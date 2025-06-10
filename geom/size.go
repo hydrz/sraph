@@ -9,8 +9,6 @@ import (
 // It is commonly used for describing the dimensions of rectangles, images, viewports, and other graphical objects.
 // The interface provides a set of arithmetic and utility operations for manipulating and querying size values.
 type Size[T Scalar] interface {
-	fmt.Stringer
-
 	// Width returns the width component.
 	// In graphics, width is used to describe the horizontal extent of a shape, image, or viewport.
 	Width() T
@@ -27,9 +25,6 @@ type Size[T Scalar] interface {
 	// Mul returns the element-wise product of this size and another.
 	// Can be used for scaling each dimension by another size, e.g., for proportional resizing.
 	Mul(other Size[T]) Size[T]
-	// MulScalar returns the size scaled by a scalar.
-	// Commonly used for uniform scaling of an object in both dimensions.
-	MulScalar(scale T) Size[T]
 	// Div returns the element-wise division of this size by another.
 	// Useful for computing relative scaling factors or normalizing dimensions.
 	Div(other Size[T]) Size[T]
@@ -40,6 +35,9 @@ type Size[T Scalar] interface {
 	// Scale scales the width and height by the given factors.
 	// Allows non-uniform scaling, e.g., stretching or shrinking only one dimension.
 	Scale(width, height T) Size[T]
+	// ScaleDim scales the width and height by the same factor.
+	// Commonly used for uniform scaling, such as resizing an image while maintaining aspect ratio.
+	ScaleDim(scale T) Size[T]
 
 	// Equal returns true if this size equals another.
 	// Used for comparison in layout, collision, or rendering logic.
@@ -87,6 +85,9 @@ type Size[T Scalar] interface {
 	// MipCount returns the mipmap count for the size.
 	// Used in texture mapping to determine the number of mipmap levels for an image.
 	MipCount() int
+
+	// String returns a string representation of the size. like "Size(width, height)".
+	String() string
 }
 
 func NewSize[T Scalar](width, height T) Size[T] {
@@ -94,7 +95,7 @@ func NewSize[T Scalar](width, height T) Size[T] {
 }
 
 func NewSizeInfinite[T Scalar]() Size[T] {
-	maxValue := MaxScalar[T]()
+	maxValue := Max[T]()
 	return size[T]{width: maxValue, height: maxValue}
 }
 
@@ -137,14 +138,6 @@ func (s size[T]) Mul(other Size[T]) Size[T] {
 	}
 }
 
-// MulScalar implements Size.
-func (s size[T]) MulScalar(scale T) Size[T] {
-	return size[T]{
-		width:  s.width * scale,
-		height: s.height * scale,
-	}
-}
-
 // Div implements Size.
 func (s size[T]) Div(other Size[T]) Size[T] {
 	return size[T]{
@@ -169,9 +162,17 @@ func (s size[T]) Scale(width, height T) Size[T] {
 	}
 }
 
+// ScaleDim implements Size.
+func (s size[T]) ScaleDim(scale T) Size[T] {
+	return size[T]{
+		width:  s.width * scale,
+		height: s.height * scale,
+	}
+}
+
 // Equal implements Size.
 func (s size[T]) Equal(other Size[T]) bool {
-	return ScalarEqual(s.width, other.Width()) && ScalarEqual(s.height, other.Height())
+	return Equal(s.width, other.Width()) && Equal(s.height, other.Height())
 }
 
 // Min implements Size.
@@ -240,46 +241,46 @@ func (s size[T]) Abs() Size[T] {
 // Floor implements Size.
 func (s size[T]) Floor() Size[T] {
 	return size[T]{
-		width:  T(math.Floor(s.width.ToFloat64())),
-		height: T(math.Floor(s.height.ToFloat64())),
+		width:  T(math.Floor(s.width.Float64())),
+		height: T(math.Floor(s.height.Float64())),
 	}
 }
 
 // Ceil implements Size.
 func (s size[T]) Ceil() Size[T] {
 	return size[T]{
-		width:  T(math.Ceil(s.width.ToFloat64())),
-		height: T(math.Ceil(s.height.ToFloat64())),
+		width:  T(math.Ceil(s.width.Float64())),
+		height: T(math.Ceil(s.height.Float64())),
 	}
 }
 
 // Round implements Size.
 func (s size[T]) Round() Size[T] {
 	return size[T]{
-		width:  T(math.Round(s.width.ToFloat64())),
-		height: T(math.Round(s.height.ToFloat64())),
+		width:  T(math.Round(s.width.Float64())),
+		height: T(math.Round(s.height.Float64())),
 	}
 }
 
 // IsZero implements Size.
 func (s size[T]) IsZero() bool {
 	var zero T
-	return ScalarEqual(s.width, zero) && ScalarEqual(s.height, zero)
+	return Equal(s.width, zero) && Equal(s.height, zero)
 }
 
 // IsFinite implements Size.
 func (s size[T]) IsFinite() bool {
-	return ScalarIsFinite(s.width) && ScalarIsFinite(s.height)
+	return IsFinite(s.width) && IsFinite(s.height)
 }
 
 // IsInfinite implements Size.
 func (s size[T]) IsInfinite() bool {
-	return math.IsInf(s.width.ToFloat64(), 0) || math.IsInf(s.height.ToFloat64(), 0)
+	return math.IsInf(s.width.Float64(), 0) || math.IsInf(s.height.Float64(), 0)
 }
 
 // IsSquare implements Size.
 func (s size[T]) IsSquare() bool {
-	return ScalarEqual(s.width, s.height)
+	return Equal(s.width, s.height)
 }
 
 // MipCount implements Size.
