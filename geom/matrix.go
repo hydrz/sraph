@@ -917,9 +917,9 @@ func (m matrix[T]) RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T] {
 func (m matrix[T]) RotateQuaternion(quat Quaternion[T]) Matrix[T] {
 	x, y, z, w := quat.X(), quat.Y(), quat.Z(), quat.W()
 	rot := matrix[T]{
-		T(1) - T(2)*(y*y+z*z), T(2) * (x*y + z*w), T(2) * (x*z - y*w), 0,
-		T(2) * (x*y - z*w), T(1) - T(2)*(x*x+z*z), T(2) * (y*z + x*w), 0,
-		T(2) * (x*z + y*w), T(2) * (y*z - x*w), T(1) - T(2)*(x*x+y*y), 0,
+		1 - T(2)*(y*y+z*z), T(2) * (x*y + z*w), T(2) * (x*z - y*w), 0,
+		T(2) * (x*y - z*w), 1 - T(2)*(x*x+z*z), T(2) * (y*z + x*w), 0,
+		T(2) * (x*z + y*w), T(2) * (y*z - x*w), 1 - T(2)*(x*x+y*y), 0,
 		0, 0, 0, 1,
 	}
 	return m.Mul(&rot)

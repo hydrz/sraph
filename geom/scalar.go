@@ -18,36 +18,6 @@ func New[T Scalar](value T) T {
 	return value
 }
 
-// Radians represents an angle in radians.
-// It is a float64 type, but defined separately to clarify its purpose in geometry calculations.
-// Radians is used to represent angles in radians, which is common in geometry and trigonometry.
-// The conversion between radians and degrees can be done using the formulas:
-// Degrees = Radians * (180 / π)
-type Radians float64
-
-func (r Radians) Degrees() Degrees {
-	return Degrees(r * (180 / math.Pi))
-}
-
-func (r Radians) String() string {
-	return strconv.FormatFloat(float64(r), 'f', -1, 64) + "rad"
-}
-
-// Degrees represents an angle in degrees.
-// It is a float64 type, but defined separately to clarify its purpose in geometry calculations.
-// Degrees is used to represent angles in degrees, which is often more intuitive for users.
-// The conversion between radians and degrees can be done using the formulas:
-// Radians = Degrees * (π / 180)
-type Degrees float64
-
-func (d Degrees) Radians() Radians {
-	return Radians(d * (math.Pi / 180))
-}
-
-func (d Degrees) String() string {
-	return strconv.FormatFloat(float64(d), 'f', -1, 64) + "°"
-}
-
 // Max returns the maximum value for the given scalar type T.
 func Max[T Scalar]() T {
 	var zero T
@@ -174,4 +144,34 @@ func (f Fixed26_6) Float64() float64 {
 // String implements Scalar.
 func (f Fixed26_6) String() string {
 	return strconv.FormatFloat(f.Float64(), 'f', -1, 64)
+}
+
+// Radians represents an angle in radians.
+// It is a float64 type, but defined separately to clarify its purpose in geometry calculations.
+// Radians is used to represent angles in radians, which is common in geometry and trigonometry.
+// The conversion between radians and degrees can be done using the formulas:
+// Degrees = Radians * (180 / π)
+type Radians float64
+
+func (r Radians) Degrees() Degrees {
+	return Degrees(r * (180 / math.Pi))
+}
+
+func (r Radians) String() string {
+	return strconv.FormatFloat(float64(r), 'f', -1, 64) + "rad"
+}
+
+// Degrees represents an angle in degrees.
+// It is a float64 type, but defined separately to clarify its purpose in geometry calculations.
+// Degrees is used to represent angles in degrees, which is often more intuitive for users.
+// The conversion between radians and degrees can be done using the formulas:
+// Radians = Degrees * (π / 180)
+type Degrees float64
+
+func (d Degrees) Radians() Radians {
+	return Radians(d * (math.Pi / 180))
+}
+
+func (d Degrees) String() string {
+	return strconv.FormatFloat(float64(d), 'f', -1, 64) + "°"
 }
