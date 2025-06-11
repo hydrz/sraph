@@ -133,6 +133,8 @@ func NewPoint[T Scalar](x, y T) Point[T] {
 	return &point[T]{x: x, y: y}
 }
 
+type Quad[T Scalar] = [4]Point[T]
+
 type point[T Scalar] struct {
 	x T
 	y T

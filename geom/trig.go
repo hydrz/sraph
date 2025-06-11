@@ -21,44 +21,34 @@ func NewTrigCosSin[T Scalar](cos, sin float64) Trig[T] {
 	}
 }
 
-/*
-*
-
-	explicit Trig(Radians r)
-	    : cos(std::cos(r.radians)), sin(std::sin(r.radians)) {}
-
-	/// Construct a Trig object from the given cosine and sine values.
-	Trig(double cos, double sin) : cos(cos), sin(sin) {}
-
-	double cos;
-	double sin;
-
-	/// @brief  Returns the vector rotated by the represented angle.
-	Vector2 operator*(const Vector2& vector) const {
-	  return Vector2(static_cast<Scalar>(vector.x * cos - vector.y * sin),
-	                 static_cast<Scalar>(vector.x * sin + vector.y * cos));
-	}
-
-	/// @brief  Returns the Trig representing the negative version of this angle.
-	Trig operator-() const { return Trig(cos, -sin); }
-
-	/// @brief  Returns the corresponding point on a circle of a given |radius|.
-	Vector2 operator*(double radius) const {
-	  return Vector2(static_cast<Scalar>(cos * radius),
-	                 static_cast<Scalar>(sin * radius));
-	}
-
-	/// @brief  Returns the corresponding point on an ellipse with the given size.
-	Vector2 operator*(const Size& ellipse_radii) const {
-	  return Vector2(static_cast<Scalar>(cos * ellipse_radii.width),
-	                 static_cast<Scalar>(sin * ellipse_radii.height));
-	}
-
-*
-*/
+// Returns the vector rotated by the represented angle.
 func (t Trig[T]) Rotate(v Vector2[T]) Vector2[T] {
-	return NewVector2[T](
+	return NewVector2(
 		v.X()*t.cos-v.Y()*t.sin,
 		v.X()*t.sin+v.Y()*t.cos,
+	)
+}
+
+// Returns the Trig representing the negative version of this angle.
+func (t Trig[T]) Neg() Trig[T] {
+	return Trig[T]{
+		cos: t.cos,
+		sin: -t.sin,
+	}
+}
+
+// Returns the corresponding point on a circle of a given |radius|.
+func (t Trig[T]) CirclePoint(radius T) Point[T] {
+	return NewPoint(
+		t.cos*radius,
+		t.sin*radius,
+	)
+}
+
+// Returns the corresponding point on an ellipse with the given size.
+func (t Trig[T]) EllipsePoint(ellipseRadii Size[T]) Point[T] {
+	return NewPoint(
+		t.cos*ellipseRadii.Width(),
+		t.sin*ellipseRadii.Height(),
 	)
 }

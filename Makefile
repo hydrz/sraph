@@ -1,5 +1,5 @@
 # Project configuration
-MOD_NAME := github.com/opensraph/template.go
+MOD_NAME := github.com/opensraph/sraph
 BINARY_NAME := $(shell basename $(MOD_NAME))
 
 # Build variables

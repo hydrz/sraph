@@ -4,9 +4,8 @@ package geom
 type FillType uint8
 
 const (
-	FillTypeUnknown FillType = iota
 	// FillTypeNonZero means non-zero winding fill.
-	FillTypeNonZero
+	FillTypeNonZero = iota
 	// FillTypeEvenOdd means even-odd fill.
 	FillTypeEvenOdd
 )
