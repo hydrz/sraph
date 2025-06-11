@@ -7,21 +7,21 @@ import (
 )
 
 func TestQuaternion_NewQuaternion(t *testing.T) {
-	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
+	q := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
 	if q.X() != 1.0 || q.Y() != 2.0 || q.Z() != 3.0 || q.W() != 4.0 {
 		t.Errorf("NewQuaternion() components mismatch")
 	}
 }
 
 func TestQuaternion_NewQuaternionFromAxisAngle(t *testing.T) {
-	axis := NewVector3(Float32(0.0), Float32(0.0), Float32(1.0)) // Z-axis
-	angle := Radians(math.Pi / 2)                                // 90 degrees
+	axis := NewVector3(F32(0.0), F32(0.0), F32(1.0)) // Z-axis
+	angle := NewRadians(F32(math.Pi / 2))            // 90 degrees
 
 	q := NewQuaternionFromAxisAngle(axis, angle)
 
 	// For 90 degree rotation around Z-axis: q = (0, 0, sin(π/4), cos(π/4)) = (0, 0, √2/2, √2/2)
-	expected := Float32(math.Sqrt(2.0) / 2.0)
-	if !Equal(q.X(), Float32(0.0)) || !Equal(q.Y(), Float32(0.0)) ||
+	expected := F32(math.Sqrt(2.0) / 2.0)
+	if !Equal(q.X(), F32(0.0)) || !Equal(q.Y(), F32(0.0)) ||
 		!Equal(q.Z(), expected) || !Equal(q.W(), expected) {
 		t.Errorf("NewQuaternionFromAxisAngle() = (%v, %v, %v, %v), want (0, 0, %v, %v)",
 			q.X(), q.Y(), q.Z(), q.W(), expected, expected)
@@ -29,8 +29,8 @@ func TestQuaternion_NewQuaternionFromAxisAngle(t *testing.T) {
 }
 
 func TestQuaternion_QuaternionArithmetic(t *testing.T) {
-	q1 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
-	q2 := NewQuaternion(Float32(5.0), Float32(6.0), Float32(7.0), Float32(8.0))
+	q1 := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	q2 := NewQuaternion(F32(5.0), F32(6.0), F32(7.0), F32(8.0))
 
 	t.Run("Add", func(t *testing.T) {
 		result := q1.Add(q2)
@@ -47,7 +47,7 @@ func TestQuaternion_QuaternionArithmetic(t *testing.T) {
 	})
 
 	t.Run("Scale", func(t *testing.T) {
-		result := q1.Scale(Float32(2.0))
+		result := q1.Scale(F32(2.0))
 		if result.X() != 2.0 || result.Y() != 4.0 || result.Z() != 6.0 || result.W() != 8.0 {
 			t.Errorf("Scale() components mismatch")
 		}
@@ -63,8 +63,8 @@ func TestQuaternion_QuaternionArithmetic(t *testing.T) {
 
 func TestQuaternion_QuaternionMultiplication(t *testing.T) {
 	// Test Hamilton product with identity quaternion
-	identity := NewQuaternion(Float32(0.0), Float32(0.0), Float32(0.0), Float32(1.0))
-	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
+	identity := NewQuaternion(F32(0.0), F32(0.0), F32(0.0), F32(1.0))
+	q := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
 
 	result := q.Mul(identity)
 	if !result.Equal(q) {
@@ -73,20 +73,20 @@ func TestQuaternion_QuaternionMultiplication(t *testing.T) {
 }
 
 func TestQuaternion_QuaternionLength(t *testing.T) {
-	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
+	q := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
 	length := q.Length()
-	expected := Float32(math.Sqrt(30.0)) // sqrt(1+4+9+16) = sqrt(30)
+	expected := F32(math.Sqrt(30.0)) // sqrt(1+4+9+16) = sqrt(30)
 	if !Equal(length, expected) {
 		t.Errorf("Length() = %v, want %v", length, expected)
 	}
 }
 
 func TestQuaternion_QuaternionDotProduct(t *testing.T) {
-	q1 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
-	q2 := NewQuaternion(Float32(5.0), Float32(6.0), Float32(7.0), Float32(8.0))
+	q1 := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	q2 := NewQuaternion(F32(5.0), F32(6.0), F32(7.0), F32(8.0))
 
 	dot := q1.Dot(q2)
-	expected := Float32(70.0) // 1*5 + 2*6 + 3*7 + 4*8 = 70
+	expected := F32(70.0) // 1*5 + 2*6 + 3*7 + 4*8 = 70
 	if !Equal(dot, expected) {
 		t.Errorf("Dot() = %v, want %v", dot, expected)
 	}
@@ -94,30 +94,30 @@ func TestQuaternion_QuaternionDotProduct(t *testing.T) {
 
 func TestQuaternion_QuaternionNormalize(t *testing.T) {
 	t.Run("Normal quaternion", func(t *testing.T) {
-		q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
+		q := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
 		normalized := q.Normalize()
 
 		// Should have length 1
 		length := normalized.Length()
-		if !Equal(length, Float32(1.0)) {
+		if !Equal(length, F32(1.0)) {
 			t.Errorf("Normalized quaternion length = %v, want 1.0", length)
 		}
 	})
 
 	t.Run("Zero quaternion", func(t *testing.T) {
-		zero := NewQuaternion(Float32(0.0), Float32(0.0), Float32(0.0), Float32(0.0))
+		zero := NewQuaternion(F32(0.0), F32(0.0), F32(0.0), F32(0.0))
 		normalized := zero.Normalize()
 
 		// Should return zero quaternion
-		if !Equal(normalized.X(), Float32(0.0)) || !Equal(normalized.Y(), Float32(0.0)) ||
-			!Equal(normalized.Z(), Float32(0.0)) || !Equal(normalized.W(), Float32(0.0)) {
+		if !Equal(normalized.X(), F32(0.0)) || !Equal(normalized.Y(), F32(0.0)) ||
+			!Equal(normalized.Z(), F32(0.0)) || !Equal(normalized.W(), F32(0.0)) {
 			t.Errorf("Normalized zero quaternion should be zero")
 		}
 	})
 }
 
 func TestQuaternion_QuaternionInvert(t *testing.T) {
-	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
+	q := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
 	inv := q.Invert()
 
 	// q * q^-1 should be close to identity
@@ -125,16 +125,16 @@ func TestQuaternion_QuaternionInvert(t *testing.T) {
 	identityNormalized := identity.Normalize()
 
 	// Check if it's close to identity quaternion (0, 0, 0, 1) or (0, 0, 0, -1)
-	if !Equal(identityNormalized.X(), Float32(0.0)) || !Equal(identityNormalized.Y(), Float32(0.0)) ||
-		!Equal(identityNormalized.Z(), Float32(0.0)) {
+	if !Equal(identityNormalized.X(), F32(0.0)) || !Equal(identityNormalized.Y(), F32(0.0)) ||
+		!Equal(identityNormalized.Z(), F32(0.0)) {
 		t.Errorf("Quaternion inversion failed")
 	}
 }
 
 func TestQuaternion_QuaternionEqual(t *testing.T) {
-	q1 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
-	q2 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
-	q3 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(5.0))
+	q1 := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	q2 := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	q3 := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(5.0))
 
 	if !q1.Equal(q2) {
 		t.Error("Equal quaternions should be equal")
@@ -145,8 +145,8 @@ func TestQuaternion_QuaternionEqual(t *testing.T) {
 }
 
 func TestQuaternion_QuaternionSlerp(t *testing.T) {
-	q1 := NewQuaternion(Float32(0.0), Float32(0.0), Float32(0.0), Float32(1.0)) // Identity
-	q2 := NewQuaternion(Float32(0.0), Float32(0.0), Float32(1.0), Float32(0.0)) // 180° rotation around Z
+	q1 := NewQuaternion(F32(0.0), F32(0.0), F32(0.0), F32(1.0)) // Identity
+	q2 := NewQuaternion(F32(0.0), F32(0.0), F32(1.0), F32(0.0)) // 180° rotation around Z
 
 	// Test interpolation at t=0 (should be q1)
 	t0 := time.Unix(0, 0)
@@ -161,22 +161,22 @@ func TestQuaternion_QuaternionSlerp(t *testing.T) {
 
 func TestQuaternion_QuaternionRotateVector3(t *testing.T) {
 	// Test 90 degree rotation around Z axis
-	axis := NewVector3(Float32(0.0), Float32(0.0), Float32(1.0))
-	angle := Radians(math.Pi / 2)
+	axis := NewVector3(F32(0.0), F32(0.0), F32(1.0))
+	angle := NewRadians(F32(math.Pi / 2))
 	q := NewQuaternionFromAxisAngle(axis, angle)
 
 	// Rotate vector (1, 0, 0) around Z axis by 90 degrees
-	v := NewVector3(Float32(1.0), Float32(0.0), Float32(0.0))
+	v := NewVector3(F32(1.0), F32(0.0), F32(0.0))
 	rotated := q.RotateVector3(v)
 
 	// Should result in approximately (0, 1, 0)
-	if !Equal(rotated.X(), Float32(0.0)) || !Equal(rotated.Y(), Float32(1.0)) || !Equal(rotated.Z(), Float32(0.0)) {
+	if !Equal(rotated.X(), F32(0.0)) || !Equal(rotated.Y(), F32(1.0)) || !Equal(rotated.Z(), F32(0.0)) {
 		t.Errorf("RotateVector3() = (%v, %v, %v), want (0, 1, 0)", rotated.X(), rotated.Y(), rotated.Z())
 	}
 }
 
 func TestQuaternion_QuaternionString(t *testing.T) {
-	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
+	q := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
 	str := q.String()
 	expected := "Quaternion(1, 2, 3, 4)"
 	if str != expected {
@@ -185,9 +185,9 @@ func TestQuaternion_QuaternionString(t *testing.T) {
 }
 
 func BenchmarkQuaternionOperations(b *testing.B) {
-	q1 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
-	q2 := NewQuaternion(Float32(5.0), Float32(6.0), Float32(7.0), Float32(8.0))
-	v := NewVector3(Float32(1.0), Float32(0.0), Float32(0.0))
+	q1 := NewQuaternion(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	q2 := NewQuaternion(F32(5.0), F32(6.0), F32(7.0), F32(8.0))
+	v := NewVector3(F32(1.0), F32(0.0), F32(0.0))
 
 	b.Run("Mul", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

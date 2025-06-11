@@ -1,6 +1,6 @@
 package geom
 
-var _ PathReceiver[Float32] = (*testPathReceiver[Float32])(nil)
+var _ PathReceiver[F32] = (*testPathReceiver[F32])(nil)
 
 // testPathReceiver is a generic PathReceiver for test assertions.
 type testPathReceiver[T Scalar] struct {

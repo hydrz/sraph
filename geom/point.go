@@ -57,7 +57,7 @@ type Point[T Scalar] interface {
 	Scale(scale T) Point[T]
 
 	// Rotate rotates this point around the origin by the given angle in radians.
-	Rotate(angle Radians) Point[T]
+	Rotate(angle Radians[T]) Point[T]
 
 	// Normalize returns a normalized version of this point.
 	//
@@ -86,7 +86,7 @@ type Point[T Scalar] interface {
 	// The angle is calculated using the arctangent of the cross and dot products.
 	// This is useful for determining the relative orientation of two vectors.
 	// Formula: angle = atan2(x1*y2 - y1*x2,  x1*x2 + y1*y2).
-	AngleTo(o Point[T]) Radians
+	AngleTo(o Point[T]) Radians[T]
 
 	// Distance returns the Euclidean distance between this point and ano.
 	//
@@ -115,7 +115,7 @@ type Point[T Scalar] interface {
 	// Reflect calculates the reflection vector of this point (vector) about the specified axis (vector).
 	//
 	// Commonly used in physics simulations (such as light reflection, collision bounce, etc.)
-	// Formula: v' = v - 2 * (v·n) * n, where v is the original vector and n is the normal (axis).
+	// Formula: v'
 	// For example, if you want to reflect a point across the x-axis, you would use Point(0, 1) as the axis.
 	Reflect(axis Point[T]) Point[T]
 
@@ -286,9 +286,9 @@ func (p point[T]) Scale(scale T) Point[T] {
 }
 
 // Rotate implements Point.
-func (p point[T]) Rotate(angle Radians) Point[T] {
-	cos := T(math.Cos(float64(angle)))
-	sin := T(math.Sin(float64(angle)))
+func (p point[T]) Rotate(angle Radians[T]) Point[T] {
+	cos := T(math.Cos(angle.Float64()))
+	sin := T(math.Sin(angle.Float64()))
 	return &point[T]{
 		x: p.x*cos - p.y*sin,
 		y: p.x*sin + p.y*cos,
@@ -316,8 +316,8 @@ func (p point[T]) Cross(o Point[T]) T {
 }
 
 // AngleTo implements Point.
-func (p point[T]) AngleTo(o Point[T]) Radians {
-	return Radians(math.Atan2(p.Cross(o).Float64(), p.Dot(o).Float64()))
+func (p point[T]) AngleTo(o Point[T]) Radians[T] {
+	return NewRadians[T](T(math.Atan2(p.Cross(o).Float64(), p.Dot(o).Float64())))
 }
 
 // Distance implements Point.

@@ -335,7 +335,7 @@ type Matrix[T Scalar] interface {
 	// Parameters:
 	//   angle: the rotation angle in radians
 	// Returns: a new matrix representing the rotation around the X axis
-	RotateX(angle Radians) Matrix[T]
+	RotateX(angle Radians[T]) Matrix[T]
 
 	// RotateY creates a rotation matrix around the Y axis.
 	// The resulting matrix is:
@@ -346,7 +346,7 @@ type Matrix[T Scalar] interface {
 	// Parameters:
 	//   angle: the rotation angle in radians
 	// Returns: a new matrix representing the rotation around the Y axis
-	RotateY(angle Radians) Matrix[T]
+	RotateY(angle Radians[T]) Matrix[T]
 
 	// RotateZ creates a rotation matrix around the Z axis.
 	// The resulting matrix is:
@@ -357,7 +357,7 @@ type Matrix[T Scalar] interface {
 	// Parameters:
 	//   angle: the rotation angle in radians
 	// Returns: a new matrix representing the rotation around the Z axis
-	RotateZ(angle Radians) Matrix[T]
+	RotateZ(angle Radians[T]) Matrix[T]
 
 	// RotateAxisAngle creates a rotation matrix around an arbitrary axis using Rodrigues' formula.
 	// Formula: R = I + sin(θ)K + (1-cos(θ))K^2, where K is the cross-product matrix of the axis.
@@ -365,7 +365,7 @@ type Matrix[T Scalar] interface {
 	//   angle: the rotation angle in radians
 	//   axis: the axis of rotation (must be a unit vector)
 	// Returns: a new matrix representing the rotation around the given axis
-	RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T]
+	RotateAxisAngle(angle Radians[T], axis Vector3[T]) Matrix[T]
 
 	// RotateQuaternion creates a rotation matrix from a quaternion.
 	// See quaternion to matrix conversion formulas.
@@ -436,7 +436,7 @@ type Matrix[T Scalar] interface {
 	// Parameters:
 	//   angle: the angle in radians
 	// Returns: the cosine and sine of the angle
-	CosSin(angle Radians) (cos, sin T)
+	CosSin(angle Radians[T]) (cos, sin T)
 
 	// String returns a string representation of the matrix.
 	String() string
@@ -855,7 +855,7 @@ func (m matrix[T]) Translate2D(vector Vector2[T]) Matrix[T] {
 }
 
 // RotateX implements Matrix.
-func (m matrix[T]) RotateX(angle Radians) Matrix[T] {
+func (m matrix[T]) RotateX(angle Radians[T]) Matrix[T] {
 	cos, sin := m.CosSin(angle)
 	rot := &matrix[T]{
 		1, 0, 0, 0,
@@ -867,7 +867,7 @@ func (m matrix[T]) RotateX(angle Radians) Matrix[T] {
 }
 
 // RotateY implements Matrix.
-func (m matrix[T]) RotateY(angle Radians) Matrix[T] {
+func (m matrix[T]) RotateY(angle Radians[T]) Matrix[T] {
 	cos, sin := m.CosSin(angle)
 	rot := &matrix[T]{
 		cos, 0, -sin, 0,
@@ -879,7 +879,7 @@ func (m matrix[T]) RotateY(angle Radians) Matrix[T] {
 }
 
 // RotateZ implements Matrix.
-func (m matrix[T]) RotateZ(angle Radians) Matrix[T] {
+func (m matrix[T]) RotateZ(angle Radians[T]) Matrix[T] {
 	cos, sin := m.CosSin(angle)
 	rot := &matrix[T]{
 		cos, sin, 0, 0,
@@ -891,7 +891,7 @@ func (m matrix[T]) RotateZ(angle Radians) Matrix[T] {
 }
 
 // RotateAxisAngle implements Matrix.
-func (m matrix[T]) RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T] {
+func (m matrix[T]) RotateAxisAngle(angle Radians[T], axis Vector3[T]) Matrix[T] {
 	v := axis.Normalize()
 	cos, sin := m.CosSin(angle)
 	cosp := T(1) - cos
@@ -1010,20 +1010,20 @@ func (m matrix[T]) Decompose() MatrixDecomposition[T] {
 }
 
 // CosSin implements Matrix.
-func (m matrix[T]) CosSin(angle Radians) (cos, sin T) {
-	sinVal := T(math.Sin(float64(angle)))
+func (m matrix[T]) CosSin(angle Radians[T]) (cos, sin T) {
+	sinVal := T(math.Sin(angle.Float64()))
 	if math.Abs(float64(sinVal)) == 1.0 {
 		// 90 or 270 degrees
 		return T(0), sinVal
 	}
 
-	cosVal := T(math.Cos(float64(angle)))
-	if math.Abs(float64(cosVal)) == 1.0 {
+	cosVal := math.Cos(angle.Float64())
+	if math.Abs(cosVal) == 1.0 {
 		// 0 or 180 degrees
-		return cosVal, T(0)
+		return T(cosVal), T(0)
 	}
 
-	return cosVal, sinVal
+	return T(cosVal), sinVal
 }
 
 // String implements Matrix.

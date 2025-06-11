@@ -79,13 +79,12 @@ func NewQuaternion[T Scalar](x, y, z, w T) Quaternion[T] {
 }
 
 // NewQuaternionFromAxisAngle creates a new quaternion from an axis and angle.
-func NewQuaternionFromAxisAngle[T Scalar](axis Vector3[T], angle Radians) Quaternion[T] {
-	// Normalize the axis vector
+func NewQuaternionFromAxisAngle[T Scalar](axis Vector3[T], angle Radians[T]) Quaternion[T] {
 	axis = axis.Normalize()
-	sinHalfAngle := T(math.Sin(float64(angle / 2)))
-	cosHalfAngle := T(math.Cos(float64(angle / 2)))
-
-	return &quaternion[T]{
+	halfAngle := angle.Float64() / 2
+	sinHalfAngle := T(math.Sin(halfAngle))
+	cosHalfAngle := T(math.Cos(halfAngle))
+	return quaternion[T]{
 		x: axis.X() * sinHalfAngle,
 		y: axis.Y() * sinHalfAngle,
 		z: axis.Z() * sinHalfAngle,

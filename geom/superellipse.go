@@ -187,11 +187,11 @@ func (b *superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse
 // circularArcPoints returns the four control points for the circular arc segment of the octant.
 func (b *superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
 	startVector := octant.CircleStart.Sub(octant.CircleCenter)
-	endVector := startVector.Rotate(Radians(-octant.CircleMaxAngle))
+	endVector := startVector.Rotate(NewRadians(T(-octant.CircleMaxAngle.Float64())))
 	circleEnd := octant.CircleCenter.Add(endVector)
 	startTangent := NewPoint(startVector.Y(), -startVector.X()).Normalize()
 	endTangent := NewPoint(-endVector.Y(), endVector.X()).Normalize()
-	bezierFactor := math.Tan(float64(octant.CircleMaxAngle/4) * 4 / 3)
+	bezierFactor := math.Tan(octant.CircleMaxAngle.Float64() / 4 * 4 / 3)
 	radius := startVector.Length()
 
 	return [4]Point[T]{
@@ -345,7 +345,7 @@ type SuperellipseOctant[T Scalar] struct {
 	// CircleCenter is the center of the circular arc, relative to Offset.
 	CircleCenter Point[T]
 	// CircleMaxAngle is the angular span of the circular arc, in radians.
-	CircleMaxAngle Radians
+	CircleMaxAngle Radians[T]
 }
 
 // SuperellipseQuadrant holds parameters for a quadrant of a rounded superellipse.
@@ -510,8 +510,8 @@ func newSuperellipseOctant[T Scalar](center Point[T], a T, radius T) Superellips
 			SemiAxis:       a,
 			Degree:         0,
 			CircleStart:    NewPoint(a, a),
-			CircleCenter:   NewPoint[T](0, 0), // Not used.
-			CircleMaxAngle: 0,                 // Not used.
+			CircleCenter:   NewPoint[T](0, 0),
+			CircleMaxAngle: NewRadians[T](0),
 		}
 	}
 
@@ -536,9 +536,9 @@ func newSuperellipseOctant[T Scalar](center Point[T], a T, radius T) Superellips
 	} else {
 		circleCenter = findCircleCenter(pointJ, PointM, R)
 	}
-	var circleMaxAngle Radians
+	var circleMaxAngle Radians[T]
 	if radius == 0 {
-		circleMaxAngle = Radians(0)
+		circleMaxAngle = NewRadians[T](0)
 	} else {
 		circleMaxAngle = (PointM.Sub(circleCenter)).AngleTo(pointJ.Sub(circleCenter))
 	}

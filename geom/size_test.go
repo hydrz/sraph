@@ -6,23 +6,23 @@ import (
 )
 
 func TestSize_NewSize(t *testing.T) {
-	s := NewSize(Float32(10.0), Float32(20.0))
+	s := NewSize(F32(10.0), F32(20.0))
 	if s.Width() != 10.0 || s.Height() != 20.0 {
 		t.Errorf("NewSize(10.0, 20.0) = (%v, %v), want (10.0, 20.0)", s.Width(), s.Height())
 	}
 }
 
 func TestSize_NewSizeInfinite(t *testing.T) {
-	s := NewSizeInfinite[Float32]()
-	maxVal := Max[Float32]()
+	s := NewSizeInfinite[F32]()
+	maxVal := Max[F32]()
 	if s.Width() != maxVal || s.Height() != maxVal {
 		t.Errorf("NewSizeInfinite() should return max values")
 	}
 }
 
 func TestSize_SizeArithmetic(t *testing.T) {
-	s1 := NewSize(Float32(10.0), Float32(20.0))
-	s2 := NewSize(Float32(5.0), Float32(10.0))
+	s1 := NewSize(F32(10.0), F32(20.0))
+	s2 := NewSize(F32(5.0), F32(10.0))
 
 	t.Run("Add", func(t *testing.T) {
 		result := s1.Add(s2)
@@ -61,17 +61,17 @@ func TestSize_SizeArithmetic(t *testing.T) {
 }
 
 func TestSize_SizeScale(t *testing.T) {
-	s := NewSize(Float32(10.0), Float32(20.0))
+	s := NewSize(F32(10.0), F32(20.0))
 
 	t.Run("Scale", func(t *testing.T) {
-		result := s.ScaleWH(Float32(2.0), Float32(1.5))
+		result := s.ScaleWH(F32(2.0), F32(1.5))
 		if result.Width() != 20.0 || result.Height() != 30.0 {
 			t.Errorf("Scale(2.0, 1.5) = (%v, %v), want (20.0, 30.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("ScaleDim", func(t *testing.T) {
-		result := s.Scale(Float32(2.0))
+		result := s.Scale(F32(2.0))
 		if result.Width() != 20.0 || result.Height() != 40.0 {
 			t.Errorf("ScaleDim(2.0) = (%v, %v), want (20.0, 40.0)", result.Width(), result.Height())
 		}
@@ -79,9 +79,9 @@ func TestSize_SizeScale(t *testing.T) {
 }
 
 func TestSize_SizeComparison(t *testing.T) {
-	s1 := NewSize(Float32(10.0), Float32(20.0))
-	s2 := NewSize(Float32(10.0), Float32(20.0))
-	s3 := NewSize(Float32(5.0), Float32(15.0))
+	s1 := NewSize(F32(10.0), F32(20.0))
+	s2 := NewSize(F32(10.0), F32(20.0))
+	s3 := NewSize(F32(5.0), F32(15.0))
 
 	t.Run("Equal", func(t *testing.T) {
 		if !s1.Equal(s2) {
@@ -108,7 +108,7 @@ func TestSize_SizeComparison(t *testing.T) {
 }
 
 func TestSize_SizeDimensions(t *testing.T) {
-	s := NewSize(Float32(15.0), Float32(10.0))
+	s := NewSize(F32(15.0), F32(10.0))
 
 	t.Run("MinDimension", func(t *testing.T) {
 		min := s.MinDimension()
@@ -133,7 +133,7 @@ func TestSize_SizeDimensions(t *testing.T) {
 }
 
 func TestSize_SizeAbs(t *testing.T) {
-	s := NewSize(Float32(-10.0), Float32(-20.0))
+	s := NewSize(F32(-10.0), F32(-20.0))
 	result := s.Abs()
 
 	if result.Width() != 10.0 || result.Height() != 20.0 {
@@ -142,7 +142,7 @@ func TestSize_SizeAbs(t *testing.T) {
 }
 
 func TestSize_SizeMathFunctions(t *testing.T) {
-	s := NewSize(Float32(10.7), Float32(20.3))
+	s := NewSize(F32(10.7), F32(20.3))
 
 	t.Run("Floor", func(t *testing.T) {
 		result := s.Floor()
@@ -168,8 +168,8 @@ func TestSize_SizeMathFunctions(t *testing.T) {
 
 func TestSize_SizeProperties(t *testing.T) {
 	t.Run("IsZero", func(t *testing.T) {
-		zero := NewSize(Float32(0.0), Float32(0.0))
-		nonZero := NewSize(Float32(1.0), Float32(0.0))
+		zero := NewSize(F32(0.0), F32(0.0))
+		nonZero := NewSize(F32(1.0), F32(0.0))
 
 		if !zero.IsZero() {
 			t.Error("Zero size should return true for IsZero()")
@@ -180,8 +180,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsFinite", func(t *testing.T) {
-		finite := NewSize(Float32(10.0), Float32(20.0))
-		infinite := NewSize(Float32(math.Inf(1)), Float32(20.0))
+		finite := NewSize(F32(10.0), F32(20.0))
+		infinite := NewSize(F32(math.Inf(1)), F32(20.0))
 
 		if !finite.IsFinite() {
 			t.Error("Finite size should return true for IsFinite()")
@@ -192,8 +192,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsInfinite", func(t *testing.T) {
-		finite := NewSize(Float32(10.0), Float32(20.0))
-		infinite := NewSize(Float32(math.Inf(1)), Float32(20.0))
+		finite := NewSize(F32(10.0), F32(20.0))
+		infinite := NewSize(F32(math.Inf(1)), F32(20.0))
 
 		if finite.IsInfinite() {
 			t.Error("Finite size should return false for IsInfinite()")
@@ -204,8 +204,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsSquare", func(t *testing.T) {
-		square := NewSize(Float32(10.0), Float32(10.0))
-		rectangle := NewSize(Float32(10.0), Float32(20.0))
+		square := NewSize(F32(10.0), F32(10.0))
+		rectangle := NewSize(F32(10.0), F32(20.0))
 
 		if !square.IsSquare() {
 			t.Error("Square size should return true for IsSquare()")
@@ -219,17 +219,17 @@ func TestSize_SizeProperties(t *testing.T) {
 func TestSize_SizeMipCount(t *testing.T) {
 	tests := []struct {
 		name     string
-		size     Size[Int32]
+		size     Size[I32]
 		expected int
 	}{
-		{"1x1", NewSize(Int32(1), Int32(1)), 1},
-		{"2x2", NewSize(Int32(2), Int32(2)), 2},
-		{"4x4", NewSize(Int32(4), Int32(4)), 3},
-		{"8x8", NewSize(Int32(8), Int32(8)), 4},
-		{"16x16", NewSize(Int32(16), Int32(16)), 5},
-		{"256x256", NewSize(Int32(256), Int32(256)), 9},
-		{"4x2", NewSize(Int32(4), Int32(2)), 3},
-		{"8x4", NewSize(Int32(8), Int32(4)), 4},
+		{"1x1", NewSize(I32(1), I32(1)), 1},
+		{"2x2", NewSize(I32(2), I32(2)), 2},
+		{"4x4", NewSize(I32(4), I32(4)), 3},
+		{"8x8", NewSize(I32(8), I32(8)), 4},
+		{"16x16", NewSize(I32(16), I32(16)), 5},
+		{"256x256", NewSize(I32(256), I32(256)), 9},
+		{"4x2", NewSize(I32(4), I32(2)), 3},
+		{"8x4", NewSize(I32(8), I32(4)), 4},
 	}
 
 	for _, tt := range tests {
@@ -243,7 +243,7 @@ func TestSize_SizeMipCount(t *testing.T) {
 }
 
 func TestSize_SizeString(t *testing.T) {
-	s := NewSize(Float32(10.5), Float32(20.5))
+	s := NewSize(F32(10.5), F32(20.5))
 	str := s.String()
 	expected := "Size(10.5, 20.5)"
 	if str != expected {
@@ -252,8 +252,8 @@ func TestSize_SizeString(t *testing.T) {
 }
 
 func BenchmarkSizeOperations(b *testing.B) {
-	s1 := NewSize(Float32(10.0), Float32(20.0))
-	s2 := NewSize(Float32(5.0), Float32(10.0))
+	s1 := NewSize(F32(10.0), F32(20.0))
+	s2 := NewSize(F32(5.0), F32(10.0))
 
 	b.Run("Add", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

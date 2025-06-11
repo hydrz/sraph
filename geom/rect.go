@@ -119,11 +119,11 @@ type Rect[T Scalar] interface {
 	Project(source Rect[T]) Rect[T]
 
 	// Round rounds the rectangle's edges to the nearest integer.
-	Round() Rect[Int32]
+	Round() Rect[I32]
 	// RoundOut rounds the edges outward to the nearest integer.
-	RoundOut() Rect[Int32]
+	RoundOut() Rect[I32]
 	// RoundIn rounds the edges inward (down) to the nearest integer.
-	RoundIn() Rect[Int32]
+	RoundIn() Rect[I32]
 
 	// === Matrix Transformations ===
 
@@ -581,32 +581,32 @@ func (r *rect[T]) Project(source Rect[T]) Rect[T] {
 }
 
 // Round implements Rect.
-func (r *rect[T]) Round() Rect[Int32] {
+func (r *rect[T]) Round() Rect[I32] {
 	return NewRect(
-		Int32(r.left.Float64()+0.5),
-		Int32(r.top.Float64()+0.5),
-		Int32(r.right.Float64()+0.5),
-		Int32(r.bottom.Float64()+0.5),
+		I32(r.left.Float64()+0.5),
+		I32(r.top.Float64()+0.5),
+		I32(r.right.Float64()+0.5),
+		I32(r.bottom.Float64()+0.5),
 	)
 }
 
 // RoundOut implements Rect.
-func (r *rect[T]) RoundOut() Rect[Int32] {
+func (r *rect[T]) RoundOut() Rect[I32] {
 	return NewRect(
-		Int32(r.left.Float64()),
-		Int32(r.top.Float64()),
-		Int32(r.right.Float64()+0.999),
-		Int32(r.bottom.Float64()+0.999),
+		I32(r.left.Float64()),
+		I32(r.top.Float64()),
+		I32(r.right.Float64()+0.999),
+		I32(r.bottom.Float64()+0.999),
 	)
 }
 
 // RoundIn implements Rect.
-func (r *rect[T]) RoundIn() Rect[Int32] {
+func (r *rect[T]) RoundIn() Rect[I32] {
 	return NewRect(
-		Int32(r.left.Float64()+0.999),
-		Int32(r.top.Float64()+0.999),
-		Int32(r.right.Float64()),
-		Int32(r.bottom.Float64()),
+		I32(r.left.Float64()+0.999),
+		I32(r.top.Float64()+0.999),
+		I32(r.right.Float64()),
+		I32(r.bottom.Float64()),
 	)
 }
 
