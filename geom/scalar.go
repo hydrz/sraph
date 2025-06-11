@@ -195,11 +195,3 @@ func (d Degrees[T]) Float64() float64 {
 func (d Degrees[T]) String() string {
 	return strconv.FormatFloat(d.degrees.Float64(), 'f', -1, 64) + "°"
 }
-
-// Helper function for absolute value.
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}

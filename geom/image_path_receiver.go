@@ -156,6 +156,14 @@ func (r *ImagePathReceiver[T]) Fill() {
 
 // Drawing helper methods
 
+// abs returns the absolute value of an integer
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 // drawLine draws a line between two points using Bresenham's algorithm.
 func (r *ImagePathReceiver[T]) drawLine(p1, p2 Point[T]) {
 	x0 := int(p1.X().Float64())
@@ -257,7 +265,7 @@ func (r *ImagePathReceiver[T]) evaluateCubicBezier(p0, p1, p2, p3 Point[T], t T)
 	return NewPoint(x, y)
 }
 
-// fillPolygon fills a polygon using a simple scanline algorithm.
+// fillPolygon fills a polygon using an improved scanline algorithm with even-odd rule.
 func (r *ImagePathReceiver[T]) fillPolygon(vertices []Point[T]) {
 	if len(vertices) < 3 {
 		return
@@ -266,8 +274,11 @@ func (r *ImagePathReceiver[T]) fillPolygon(vertices []Point[T]) {
 	// Find bounding box
 	minY := int(vertices[0].Y().Float64())
 	maxY := minY
+	minX := int(vertices[0].X().Float64())
+	maxX := minX
 
 	for _, v := range vertices {
+		x := int(v.X().Float64())
 		y := int(v.Y().Float64())
 		if y < minY {
 			minY = y
@@ -275,11 +286,31 @@ func (r *ImagePathReceiver[T]) fillPolygon(vertices []Point[T]) {
 		if y > maxY {
 			maxY = y
 		}
+		if x < minX {
+			minX = x
+		}
+		if x > maxX {
+			maxX = x
+		}
 	}
 
-	// Scanline fill
+	// Clamp to image bounds
+	if minY < r.bounds.Min.Y {
+		minY = r.bounds.Min.Y
+	}
+	if maxY >= r.bounds.Max.Y {
+		maxY = r.bounds.Max.Y - 1
+	}
+	if minX < r.bounds.Min.X {
+		minX = r.bounds.Min.X
+	}
+	if maxX >= r.bounds.Max.X {
+		maxX = r.bounds.Max.X - 1
+	}
+
+	// Scanline fill using even-odd rule
 	for y := minY; y <= maxY; y++ {
-		intersections := r.findIntersections(vertices, y)
+		intersections := r.findIntersections(vertices, float64(y)+0.5) // Use middle of scanline
 
 		// Sort intersections
 		for i := 0; i < len(intersections)-1; i++ {
@@ -290,38 +321,60 @@ func (r *ImagePathReceiver[T]) fillPolygon(vertices []Point[T]) {
 			}
 		}
 
-		// Fill between pairs of intersections
+		// Fill between pairs of intersections (even-odd rule)
 		for i := 0; i < len(intersections)-1; i += 2 {
-			x1 := intersections[i]
-			x2 := intersections[i+1]
+			if i+1 < len(intersections) {
+				x1 := intersections[i]
+				x2 := intersections[i+1]
 
-			for x := x1; x <= x2; x++ {
-				r.setPixelSafe(x, y, r.fillColor)
+				// Ensure x1 <= x2
+				if x1 > x2 {
+					x1, x2 = x2, x1
+				}
+
+				// Clamp to bounds
+				if x1 < minX {
+					x1 = minX
+				}
+				if x2 > maxX {
+					x2 = maxX
+				}
+
+				for x := x1; x <= x2; x++ {
+					r.setPixelSafe(x, y, r.fillColor)
+				}
 			}
 		}
 	}
 }
 
 // findIntersections finds x-coordinates where the polygon edges intersect with a horizontal scanline.
-func (r *ImagePathReceiver[T]) findIntersections(vertices []Point[T], y int) []int {
+func (r *ImagePathReceiver[T]) findIntersections(vertices []Point[T], y float64) []int {
 	var intersections []int
+	n := len(vertices)
 
-	for i := 0; i < len(vertices); i++ {
-		j := (i + 1) % len(vertices)
+	for i := 0; i < n; i++ {
+		j := (i + 1) % n
 
-		y1 := int(vertices[i].Y().Float64())
-		y2 := int(vertices[j].Y().Float64())
+		y1 := vertices[i].Y().Float64()
+		y2 := vertices[j].Y().Float64()
+
+		// Skip horizontal edges
+		if abs(int(y1-y2)) < 1 {
+			continue
+		}
 
 		// Check if scanline intersects this edge
-		if (y1 <= y && y < y2) || (y2 <= y && y < y1) {
+		// Use strict inequality to avoid double-counting vertices
+		if (y1 < y && y <= y2) || (y2 < y && y <= y1) {
 			x1 := vertices[i].X().Float64()
 			x2 := vertices[j].X().Float64()
 
-			// Calculate intersection x-coordinate
-			if y1 != y2 {
-				x := x1 + (x2-x1)*float64(y-y1)/float64(y2-y1)
-				intersections = append(intersections, int(x))
-			}
+			// Calculate intersection x-coordinate using linear interpolation
+			t := (y - y1) / (y2 - y1)
+			x := x1 + t*(x2-x1)
+
+			intersections = append(intersections, int(x+0.5)) // Round to nearest integer
 		}
 	}
 
