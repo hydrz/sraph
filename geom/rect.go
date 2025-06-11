@@ -369,16 +369,23 @@ func (r *rect[T]) IsMaximum() bool {
 
 // === Spatial Relationships ===
 
-// ContainsExclusive implements Rect.
-func (r *rect[T]) ContainsExclusive(p Point[T]) bool {
-	return p.X() > r.left && p.X() < r.right &&
-		p.Y() > r.top && p.Y() < r.bottom
-}
-
 // Contains implements Rect.
 func (r *rect[T]) Contains(p Point[T]) bool {
+	if r.IsEmpty() {
+		return false
+	}
+
 	return p.X() >= r.left && p.X() <= r.right &&
 		p.Y() >= r.top && p.Y() <= r.bottom
+}
+
+// ContainsExclusive implements Rect.
+func (r *rect[T]) ContainsExclusive(p Point[T]) bool {
+	if r.IsEmpty() {
+		return false
+	}
+	return p.X() > r.left && p.X() < r.right &&
+		p.Y() > r.top && p.Y() < r.bottom
 }
 
 // ContainsRect implements Rect.

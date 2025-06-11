@@ -21,8 +21,8 @@ func TestRoundingRadii_NewAndProperties(t *testing.T) {
 	}
 }
 
-func TestRoundingRadii4(t *testing.T) {
-	r := NewRoundingRadii4[Float32](1, 2, 3, 4)
+func TestRoundingRadiiLTRB(t *testing.T) {
+	r := NewRoundingRadiiLTRB[Float32](1, 2, 3, 4)
 	if !r.TopLeft().Equal(NewSize[Float32](1, 2)) ||
 		!r.TopRight().Equal(NewSize[Float32](3, 2)) ||
 		!r.BottomLeft().Equal(NewSize[Float32](1, 4)) ||
@@ -39,14 +39,14 @@ func TestRoundingRadii_IsEmpty(t *testing.T) {
 	if !r.IsEmpty() {
 		t.Errorf("IsEmpty: should be true for all zero radii")
 	}
-	r2 := NewRoundingRadii4[Float32](0, 1, 0, 0)
+	r2 := NewRoundingRadiiLTRB[Float32](0, 1, 0, 0)
 	if r2.IsEmpty() {
 		t.Errorf("IsEmpty: should be false if any corner is nonzero")
 	}
 }
 
 func TestRoundingRadii_Scale(t *testing.T) {
-	r := NewRoundingRadii4[Float32](1, 2, 3, 4)
+	r := NewRoundingRadiiLTRB[Float32](1, 2, 3, 4)
 	s := r.Scale(2)
 	if !s.TopLeft().Equal(NewSize[Float32](2, 4)) ||
 		!s.TopRight().Equal(NewSize[Float32](6, 4)) ||
@@ -68,9 +68,9 @@ func TestRoundingRadii_ScaleToFit(t *testing.T) {
 }
 
 func TestRoundingRadii_Equal(t *testing.T) {
-	r1 := NewRoundingRadii4[Float32](1, 2, 3, 4)
-	r2 := NewRoundingRadii4[Float32](1, 2, 3, 4)
-	r3 := NewRoundingRadii4[Float32](1, 2, 3, 5)
+	r1 := NewRoundingRadiiLTRB[Float32](1, 2, 3, 4)
+	r2 := NewRoundingRadiiLTRB[Float32](1, 2, 3, 4)
+	r3 := NewRoundingRadiiLTRB[Float32](1, 2, 3, 5)
 	if !r1.Equal(r2) {
 		t.Errorf("Equal: should be true for identical radii")
 	}

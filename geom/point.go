@@ -19,8 +19,12 @@ type Point[T Scalar] interface {
 	Sub(o Point[T]) Point[T]
 	// Mul returns the element-wise product of this point and ano.
 	Mul(o Point[T]) Point[T]
+	// MulSize returns the element-wise product of this point and a Size.
+	MulSize(o Size[T]) Point[T]
 	// Div returns the element-wise division of this point by ano.
 	Div(o Point[T]) Point[T]
+	// DivSize returns the element-wise division of this point by a Size.
+	DivSize(o Size[T]) Point[T]
 
 	// Neg returns the negated point.
 	Neg() Point[T]
@@ -76,6 +80,13 @@ type Point[T Scalar] interface {
 	// A positive result means counterclockwise, negative means clockwise, and zero means collinear.
 	// Formula: cross = x1*y2 - y1*x2.
 	Cross(o Point[T]) T
+
+	// AngleTo returns the angle in radians between this point and ano.
+	//
+	// The angle is calculated using the arctangent of the cross and dot products.
+	// This is useful for determining the relative orientation of two vectors.
+	// Formula: angle = atan2(x1*y2 - y1*x2,  x1*x2 + y1*y2).
+	AngleTo(o Point[T]) Radians
 
 	// Distance returns the Euclidean distance between this point and ano.
 	//
@@ -152,9 +163,19 @@ func (p point[T]) Mul(o Point[T]) Point[T] {
 	return &point[T]{x: p.x * o.X(), y: p.y * o.Y()}
 }
 
+// MulSize implements Point.
+func (p point[T]) MulSize(o Size[T]) Point[T] {
+	return &point[T]{x: p.x * o.Width(), y: p.y * o.Height()}
+}
+
 // Div implements Point.
 func (p point[T]) Div(o Point[T]) Point[T] {
 	return &point[T]{x: p.x / o.X(), y: p.y / o.Y()}
+}
+
+// DivSize implements Point.
+func (p point[T]) DivSize(o Size[T]) Point[T] {
+	return &point[T]{x: p.x / o.Width(), y: p.y / o.Height()}
 }
 
 // Neg implements Point.
@@ -292,6 +313,11 @@ func (p point[T]) Dot(o Point[T]) T {
 // Cross implements Point.
 func (p point[T]) Cross(o Point[T]) T {
 	return p.x*o.Y() - p.y*o.X()
+}
+
+// AngleTo implements Point.
+func (p point[T]) AngleTo(o Point[T]) Radians {
+	return Radians(math.Atan2(p.Cross(o).Float64(), p.Dot(o).Float64()))
 }
 
 // Distance implements Point.

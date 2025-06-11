@@ -31,12 +31,12 @@ type Size[T Scalar] interface {
 	// Rare in graphics, but can be used for certain mathematical operations.
 	Neg() Size[T]
 
-	// Scale scales the width and height by the given factors.
-	// Allows non-uniform scaling, e.g., stretching or shrinking only one dimension.
-	Scale(width, height T) Size[T]
-	// ScaleDim scales the width and height by the same factor.
+	// Scale scales the width and height by the same factor.
 	// Commonly used for uniform scaling, such as resizing an image while maintaining aspect ratio.
-	ScaleDim(scale T) Size[T]
+	Scale(scale T) Size[T]
+	// ScaleWH scales the width and height by the given factors.
+	// Allows non-uniform scaling, e.g., stretching or shrinking only one dimension.
+	ScaleWH(width, height T) Size[T]
 
 	// Equal returns true if this size equals another.
 	// Used for comparison in layout, collision, or rendering logic.
@@ -154,18 +154,18 @@ func (s size[T]) Neg() Size[T] {
 }
 
 // Scale implements Size.
-func (s size[T]) Scale(width, height T) Size[T] {
-	return size[T]{
-		width:  s.width * width,
-		height: s.height * height,
-	}
-}
-
-// ScaleDim implements Size.
-func (s size[T]) ScaleDim(scale T) Size[T] {
+func (s size[T]) Scale(scale T) Size[T] {
 	return size[T]{
 		width:  s.width * scale,
 		height: s.height * scale,
+	}
+}
+
+// ScaleWH implements Size.
+func (s size[T]) ScaleWH(width, height T) Size[T] {
+	return size[T]{
+		width:  s.width * width,
+		height: s.height * height,
 	}
 }
 

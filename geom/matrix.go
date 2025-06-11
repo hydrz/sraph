@@ -57,13 +57,24 @@ func (md *MatrixDecomposition[T]) Comp1ntsMask() MatrixComp1nt {
 
 // Matrix represents a 4x4 matrix using column-major storage.
 //
-// Utility methods that make assumptions about normalized device coordinates (NDC) follow these conventions:
-//   - Left-handed coordinate system. Positive rotation is clockwise about the axis of rotation.
-//   - Lower left corner is (-1.0, -1.0).
-//   - Upper right corner is (1.0, 1.0).
-//   - Visible z-space is from 0.0 to 1.0.
-//   - Note: This is NOT the same as OpenGL! Be careful.
-//   - NDC origin is at (0.0, 0.0, 0.5).
+// All methods that use normalized device coordinates (NDC) with Matrix
+// follow the DirectX/Vulkan convention:
+//
+//   - Left-handed coordinate system:
+//     X increases to the right, Y increases upward, Z increases away from the viewer.
+//     Positive rotation is clockwise about the rotation axis.
+//   - NDC bounds:
+//     Lower-left corner:  (-1.0, -1.0)
+//     Upper-right corner: ( 1.0,  1.0)
+//     Z range (visible):   0.0 (near) to 1.0 (far)
+//   - NDC origin is at (0.0, 0.0, 0.5) (center of the NDC cube).
+//
+// NOTE: This differs from OpenGL, which uses a right-handed system and NDC z in [-1, 1].
+//
+// For more details, see:
+//
+//	https://learn.microsoft.com/en-us/windows/win32/direct3d9/projection-transform
+//	https://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
 type Matrix[T Scalar] interface {
 	// === Element Access ===
 
@@ -248,12 +259,12 @@ type Matrix[T Scalar] interface {
 	// Returns: slice of 3 Point representing the basis vectors without translation
 	BasisPoints() []Point[T]
 
-	// Scale returns the scale factors along each axis as a Vector3.
+	// GetScale returns the scale factors along each axis as a Vector3.
 	// Extracts the scaling comp1nt from the transformation matrix.
 	// For non-uniform scaling or matrices with rotation, this returns the
 	// length of each basis vector.
 	// Returns: Vector3 containing scale factors for X, Y, and Z axes
-	Scale() Vector3[T]
+	GetScale() Vector3[T]
 
 	// ScaleInDirection returns the scale factor along the given direction vector.
 	// This computes how much the matrix scales a vector in the specified direction.
@@ -271,6 +282,17 @@ type Matrix[T Scalar] interface {
 
 	// === Matrix Construction ===
 
+	// Scale creates a 3D scale matrix.
+	// The resulting matrix is:
+	// [ sx  0   0   0 ]
+	// [  0 sy   0   0 ]
+	// [  0  0  sz   0 ]
+	// [  0  0   0   1 ]
+	// Parameters:
+	//   scale: the scaling factors for the X, Y, and Z axes
+	// Returns: a new matrix representing the 3D scale transformation
+	Scale(scale Vector3[T]) Matrix[T]
+
 	// Scale2D creates a 2D scale matrix.
 	// The resulting matrix is:
 	// [ sx  0   0   0 ]
@@ -282,50 +304,27 @@ type Matrix[T Scalar] interface {
 	// Returns: a new matrix representing the 2D scale transformation
 	Scale2D(scale Vector2[T]) Matrix[T]
 
-	// Scale3D creates a 3D scale matrix.
+	// Translate creates a 3D translation matrix.
 	// The resulting matrix is:
-	// [ sx  0   0   0 ]
-	// [  0 sy   0   0 ]
-	// [  0  0  sz   0 ]
-	// [  0  0   0   1 ]
+	// [ 1   0   0   0 ]
+	// [ 0   1   0   0 ]
+	// [ 0   0   1   0 ]
+	// [ tx  ty  tz  1 ]
 	// Parameters:
-	//   scale: the scaling factors for the X, Y, and Z axes
-	// Returns: a new matrix representing the 3D scale transformation
-	Scale3D(scale Vector3[T]) Matrix[T]
+	//   vector: the translation vector for the X, Y, and Z axes
+	// Returns: a new matrix representing the 3D translation transformation
+	Translate(vector Vector3[T]) Matrix[T]
 
 	// Translate2D creates a 2D translation matrix.
 	// The resulting matrix is:
-	// [ 1  0  0  tx ]
-	// [ 0  1  0  ty ]
-	// [ 0  0  1   0 ]
-	// [ 0  0  0   1 ]
+	// [ 1   0   0   0 ]
+	// [ 0   1   0   0 ]
+	// [ 0   0   1   0 ]
+	// [ tx  ty  0   1 ]
 	// Parameters:
 	//   vector: the translation vector for the X and Y axes
 	// Returns: a new matrix representing the 2D translation transformation
 	Translate2D(vector Vector2[T]) Matrix[T]
-
-	// Translate3D creates a 3D translation matrix.
-	// The resulting matrix is:
-	// [ 1  0  0  tx ]
-	// [ 0  1  0  ty ]
-	// [ 0  0  1  tz ]
-	// [ 0  0  0   1 ]
-	// Parameters:
-	//   vector: the translation vector for the X, Y, and Z axes
-	// Returns: a new matrix representing the 3D translation transformation
-	Translate3D(vector Vector3[T]) Matrix[T]
-
-	// Translate4D creates a 4D translation matrix.
-	// The resulting matrix is:
-	// [ 1  0  0  0  tx ]
-	// [ 0  1  0  0  ty ]
-	// [ 0  0  1  0  tz ]
-	// [ 0  0  0  1  tw ]
-	// [ 0  0  0  0   1 ]
-	// Parameters:
-	//   vector: the translation vector for the X, Y, Z, and W axes
-	// Returns: a new matrix representing the 4D translation transformation
-	Translate4D(vector Vector4[T]) Matrix[T]
 
 	// RotateX creates a rotation matrix around the X axis.
 	// The resulting matrix is:
@@ -450,6 +449,23 @@ func NewMatrix[T Scalar]() Matrix[T] {
 		0, 1, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1,
+	}
+}
+
+// NewMatrixColumn creates a new matrix from the provided values.
+// The values are provided in column-major order, meaning the first four values
+// correspond to the first column, the next four to the second column, and so on.
+func NewMatrixColumn[T Scalar](
+	m0, m1, m2, m3,
+	m4, m5, m6, m7,
+	m8, m9, m10, m11,
+	m12, m13, m14, m15 T,
+) Matrix[T] {
+	return &matrix[T]{
+		m0, m1, m2, m3,
+		m4, m5, m6, m7,
+		m8, m9, m10, m11,
+		m12, m13, m14, m15,
 	}
 }
 
@@ -757,8 +773,8 @@ func (m matrix[T]) BasisPoints() []Point[T] {
 	}
 }
 
-// Scale implements Matrix.
-func (m matrix[T]) Scale() Vector3[T] {
+// GetScale implements Matrix.
+func (m matrix[T]) GetScale() Vector3[T] {
 	basisX := NewVector3(m[0], m[1], m[2])
 	basisY := NewVector3(m[4], m[5], m[6])
 	basisZ := NewVector3(m[8], m[9], m[10])
@@ -805,13 +821,8 @@ func (m matrix[T]) MaxScaleXY() T {
 	return scaleY
 }
 
-// Scale2D implements Matrix.
-func (m matrix[T]) Scale2D(s Vector2[T]) Matrix[T] {
-	return m.Scale3D(NewVector3(s.X(), s.Y(), T(1)))
-}
-
-// Scale3D implements Matrix.
-func (m matrix[T]) Scale3D(s Vector3[T]) Matrix[T] {
+// Scale implements Matrix.
+func (m matrix[T]) Scale(s Vector3[T]) Matrix[T] {
 	return &matrix[T]{
 		m[0] * s.X(), m[1] * s.X(), m[2] * s.X(), m[3] * s.X(),
 		m[4] * s.Y(), m[5] * s.Y(), m[6] * s.Y(), m[7] * s.Y(),
@@ -820,13 +831,13 @@ func (m matrix[T]) Scale3D(s Vector3[T]) Matrix[T] {
 	}
 }
 
-// Translate2D implements Matrix.
-func (m matrix[T]) Translate2D(vector Vector2[T]) Matrix[T] {
-	return m.Translate3D(NewVector3(vector.X(), vector.Y(), T(0)))
+// Scale2D implements Matrix.
+func (m matrix[T]) Scale2D(s Vector2[T]) Matrix[T] {
+	return m.Scale(NewVector3(s.X(), s.Y(), T(1)))
 }
 
-// Translate3D implements Matrix.
-func (m matrix[T]) Translate3D(t Vector3[T]) Matrix[T] {
+// Translate implements Matrix.
+func (m matrix[T]) Translate(t Vector3[T]) Matrix[T] {
 	return &matrix[T]{
 		m[0], m[1], m[2], m[3],
 		m[4], m[5], m[6], m[7],
@@ -838,14 +849,9 @@ func (m matrix[T]) Translate3D(t Vector3[T]) Matrix[T] {
 	}
 }
 
-// Translate4D implements Matrix.
-func (m matrix[T]) Translate4D(vector Vector4[T]) Matrix[T] {
-	return &matrix[T]{
-		m[0], m[1], m[2], m[3],
-		m[4], m[5], m[6], m[7],
-		m[8], m[9], m[10], m[11],
-		m[12] + vector.X(), m[13] + vector.Y(), m[14] + vector.Z(), m[15] + vector.W(),
-	}
+// Translate2D implements Matrix.
+func (m matrix[T]) Translate2D(vector Vector2[T]) Matrix[T] {
+	return m.Translate(NewVector3(vector.X(), vector.Y(), T(0)))
 }
 
 // RotateX implements Matrix.
@@ -996,7 +1002,7 @@ func (m matrix[T]) Decompose() MatrixDecomposition[T] {
 	// For now, return basic comp1nts
 	return MatrixDecomposition[T]{
 		Translation: NewVector3(m[12], m[13], m[14]),
-		Scale:       m.Scale(),
+		Scale:       m.GetScale(),
 		Shear:       Shear[T]{XY: 0, XZ: 0, YZ: 0},
 		Perspective: NewVector4(T(0), T(0), T(0), T(1)),
 		Rotation:    NewQuaternion(T(0), T(0), T(0), T(1)),

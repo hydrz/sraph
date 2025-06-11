@@ -1,6 +1,7 @@
 package geom
 
 import (
+	"cmp"
 	"math"
 	"strconv"
 )
@@ -76,14 +77,14 @@ func IsFinite[T Scalar](s T) bool {
 }
 
 // Clamp clamps the scalar value between min and max.
-func Clamp[T Scalar](s, min, max T) T {
-	if s.Float64() < min.Float64() {
+func Clamp[T cmp.Ordered](value, min, max T) T {
+	if value < min {
 		return min
 	}
-	if s.Float64() > max.Float64() {
+	if value > max {
 		return max
 	}
-	return s
+	return value
 }
 
 // Int32 is a 32-bit integer scalar type.

@@ -43,8 +43,8 @@ func NewRoundingRadii[T Scalar](radius T) RoundingRadii[T] {
 	}
 }
 
-// NewRoundingRadii4 creates a RoundingRadii with each corner specified individually.
-func NewRoundingRadii4[T Scalar](left, top, right, bottom T) RoundingRadii[T] {
+// NewRoundingRadiiLTRB creates a RoundingRadii with each corner specified individually.
+func NewRoundingRadiiLTRB[T Scalar](left, top, right, bottom T) RoundingRadii[T] {
 	return roundingRadii[T]{
 		leftTop:     NewSize(left, top),
 		rightTop:    NewSize(right, top),
@@ -116,10 +116,10 @@ func (r roundingRadii[T]) IsUniform() bool {
 // Scale implements RoundingRadii.
 func (r roundingRadii[T]) Scale(scale T) RoundingRadii[T] {
 	return roundingRadii[T]{
-		leftTop:     r.leftTop.ScaleDim(scale),
-		rightTop:    r.rightTop.ScaleDim(scale),
-		leftBottom:  r.leftBottom.ScaleDim(scale),
-		rightBottom: r.rightBottom.ScaleDim(scale),
+		leftTop:     r.leftTop.Scale(scale),
+		rightTop:    r.rightTop.Scale(scale),
+		leftBottom:  r.leftBottom.Scale(scale),
+		rightBottom: r.rightBottom.Scale(scale),
 	}
 }
 

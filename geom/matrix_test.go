@@ -104,7 +104,7 @@ func TestMatrix_Transformations(t *testing.T) {
 	t.Run("Translation", func(t *testing.T) {
 		m := NewMatrix[Float32]()
 		translation := NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))
-		result := m.Translate3D(translation)
+		result := m.Translate(translation)
 
 		if result.At(0, 3) != 1.0 || result.At(1, 3) != 2.0 || result.At(2, 3) != 3.0 {
 			t.Error("Translation matrix creation failed")
@@ -114,7 +114,7 @@ func TestMatrix_Transformations(t *testing.T) {
 	t.Run("Scale", func(t *testing.T) {
 		m := NewMatrix[Float32]()
 		scale := NewVector3(Float32(2.0), Float32(3.0), Float32(4.0))
-		result := m.Scale3D(scale)
+		result := m.Scale(scale)
 
 		if result.At(0, 0) != 2.0 || result.At(1, 1) != 3.0 || result.At(2, 2) != 4.0 {
 			t.Error("Scale matrix creation failed")
@@ -185,7 +185,7 @@ func TestMatrix_Scale(t *testing.T) {
 	m.Set(1, 1, Float32(3.0))
 	m.Set(2, 2, Float32(4.0))
 
-	scale := m.Scale()
+	scale := m.GetScale()
 	if !Equal(scale.X(), Float32(2.0)) || !Equal(scale.Y(), Float32(3.0)) || !Equal(scale.Z(), Float32(4.0)) {
 		t.Errorf("Scale() = (%v, %v, %v), want (2.0, 3.0, 4.0)", scale.X(), scale.Y(), scale.Z())
 	}
@@ -243,18 +243,18 @@ func TestMatrix_Analysis(t *testing.T) {
 
 func TestMatrix_Decompose(t *testing.T) {
 	m := NewMatrix[Float32]()
-	decomp := m.Decompose()
+	d := m.Decompose()
 
 	// Check identity decomposition
-	if !Equal(decomp.Translation.X(), Float32(0.0)) ||
-		!Equal(decomp.Translation.Y(), Float32(0.0)) ||
-		!Equal(decomp.Translation.Z(), Float32(0.0)) {
+	if !Equal(d.Translation.X(), Float32(0.0)) ||
+		!Equal(d.Translation.Y(), Float32(0.0)) ||
+		!Equal(d.Translation.Z(), Float32(0.0)) {
 		t.Error("Identity matrix should have zero translation")
 	}
 
-	if !Equal(decomp.Scale.X(), Float32(1.0)) ||
-		!Equal(decomp.Scale.Y(), Float32(1.0)) ||
-		!Equal(decomp.Scale.Z(), Float32(1.0)) {
+	if !Equal(d.Scale.X(), Float32(1.0)) ||
+		!Equal(d.Scale.Y(), Float32(1.0)) ||
+		!Equal(d.Scale.Z(), Float32(1.0)) {
 		t.Error("Identity matrix should have unit scale")
 	}
 }
@@ -348,7 +348,7 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 		translation := NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))
 		scale := NewVector3(Float32(2.0), Float32(3.0), Float32(4.0))
 
-		result := m.Translate3D(translation).Scale3D(scale).RotateZ(Radians(math.Pi / 4))
+		result := m.Translate(translation).Scale(scale).RotateZ(Radians(math.Pi / 4))
 
 		// Test that the final matrix is not identity
 		if result.IsIdentity() {
@@ -368,8 +368,8 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 		m := NewMatrix[Float32]()
 
 		// Create a complex transformation
-		original := m.Translate3D(NewVector3(Float32(5.0), Float32(10.0), Float32(15.0))).
-			Scale3D(NewVector3(Float32(2.0), Float32(3.0), Float32(4.0))).
+		original := m.Translate(NewVector3(Float32(5.0), Float32(10.0), Float32(15.0))).
+			Scale(NewVector3(Float32(2.0), Float32(3.0), Float32(4.0))).
 			RotateY(Radians(math.Pi / 6))
 
 		// Get inverse
@@ -413,7 +413,7 @@ func TestMatrix_BoundaryConditions(t *testing.T) {
 		m := NewMatrix[Float32]()
 		zeroScale := NewVector3(Float32(0.0), Float32(0.0), Float32(0.0))
 
-		result := m.Scale3D(zeroScale)
+		result := m.Scale(zeroScale)
 
 		// Zero scale should make matrix non-invertible
 		if result.IsInvertible() {
@@ -430,7 +430,7 @@ func TestMatrix_BoundaryConditions(t *testing.T) {
 		m := NewMatrix[Float32]()
 		largeScale := NewVector3(Float32(1e6), Float32(1e6), Float32(1e6))
 
-		result := m.Scale3D(largeScale)
+		result := m.Scale(largeScale)
 
 		// Should still be finite
 		if !result.IsFinite() {
@@ -447,7 +447,7 @@ func TestMatrix_BoundaryConditions(t *testing.T) {
 		m := NewMatrix[Float32]()
 		smallScale := NewVector3(Float32(1e-6), Float32(1e-6), Float32(1e-6))
 
-		result := m.Scale3D(smallScale)
+		result := m.Scale(smallScale)
 
 		// Should still be finite and invertible
 		if !result.IsFinite() || !result.IsInvertible() {
@@ -506,7 +506,7 @@ func TestMatrix_NumericalStability(t *testing.T) {
 		m := NewMatrix[Float32]()
 
 		// Create nearly singular matrix (very small scale in one dimension)
-		nearSingular := m.Scale3D(NewVector3(Float32(1.0), Float32(1e-10), Float32(1.0)))
+		nearSingular := m.Scale(NewVector3(Float32(1.0), Float32(1e-10), Float32(1.0)))
 
 		// Should still be technically invertible
 		if !nearSingular.IsInvertible() {
@@ -562,12 +562,12 @@ func TestMatrix_RealWorldScenarios(t *testing.T) {
 	t.Run("ObjectHierarchy", func(t *testing.T) {
 		// Simulate parent-child object hierarchy
 		parentTransform := NewMatrix[Float32]().
-			Translate3D(NewVector3(Float32(5.0), Float32(0.0), Float32(0.0))).
+			Translate(NewVector3(Float32(5.0), Float32(0.0), Float32(0.0))).
 			RotateY(Radians(math.Pi / 4))
 
 		childLocalTransform := NewMatrix[Float32]().
-			Translate3D(NewVector3(Float32(2.0), Float32(1.0), Float32(0.0))).
-			Scale3D(NewVector3(Float32(0.5), Float32(0.5), Float32(0.5)))
+			Translate(NewVector3(Float32(2.0), Float32(1.0), Float32(0.0))).
+			Scale(NewVector3(Float32(0.5), Float32(0.5), Float32(0.5)))
 
 		// Child world transform = parent * child_local
 		childWorldTransform := parentTransform.Mul(childLocalTransform)
@@ -578,7 +578,7 @@ func TestMatrix_RealWorldScenarios(t *testing.T) {
 		}
 
 		// Child should have combined scale
-		childScale := childWorldTransform.Scale()
+		childScale := childWorldTransform.GetScale()
 		if !Equal(childScale.X(), Float32(0.5)) {
 			t.Errorf("Child should inherit scale, got %v", childScale.X())
 		}
@@ -587,10 +587,10 @@ func TestMatrix_RealWorldScenarios(t *testing.T) {
 	t.Run("AnimationInterpolation", func(t *testing.T) {
 		// Test matrix interpolation scenario
 		start := NewMatrix[Float32]().
-			Translate3D(NewVector3(Float32(0.0), Float32(0.0), Float32(0.0)))
+			Translate(NewVector3(Float32(0.0), Float32(0.0), Float32(0.0)))
 
 		end := NewMatrix[Float32]().
-			Translate3D(NewVector3(Float32(10.0), Float32(5.0), Float32(0.0))).
+			Translate(NewVector3(Float32(10.0), Float32(5.0), Float32(0.0))).
 			RotateZ(Radians(math.Pi))
 
 		// Simple linear interpolation of individual elements (not ideal, but for testing)
@@ -636,7 +636,7 @@ func TestMatrix_ErrorHandling(t *testing.T) {
 		m := NewMatrix[Float32]()
 
 		// Create singular matrix (determinant = 0)
-		singular := m.Scale3D(NewVector3(Float32(1.0), Float32(0.0), Float32(1.0)))
+		singular := m.Scale(NewVector3(Float32(1.0), Float32(0.0), Float32(1.0)))
 
 		_, err := singular.Inverse()
 		if err == nil {
@@ -667,7 +667,7 @@ func TestMatrix_SpecialCases(t *testing.T) {
 		m := NewMatrix[Float32]()
 
 		// Uniform scaling should preserve angles
-		uniform := m.Scale3D(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0)))
+		uniform := m.Scale(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0)))
 
 		v1 := NewVector3(Float32(1.0), Float32(0.0), Float32(0.0))
 		v2 := NewVector3(Float32(0.0), Float32(1.0), Float32(0.0))
@@ -688,13 +688,13 @@ func TestMatrix_SpecialCases(t *testing.T) {
 		m := NewMatrix[Float32]()
 
 		// Pure translation should be axis-aligned
-		translated := m.Translate3D(NewVector3(Float32(5.0), Float32(3.0), Float32(1.0)))
+		translated := m.Translate(NewVector3(Float32(5.0), Float32(3.0), Float32(1.0)))
 		if !translated.IsAxisAligned() {
 			t.Error("Pure translation should be axis-aligned")
 		}
 
 		// Pure scale should be axis-aligned
-		scaled := m.Scale3D(NewVector3(Float32(2.0), Float32(3.0), Float32(0.5)))
+		scaled := m.Scale(NewVector3(Float32(2.0), Float32(3.0), Float32(0.5)))
 		if !scaled.IsAxisAligned() {
 			t.Error("Pure scale should be axis-aligned")
 		}
@@ -747,8 +747,8 @@ func BenchmarkMatrixOperations(b *testing.B) {
 
 	b.Run("ChainedTransforms", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			m1.Translate3D(NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))).
-				Scale3D(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0))).
+			m1.Translate(NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))).
+				Scale(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0))).
 				RotateZ(Radians(math.Pi / 4))
 		}
 	})
@@ -761,8 +761,8 @@ func BenchmarkMatrixOperations(b *testing.B) {
 	})
 
 	b.Run("MatrixDecomposition", func(b *testing.B) {
-		complex := m1.Translate3D(NewVector3(Float32(5.0), Float32(3.0), Float32(1.0))).
-			Scale3D(NewVector3(Float32(2.0), Float32(1.5), Float32(0.8))).
+		complex := m1.Translate(NewVector3(Float32(5.0), Float32(3.0), Float32(1.0))).
+			Scale(NewVector3(Float32(2.0), Float32(1.5), Float32(0.8))).
 			RotateY(Radians(math.Pi / 3))
 
 		for i := 0; i < b.N; i++ {
@@ -776,8 +776,8 @@ func BenchmarkMatrixComparison(b *testing.B) {
 
 	b.Run("SingleMatrixMul", func(b *testing.B) {
 		base := NewMatrix[Float32]()
-		transform := base.Translate3D(NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))).
-			Scale3D(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0)))
+		transform := base.Translate(NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))).
+			Scale(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0)))
 
 		for i := 0; i < b.N; i++ {
 			base.Mul(transform)
@@ -788,8 +788,8 @@ func BenchmarkMatrixComparison(b *testing.B) {
 		base := NewMatrix[Float32]()
 
 		for i := 0; i < b.N; i++ {
-			base.Translate3D(NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))).
-				Scale3D(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0)))
+			base.Translate(NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))).
+				Scale(NewVector3(Float32(2.0), Float32(2.0), Float32(2.0)))
 		}
 	})
 }

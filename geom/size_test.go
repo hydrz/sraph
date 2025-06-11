@@ -64,14 +64,14 @@ func TestSize_SizeScale(t *testing.T) {
 	s := NewSize(Float32(10.0), Float32(20.0))
 
 	t.Run("Scale", func(t *testing.T) {
-		result := s.Scale(Float32(2.0), Float32(1.5))
+		result := s.ScaleWH(Float32(2.0), Float32(1.5))
 		if result.Width() != 20.0 || result.Height() != 30.0 {
 			t.Errorf("Scale(2.0, 1.5) = (%v, %v), want (20.0, 30.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("ScaleDim", func(t *testing.T) {
-		result := s.ScaleDim(Float32(2.0))
+		result := s.Scale(Float32(2.0))
 		if result.Width() != 20.0 || result.Height() != 40.0 {
 			t.Errorf("ScaleDim(2.0) = (%v, %v), want (20.0, 40.0)", result.Width(), result.Height())
 		}

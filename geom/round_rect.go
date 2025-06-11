@@ -27,6 +27,36 @@ func NewRoundRect[T Scalar](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
 	}
 }
 
+// NewRoundRectOval creates a new RoundRect that is an oval, with radii equal to half the width and height of the rectangle.
+func NewRoundRectOval[T Scalar](rect Rect[T]) RoundRect[T] {
+	return NewRoundRect(
+		rect,
+		NewRoundingRadiiFromSizes(rect.Size().Scale(1/2)),
+	)
+}
+
+// NewRoundRectRadius creates a new RoundRect with the given rectangle and uniform corner radius.
+func NewRoundRectRadius[T Scalar](rect Rect[T], radius T) RoundRect[T] {
+	return NewRoundRect(
+		rect,
+		NewRoundingRadii(radius),
+	)
+}
+
+func NewRoundRectXY[T Scalar](rect Rect[T], xRadius, yRadius T) RoundRect[T] {
+	return NewRoundRect(
+		rect,
+		NewRoundingRadiiFromSizes(NewSize(xRadius, yRadius)),
+	)
+}
+
+func NewRoundRectLTRB[T Scalar](rect Rect[T], left, top, right, bottom T) RoundRect[T] {
+	return NewRoundRect(
+		rect,
+		NewRoundingRadiiLTRB(left, top, right, bottom),
+	)
+}
+
 type roundRect[T Scalar] struct {
 	Rect[T]
 	radii RoundingRadii[T]
