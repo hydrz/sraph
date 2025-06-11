@@ -231,7 +231,7 @@ func TestVector3Equal(t *testing.T) {
 func TestVector3String(t *testing.T) {
 	v := NewVector3[F32](1.0, 2.0, 3.0)
 	str := v.String()
-	expected := "Vector3(1, 2, 3)"
+	expected := "(1, 2, 3)"
 	if str != expected {
 		t.Errorf("String() = %v, want %v", str, expected)
 	}
@@ -282,7 +282,7 @@ func TestVector4IsFinite(t *testing.T) {
 func TestVector4String(t *testing.T) {
 	v := NewVector4[F32](1.0, 2.0, 3.0, 4.0)
 	str := v.String()
-	expected := "Vector4(1, 2, 3, 4)"
+	expected := "(1, 2, 3, 4)"
 	if str != expected {
 		t.Errorf("String() = %v, want %v", str, expected)
 	}

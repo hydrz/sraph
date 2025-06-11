@@ -193,7 +193,7 @@ func TestMatrix_Scale(t *testing.T) {
 
 func TestMatrix_TransformPoint(t *testing.T) {
 	m := NewMatrix[F32]()
-	point := NewPoint(F32(1.0), F32(2.0))
+	point := NewPoint[F32](1, 2)
 
 	// Identity transform should return same point
 	result := m.TransformPoint(point)
@@ -204,7 +204,7 @@ func TestMatrix_TransformPoint(t *testing.T) {
 
 func TestMatrix_TransformVector(t *testing.T) {
 	m := NewMatrix[F32]()
-	v3 := NewVector3(F32(1.0), F32(2.0), F32(3.0))
+	v3 := NewVector3[F32](1, 2, 3)
 
 	// Identity transform should return same vector
 	result := m.TransformVector3D(v3)

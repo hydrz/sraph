@@ -178,7 +178,7 @@ func TestQuaternion_QuaternionRotateVector3(t *testing.T) {
 func TestQuaternion_QuaternionString(t *testing.T) {
 	q := NewQuaternion[F32](1.0, 2.0, 3.0, 4.0)
 	str := q.String()
-	expected := "Quaternion(1, 2, 3, 4)"
+	expected := "(1, 2, 3, 4)"
 	if str != expected {
 		t.Errorf("String() = %v, want %v", str, expected)
 	}

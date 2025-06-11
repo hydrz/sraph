@@ -180,8 +180,8 @@ func TestSuperellipse_FindCircleCenterAndReplaceNaN(t *testing.T) {
 	if math.IsNaN(center.X().Float64()) || math.IsNaN(center.Y().Float64()) {
 		t.Error("findCircleCenter returned NaN")
 	}
-	v := NewPoint[F64](F64(math.NaN()), F64(2))
-	def := NewSize(F64(1), F64(3))
+	v := NewPoint[F64](F64(math.NaN()), 2)
+	def := NewSize[F64](1, 3)
 	res := replaceNaNWithDefault(v, def)
 	if !Equal(res.X(), F64(1)) || !Equal(res.Y(), F64(2)) {
 		t.Error("replaceNaNWithDefault did not replace NaN as expected")

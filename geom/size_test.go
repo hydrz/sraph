@@ -222,14 +222,14 @@ func TestSize_SizeMipCount(t *testing.T) {
 		size     Size[I32]
 		expected int
 	}{
-		{"1x1", NewSize(I32(1), I32(1)), 1},
-		{"2x2", NewSize(I32(2), I32(2)), 2},
-		{"4x4", NewSize(I32(4), I32(4)), 3},
-		{"8x8", NewSize(I32(8), I32(8)), 4},
-		{"16x16", NewSize(I32(16), I32(16)), 5},
-		{"256x256", NewSize(I32(256), I32(256)), 9},
-		{"4x2", NewSize(I32(4), I32(2)), 3},
-		{"8x4", NewSize(I32(8), I32(4)), 4},
+		{"1x1", NewSize[I32](1, 1), 1},
+		{"2x2", NewSize[I32](2, 2), 2},
+		{"4x4", NewSize[I32](4, 4), 3},
+		{"8x8", NewSize[I32](8, 8), 4},
+		{"16x16", NewSize[I32](16, 16), 5},
+		{"256x256", NewSize[I32](256, 256), 9},
+		{"4x2", NewSize[I32](4, 2), 3},
+		{"8x4", NewSize[I32](8, 4), 4},
 	}
 
 	for _, tt := range tests {
@@ -245,7 +245,7 @@ func TestSize_SizeMipCount(t *testing.T) {
 func TestSize_SizeString(t *testing.T) {
 	s := NewSize[F32](10.5, 20.5)
 	str := s.String()
-	expected := "Size(10.5, 20.5)"
+	expected := "(10.5, 20.5)"
 	if str != expected {
 		t.Errorf("String() = %v, want %v", str, expected)
 	}
