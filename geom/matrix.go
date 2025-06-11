@@ -2,6 +2,7 @@ package geom
 
 import (
 	"errors"
+	"fmt"
 	"math"
 )
 
@@ -109,14 +110,6 @@ type Matrix[T Scalar] interface {
 	//   other: the matrix to multiply with this matrix
 	// Returns: a new matrix containing the matrix product
 	Mul(other Matrix[T]) Matrix[T]
-
-	// DivElements returns the element-wise division of this matrix by another matrix.
-	// Formula: C[i][j] = A[i][j] / B[i][j] for all i,j
-	// Note: This is NOT matrix division (which would be A * B^-1)
-	// Parameters:
-	//   other: the matrix to divide this matrix by
-	// Returns: a new matrix containing the element-wise quotient
-	DivElements(other Matrix[T]) Matrix[T]
 
 	// === Comparison and Properties ===
 
@@ -451,6 +444,9 @@ type Matrix[T Scalar] interface {
 	//   angle: the angle in radians
 	// Returns: the cosine and sine of the angle
 	CosSin(angle Radians) (cos, sin T)
+
+	// String returns a string representation of the matrix.
+	String() string
 }
 
 // NewMatrix creates a new empty matrix with default values.
@@ -466,7 +462,7 @@ func NewMatrix[T Scalar]() Matrix[T] {
 type matrix[T Scalar] [16]T
 
 // At returns the value at the specified row and column (0-based).
-func (m *matrix[T]) At(row int, col int) T {
+func (m matrix[T]) At(row int, col int) T {
 	// Column-major order: index = col*4 + row
 	return m[col*4+row]
 }
@@ -477,53 +473,52 @@ func (m *matrix[T]) Set(row int, col int, value T) {
 }
 
 // Add implements Matrix.
-func (m *matrix[T]) Add(other Matrix[T]) Matrix[T] {
-	result := &matrix[T]{}
-	for i := 0; i < 16; i++ {
-		result[i] = m[i] + other.(*matrix[T])[i]
+func (m matrix[T]) Add(other Matrix[T]) Matrix[T] {
+	o := other.(*matrix[T])
+	return &matrix[T]{
+		m[0] + o[0], m[1] + o[1], m[2] + o[2], m[3] + o[3],
+		m[4] + o[4], m[5] + o[5], m[6] + o[6], m[7] + o[7],
+		m[8] + o[8], m[9] + o[9], m[10] + o[10], m[11] + o[11],
+		m[12] + o[12], m[13] + o[13], m[14] + o[14], m[15] + o[15],
 	}
-	return result
 }
 
 // Sub implements Matrix.
-func (m *matrix[T]) Sub(other Matrix[T]) Matrix[T] {
-	result := &matrix[T]{}
-	for i := 0; i < 16; i++ {
-		result[i] = m[i] - other.(*matrix[T])[i]
+func (m matrix[T]) Sub(other Matrix[T]) Matrix[T] {
+	o := other.(*matrix[T])
+	return &matrix[T]{
+		m[0] - o[0], m[1] - o[1], m[2] - o[2], m[3] - o[3],
+		m[4] - o[4], m[5] - o[5], m[6] - o[6], m[7] - o[7],
+		m[8] - o[8], m[9] - o[9], m[10] - o[10], m[11] - o[11],
+		m[12] - o[12], m[13] - o[13], m[14] - o[14], m[15] - o[15],
 	}
-	return result
 }
 
 // Mul implements Matrix.
-func (m *matrix[T]) Mul(other Matrix[T]) Matrix[T] {
+func (m matrix[T]) Mul(other Matrix[T]) Matrix[T] {
 	o := other.(*matrix[T])
-	result := &matrix[T]{}
-
-	// Matrix multiplication using column-major order
-	for col := 0; col < 4; col++ {
-		for row := 0; row < 4; row++ {
-			var sum T
-			for k := 0; k < 4; k++ {
-				sum += m[k*4+row] * o[col*4+k]
-			}
-			result[col*4+row] = sum
-		}
+	return &matrix[T]{
+		m[0]*o[0] + m[4]*o[1] + m[8]*o[2] + m[12]*o[3],
+		m[1]*o[0] + m[5]*o[1] + m[9]*o[2] + m[13]*o[3],
+		m[2]*o[0] + m[6]*o[1] + m[10]*o[2] + m[14]*o[3],
+		m[3]*o[0] + m[7]*o[1] + m[11]*o[2] + m[15]*o[3],
+		m[0]*o[4] + m[4]*o[5] + m[8]*o[6] + m[12]*o[7],
+		m[1]*o[4] + m[5]*o[5] + m[9]*o[6] + m[13]*o[7],
+		m[2]*o[4] + m[6]*o[5] + m[10]*o[6] + m[14]*o[7],
+		m[3]*o[4] + m[7]*o[5] + m[11]*o[6] + m[15]*o[7],
+		m[0]*o[8] + m[4]*o[9] + m[8]*o[10] + m[12]*o[11],
+		m[1]*o[8] + m[5]*o[9] + m[9]*o[10] + m[13]*o[11],
+		m[2]*o[8] + m[6]*o[9] + m[10]*o[10] + m[14]*o[11],
+		m[3]*o[8] + m[7]*o[9] + m[11]*o[10] + m[15]*o[11],
+		m[0]*o[12] + m[4]*o[13] + m[8]*o[14] + m[12]*o[15],
+		m[1]*o[12] + m[5]*o[13] + m[9]*o[14] + m[13]*o[15],
+		m[2]*o[12] + m[6]*o[13] + m[10]*o[14] + m[14]*o[15],
+		m[3]*o[12] + m[7]*o[13] + m[11]*o[14] + m[15]*o[15],
 	}
-	return result
-}
-
-// DivElements implements Matrix.
-func (m *matrix[T]) DivElements(other Matrix[T]) Matrix[T] {
-	result := &matrix[T]{}
-	o := other.(*matrix[T])
-	for i := 0; i < 16; i++ {
-		result[i] = m[i] / o[i]
-	}
-	return result
 }
 
 // Equal implements Matrix.
-func (m *matrix[T]) Equal(other Matrix[T]) bool {
+func (m matrix[T]) Equal(other Matrix[T]) bool {
 	o := other.(*matrix[T])
 	for i := 0; i < 16; i++ {
 		if !Equal(m[i], o[i]) {
@@ -534,7 +529,7 @@ func (m *matrix[T]) Equal(other Matrix[T]) bool {
 }
 
 // IsFinite implements Matrix.
-func (m *matrix[T]) IsFinite() bool {
+func (m matrix[T]) IsFinite() bool {
 	for i := 0; i < 16; i++ {
 		if !IsFinite(m[i]) {
 			return false
@@ -544,7 +539,7 @@ func (m *matrix[T]) IsFinite() bool {
 }
 
 // IsIdentity implements Matrix.
-func (m *matrix[T]) IsIdentity() bool {
+func (m matrix[T]) IsIdentity() bool {
 
 	return Equal(m[0], 1) && Equal(m[1], 0) && Equal(m[2], 0) && Equal(m[3], 0) &&
 		Equal(m[4], 0) && Equal(m[5], 1) && Equal(m[6], 0) && Equal(m[7], 0) &&
@@ -553,13 +548,13 @@ func (m *matrix[T]) IsIdentity() bool {
 }
 
 // IsInvertible implements Matrix.
-func (m *matrix[T]) IsInvertible() bool {
+func (m matrix[T]) IsInvertible() bool {
 
 	return m.Determinant() != 0
 }
 
 // Determinant implements Matrix.
-func (m *matrix[T]) Determinant() T {
+func (m matrix[T]) Determinant() T {
 	// Using the same algorithm as C++ implementation
 	a00, a01, a02, a03 := m[0], m[1], m[2], m[3]
 	a10, a11, a12, a13 := m[4], m[5], m[6], m[7]
@@ -583,29 +578,29 @@ func (m *matrix[T]) Determinant() T {
 }
 
 // IsAffine implements Matrix.
-func (m *matrix[T]) IsAffine() bool {
+func (m matrix[T]) IsAffine() bool {
 	return Equal(m[2], 0) && Equal(m[3], 0) && Equal(m[6], 0) && Equal(m[7], 0) &&
 		Equal(m[8], 0) && Equal(m[9], 0) && Equal(m[10], 1) && Equal(m[11], 0) &&
 		Equal(m[14], 0) && Equal(m[15], 1)
 }
 
 // HasPerspective implements Matrix.
-func (m *matrix[T]) HasPerspective() bool {
+func (m matrix[T]) HasPerspective() bool {
 	return !Equal(m[3], 0) || !Equal(m[7], 0) || !Equal(m[11], 0) || !Equal(m[15], 1)
 }
 
 // HasPerspective2D implements Matrix.
-func (m *matrix[T]) HasPerspective2D() bool {
+func (m matrix[T]) HasPerspective2D() bool {
 	return !Equal(m[3], 0) || !Equal(m[7], 0) || !Equal(m[15], 1)
 }
 
 // HasTranslation implements Matrix.
-func (m *matrix[T]) HasTranslation() bool {
+func (m matrix[T]) HasTranslation() bool {
 	return !Equal(m[12], 0) || !Equal(m[13], 0)
 }
 
 // IsAxisAligned implements Matrix.
-func (m *matrix[T]) IsAxisAligned() bool {
+func (m matrix[T]) IsAxisAligned() bool {
 	if m.HasPerspective() {
 		return false
 	}
@@ -617,32 +612,32 @@ func (m *matrix[T]) IsAxisAligned() bool {
 		!Equal(m[8], 0), !Equal(m[9], 0), !Equal(m[10], 0),
 	}
 
+	bti := func(b bool) int {
+		if b {
+			return 1
+		}
+		return 0
+	}
+
 	// Check if all three basis vectors are aligned to an axis
-	if (boolToInt(v[0])+boolToInt(v[1])+boolToInt(v[2]) != 1) ||
-		(boolToInt(v[3])+boolToInt(v[4])+boolToInt(v[5]) != 1) ||
-		(boolToInt(v[6])+boolToInt(v[7])+boolToInt(v[8]) != 1) {
+	if (bti(v[0])+bti(v[1])+bti(v[2]) != 1) ||
+		(bti(v[3])+bti(v[4])+bti(v[5]) != 1) ||
+		(bti(v[6])+bti(v[7])+bti(v[8]) != 1) {
 		return false
 	}
 
 	// Ensure that n1 of the basis vectors overlap
-	if (boolToInt(v[0])+boolToInt(v[3])+boolToInt(v[6]) != 1) ||
-		(boolToInt(v[1])+boolToInt(v[4])+boolToInt(v[7]) != 1) ||
-		(boolToInt(v[2])+boolToInt(v[5])+boolToInt(v[8]) != 1) {
+	if (bti(v[0])+bti(v[3])+bti(v[6]) != 1) ||
+		(bti(v[1])+bti(v[4])+bti(v[7]) != 1) ||
+		(bti(v[2])+bti(v[5])+bti(v[8]) != 1) {
 		return false
 	}
 
 	return true
 }
 
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
-
 // IsAxisAligned2D implements Matrix.
-func (m *matrix[T]) IsAxisAligned2D() bool {
+func (m matrix[T]) IsAxisAligned2D() bool {
 	if m.HasPerspective2D() {
 		return false
 	}
@@ -657,7 +652,7 @@ func (m *matrix[T]) IsAxisAligned2D() bool {
 }
 
 // IsTranslationOnly implements Matrix.
-func (m *matrix[T]) IsTranslationOnly() bool {
+func (m matrix[T]) IsTranslationOnly() bool {
 
 	return Equal(m[0], 1) && Equal(m[1], 0) && Equal(m[2], 0) && Equal(m[3], 0) &&
 		Equal(m[4], 0) && Equal(m[5], 1) && Equal(m[6], 0) && Equal(m[7], 0) &&
@@ -666,7 +661,7 @@ func (m *matrix[T]) IsTranslationOnly() bool {
 }
 
 // IsTranslationScaleOnly implements Matrix.
-func (m *matrix[T]) IsTranslationScaleOnly() bool {
+func (m matrix[T]) IsTranslationScaleOnly() bool {
 
 	return !Equal(m[0], 0) && Equal(m[1], 0) && Equal(m[2], 0) && Equal(m[3], 0) &&
 		Equal(m[4], 0) && !Equal(m[5], 0) && Equal(m[6], 0) && Equal(m[7], 0) &&
@@ -675,19 +670,17 @@ func (m *matrix[T]) IsTranslationScaleOnly() bool {
 }
 
 // Transpose implements Matrix.
-func (m *matrix[T]) Transpose() Matrix[T] {
-	result := &matrix[T]{}
-	for row := 0; row < 4; row++ {
-		for col := 0; col < 4; col++ {
-			result[row*4+col] = m[col*4+row]
-		}
+func (m matrix[T]) Transpose() Matrix[T] {
+	return &matrix[T]{
+		m[0], m[4], m[8], m[12],
+		m[1], m[5], m[9], m[13],
+		m[2], m[6], m[10], m[14],
+		m[3], m[7], m[11], m[15],
 	}
-	return result
 }
 
 // Inverse implements Matrix.
-func (m *matrix[T]) Inverse() (Matrix[T], error) {
-	// Using the same algorithm as C++ implementation
+func (m matrix[T]) Inverse() (Matrix[T], error) {
 	tmp := &matrix[T]{
 		m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15] + m[9]*m[7]*m[14] + m[13]*m[6]*m[11] - m[13]*m[7]*m[10],
 		-m[1]*m[10]*m[15] + m[1]*m[11]*m[14] + m[9]*m[2]*m[15] - m[9]*m[3]*m[14] - m[13]*m[2]*m[11] + m[13]*m[3]*m[10],
@@ -722,7 +715,7 @@ func (m *matrix[T]) Inverse() (Matrix[T], error) {
 }
 
 // To3x3 implements Matrix.
-func (m *matrix[T]) To3x3() Matrix[T] {
+func (m matrix[T]) To3x3() Matrix[T] {
 	result := &matrix[T]{
 		m[0], m[1], 0, m[3],
 		m[4], m[5], 0, m[7],
@@ -733,26 +726,27 @@ func (m *matrix[T]) To3x3() Matrix[T] {
 }
 
 // ToColumnMajor implements Matrix.
-func (m *matrix[T]) ToColumnMajor() Matrix[T] {
-	// Already in column-major order
-	result := &matrix[T]{}
-	copy(result[:], m[:])
-	return result
+func (m matrix[T]) ToColumnMajor() Matrix[T] {
+	return &matrix[T]{
+		m[0], m[4], m[8], m[12],
+		m[1], m[5], m[9], m[13],
+		m[2], m[6], m[10], m[14],
+		m[3], m[7], m[11], m[15],
+	}
 }
 
 // ToRowMajor implements Matrix.
-func (m *matrix[T]) ToRowMajor() Matrix[T] {
-	result := &matrix[T]{}
-	for row := 0; row < 4; row++ {
-		for col := 0; col < 4; col++ {
-			result[row*4+col] = m[col*4+row]
-		}
+func (m matrix[T]) ToRowMajor() Matrix[T] {
+	return &matrix[T]{
+		m[0], m[1], m[2], m[3],
+		m[4], m[5], m[6], m[7],
+		m[8], m[9], m[10], m[11],
+		m[12], m[13], m[14], m[15],
 	}
-	return result
 }
 
 // BasisVectors implements Matrix.
-func (m *matrix[T]) BasisVectors() []Vector3[T] {
+func (m matrix[T]) BasisVectors() []Vector3[T] {
 	return []Vector3[T]{
 		NewVector3(m[0], m[1], m[2]),  // X basis
 		NewVector3(m[4], m[5], m[6]),  // Y basis
@@ -761,7 +755,7 @@ func (m *matrix[T]) BasisVectors() []Vector3[T] {
 }
 
 // BasisPoints implements Matrix.
-func (m *matrix[T]) BasisPoints() []Point[T] {
+func (m matrix[T]) BasisPoints() []Point[T] {
 	return []Point[T]{
 		NewPoint(m[0], m[1]), // X basis
 		NewPoint(m[4], m[5]), // Y basis
@@ -770,7 +764,7 @@ func (m *matrix[T]) BasisPoints() []Point[T] {
 }
 
 // Scale implements Matrix.
-func (m *matrix[T]) Scale() Vector3[T] {
+func (m matrix[T]) Scale() Vector3[T] {
 	basisX := NewVector3(m[0], m[1], m[2])
 	basisY := NewVector3(m[4], m[5], m[6])
 	basisZ := NewVector3(m[8], m[9], m[10])
@@ -778,7 +772,7 @@ func (m *matrix[T]) Scale() Vector3[T] {
 }
 
 // ScaleInDirection implements Matrix.
-func (m *matrix[T]) ScaleInDirection(dir Vector3[T]) T {
+func (m matrix[T]) ScaleInDirection(dir Vector3[T]) T {
 	normalized := dir.Normalize()
 	basis := m.To3x3()
 	inv, err := basis.Inverse()
@@ -790,7 +784,7 @@ func (m *matrix[T]) ScaleInDirection(dir Vector3[T]) T {
 }
 
 // MaxScaleXY implements Matrix.
-func (m *matrix[T]) MaxScaleXY() T {
+func (m matrix[T]) MaxScaleXY() T {
 	// Check for common case of axis-aligned transformation
 
 	if Equal(m[1], 0) && Equal(m[4], 0) {
@@ -818,90 +812,86 @@ func (m *matrix[T]) MaxScaleXY() T {
 }
 
 // Scale2D implements Matrix.
-func (m *matrix[T]) Scale2D(scale Vector2[T]) Matrix[T] {
-	return &matrix[T]{
-		scale.X(), 0, 0, 0,
-		0, scale.Y(), 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1,
-	}
+func (m matrix[T]) Scale2D(s Vector2[T]) Matrix[T] {
+	return m.Scale3D(NewVector3(s.X(), s.Y(), T(1)))
 }
 
 // Scale3D implements Matrix.
-func (m *matrix[T]) Scale3D(scale Vector3[T]) Matrix[T] {
+func (m matrix[T]) Scale3D(s Vector3[T]) Matrix[T] {
 	return &matrix[T]{
-		scale.X(), 0, 0, 0,
-		0, scale.Y(), 0, 0,
-		0, 0, scale.Z(), 0,
-		0, 0, 0, 1,
+		m[0] * s.X(), m[1] * s.X(), m[2] * s.X(), m[3] * s.X(),
+		m[4] * s.Y(), m[5] * s.Y(), m[6] * s.Y(), m[7] * s.Y(),
+		m[8] * s.Z(), m[9] * s.Z(), m[10] * s.Z(), m[11] * s.Z(),
+		m[12], m[13], m[14], m[15],
 	}
 }
 
 // Translate2D implements Matrix.
-func (m *matrix[T]) Translate2D(vector Vector2[T]) Matrix[T] {
-	return &matrix[T]{
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		vector.X(), vector.Y(), 0, 1,
-	}
+func (m matrix[T]) Translate2D(vector Vector2[T]) Matrix[T] {
+	return m.Translate3D(NewVector3(vector.X(), vector.Y(), T(0)))
 }
 
 // Translate3D implements Matrix.
-func (m *matrix[T]) Translate3D(vector Vector3[T]) Matrix[T] {
+func (m matrix[T]) Translate3D(t Vector3[T]) Matrix[T] {
 	return &matrix[T]{
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		vector.X(), vector.Y(), vector.Z(), 1,
+		m[0], m[1], m[2], m[3],
+		m[4], m[5], m[6], m[7],
+		m[8], m[9], m[10], m[11],
+		m[0]*t.X() + m[4]*t.Y() + m[8]*t.Z() + m[12],
+		m[1]*t.X() + m[5]*t.Y() + m[9]*t.Z() + m[13],
+		m[2]*t.X() + m[6]*t.Y() + m[10]*t.Z() + m[14],
+		m[3]*t.X() + m[7]*t.Y() + m[11]*t.Z() + m[15],
 	}
 }
 
 // Translate4D implements Matrix.
-func (m *matrix[T]) Translate4D(vector Vector4[T]) Matrix[T] {
+func (m matrix[T]) Translate4D(vector Vector4[T]) Matrix[T] {
 	return &matrix[T]{
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		vector.X(), vector.Y(), vector.Z(), vector.W(),
+		m[0], m[1], m[2], m[3],
+		m[4], m[5], m[6], m[7],
+		m[8], m[9], m[10], m[11],
+		m[12] + vector.X(), m[13] + vector.Y(), m[14] + vector.Z(), m[15] + vector.W(),
 	}
 }
 
 // RotateX implements Matrix.
-func (m *matrix[T]) RotateX(angle Radians) Matrix[T] {
+func (m matrix[T]) RotateX(angle Radians) Matrix[T] {
 	cos, sin := m.CosSin(angle)
-	return &matrix[T]{
+	rot := &matrix[T]{
 		1, 0, 0, 0,
 		0, cos, sin, 0,
 		0, -sin, cos, 0,
 		0, 0, 0, 1,
 	}
+	return m.Mul(rot)
 }
 
 // RotateY implements Matrix.
-func (m *matrix[T]) RotateY(angle Radians) Matrix[T] {
+func (m matrix[T]) RotateY(angle Radians) Matrix[T] {
 	cos, sin := m.CosSin(angle)
-	return &matrix[T]{
+	rot := &matrix[T]{
 		cos, 0, -sin, 0,
 		0, 1, 0, 0,
 		sin, 0, cos, 0,
 		0, 0, 0, 1,
 	}
+	return m.Mul(rot)
 }
 
 // RotateZ implements Matrix.
-func (m *matrix[T]) RotateZ(angle Radians) Matrix[T] {
+func (m matrix[T]) RotateZ(angle Radians) Matrix[T] {
 	cos, sin := m.CosSin(angle)
-	return &matrix[T]{
+	rot := &matrix[T]{
 		cos, sin, 0, 0,
 		-sin, cos, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1,
 	}
+	return m.Mul(rot)
 }
 
 // RotateAxisAngle implements Matrix.
-func (m *matrix[T]) RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T] {
+func (m matrix[T]) RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T] {
 	v := axis.Normalize()
 	cos, sin := m.CosSin(angle)
 	cosp := T(1) - cos
@@ -924,18 +914,19 @@ func (m *matrix[T]) RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T] {
 }
 
 // RotateQuaternion implements Matrix.
-func (m *matrix[T]) RotateQuaternion(quat Quaternion[T]) Matrix[T] {
+func (m matrix[T]) RotateQuaternion(quat Quaternion[T]) Matrix[T] {
 	x, y, z, w := quat.X(), quat.Y(), quat.Z(), quat.W()
-	return &matrix[T]{
+	rot := matrix[T]{
 		T(1) - T(2)*(y*y+z*z), T(2) * (x*y + z*w), T(2) * (x*z - y*w), 0,
 		T(2) * (x*y - z*w), T(1) - T(2)*(x*x+z*z), T(2) * (y*z + x*w), 0,
 		T(2) * (x*z + y*w), T(2) * (y*z - x*w), T(1) - T(2)*(x*x+y*y), 0,
 		0, 0, 0, 1,
 	}
+	return m.Mul(&rot)
 }
 
 // Orthographic implements Matrix.
-func (m *matrix[T]) Orthographic(size Size[T]) Matrix[T] {
+func (m matrix[T]) Orthographic(size Size[T]) Matrix[T] {
 	// Per NDC assumptions: scale and translate to NDC space
 	scaleX := T(2) / size.Width()
 	scaleY := -T(2) / size.Height()
@@ -949,7 +940,7 @@ func (m *matrix[T]) Orthographic(size Size[T]) Matrix[T] {
 }
 
 // LookAt implements Matrix.
-func (m *matrix[T]) LookAt(position, target, up Vector3[T]) Matrix[T] {
+func (m matrix[T]) LookAt(position, target, up Vector3[T]) Matrix[T] {
 	forward := target.Sub(position).Normalize()
 	right := up.Cross(forward)
 	upNorm := forward.Cross(right)
@@ -963,7 +954,7 @@ func (m *matrix[T]) LookAt(position, target, up Vector3[T]) Matrix[T] {
 }
 
 // TransformPoint implements Matrix.
-func (m *matrix[T]) TransformPoint(point Point[T]) Point[T] {
+func (m matrix[T]) TransformPoint(point Point[T]) Point[T] {
 	x, y := point.X(), point.Y()
 	w := x*m[3] + y*m[7] + m[15]
 	resultX := x*m[0] + y*m[4] + m[12]
@@ -976,7 +967,7 @@ func (m *matrix[T]) TransformPoint(point Point[T]) Point[T] {
 }
 
 // TransformVector2D implements Matrix.
-func (m *matrix[T]) TransformVector2D(vector Vector2[T]) Vector2[T] {
+func (m matrix[T]) TransformVector2D(vector Vector2[T]) Vector2[T] {
 	x, y := vector.X(), vector.Y()
 	return NewVector2(
 		x*m[0]+y*m[4],
@@ -985,7 +976,7 @@ func (m *matrix[T]) TransformVector2D(vector Vector2[T]) Vector2[T] {
 }
 
 // TransformVector3D implements Matrix.
-func (m *matrix[T]) TransformVector3D(vector Vector3[T]) Vector3[T] {
+func (m matrix[T]) TransformVector3D(vector Vector3[T]) Vector3[T] {
 	x, y, z := vector.X(), vector.Y(), vector.Z()
 	return NewVector3(
 		x*m[0]+y*m[4]+z*m[8],
@@ -995,7 +986,7 @@ func (m *matrix[T]) TransformVector3D(vector Vector3[T]) Vector3[T] {
 }
 
 // TransformVector4D implements Matrix.
-func (m *matrix[T]) TransformVector4D(vector Vector4[T]) Vector4[T] {
+func (m matrix[T]) TransformVector4D(vector Vector4[T]) Vector4[T] {
 	x, y, z, w := vector.X(), vector.Y(), vector.Z(), vector.W()
 	return NewVector4(
 		x*m[0]+y*m[4]+z*m[8]+w*m[12],
@@ -1006,7 +997,7 @@ func (m *matrix[T]) TransformVector4D(vector Vector4[T]) Vector4[T] {
 }
 
 // Decompose implements Matrix.
-func (m *matrix[T]) Decompose() MatrixDecomposition[T] {
+func (m matrix[T]) Decompose() MatrixDecomposition[T] {
 	// This is a simplified version - full decomposition is complex
 	// For now, return basic comp1nts
 	return MatrixDecomposition[T]{
@@ -1019,7 +1010,7 @@ func (m *matrix[T]) Decompose() MatrixDecomposition[T] {
 }
 
 // CosSin implements Matrix.
-func (m *matrix[T]) CosSin(angle Radians) (cos, sin T) {
+func (m matrix[T]) CosSin(angle Radians) (cos, sin T) {
 	sinVal := T(math.Sin(float64(angle)))
 	if math.Abs(float64(sinVal)) == 1.0 {
 		// 90 or 270 degrees
@@ -1033,4 +1024,15 @@ func (m *matrix[T]) CosSin(angle Radians) (cos, sin T) {
 	}
 
 	return cosVal, sinVal
+}
+
+// String implements Matrix.
+func (m matrix[T]) String() string {
+	return fmt.Sprintf(
+		"[%v %v %v %v]\n[%v %v %v %v]\n[%v %v %v %v]\n[%v %v %v %v]",
+		m[0], m[1], m[2], m[3],
+		m[4], m[5], m[6], m[7],
+		m[8], m[9], m[10], m[11],
+		m[12], m[13], m[14], m[15],
+	)
 }
