@@ -45,10 +45,10 @@ func TestScalar_Radians(t *testing.T) {
 		radians  Radians[F32]
 		expected Degrees[F32]
 	}{
-		{"Zero", NewRadians(F32(0)), NewDegrees(F32(0))},
-		{"Pi", NewRadians(F32(math.Pi)), NewDegrees(F32(180))},
-		{"Half Pi", NewRadians(F32(math.Pi / 2)), NewDegrees(F32(90))},
-		{"Two Pi", NewRadians(F32(2 * math.Pi)), NewDegrees(F32(360))},
+		{"Zero", NewRadians[F32](0.0), NewDegrees[F32](0.0)},
+		{"Pi", NewRadians[F32](math.Pi), NewDegrees[F32](180.0)},
+		{"Half Pi", NewRadians[F32](math.Pi / 2), NewDegrees[F32](90.0)},
+		{"Two Pi", NewRadians[F32](2 * math.Pi), NewDegrees[F32](360.0)},
 	}
 
 	for _, tt := range tests {
@@ -67,10 +67,10 @@ func TestScalar_Degrees(t *testing.T) {
 		degrees  Degrees[F32]
 		expected Radians[F32]
 	}{
-		{"Zero", NewDegrees(F32(0)), NewRadians(F32(0))},
-		{"180", NewDegrees(F32(180)), NewRadians(F32(math.Pi))},
-		{"90", NewDegrees(F32(90)), NewRadians(F32(math.Pi / 2))},
-		{"360", NewDegrees(F32(360)), NewRadians(F32(2 * math.Pi))},
+		{"Zero", NewDegrees[F32](0.0), NewRadians[F32](0.0)},
+		{"180", NewDegrees[F32](180.0), NewRadians[F32](math.Pi)},
+		{"90", NewDegrees[F32](90.0), NewRadians[F32](math.Pi / 2)},
+		{"360", NewDegrees[F32](360.0), NewRadians[F32](2 * math.Pi)},
 	}
 
 	for _, tt := range tests {

@@ -1004,8 +1004,8 @@ func (m matrix[T]) Decompose() MatrixDecomposition[T] {
 		Translation: NewVector3(m[12], m[13], m[14]),
 		Scale:       m.GetScale(),
 		Shear:       Shear[T]{XY: 0, XZ: 0, YZ: 0},
-		Perspective: NewVector4(T(0), T(0), T(0), T(1)),
-		Rotation:    NewQuaternion(T(0), T(0), T(0), T(1)),
+		Perspective: NewVector4[T](0, 0, 0, 1),
+		Rotation:    NewQuaternion[T](0, 0, 0, 1),
 	}
 }
 

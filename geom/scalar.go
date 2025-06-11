@@ -9,7 +9,7 @@ import (
 // Scalar is a generic interface for numeric types used in geometry calculations.
 // It supports conversion to float64 and string representation.
 type Scalar interface {
-	~int32 | ~int64 | ~float32 | ~float64
+	~int | ~int32 | ~int64 | ~float32 | ~float64
 	Float64() float64
 	String() string
 }

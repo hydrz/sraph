@@ -6,15 +6,15 @@ import (
 )
 
 func TestPoint_NewPoint(t *testing.T) {
-	p := NewPoint(F32(3.0), F32(4.0))
+	p := NewPoint[F32](3.0, 4.0)
 	if p.X() != 3.0 || p.Y() != 4.0 {
 		t.Errorf("NewPoint(3.0, 4.0) = (%v, %v), want (3.0, 4.0)", p.X(), p.Y())
 	}
 }
 
 func TestPoint_PointArithmetic(t *testing.T) {
-	p1 := NewPoint(F32(1.0), F32(2.0))
-	p2 := NewPoint(F32(3.0), F32(4.0))
+	p1 := NewPoint[F32](1.0, 2.0)
+	p2 := NewPoint[F32](3.0, 4.0)
 
 	t.Run("Add", func(t *testing.T) {
 		result := p1.Add(p2)
@@ -46,7 +46,7 @@ func TestPoint_PointArithmetic(t *testing.T) {
 }
 
 func TestPoint_PointTransformations(t *testing.T) {
-	p := NewPoint(F32(3.0), F32(4.0))
+	p := NewPoint[F32](3.0, 4.0)
 
 	t.Run("Neg", func(t *testing.T) {
 		result := p.Neg()
@@ -56,7 +56,7 @@ func TestPoint_PointTransformations(t *testing.T) {
 	})
 
 	t.Run("Abs", func(t *testing.T) {
-		negP := NewPoint(F32(-3.0), F32(-4.0))
+		negP := NewPoint[F32](-3.0, -4.0)
 		result := negP.Abs()
 		if result.X() != 3.0 || result.Y() != 4.0 {
 			t.Errorf("Abs() = (%v, %v), want (3.0, 4.0)", result.X(), result.Y())
@@ -80,20 +80,20 @@ func TestPoint_PointMath(t *testing.T) {
 	}{
 		{
 			"Floor",
-			NewPoint(F32(3.7), F32(4.2)),
-			NewPoint(F32(3.0), F32(4.0)),
+			NewPoint[F32](3.7, 4.2),
+			NewPoint[F32](3.0, 4.0),
 			func(p Point[F32]) Point[F32] { return p.Floor() },
 		},
 		{
 			"Ceil",
-			NewPoint(F32(3.2), F32(4.7)),
-			NewPoint(F32(4.0), F32(5.0)),
+			NewPoint[F32](3.2, 4.7),
+			NewPoint[F32](4.0, 5.0),
 			func(p Point[F32]) Point[F32] { return p.Ceil() },
 		},
 		{
 			"Round",
-			NewPoint(F32(3.4), F32(4.6)),
-			NewPoint(F32(3.0), F32(5.0)),
+			NewPoint[F32](3.4, 4.6),
+			NewPoint[F32](3.0, 5.0),
 			func(p Point[F32]) Point[F32] { return p.Round() },
 		},
 	}
@@ -109,9 +109,9 @@ func TestPoint_PointMath(t *testing.T) {
 }
 
 func TestPoint_PointComparison(t *testing.T) {
-	p1 := NewPoint(F32(1.0), F32(2.0))
-	p2 := NewPoint(F32(1.0), F32(2.0))
-	p3 := NewPoint(F32(3.0), F32(4.0))
+	p1 := NewPoint[F32](1.0, 2.0)
+	p2 := NewPoint[F32](1.0, 2.0)
+	p3 := NewPoint[F32](3.0, 4.0)
 
 	t.Run("Equal", func(t *testing.T) {
 		if !p1.Equal(p2) {
@@ -139,8 +139,8 @@ func TestPoint_PointComparison(t *testing.T) {
 
 func TestPoint_PointProperties(t *testing.T) {
 	t.Run("IsZero", func(t *testing.T) {
-		zero := NewPoint(F32(0.0), F32(0.0))
-		nonZero := NewPoint(F32(1.0), F32(0.0))
+		zero := NewPoint[F32](0.0, 0.0)
+		nonZero := NewPoint[F32](1.0, 0.0)
 
 		if !zero.IsZero() {
 			t.Error("Zero point should return true for IsZero()")
@@ -151,8 +151,8 @@ func TestPoint_PointProperties(t *testing.T) {
 	})
 
 	t.Run("IsFinite", func(t *testing.T) {
-		finite := NewPoint(F32(1.0), F32(2.0))
-		infinite := NewPoint(F32(math.Inf(1)), F32(2.0))
+		finite := NewPoint[F32](1.0, 2.0)
+		infinite := NewPoint[F32](F32(math.Inf(1)), 2.0)
 
 		if !finite.IsFinite() {
 			t.Error("Finite point should return true for IsFinite()")
@@ -164,8 +164,8 @@ func TestPoint_PointProperties(t *testing.T) {
 }
 
 func TestPoint_PointVectorOperations(t *testing.T) {
-	p1 := NewPoint(F32(3.0), F32(4.0))
-	p2 := NewPoint(F32(1.0), F32(2.0))
+	p1 := NewPoint[F32](3.0, 4.0)
+	p2 := NewPoint[F32](1.0, 2.0)
 
 	t.Run("Length", func(t *testing.T) {
 		length := p1.Length()
@@ -218,7 +218,7 @@ func TestPoint_PointVectorOperations(t *testing.T) {
 
 func TestPoint_PointNormalize(t *testing.T) {
 	t.Run("Normal vector", func(t *testing.T) {
-		p := NewPoint(F32(3.0), F32(4.0))
+		p := NewPoint[F32](3.0, 4.0)
 		normalized := p.Normalize()
 
 		// Should have length 1
@@ -229,7 +229,7 @@ func TestPoint_PointNormalize(t *testing.T) {
 	})
 
 	t.Run("Zero vector", func(t *testing.T) {
-		zero := NewPoint(F32(0.0), F32(0.0))
+		zero := NewPoint[F32](0.0, 0.0)
 		normalized := zero.Normalize()
 
 		// Should return default unit vector (1, 0)
@@ -240,7 +240,7 @@ func TestPoint_PointNormalize(t *testing.T) {
 }
 
 func TestPoint_PointRotate(t *testing.T) {
-	p := NewPoint(F32(1.0), F32(0.0))
+	p := NewPoint[F32](1.0, 0.0)
 
 	t.Run("90 degrees", func(t *testing.T) {
 		rotated := p.Rotate(NewRadians[F32](math.Pi / 2))
@@ -266,19 +266,19 @@ func TestPoint_PointReflect(t *testing.T) {
 		expected Point[F32]
 	}{
 		{
-			NewVector2(F32(0), F32(1)),
-			NewPoint(F32(2), F32(3)),
-			NewPoint(F32(2), F32(-3)),
+			axis:     NewVector2[F32](0, 1),
+			point:    NewPoint[F32](2, 3),
+			expected: NewPoint[F32](2, -3),
 		},
 		{
-			NewVector2(F32(1), F32(1)),
-			NewPoint(F32(1), F32(0)),
-			NewPoint(F32(0), F32(-1)),
+			axis:     NewVector2[F32](1, 1),
+			point:    NewPoint[F32](1, 0),
+			expected: NewPoint[F32](0, -1),
 		},
 		{
-			NewVector2(F32(1), F32(1)),
-			NewPoint(F32(-1), F32(-1)),
-			NewPoint(F32(-1), F32(-1)).Neg(),
+			axis:     NewVector2[F32](1, 1),
+			point:    NewPoint[F32](-1, -1),
+			expected: NewPoint[F32](-1, -1).Neg(),
 		},
 	}
 	for _, tt := range tests {
@@ -292,8 +292,8 @@ func TestPoint_PointReflect(t *testing.T) {
 }
 
 func TestPoint_PointLerp(t *testing.T) {
-	p1 := NewPoint(F32(0.0), F32(0.0))
-	p2 := NewPoint(F32(10.0), F32(20.0))
+	p1 := NewPoint[F32](0.0, 0.0)
+	p2 := NewPoint[F32](10.0, 20.0)
 
 	tests := []struct {
 		t        F32
@@ -301,8 +301,8 @@ func TestPoint_PointLerp(t *testing.T) {
 	}{
 		{F32(0.0), p1},
 		{F32(1.0), p2},
-		{F32(0.5), NewPoint(F32(5.0), F32(10.0))},
-		{F32(0.25), NewPoint(F32(2.5), F32(5.0))},
+		{F32(0.5), NewPoint[F32](5.0, 10.0)},
+		{F32(0.25), NewPoint[F32](2.5, 5.0)},
 	}
 
 	for _, tt := range tests {
@@ -316,8 +316,8 @@ func TestPoint_PointLerp(t *testing.T) {
 }
 
 func TestPoint_PointTranslate(t *testing.T) {
-	p := NewPoint(F32(1.0), F32(2.0))
-	vector := NewVector2(F32(3.0), F32(4.0))
+	p := NewPoint[F32](1.0, 2.0)
+	vector := NewVector2[F32](3.0, 4.0)
 
 	result := p.Translate(vector)
 	if result.X() != 4.0 || result.Y() != 6.0 {

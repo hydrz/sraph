@@ -6,7 +6,7 @@ import (
 )
 
 func TestSize_NewSize(t *testing.T) {
-	s := NewSize(F32(10.0), F32(20.0))
+	s := NewSize[F32](10.0, 20.0)
 	if s.Width() != 10.0 || s.Height() != 20.0 {
 		t.Errorf("NewSize(10.0, 20.0) = (%v, %v), want (10.0, 20.0)", s.Width(), s.Height())
 	}
@@ -21,8 +21,8 @@ func TestSize_NewSizeInfinite(t *testing.T) {
 }
 
 func TestSize_SizeArithmetic(t *testing.T) {
-	s1 := NewSize(F32(10.0), F32(20.0))
-	s2 := NewSize(F32(5.0), F32(10.0))
+	s1 := NewSize[F32](10.0, 20.0)
+	s2 := NewSize[F32](5.0, 10.0)
 
 	t.Run("Add", func(t *testing.T) {
 		result := s1.Add(s2)
@@ -61,7 +61,7 @@ func TestSize_SizeArithmetic(t *testing.T) {
 }
 
 func TestSize_SizeScale(t *testing.T) {
-	s := NewSize(F32(10.0), F32(20.0))
+	s := NewSize[F32](10.0, 20.0)
 
 	t.Run("Scale", func(t *testing.T) {
 		result := s.ScaleWH(F32(2.0), F32(1.5))
@@ -79,9 +79,9 @@ func TestSize_SizeScale(t *testing.T) {
 }
 
 func TestSize_SizeComparison(t *testing.T) {
-	s1 := NewSize(F32(10.0), F32(20.0))
-	s2 := NewSize(F32(10.0), F32(20.0))
-	s3 := NewSize(F32(5.0), F32(15.0))
+	s1 := NewSize[F32](10.0, 20.0)
+	s2 := NewSize[F32](10.0, 20.0)
+	s3 := NewSize[F32](5.0, 15.0)
 
 	t.Run("Equal", func(t *testing.T) {
 		if !s1.Equal(s2) {
@@ -108,7 +108,7 @@ func TestSize_SizeComparison(t *testing.T) {
 }
 
 func TestSize_SizeDimensions(t *testing.T) {
-	s := NewSize(F32(15.0), F32(10.0))
+	s := NewSize[F32](15.0, 10.0)
 
 	t.Run("MinDimension", func(t *testing.T) {
 		min := s.MinDimension()
@@ -133,7 +133,7 @@ func TestSize_SizeDimensions(t *testing.T) {
 }
 
 func TestSize_SizeAbs(t *testing.T) {
-	s := NewSize(F32(-10.0), F32(-20.0))
+	s := NewSize[F32](-10.0, -20.0)
 	result := s.Abs()
 
 	if result.Width() != 10.0 || result.Height() != 20.0 {
@@ -142,7 +142,7 @@ func TestSize_SizeAbs(t *testing.T) {
 }
 
 func TestSize_SizeMathFunctions(t *testing.T) {
-	s := NewSize(F32(10.7), F32(20.3))
+	s := NewSize[F32](10.7, 20.3)
 
 	t.Run("Floor", func(t *testing.T) {
 		result := s.Floor()
@@ -168,8 +168,8 @@ func TestSize_SizeMathFunctions(t *testing.T) {
 
 func TestSize_SizeProperties(t *testing.T) {
 	t.Run("IsZero", func(t *testing.T) {
-		zero := NewSize(F32(0.0), F32(0.0))
-		nonZero := NewSize(F32(1.0), F32(0.0))
+		zero := NewSize[F32](0.0, 0.0)
+		nonZero := NewSize[F32](1.0, 0.0)
 
 		if !zero.IsZero() {
 			t.Error("Zero size should return true for IsZero()")
@@ -180,8 +180,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsFinite", func(t *testing.T) {
-		finite := NewSize(F32(10.0), F32(20.0))
-		infinite := NewSize(F32(math.Inf(1)), F32(20.0))
+		finite := NewSize[F32](10.0, 20.0)
+		infinite := NewSize[F32](F32(math.Inf(1)), 20.0)
 
 		if !finite.IsFinite() {
 			t.Error("Finite size should return true for IsFinite()")
@@ -192,8 +192,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsInfinite", func(t *testing.T) {
-		finite := NewSize(F32(10.0), F32(20.0))
-		infinite := NewSize(F32(math.Inf(1)), F32(20.0))
+		finite := NewSize[F32](10.0, 20.0)
+		infinite := NewSize[F32](F32(math.Inf(1)), 20.0)
 
 		if finite.IsInfinite() {
 			t.Error("Finite size should return false for IsInfinite()")
@@ -204,8 +204,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsSquare", func(t *testing.T) {
-		square := NewSize(F32(10.0), F32(10.0))
-		rectangle := NewSize(F32(10.0), F32(20.0))
+		square := NewSize[F32](10.0, 10.0)
+		rectangle := NewSize[F32](10.0, 20.0)
 
 		if !square.IsSquare() {
 			t.Error("Square size should return true for IsSquare()")
@@ -243,7 +243,7 @@ func TestSize_SizeMipCount(t *testing.T) {
 }
 
 func TestSize_SizeString(t *testing.T) {
-	s := NewSize(F32(10.5), F32(20.5))
+	s := NewSize[F32](10.5, 20.5)
 	str := s.String()
 	expected := "Size(10.5, 20.5)"
 	if str != expected {
@@ -252,8 +252,8 @@ func TestSize_SizeString(t *testing.T) {
 }
 
 func BenchmarkSizeOperations(b *testing.B) {
-	s1 := NewSize(F32(10.0), F32(20.0))
-	s2 := NewSize(F32(5.0), F32(10.0))
+	s1 := NewSize[F32](10.0, 20.0)
+	s2 := NewSize[F32](5.0, 10.0)
 
 	b.Run("Add", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

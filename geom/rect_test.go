@@ -29,26 +29,26 @@ func TestRect_NewRectXYWH(t *testing.T) {
 }
 
 func TestRect_NewRectOriginSize(t *testing.T) {
-	origin := NewPoint(I32(1), I32(2))
-	size := NewSize(I32(3), I32(4))
-	r := NewRectOriginSize(origin, size)
+	origin := NewPoint[I32](1, 2)
+	size := NewSize[I32](3, 4)
+	r := NewRectOriginSize[I32](origin, size)
 	if r.Left() != 1 || r.Top() != 2 || r.Right() != 4 || r.Bottom() != 6 {
 		t.Errorf("RectOriginSize failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
 	}
 }
 
 func TestRect_NewRectSize(t *testing.T) {
-	size := NewSize(I32(3), I32(4))
-	r := NewRectSize(size)
+	size := NewSize[I32](3, 4)
+	r := NewRectSize[I32](size)
 	if r.Left() != 0 || r.Top() != 0 || r.Right() != 3 || r.Bottom() != 4 {
 		t.Errorf("RectSize failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
 	}
 }
 
 func TestRect_BoundingRect(t *testing.T) {
-	p1 := NewPoint(I32(1), I32(2))
-	p2 := NewPoint(I32(3), I32(5))
-	p3 := NewPoint(I32(-1), I32(4))
+	p1 := NewPoint[I32](1, 2)
+	p2 := NewPoint[I32](3, 5)
+	p3 := NewPoint[I32](-1, 4)
 	r := BoundingRect(p1, p2, p3)
 	if r.Left() != -1 || r.Top() != 2 || r.Right() != 3 || r.Bottom() != 5 {
 		t.Errorf("BoundingRect failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
@@ -95,11 +95,11 @@ func TestRect_IsEmptyIsSquareIsMaximum(t *testing.T) {
 
 func TestRect_ContainsAndIntersects(t *testing.T) {
 	r := NewRect[I32](0, 0, 10, 10)
-	p := NewPoint(I32(5), I32(5))
+	p := NewPoint[I32](5, 5)
 	if !r.Contains(p) {
 		t.Errorf("Contains failed")
 	}
-	if !r.ContainsExclusive(NewPoint(I32(1), I32(1))) {
+	if !r.ContainsExclusive(NewPoint[I32](1, 1)) {
 		t.Errorf("ContainsExclusive failed")
 	}
 	r2 := NewRect[I32](5, 5, 15, 15)
@@ -130,7 +130,7 @@ func TestRect_ExpandAndExpandPoint(t *testing.T) {
 	if r2.Left() != 0 || r2.Top() != 0 || r2.Right() != 4 || r2.Bottom() != 4 {
 		t.Errorf("Expand failed: got %v", r2)
 	}
-	p := NewPoint(I32(5), I32(5))
+	p := NewPoint[I32](5, 5)
 	r3 := r.ExpandPoint(p)
 	if r3.Right() != 5 || r3.Bottom() != 5 {
 		t.Errorf("ExpandPoint failed: got %v", r3)
@@ -139,7 +139,7 @@ func TestRect_ExpandAndExpandPoint(t *testing.T) {
 
 func TestRect_TranslateAndScale(t *testing.T) {
 	r := NewRect[I32](1, 2, 3, 4)
-	v := NewVector2(I32(2), I32(3))
+	v := NewVector2[I32](2, 3)
 	r2 := r.Translate(v)
 	if r2.Left() != 3 || r2.Top() != 5 {
 		t.Errorf("Translate failed: got %v", r2)

@@ -6,29 +6,29 @@ import (
 )
 
 func TestNewVector2(t *testing.T) {
-	v := NewVector2(F32(1.0), F32(2.0))
+	v := NewVector2[F32](1.0, 2.0)
 	if v.X() != 1.0 || v.Y() != 2.0 {
 		t.Errorf("NewVector2(1.0, 2.0) = (%v, %v), want (1.0, 2.0)", v.X(), v.Y())
 	}
 }
 
 func TestNewVector3(t *testing.T) {
-	v := NewVector3(F32(1.0), F32(2.0), F32(3.0))
+	v := NewVector3[F32](1.0, 2.0, 3.0)
 	if v.X() != 1.0 || v.Y() != 2.0 || v.Z() != 3.0 {
 		t.Errorf("NewVector3(1.0, 2.0, 3.0) = (%v, %v, %v), want (1.0, 2.0, 3.0)", v.X(), v.Y(), v.Z())
 	}
 }
 
 func TestNewVector4(t *testing.T) {
-	v := NewVector4(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	v := NewVector4[F32](1.0, 2.0, 3.0, 4.0)
 	if v.X() != 1.0 || v.Y() != 2.0 || v.Z() != 3.0 || v.W() != 4.0 {
 		t.Errorf("NewVector4() components mismatch")
 	}
 }
 
 func TestVector3Arithmetic(t *testing.T) {
-	v1 := NewVector3(F32(1.0), F32(2.0), F32(3.0))
-	v2 := NewVector3(F32(4.0), F32(5.0), F32(6.0))
+	v1 := NewVector3[F32](1.0, 2.0, 3.0)
+	v2 := NewVector3[F32](4.0, 5.0, 6.0)
 
 	t.Run("Add", func(t *testing.T) {
 		result := v1.Add(v2)
@@ -67,7 +67,7 @@ func TestVector3Arithmetic(t *testing.T) {
 }
 
 func TestVector3VectorOperations(t *testing.T) {
-	v := NewVector3(F32(3.0), F32(4.0), F32(0.0))
+	v := NewVector3[F32](3.0, 4.0, 0.0)
 
 	t.Run("Length", func(t *testing.T) {
 		length := v.Length()
@@ -95,7 +95,7 @@ func TestVector3VectorOperations(t *testing.T) {
 	})
 
 	t.Run("Zero vector normalize", func(t *testing.T) {
-		zero := NewVector3(F32(0.0), F32(0.0), F32(0.0))
+		zero := NewVector3[F32](0.0, 0.0, 0.0)
 		normalized := zero.Normalize()
 
 		// Should return zero vector
@@ -106,8 +106,8 @@ func TestVector3VectorOperations(t *testing.T) {
 }
 
 func TestVector3DotProduct(t *testing.T) {
-	v1 := NewVector3(F32(1.0), F32(2.0), F32(3.0))
-	v2 := NewVector3(F32(4.0), F32(5.0), F32(6.0))
+	v1 := NewVector3[F32](1.0, 2.0, 3.0)
+	v2 := NewVector3[F32](4.0, 5.0, 6.0)
 
 	dot := v1.Dot(v2)
 	expected := F32(32.0) // 1*4 + 2*5 + 3*6 = 32
@@ -117,8 +117,8 @@ func TestVector3DotProduct(t *testing.T) {
 }
 
 func TestVector3CrossProduct(t *testing.T) {
-	v1 := NewVector3(F32(1.0), F32(0.0), F32(0.0))
-	v2 := NewVector3(F32(0.0), F32(1.0), F32(0.0))
+	v1 := NewVector3[F32](1.0, 0.0, 0.0)
+	v2 := NewVector3[F32](0.0, 1.0, 0.0)
 
 	cross := v1.Cross(v2)
 	// (1,0,0) × (0,1,0) = (0,0,1)
@@ -128,7 +128,7 @@ func TestVector3CrossProduct(t *testing.T) {
 }
 
 func TestVector3MathFunctions(t *testing.T) {
-	v := NewVector3(F32(1.7), F32(2.3), F32(3.9))
+	v := NewVector3[F32](1.7, 2.3, 3.9)
 
 	t.Run("Floor", func(t *testing.T) {
 		result := v.Floor()
@@ -152,7 +152,7 @@ func TestVector3MathFunctions(t *testing.T) {
 	})
 
 	t.Run("Abs", func(t *testing.T) {
-		negV := NewVector3(F32(-1.0), F32(-2.0), F32(-3.0))
+		negV := NewVector3[F32](-1.0, -2.0, -3.0)
 		result := negV.Abs()
 		if result.X() != 1.0 || result.Y() != 2.0 || result.Z() != 3.0 {
 			t.Errorf("Abs() = (%v, %v, %v), want (1.0, 2.0, 3.0)", result.X(), result.Y(), result.Z())
@@ -161,9 +161,9 @@ func TestVector3MathFunctions(t *testing.T) {
 }
 
 func TestVector3MinMax(t *testing.T) {
-	v1 := NewVector3(F32(1.0), F32(5.0), F32(3.0))
-	v2 := NewVector3(F32(4.0), F32(2.0), F32(6.0))
-	v3 := NewVector3(F32(2.0), F32(3.0), F32(1.0))
+	v1 := NewVector3[F32](1.0, 5.0, 3.0)
+	v2 := NewVector3[F32](4.0, 2.0, 6.0)
+	v3 := NewVector3[F32](2.0, 3.0, 1.0)
 
 	t.Run("Min with multiple vectors", func(t *testing.T) {
 		result := v1.Min(v2, v3)
@@ -181,8 +181,8 @@ func TestVector3MinMax(t *testing.T) {
 }
 
 func TestVector3Lerp(t *testing.T) {
-	v1 := NewVector3(F32(0.0), F32(0.0), F32(0.0))
-	v2 := NewVector3(F32(10.0), F32(20.0), F32(30.0))
+	v1 := NewVector3[F32](0.0, 0.0, 0.0)
+	v2 := NewVector3[F32](10.0, 20.0, 30.0)
 
 	tests := []struct {
 		t        F32
@@ -190,8 +190,8 @@ func TestVector3Lerp(t *testing.T) {
 	}{
 		{F32(0.0), v1},
 		{F32(1.0), v2},
-		{F32(0.5), NewVector3(F32(5.0), F32(10.0), F32(15.0))},
-		{F32(0.25), NewVector3(F32(2.5), F32(5.0), F32(7.5))},
+		{F32(0.5), NewVector3[F32](5.0, 10.0, 15.0)},
+		{F32(0.25), NewVector3[F32](2.5, 5.0, 7.5)},
 	}
 
 	for _, tt := range tests {
@@ -205,8 +205,8 @@ func TestVector3Lerp(t *testing.T) {
 }
 
 func TestVector3Combine(t *testing.T) {
-	v1 := NewVector3(F32(1.0), F32(2.0), F32(3.0))
-	v2 := NewVector3(F32(4.0), F32(5.0), F32(6.0))
+	v1 := NewVector3[F32](1.0, 2.0, 3.0)
+	v2 := NewVector3[F32](4.0, 5.0, 6.0)
 
 	result := v1.Combine(v2, F32(2.0))
 	// v1 + v2 * 2.0 = (1,2,3) + (8,10,12) = (9,12,15)
@@ -216,9 +216,9 @@ func TestVector3Combine(t *testing.T) {
 }
 
 func TestVector3Equal(t *testing.T) {
-	v1 := NewVector3(F32(1.0), F32(2.0), F32(3.0))
-	v2 := NewVector3(F32(1.0), F32(2.0), F32(3.0))
-	v3 := NewVector3(F32(1.0), F32(2.0), F32(4.0))
+	v1 := NewVector3[F32](1.0, 2.0, 3.0)
+	v2 := NewVector3[F32](1.0, 2.0, 3.0)
+	v3 := NewVector3[F32](1.0, 2.0, 4.0)
 
 	if !v1.Equal(v2) {
 		t.Error("Equal vectors should be equal")
@@ -229,7 +229,7 @@ func TestVector3Equal(t *testing.T) {
 }
 
 func TestVector3String(t *testing.T) {
-	v := NewVector3(F32(1.0), F32(2.0), F32(3.0))
+	v := NewVector3[F32](1.0, 2.0, 3.0)
 	str := v.String()
 	expected := "Vector3(1, 2, 3)"
 	if str != expected {
@@ -239,7 +239,7 @@ func TestVector3String(t *testing.T) {
 
 // Vector4 tests
 func TestVector4XY(t *testing.T) {
-	v4 := NewVector4(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	v4 := NewVector4[F32](1.0, 2.0, 3.0, 4.0)
 	v2 := v4.XY()
 
 	if v2.X() != 1.0 || v2.Y() != 2.0 {
@@ -248,7 +248,7 @@ func TestVector4XY(t *testing.T) {
 }
 
 func TestVector4Length(t *testing.T) {
-	v := NewVector4(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	v := NewVector4[F32](1.0, 2.0, 3.0, 4.0)
 	length := v.Length()
 	expected := F32(math.Sqrt(30.0)) // sqrt(1^2 + 2^2 + 3^2 + 4^2) = sqrt(30)
 	if !Equal(length, expected) {
@@ -257,8 +257,8 @@ func TestVector4Length(t *testing.T) {
 }
 
 func TestVector4CrossProduct(t *testing.T) {
-	v1 := NewVector4(F32(1.0), F32(0.0), F32(0.0), F32(0.0))
-	v2 := NewVector4(F32(0.0), F32(1.0), F32(0.0), F32(0.0))
+	v1 := NewVector4[F32](1.0, 0.0, 0.0, 0.0)
+	v2 := NewVector4[F32](0.0, 1.0, 0.0, 0.0)
 
 	// Cross product returns zero vector for 4D
 	cross := v1.Cross(v2)
@@ -268,8 +268,8 @@ func TestVector4CrossProduct(t *testing.T) {
 }
 
 func TestVector4IsFinite(t *testing.T) {
-	finite := NewVector4(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
-	infinite := NewVector4(F32(math.Inf(1)), F32(2.0), F32(3.0), F32(4.0))
+	finite := NewVector4[F32](1.0, 2.0, 3.0, 4.0)
+	infinite := NewVector4[F32](F32(math.Inf(1)), 2.0, 3.0, 4.0)
 
 	if !finite.IsFinite() {
 		t.Error("Finite vector should return true for IsFinite()")
@@ -280,7 +280,7 @@ func TestVector4IsFinite(t *testing.T) {
 }
 
 func TestVector4String(t *testing.T) {
-	v := NewVector4(F32(1.0), F32(2.0), F32(3.0), F32(4.0))
+	v := NewVector4[F32](1.0, 2.0, 3.0, 4.0)
 	str := v.String()
 	expected := "Vector4(1, 2, 3, 4)"
 	if str != expected {
@@ -289,8 +289,8 @@ func TestVector4String(t *testing.T) {
 }
 
 func BenchmarkVector3Operations(b *testing.B) {
-	v1 := NewVector3(F32(1.0), F32(2.0), F32(3.0))
-	v2 := NewVector3(F32(4.0), F32(5.0), F32(6.0))
+	v1 := NewVector3[F32](1.0, 2.0, 3.0)
+	v2 := NewVector3[F32](4.0, 5.0, 6.0)
 
 	b.Run("Add", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
