@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestNewSize(t *testing.T) {
+func TestSize_NewSize(t *testing.T) {
 	s := NewSize(Float32(10.0), Float32(20.0))
 	if s.Width() != 10.0 || s.Height() != 20.0 {
 		t.Errorf("NewSize(10.0, 20.0) = (%v, %v), want (10.0, 20.0)", s.Width(), s.Height())
 	}
 }
 
-func TestNewSizeInfinite(t *testing.T) {
+func TestSize_NewSizeInfinite(t *testing.T) {
 	s := NewSizeInfinite[Float32]()
 	maxVal := Max[Float32]()
 	if s.Width() != maxVal || s.Height() != maxVal {
@@ -20,7 +20,7 @@ func TestNewSizeInfinite(t *testing.T) {
 	}
 }
 
-func TestSizeArithmetic(t *testing.T) {
+func TestSize_SizeArithmetic(t *testing.T) {
 	s1 := NewSize(Float32(10.0), Float32(20.0))
 	s2 := NewSize(Float32(5.0), Float32(10.0))
 
@@ -60,7 +60,7 @@ func TestSizeArithmetic(t *testing.T) {
 	})
 }
 
-func TestSizeScale(t *testing.T) {
+func TestSize_SizeScale(t *testing.T) {
 	s := NewSize(Float32(10.0), Float32(20.0))
 
 	t.Run("Scale", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestSizeScale(t *testing.T) {
 	})
 }
 
-func TestSizeComparison(t *testing.T) {
+func TestSize_SizeComparison(t *testing.T) {
 	s1 := NewSize(Float32(10.0), Float32(20.0))
 	s2 := NewSize(Float32(10.0), Float32(20.0))
 	s3 := NewSize(Float32(5.0), Float32(15.0))
@@ -107,7 +107,7 @@ func TestSizeComparison(t *testing.T) {
 	})
 }
 
-func TestSizeDimensions(t *testing.T) {
+func TestSize_SizeDimensions(t *testing.T) {
 	s := NewSize(Float32(15.0), Float32(10.0))
 
 	t.Run("MinDimension", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestSizeDimensions(t *testing.T) {
 	})
 }
 
-func TestSizeAbs(t *testing.T) {
+func TestSize_SizeAbs(t *testing.T) {
 	s := NewSize(Float32(-10.0), Float32(-20.0))
 	result := s.Abs()
 
@@ -141,7 +141,7 @@ func TestSizeAbs(t *testing.T) {
 	}
 }
 
-func TestSizeMathFunctions(t *testing.T) {
+func TestSize_SizeMathFunctions(t *testing.T) {
 	s := NewSize(Float32(10.7), Float32(20.3))
 
 	t.Run("Floor", func(t *testing.T) {
@@ -166,7 +166,7 @@ func TestSizeMathFunctions(t *testing.T) {
 	})
 }
 
-func TestSizeProperties(t *testing.T) {
+func TestSize_SizeProperties(t *testing.T) {
 	t.Run("IsZero", func(t *testing.T) {
 		zero := NewSize(Float32(0.0), Float32(0.0))
 		nonZero := NewSize(Float32(1.0), Float32(0.0))
@@ -216,7 +216,7 @@ func TestSizeProperties(t *testing.T) {
 	})
 }
 
-func TestSizeMipCount(t *testing.T) {
+func TestSize_SizeMipCount(t *testing.T) {
 	tests := []struct {
 		name     string
 		size     Size[Int32]
@@ -242,7 +242,7 @@ func TestSizeMipCount(t *testing.T) {
 	}
 }
 
-func TestSizeString(t *testing.T) {
+func TestSize_SizeString(t *testing.T) {
 	s := NewSize(Float32(10.5), Float32(20.5))
 	str := s.String()
 	expected := "Size(10.5, 20.5)"

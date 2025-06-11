@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestNewPoint(t *testing.T) {
+func TestPoint_NewPoint(t *testing.T) {
 	p := NewPoint(Float32(3.0), Float32(4.0))
 	if p.X() != 3.0 || p.Y() != 4.0 {
 		t.Errorf("NewPoint(3.0, 4.0) = (%v, %v), want (3.0, 4.0)", p.X(), p.Y())
 	}
 }
 
-func TestPointArithmetic(t *testing.T) {
+func TestPoint_PointArithmetic(t *testing.T) {
 	p1 := NewPoint(Float32(1.0), Float32(2.0))
 	p2 := NewPoint(Float32(3.0), Float32(4.0))
 
@@ -45,7 +45,7 @@ func TestPointArithmetic(t *testing.T) {
 	})
 }
 
-func TestPointTransformations(t *testing.T) {
+func TestPoint_PointTransformations(t *testing.T) {
 	p := NewPoint(Float32(3.0), Float32(4.0))
 
 	t.Run("Neg", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestPointTransformations(t *testing.T) {
 	})
 }
 
-func TestPointMath(t *testing.T) {
+func TestPoint_PointMath(t *testing.T) {
 	tests := []struct {
 		name     string
 		point    Point[Float32]
@@ -108,7 +108,7 @@ func TestPointMath(t *testing.T) {
 	}
 }
 
-func TestPointComparison(t *testing.T) {
+func TestPoint_PointComparison(t *testing.T) {
 	p1 := NewPoint(Float32(1.0), Float32(2.0))
 	p2 := NewPoint(Float32(1.0), Float32(2.0))
 	p3 := NewPoint(Float32(3.0), Float32(4.0))
@@ -137,7 +137,7 @@ func TestPointComparison(t *testing.T) {
 	})
 }
 
-func TestPointProperties(t *testing.T) {
+func TestPoint_PointProperties(t *testing.T) {
 	t.Run("IsZero", func(t *testing.T) {
 		zero := NewPoint(Float32(0.0), Float32(0.0))
 		nonZero := NewPoint(Float32(1.0), Float32(0.0))
@@ -163,7 +163,7 @@ func TestPointProperties(t *testing.T) {
 	})
 }
 
-func TestPointVectorOperations(t *testing.T) {
+func TestPoint_PointVectorOperations(t *testing.T) {
 	p1 := NewPoint(Float32(3.0), Float32(4.0))
 	p2 := NewPoint(Float32(1.0), Float32(2.0))
 
@@ -216,7 +216,7 @@ func TestPointVectorOperations(t *testing.T) {
 	})
 }
 
-func TestPointNormalize(t *testing.T) {
+func TestPoint_PointNormalize(t *testing.T) {
 	t.Run("Normal vector", func(t *testing.T) {
 		p := NewPoint(Float32(3.0), Float32(4.0))
 		normalized := p.Normalize()
@@ -239,7 +239,7 @@ func TestPointNormalize(t *testing.T) {
 	})
 }
 
-func TestPointRotate(t *testing.T) {
+func TestPoint_PointRotate(t *testing.T) {
 	p := NewPoint(Float32(1.0), Float32(0.0))
 
 	t.Run("90 degrees", func(t *testing.T) {
@@ -259,7 +259,7 @@ func TestPointRotate(t *testing.T) {
 	})
 }
 
-func TestPointReflect(t *testing.T) {
+func TestPoint_PointReflect(t *testing.T) {
 	tests := []struct {
 		axis     Vector2[Float32]
 		point    Point[Float32]
@@ -291,7 +291,7 @@ func TestPointReflect(t *testing.T) {
 	}
 }
 
-func TestPointLerp(t *testing.T) {
+func TestPoint_PointLerp(t *testing.T) {
 	p1 := NewPoint(Float32(0.0), Float32(0.0))
 	p2 := NewPoint(Float32(10.0), Float32(20.0))
 
@@ -315,7 +315,7 @@ func TestPointLerp(t *testing.T) {
 	}
 }
 
-func TestPointTranslate(t *testing.T) {
+func TestPoint_PointTranslate(t *testing.T) {
 	p := NewPoint(Float32(1.0), Float32(2.0))
 	vector := NewVector2(Float32(3.0), Float32(4.0))
 

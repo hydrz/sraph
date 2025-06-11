@@ -16,12 +16,6 @@ const (
 	MatrixComp1ntRotation
 )
 
-type Shear[T Scalar] struct {
-	XY T
-	XZ T
-	YZ T
-}
-
 type MatrixDecomposition[T Scalar] struct {
 	Translation Vector3[T]
 	Scale       Vector3[T]

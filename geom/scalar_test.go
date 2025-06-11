@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestNew(t *testing.T) {
+func TestScalar_New(t *testing.T) {
 	tests := []struct {
 		name     string
 		value    interface{}
@@ -39,7 +39,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestRadians(t *testing.T) {
+func TestScalar_Radians(t *testing.T) {
 	tests := []struct {
 		name     string
 		radians  Radians
@@ -61,7 +61,7 @@ func TestRadians(t *testing.T) {
 	}
 }
 
-func TestDegrees(t *testing.T) {
+func TestScalar_Degrees(t *testing.T) {
 	tests := []struct {
 		name     string
 		degrees  Degrees
@@ -83,7 +83,7 @@ func TestDegrees(t *testing.T) {
 	}
 }
 
-func TestMax(t *testing.T) {
+func TestScalar_Max(t *testing.T) {
 	tests := []struct {
 		name     string
 		testFunc func() bool
@@ -111,7 +111,7 @@ func TestMax(t *testing.T) {
 	}
 }
 
-func TestEqual(t *testing.T) {
+func TestScalar_Equal(t *testing.T) {
 	tests := []struct {
 		name     string
 		a, b     interface{}
@@ -145,7 +145,7 @@ func TestEqual(t *testing.T) {
 	}
 }
 
-func TestIsFinite(t *testing.T) {
+func TestScalar_IsFinite(t *testing.T) {
 	tests := []struct {
 		name     string
 		value    interface{}
@@ -178,7 +178,7 @@ func TestIsFinite(t *testing.T) {
 	}
 }
 
-func TestClamp(t *testing.T) {
+func TestScalar_Clamp(t *testing.T) {
 	tests := []struct {
 		name     string
 		value    Float32
@@ -203,7 +203,7 @@ func TestClamp(t *testing.T) {
 	}
 }
 
-func TestScalarTypes(t *testing.T) {
+func TestScalar_ScalarTypes(t *testing.T) {
 	t.Run("Int32", func(t *testing.T) {
 		i := Int32(42)
 		if i.Float64() != 42.0 {
@@ -241,7 +241,7 @@ func TestScalarTypes(t *testing.T) {
 	})
 }
 
-func BenchmarkEqual(b *testing.B) {
+func BenchmarkScalar_Equal(b *testing.B) {
 	f1 := Float64(1.0)
 	f2 := Float64(1.0000001)
 
@@ -251,7 +251,7 @@ func BenchmarkEqual(b *testing.B) {
 	}
 }
 
-func BenchmarkIsFinite(b *testing.B) {
+func BenchmarkScalar_IsFinite(b *testing.B) {
 	f := Float64(1.0)
 
 	b.ResetTimer()

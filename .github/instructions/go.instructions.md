@@ -10,3 +10,11 @@ applyTo: "**/*.go"
 - Follow Go best practices for readability, maintainability, and simplicity.
 - Use standard libraries and idiomatic Go patterns.
 - Keep the order of implementation methods consistent with the order in the interface definition.
+
+
+# Go Testing Guidelines
+- All exported functions and methods must have unit tests.
+- Use table-driven tests for functions and methods where applicable.
+- Use descriptive test names that indicate the purpose of the test.
+- Use the `testing` package for writing tests.
+- Test method names should be in the format `TestFileName_FunctionName`, where `FileName` is the name of the file containing the function being tested, and `FunctionName` is the name of the function being tested.

@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-func TestNewQuaternion(t *testing.T) {
+func TestQuaternion_NewQuaternion(t *testing.T) {
 	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	if q.X() != 1.0 || q.Y() != 2.0 || q.Z() != 3.0 || q.W() != 4.0 {
 		t.Errorf("NewQuaternion() components mismatch")
 	}
 }
 
-func TestNewQuaternionFromAxisAngle(t *testing.T) {
+func TestQuaternion_NewQuaternionFromAxisAngle(t *testing.T) {
 	axis := NewVector3(Float32(0.0), Float32(0.0), Float32(1.0)) // Z-axis
 	angle := Radians(math.Pi / 2)                                // 90 degrees
 
@@ -28,7 +28,7 @@ func TestNewQuaternionFromAxisAngle(t *testing.T) {
 	}
 }
 
-func TestQuaternionArithmetic(t *testing.T) {
+func TestQuaternion_QuaternionArithmetic(t *testing.T) {
 	q1 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	q2 := NewQuaternion(Float32(5.0), Float32(6.0), Float32(7.0), Float32(8.0))
 
@@ -61,7 +61,7 @@ func TestQuaternionArithmetic(t *testing.T) {
 	})
 }
 
-func TestQuaternionMultiplication(t *testing.T) {
+func TestQuaternion_QuaternionMultiplication(t *testing.T) {
 	// Test Hamilton product with identity quaternion
 	identity := NewQuaternion(Float32(0.0), Float32(0.0), Float32(0.0), Float32(1.0))
 	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
@@ -72,7 +72,7 @@ func TestQuaternionMultiplication(t *testing.T) {
 	}
 }
 
-func TestQuaternionLength(t *testing.T) {
+func TestQuaternion_QuaternionLength(t *testing.T) {
 	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	length := q.Length()
 	expected := Float32(math.Sqrt(30.0)) // sqrt(1+4+9+16) = sqrt(30)
@@ -81,7 +81,7 @@ func TestQuaternionLength(t *testing.T) {
 	}
 }
 
-func TestQuaternionDotProduct(t *testing.T) {
+func TestQuaternion_QuaternionDotProduct(t *testing.T) {
 	q1 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	q2 := NewQuaternion(Float32(5.0), Float32(6.0), Float32(7.0), Float32(8.0))
 
@@ -92,7 +92,7 @@ func TestQuaternionDotProduct(t *testing.T) {
 	}
 }
 
-func TestQuaternionNormalize(t *testing.T) {
+func TestQuaternion_QuaternionNormalize(t *testing.T) {
 	t.Run("Normal quaternion", func(t *testing.T) {
 		q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 		normalized := q.Normalize()
@@ -116,7 +116,7 @@ func TestQuaternionNormalize(t *testing.T) {
 	})
 }
 
-func TestQuaternionInvert(t *testing.T) {
+func TestQuaternion_QuaternionInvert(t *testing.T) {
 	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	inv := q.Invert()
 
@@ -131,7 +131,7 @@ func TestQuaternionInvert(t *testing.T) {
 	}
 }
 
-func TestQuaternionEqual(t *testing.T) {
+func TestQuaternion_QuaternionEqual(t *testing.T) {
 	q1 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	q2 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	q3 := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(5.0))
@@ -144,7 +144,7 @@ func TestQuaternionEqual(t *testing.T) {
 	}
 }
 
-func TestQuaternionSlerp(t *testing.T) {
+func TestQuaternion_QuaternionSlerp(t *testing.T) {
 	q1 := NewQuaternion(Float32(0.0), Float32(0.0), Float32(0.0), Float32(1.0)) // Identity
 	q2 := NewQuaternion(Float32(0.0), Float32(0.0), Float32(1.0), Float32(0.0)) // 180° rotation around Z
 
@@ -159,7 +159,7 @@ func TestQuaternionSlerp(t *testing.T) {
 	}
 }
 
-func TestQuaternionRotateVector3(t *testing.T) {
+func TestQuaternion_QuaternionRotateVector3(t *testing.T) {
 	// Test 90 degree rotation around Z axis
 	axis := NewVector3(Float32(0.0), Float32(0.0), Float32(1.0))
 	angle := Radians(math.Pi / 2)
@@ -175,7 +175,7 @@ func TestQuaternionRotateVector3(t *testing.T) {
 	}
 }
 
-func TestQuaternionString(t *testing.T) {
+func TestQuaternion_QuaternionString(t *testing.T) {
 	q := NewQuaternion(Float32(1.0), Float32(2.0), Float32(3.0), Float32(4.0))
 	str := q.String()
 	expected := "Quaternion(1, 2, 3, 4)"

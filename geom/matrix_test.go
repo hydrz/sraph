@@ -14,7 +14,7 @@ func TestNewMatrix(t *testing.T) {
 	}
 }
 
-func TestMatrixAt(t *testing.T) {
+func TestMatrix_At(t *testing.T) {
 	m := NewMatrix[Float32]()
 
 	// Test identity matrix values
@@ -27,7 +27,7 @@ func TestMatrixAt(t *testing.T) {
 	}
 }
 
-func TestMatrixSet(t *testing.T) {
+func TestMatrix_Set(t *testing.T) {
 	m := NewMatrix[Float32]()
 	m.Set(0, 1, Float32(5.0))
 
@@ -36,7 +36,7 @@ func TestMatrixSet(t *testing.T) {
 	}
 }
 
-func TestMatrixArithmetic(t *testing.T) {
+func TestMatrix_Arithmetic(t *testing.T) {
 	m1 := NewMatrix[Float32]()
 	m2 := NewMatrix[Float32]()
 
@@ -59,7 +59,7 @@ func TestMatrixArithmetic(t *testing.T) {
 	})
 }
 
-func TestMatrixMultiplication(t *testing.T) {
+func TestMatrix_Multiplication(t *testing.T) {
 	identity := NewMatrix[Float32]()
 	m := NewMatrix[Float32]()
 	m.Set(0, 3, Float32(5.0)) // Translation
@@ -71,7 +71,7 @@ func TestMatrixMultiplication(t *testing.T) {
 	}
 }
 
-func TestMatrixProperties(t *testing.T) {
+func TestMatrix_Properties(t *testing.T) {
 	identity := NewMatrix[Float32]()
 
 	t.Run("IsIdentity", func(t *testing.T) {
@@ -100,7 +100,7 @@ func TestMatrixProperties(t *testing.T) {
 	})
 }
 
-func TestMatrixTransformations(t *testing.T) {
+func TestMatrix_Transformations(t *testing.T) {
 	t.Run("Translation", func(t *testing.T) {
 		m := NewMatrix[Float32]()
 		translation := NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))
@@ -136,7 +136,7 @@ func TestMatrixTransformations(t *testing.T) {
 	})
 }
 
-func TestMatrixInverse(t *testing.T) {
+func TestMatrix_Inverse(t *testing.T) {
 	identity := NewMatrix[Float32]()
 
 	inv, err := identity.Inverse()
@@ -149,7 +149,7 @@ func TestMatrixInverse(t *testing.T) {
 	}
 }
 
-func TestMatrixTranspose(t *testing.T) {
+func TestMatrix_Transpose(t *testing.T) {
 	m := NewMatrix[Float32]()
 	m.Set(0, 1, Float32(5.0))
 
@@ -159,7 +159,7 @@ func TestMatrixTranspose(t *testing.T) {
 	}
 }
 
-func TestMatrixBasisVectors(t *testing.T) {
+func TestMatrix_BasisVectors(t *testing.T) {
 	identity := NewMatrix[Float32]()
 	basis := identity.BasisVectors()
 
@@ -179,7 +179,7 @@ func TestMatrixBasisVectors(t *testing.T) {
 	}
 }
 
-func TestMatrixScale(t *testing.T) {
+func TestMatrix_Scale(t *testing.T) {
 	m := NewMatrix[Float32]()
 	m.Set(0, 0, Float32(2.0))
 	m.Set(1, 1, Float32(3.0))
@@ -191,7 +191,7 @@ func TestMatrixScale(t *testing.T) {
 	}
 }
 
-func TestMatrixTransformPoint(t *testing.T) {
+func TestMatrix_TransformPoint(t *testing.T) {
 	m := NewMatrix[Float32]()
 	point := NewPoint(Float32(1.0), Float32(2.0))
 
@@ -202,7 +202,7 @@ func TestMatrixTransformPoint(t *testing.T) {
 	}
 }
 
-func TestMatrixTransformVector(t *testing.T) {
+func TestMatrix_TransformVector(t *testing.T) {
 	m := NewMatrix[Float32]()
 	v3 := NewVector3(Float32(1.0), Float32(2.0), Float32(3.0))
 
@@ -213,7 +213,7 @@ func TestMatrixTransformVector(t *testing.T) {
 	}
 }
 
-func TestMatrixAnalysis(t *testing.T) {
+func TestMatrix_Analysis(t *testing.T) {
 	identity := NewMatrix[Float32]()
 
 	t.Run("IsAffine", func(t *testing.T) {
@@ -241,7 +241,7 @@ func TestMatrixAnalysis(t *testing.T) {
 	})
 }
 
-func TestMatrixDecompose(t *testing.T) {
+func TestMatrix_Decompose(t *testing.T) {
 	m := NewMatrix[Float32]()
 	decomp := m.Decompose()
 
@@ -259,7 +259,7 @@ func TestMatrixDecompose(t *testing.T) {
 	}
 }
 
-func TestMatrixCosSin(t *testing.T) {
+func TestMatrix_CosSin(t *testing.T) {
 	m := NewMatrix[Float32]()
 
 	// Test 90 degrees
@@ -275,7 +275,7 @@ func TestMatrixCosSin(t *testing.T) {
 	}
 }
 
-func TestMatrixLookAt(t *testing.T) {
+func TestMatrix_LookAt(t *testing.T) {
 	m := NewMatrix[Float32]()
 	position := NewVector3(Float32(0.0), Float32(0.0), Float32(1.0))
 	target := NewVector3(Float32(0.0), Float32(0.0), Float32(0.0))
@@ -289,7 +289,7 @@ func TestMatrixLookAt(t *testing.T) {
 	}
 }
 
-func TestMatrixOrthographic(t *testing.T) {
+func TestMatrix_Orthographic(t *testing.T) {
 	m := NewMatrix[Float32]()
 	size := NewSize(Float32(800.0), Float32(600.0))
 
@@ -301,7 +301,7 @@ func TestMatrixOrthographic(t *testing.T) {
 	}
 }
 
-func TestMatrixQuaternionRotation(t *testing.T) {
+func TestMatrix_QuaternionRotation(t *testing.T) {
 	m := NewMatrix[Float32]()
 	quat := NewQuaternion(Float32(0.0), Float32(0.0), Float32(0.0), Float32(1.0))
 
@@ -313,7 +313,7 @@ func TestMatrixQuaternionRotation(t *testing.T) {
 	}
 }
 
-func TestMatrixAxisAngleRotation(t *testing.T) {
+func TestMatrix_AxisAngleRotation(t *testing.T) {
 	m := NewMatrix[Float32]()
 	axis := NewVector3(Float32(0.0), Float32(0.0), Float32(1.0))
 	angle := Radians(0.0)
@@ -326,7 +326,7 @@ func TestMatrixAxisAngleRotation(t *testing.T) {
 	}
 }
 
-func TestMatrixEqual(t *testing.T) {
+func TestMatrix_Equal(t *testing.T) {
 	m1 := NewMatrix[Float32]()
 	m2 := NewMatrix[Float32]()
 
@@ -340,7 +340,7 @@ func TestMatrixEqual(t *testing.T) {
 	}
 }
 
-func TestMatrixChainedTransformations(t *testing.T) {
+func TestMatrix_ChainedTransformations(t *testing.T) {
 	t.Run("TranslateScaleRotate", func(t *testing.T) {
 		m := NewMatrix[Float32]()
 
@@ -408,7 +408,7 @@ func TestMatrixChainedTransformations(t *testing.T) {
 	})
 }
 
-func TestMatrixBoundaryConditions(t *testing.T) {
+func TestMatrix_BoundaryConditions(t *testing.T) {
 	t.Run("ZeroScale", func(t *testing.T) {
 		m := NewMatrix[Float32]()
 		zeroScale := NewVector3(Float32(0.0), Float32(0.0), Float32(0.0))
@@ -477,7 +477,7 @@ func TestMatrixBoundaryConditions(t *testing.T) {
 	})
 }
 
-func TestMatrixNumericalStability(t *testing.T) {
+func TestMatrix_NumericalStability(t *testing.T) {
 	t.Run("RepeatedOperations", func(t *testing.T) {
 		m := NewMatrix[Float32]()
 		result := m
@@ -526,7 +526,7 @@ func TestMatrixNumericalStability(t *testing.T) {
 	})
 }
 
-func TestMatrixRealWorldScenarios(t *testing.T) {
+func TestMatrix_RealWorldScenarios(t *testing.T) {
 	t.Run("CameraTransform", func(t *testing.T) {
 		m := NewMatrix[Float32]()
 
@@ -617,7 +617,7 @@ func TestMatrixRealWorldScenarios(t *testing.T) {
 	})
 }
 
-func TestMatrixErrorHandling(t *testing.T) {
+func TestMatrix_ErrorHandling(t *testing.T) {
 	// t.Run("InvalidIndices", func(t *testing.T) {
 	// 	m := NewMatrix[Float32]()
 
@@ -645,7 +645,7 @@ func TestMatrixErrorHandling(t *testing.T) {
 	})
 }
 
-func TestMatrixSpecialCases(t *testing.T) {
+func TestMatrix_SpecialCases(t *testing.T) {
 	t.Run("IdentityProperties", func(t *testing.T) {
 		identity := NewMatrix[Float32]()
 
