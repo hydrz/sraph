@@ -62,7 +62,7 @@ type Vector3[T Scalar] interface {
 	// Combine makes a linear combination of two vectors.
 	Combine(b Vector3[T], bScale T) Vector3[T]
 
-	// String returns a string representation of the vector. like "Vector3(1, 2, 3)".
+	// String returns a string representation of the vector. like "(1, 2, 3)".
 	String() string
 }
 
@@ -128,7 +128,7 @@ type Vector4[T Scalar] interface {
 	// Combine makes a linear combination of two vectors.
 	Combine(b Vector4[T], bScale T) Vector4[T]
 
-	// String returns a string representation of the vector. like "Vector4(1, 2, 3, 4)".
+	// String returns a string representation of the vector. like "(1, 2, 3, 4)".
 	String() string
 
 	// IsFinite returns true if all components are finite.
@@ -332,7 +332,7 @@ func (v vector3[T]) Combine(b Vector3[T], bScale T) Vector3[T] {
 
 // String implements Vector3.
 func (v vector3[T]) String() string {
-	return "Vector3(" + v.x.String() + ", " + v.y.String() + ", " + v.z.String() + ")"
+	return "(" + v.x.String() + ", " + v.y.String() + ", " + v.z.String() + ")"
 }
 
 type vector4[T Scalar] struct {
@@ -566,7 +566,7 @@ func (v vector4[T]) Combine(b Vector4[T], bScale T) Vector4[T] {
 
 // String implements Vector4.
 func (v vector4[T]) String() string {
-	return "Vector4(" + v.x.String() + ", " + v.y.String() + ", " + v.z.String() + ", " + v.w.String() + ")"
+	return "(" + v.x.String() + ", " + v.y.String() + ", " + v.z.String() + ", " + v.w.String() + ")"
 }
 
 // IsFinite implements Vector4.

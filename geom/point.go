@@ -114,7 +114,7 @@ type Point[T Scalar] interface {
 	// Formula: lerp = this + (o - this) * t, where t is the interpolation factor (0 to 1).
 	Lerp(o Point[T], t T) Point[T]
 
-	// String returns a string representation of the point. like "Point(x, y)".
+	// String returns a string representation of the point. like "(x, y)".
 	String() string
 }
 
@@ -335,5 +335,5 @@ func (p point[T]) Lerp(o Point[T], t T) Point[T] {
 
 // String implements Point.
 func (p point[T]) String() string {
-	return "Point(" + p.x.String() + ", " + p.y.String() + ")"
+	return "(" + p.x.String() + ", " + p.y.String() + ")"
 }

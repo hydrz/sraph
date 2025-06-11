@@ -69,7 +69,7 @@ type Quaternion[T Scalar] interface {
 	// where qv is the vector part of the quaternion (x, y, z) and w is the scalar part.
 	RotateVector3(vector Vector3[T]) Vector3[T]
 
-	// String returns a string representation.
+	// String returns a string representation. like "(x, y, z, w)".
 	String() string
 }
 
@@ -280,5 +280,5 @@ func (q quaternion[T]) RotateVector3(vector Vector3[T]) Vector3[T] {
 
 // String implements Quaternion.
 func (q quaternion[T]) String() string {
-	return fmt.Sprintf("Quaternion(%v, %v, %v, %v)", q.x, q.y, q.z, q.w)
+	return fmt.Sprintf("(%v, %v, %v, %v)", q.x, q.y, q.z, q.w)
 }

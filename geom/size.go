@@ -1,7 +1,6 @@
 package geom
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -86,7 +85,7 @@ type Size[T Scalar] interface {
 	// Used in texture mapping to determine the number of mipmap levels for an image.
 	MipCount() int
 
-	// String returns a string representation of the size. like "Size(width, height)".
+	// String returns a string representation of the size. like "(width, height)".
 	String() string
 }
 
@@ -302,5 +301,5 @@ func (s size[T]) MipCount() int {
 
 // String implements Size.
 func (s size[T]) String() string {
-	return fmt.Sprintf("Size(%v, %v)", s.width, s.height)
+	return "(" + s.width.String() + ", " + s.height.String() + ")"
 }
