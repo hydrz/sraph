@@ -4,11 +4,14 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
+	"go/format"
 	"io"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -28,6 +31,11 @@ import (
 
 //go:embed webgpu.tmpl
 var tmpl string
+
+const (
+	defaultSchemaURL = "https://raw.githubusercontent.com/webgpu-native/webgpu-headers/refs/heads/main/schema.json"
+	defaultYamlURL   = "https://raw.githubusercontent.com/webgpu-native/webgpu-headers/refs/heads/main/webgpu.yml"
+)
 
 // Yml structure and related types
 type Yml struct {
@@ -132,10 +140,10 @@ type Object struct {
 var arrayTypeRegexp = regexp.MustCompile(`array<([a-zA-Z0-9._]+)>`)
 
 var (
-	schemaPath  string
-	headerPaths StringListFlag
-	yamlPaths   StringListFlag
-	extPrefix   bool
+	schemaPath string
+	goPaths    StringListFlag
+	yamlPaths  StringListFlag
+	extPrefix  bool
 )
 
 // StringListFlag implementation
@@ -156,12 +164,12 @@ const (
 
 // Generator structure
 type Generator struct {
-	ExtPrefix  string
-	HeaderName string
+	ExtPrefix string
+	GoName    string
 	*Yml
 }
 
-// Utility functions
+// Utility functions - only keep those used in templates
 func Comment(in string, mode CommentType, indent int, newline bool) string {
 	if in == "" || strings.TrimSpace(in) == "TODO" {
 		return ""
@@ -207,10 +215,6 @@ func Comment(in string, mode CommentType, indent int, newline bool) string {
 	return out.String()
 }
 
-func ConstantCase(v string) string {
-	return strings.ToUpper(v)
-}
-
 func PascalCase(s string) string {
 	var out strings.Builder
 	out.Grow(len(s))
@@ -249,37 +253,11 @@ func CamelCase(s string) string {
 	return out.String()
 }
 
-func Singularize(s string) string {
-	switch s {
-	case "entries":
-		return "entry"
-	default:
-		return strings.TrimSuffix(s, "s")
-	}
-}
-
-func TrimTypePrefix(s string) string {
-	switch {
-	case strings.HasPrefix(s, "enum."):
-		return strings.TrimPrefix(s, "enum.")
-	case strings.HasPrefix(s, "bitflag."):
-		return strings.TrimPrefix(s, "bitflag.")
-	case strings.HasPrefix(s, "struct."):
-		return strings.TrimPrefix(s, "struct.")
-	case strings.HasPrefix(s, "callback."):
-		return strings.TrimPrefix(s, "callback.")
-	case strings.HasPrefix(s, "object."):
-		return strings.TrimPrefix(s, "object.")
-	default:
-		return ""
-	}
-}
-
 func UpperConcatCase(s string) string {
 	return strings.ToUpper(PascalCase(s))
 }
 
-// Struct sorting function
+// Struct sorting function - needed for SortAndTransform
 func SortStructs(structs []Struct) {
 	type node struct {
 		visited    bool
@@ -357,7 +335,7 @@ func SortStructs(structs []Struct) {
 	})
 }
 
-// Validation functions
+// Validation functions - needed for main
 func ValidateYamls(schemaPath string, yamlPaths []string) error {
 	// Validation through json schema
 	for _, yamlPath := range yamlPaths {
@@ -486,7 +464,7 @@ func mergeAndValidateDuplicates(yamlPaths []string) (errs error) {
 	return
 }
 
-// Sorting and transformation functions
+// Sorting and transformation functions - needed for main
 func SortAndTransform(yml *Yml) {
 	// Sort structs
 	SortStructs(yml.Structs)
@@ -574,212 +552,50 @@ func (g *Generator) Gen(dst io.Writer) error {
 		New("").
 		Funcs(template.FuncMap{
 			"SComment":  func(v string, indent int) string { return Comment(v, CommentTypeSingleLine, indent, true) },
-			"MComment":  func(v string, indent int) string { return Comment(v, CommentTypeMultiLine, indent, true) },
 			"SCommentN": func(v string, indent int) string { return Comment(v, CommentTypeSingleLine, indent, false) },
-			"MCommentN": func(v string, indent int) string { return Comment(v, CommentTypeMultiLine, indent, false) },
-			"MCommentMainPage": func(v string, indent int) string {
-				if v == "" || strings.TrimSpace(v) == "TODO" {
-					return ""
-				}
-				return Comment("\\mainpage\n\n"+strings.TrimSpace(v), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentEnumValue": func(v string, indent int, e Enum, entryIndex int) string {
-				var s string
-				v = strings.TrimSpace(v)
-				if v != "" && v != "TODO" {
-					s += v
-				}
-				value, _ := g.EnumValue32(e, entryIndex)
-				if value == 0 {
-					s = "`0`. " + s
-				}
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentBitflagType": func(v string, indent int) string {
-				var s string
-				v = strings.TrimSpace(v)
-				if v != "" && v != "TODO" {
-					s += v
-				}
-				s += "\n\nFor reserved non-standard bitflag values, see @ref BitflagRegistry."
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentBitflagValue": func(v string, indent int, b Bitflag, entryIndex int) string {
-				value, _ := g.BitflagValue(b, entryIndex, true)
-				s := value + "\n"
-				v = strings.TrimSpace(v)
-				if v != "" && v != "TODO" {
-					s += v
-				}
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentFunction": func(fn *Function, indent int) string {
-				var s string
-				{
-					var funcDoc = strings.TrimSpace(fn.Doc)
-					if funcDoc != "" && funcDoc != "TODO" {
-						s += funcDoc
-					}
-				}
-				for _, arg := range fn.Args {
-					argDoc := strings.TrimSpace(arg.Doc)
-					var sArg string
-					if argDoc != "" && argDoc != "TODO" {
-						sArg = argDoc
-					}
-
-					if arg.PassedWithOwnership != nil {
-						if *arg.PassedWithOwnership {
-							sArg += "\nThis parameter is @ref ReturnedWithOwnership."
-						} else {
-							panic("invalid")
-						}
-					}
-
-					sArg = strings.TrimSpace(sArg)
-					if sArg != "" {
-						s += "\n\n@param " + CamelCase(arg.Name) + "\n" + sArg
-					}
-				}
-				if fn.Returns != nil {
-					returnsDoc := strings.TrimSpace(fn.Returns.Doc)
-					var sRet string
-					if returnsDoc != "" && returnsDoc != "TODO" {
-						sRet = returnsDoc
-					}
-
-					if fn.Returns.PassedWithOwnership != nil {
-						if *fn.Returns.PassedWithOwnership {
-							sRet += "\nThis value is @ref ReturnedWithOwnership."
-						} else {
-							panic("invalid")
-						}
-					}
-
-					sRet = strings.TrimSpace(sRet)
-					if sRet != "" {
-						s += "\n\n@returns\n" + sRet
-					}
-				}
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentCallback": func(cb *Callback, indent int) string {
-				var s string
-				{
-					var funcDoc = strings.TrimSpace(cb.Doc)
-					if funcDoc != "" && funcDoc != "TODO" {
-						s += funcDoc
-					}
-					s += "\n\nSee also @ref CallbackError."
-				}
-				for _, arg := range cb.Args {
-					var argDoc = strings.TrimSpace(arg.Doc)
-					var sArg string
-					if argDoc != "" && argDoc != "TODO" {
-						sArg += argDoc
-					}
-
-					if arg.PassedWithOwnership != nil {
-						if *arg.PassedWithOwnership {
-							sArg += "\nThis parameter is @ref PassedWithOwnership."
-						} else {
-							sArg += "\nThis parameter is @ref PassedWithoutOwnership."
-						}
-					}
-
-					sArg = strings.TrimSpace(sArg)
-					if sArg != "" {
-						s += "\n\n@param " + CamelCase(arg.Name) + "\n" + sArg
-					}
-				}
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentMember": func(member *ParameterType, indent int) string {
-				var s string
-
-				var srcDoc = strings.TrimSpace(member.Doc)
-				if srcDoc != "" && srcDoc != "TODO" {
-					s += srcDoc
-				}
-
-				switch member.Type {
-				case "nullable_string":
-					s += "\n\nThis is a \\ref NullableInputString."
-				case "string_with_default_empty":
-					s += "\n\nThis is a \\ref NonNullInputString."
-				case "out_string":
-					s += "\n\nThis is an \\ref OutputString."
-				}
-
-				s += "\n\nThe `INIT` macro sets this to " + g.DefaultValue(*member, true /* isDocString */) + "."
-
-				if member.PassedWithOwnership != nil {
-					panic("invalid")
-				}
-
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentStruct": func(st *Struct, indent int) string {
-				var s string
-
-				var srcDoc = strings.TrimSpace(st.Doc)
-				if srcDoc != "" && srcDoc != "TODO" {
-					s += srcDoc
-				}
-
-				if st.Type == "extensible_callback_arg" {
-					s += "\n\nThis is an @ref ImplementationAllocatedStructChain root.\nArbitrary chains must be handled gracefully by the application!"
-				}
-
-				s += "\n\nDefault values can be set using @ref WGPU_" + g.ConstantCaseName(st.Base) + "_INIT as initializer."
-
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"MCommentProcPointer": func(name string, indent int) string {
-				var s string
-				s += "Proc pointer type for @ref wgpu" + name + ":\n"
-				s += "> @copydoc wgpu" + name
-				return Comment(strings.TrimSpace(s), CommentTypeMultiLine, indent, true)
-			},
-			"ConstantCase":     ConstantCase,
-			"PascalCase":       PascalCase,
-			"CamelCase":        CamelCase,
-			"ConstantCaseName": g.ConstantCaseName,
-			"PascalCaseName":   g.PascalCaseName,
-			"CEnumName":        g.CEnumName,
-			"CMethodName":      g.CMethodName,
-			"CType":            g.CType,
-			"CValue":           g.CValue,
-			"EnumValue32":      g.EnumValue32,
-			"BitflagValue": func(b Bitflag, entryIndex int) (string, error) {
-				return g.BitflagValue(b, entryIndex, false)
-			},
 			"IsArray": func(typ string) bool {
 				return arrayTypeRegexp.Match([]byte(typ))
 			},
-			"ArrayType": func(typ string, pointer PointerType) string {
-				matches := arrayTypeRegexp.FindStringSubmatch(typ)
-				if len(matches) == 2 {
-					return g.CType(matches[1], pointer)
-				}
-				return ""
+			"IsLast": func(i int, s any) bool { return i == reflect.ValueOf(s).Len()-1 },
+			// Go template functions - only the ones actually used
+			"GoConstantName":      g.GoConstantName,
+			"GoTypeName":          g.GoTypeName,
+			"GoEnumName":          g.GoEnumName,
+			"GoValue":             g.GoValue,
+			"GoType":              g.GoType,
+			"GoFunctionName":      g.GoFunctionName,
+			"GoParameterName":     g.GoParameterName,
+			"GoFunctionArgs":      g.GoFunctionArgs,
+			"GoFunctionReturns":   g.GoFunctionReturns,
+			"GoStructMember":      g.GoStructMember,
+			"GoStructMemberArray": g.GoStructMemberArray,
+			"EnumValue32":         g.EnumValue32,
+			"BitflagValue": func(b Bitflag, entryIndex int) (string, error) {
+				return g.BitflagValue(b, entryIndex, false)
 			},
-			"Singularize":             Singularize,
-			"IsLast":                  func(i int, s any) bool { return i == reflect.ValueOf(s).Len()-1 },
-			"FunctionReturns":         g.FunctionReturns,
-			"FunctionArgs":            g.FunctionArgs,
-			"CallbackArgs":            g.CallbackArgs,
-			"StructMember":            g.StructMember,
-			"StructMemberArrayCount":  g.StructMemberArrayCount,
-			"StructMemberArrayData":   g.StructMemberArrayData,
-			"StructMemberInitializer": g.StructMemberInitializer,
 		})
 	t, err := t.Parse(tmpl)
 	if err != nil {
 		return fmt.Errorf("GenCHeader: failed to parse template: %w", err)
 	}
-	if err := t.Execute(dst, g); err != nil {
+
+	// Render template to buffer
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, g); err != nil {
 		return fmt.Errorf("GenCHeader: failed to execute template: %w", err)
+	}
+
+	// Format Go code
+	formatted, err := format.Source(buf.Bytes())
+	if err != nil {
+		// If formatting fails, write unformatted code for easier debugging
+		_, _ = dst.Write(buf.Bytes())
+		return fmt.Errorf("GenCHeader: gofmt failed: %w", err)
+	}
+
+	_, err = dst.Write(formatted)
+	if err != nil {
+		return fmt.Errorf("GenCHeader: failed to write formatted code: %w", err)
 	}
 	return nil
 }
@@ -839,211 +655,22 @@ func (g *Generator) FindBaseType(typ string) Base {
 	}
 }
 
-func (g *Generator) ConstantCaseName(b Base) string {
-	if b.Extended {
-		return ConstantCase(b.Name)
-	}
-
-	prefix := g.PrefixForNamespace(b.Namespace)
-	switch prefix {
+func (g *Generator) PrefixForNamespace(namespace string) string {
+	switch namespace {
 	case "":
-		return ConstantCase(b.Name)
+		return g.ExtPrefix
+	case "webgpu":
+		return ""
 	default:
-		return ConstantCase(prefix + "_" + b.Name)
+		return namespace
 	}
 }
 
-func (g *Generator) PascalCaseName(b Base) string {
-	if b.Extended {
-		return PascalCase(b.Name)
-	}
-
-	prefix := g.PrefixForNamespace(b.Namespace)
-	switch prefix {
-	case "":
-		return PascalCase(b.Name)
-	default:
-		return PascalCase(prefix + "_" + b.Name)
-	}
-}
-
-func (g *Generator) CEnumName(typ Base, entry Base) string {
-	if !typ.Extended {
-		return g.CType(typ, "") + "_" + PascalCase(entry.Name)
-	} else {
-		return g.CType(typ, "") + "_" + g.PascalCaseName(entry)
-	}
-}
-
-func (g *Generator) CMethodName(o Object, m Function) string {
-	if !o.Extended {
-		return g.PascalCaseName(o.Base) + PascalCase(m.Name)
-	} else {
-		return PascalCase(o.Name) + g.PascalCaseName(m.Base)
-	}
-}
-
-func (g *Generator) CValue(s string) (string, error) {
-	switch s {
-	case "usize_max":
-		return "SIZE_MAX", nil
-	case "uint32_max":
-		return "UINT32_MAX", nil
-	case "uint64_max":
-		return "UINT64_MAX", nil
-	case "nan":
-		return "NAN", nil
-	default:
-		var num string
-		var base int
-		if strings.HasPrefix(s, "0x") {
-			base = 16
-			num = strings.TrimPrefix(s, "0x")
-		} else {
-			base = 10
-			num = s
-		}
-		v, err := strconv.ParseUint(num, base, 64)
-		if err != nil {
-			return "", fmt.Errorf("CValue: failed to parse \"%s\": %w", s, err)
-		}
-		var suffix string
-		if v <= math.MaxUint32 {
-			suffix = "UL"
-		} else {
-			suffix = "ULL"
-		}
-		return "0x" + strconv.FormatUint(v, 16) + suffix, nil
-	}
-}
-
-func (g *Generator) CType(typ any, pointerType PointerType) string {
-	appendModifiers := func(s string, pointerType PointerType) string {
-		var sb strings.Builder
-		sb.WriteString(s)
-		switch pointerType {
-		case PointerTypeImmutable:
-			sb.WriteString(" const *")
-		case PointerTypeMutable:
-			sb.WriteString(" *")
-		}
-		return sb.String()
-	}
-
-	var ctype string
-	switch t := typ.(type) {
-	case string:
-		{
-			switch t {
-			case "bool":
-				ctype = "WGPUBool"
-			case "nullable_string", "string_with_default_empty", "out_string":
-				ctype = "WGPUStringView"
-			case "uint16":
-				ctype = "uint16_t"
-			case "uint32":
-				ctype = "uint32_t"
-			case "uint64":
-				ctype = "uint64_t"
-			case "usize":
-				ctype = "size_t"
-			case "int16":
-				ctype = "int16_t"
-			case "int32":
-				ctype = "int32_t"
-			case "float32", "nullable_float32":
-				ctype = "float"
-			case "float64", "float64_supertype":
-				ctype = "double"
-			case "c_void":
-				ctype = "void"
-			default:
-				// Handle type names prefixed with the type category.
-				return g.CType(g.FindBaseType(t), pointerType)
-			}
-		}
-	case Base:
-		{
-			ctype = "WGPU" + g.PascalCaseName(t)
-		}
-	default:
-		panic("Unknown input for type")
-	}
-
-	return appendModifiers(ctype, pointerType)
-}
-
-func (g *Generator) FunctionReturns(f Function) string {
-	if f.Callback != nil {
-		return "WGPUFuture"
-	}
-	if f.Returns != nil {
-		sb := &strings.Builder{}
-		if f.Returns.Optional {
-			sb.WriteString("WGPU_NULLABLE ")
-		}
-		sb.WriteString(g.CType(f.Returns.Type, f.Returns.Pointer))
-		return sb.String()
-	}
-	return "void"
-}
-
-func (g *Generator) FunctionArgs(f Function, o *Object) string {
-	sb := &strings.Builder{}
-	if o != nil {
-		if len(f.Args) > 0 {
-			fmt.Fprintf(sb, "%s %s, ", g.CType(o.Base, ""), CamelCase(o.Name))
-		} else {
-			fmt.Fprintf(sb, "%s %s", g.CType(o.Base, ""), CamelCase(o.Name))
-		}
-	}
-	for i, arg := range f.Args {
-		if arg.Optional {
-			sb.WriteString("WGPU_NULLABLE ")
-		}
-		matches := arrayTypeRegexp.FindStringSubmatch(arg.Type)
-		if len(matches) == 2 {
-			fmt.Fprintf(sb, "size_t %sCount, ", CamelCase(Singularize(arg.Name)))
-			fmt.Fprintf(sb, "%s %s", g.CType(matches[1], arg.Pointer), CamelCase(arg.Name))
-		} else {
-			fmt.Fprintf(sb, "%s %s", g.CType(arg.Type, arg.Pointer), CamelCase(arg.Name))
-		}
-		if i != len(f.Args)-1 {
-			sb.WriteString(", ")
-		}
-	}
-	if f.Callback != nil {
-		fmt.Fprintf(sb, ", %sCallbackInfo callbackInfo", g.CType(*f.Callback, ""))
-	}
-	return sb.String()
-}
-
-func (g *Generator) CallbackArgs(f Callback) string {
-	sb := &strings.Builder{}
-	for _, arg := range f.Args {
-		if arg.Optional {
-			sb.WriteString("WGPU_NULLABLE ")
-		}
-		var structPrefix string
-		if strings.HasPrefix(arg.Type, "struct.") {
-			structPrefix = "struct "
-		}
-		matches := arrayTypeRegexp.FindStringSubmatch(arg.Type)
-		if len(matches) == 2 {
-			fmt.Fprintf(sb, "size_t %sCount, ", CamelCase(Singularize(arg.Name)))
-			fmt.Fprintf(sb, "%s%s %s, ", structPrefix, g.CType(matches[1], arg.Pointer), CamelCase(arg.Name))
-		} else {
-			fmt.Fprintf(sb, "%s%s %s, ", structPrefix, g.CType(arg.Type, arg.Pointer), CamelCase(arg.Name))
-		}
-	}
-	sb.WriteString("WGPU_NULLABLE void* userdata1, WGPU_NULLABLE void* userdata2")
-	return sb.String()
-}
-
-func (g *Generator) EnumValue16(e Enum, entryIndex int) (uint16, error) {
+func (g *Generator) EnumValue32(e Enum, entryIndex int) (uint32, error) {
 	entry := e.Entries[entryIndex]
+	var value16 uint16
 	if entry.Value == "" {
-		return uint16(entryIndex), nil
+		value16 = uint16(entryIndex)
 	} else {
 		var num string
 		var base int
@@ -1054,18 +681,11 @@ func (g *Generator) EnumValue16(e Enum, entryIndex int) (uint16, error) {
 			base = 10
 			num = entry.Value
 		}
-		value, err := strconv.ParseUint(num, base, 16)
+		v, err := strconv.ParseUint(num, base, 16)
 		if err != nil {
 			return 0, err
 		}
-		return uint16(value), nil
-	}
-}
-
-func (g *Generator) EnumValue32(e Enum, entryIndex int) (uint32, error) {
-	value16, err := g.EnumValue16(e, entryIndex)
-	if err != nil {
-		return 0, err
+		value16 = uint16(v)
 	}
 	return uint32(g.EnumPrefix)<<16 | uint32(value16), nil
 }
@@ -1092,248 +712,234 @@ func (g *Generator) BitflagValue(b Bitflag, entryIndex int, isDocString bool) (s
 	entry := b.Entries[entryIndex]
 
 	var value uint64
-	var entryComment string
 	if len(entry.ValueCombination) > 0 {
 		if entry.Value != "" {
 			return "", fmt.Errorf("BitflagValue: found conflicting 'value' and 'value_combination' in '%s'", b.Name)
 		}
-		entryComment += "`"
-		for valueIndex, v := range entry.ValueCombination {
+		for _, v := range entry.ValueCombination {
 			// find the value by searching in b, bitwise-OR it into the result
 			for searchIndex, search := range b.Entries {
 				if search.Name == v {
 					searchValue, err := bitflagEntryValue(search, searchIndex)
 					if err != nil {
-						return "", nil
+						return "", err
 					}
 					value |= searchValue
 					break
 				}
 			}
-			// construct comment
-			idx := slices.IndexFunc(b.Entries, func(e BitflagEntry) bool { return e.Name == v })
-			if idx != -1 {
-				entryComment += g.PascalCaseName(b.Entries[idx].Base)
-			} else {
-				entryComment += PascalCase(v)
-			}
-			if valueIndex != len(entry.ValueCombination)-1 {
-				entryComment += " | "
-			}
 		}
-		entryComment += "`."
 	} else {
 		var err error
 		value, err = bitflagEntryValue(entry, entryIndex)
 		if err != nil {
-			return "", nil
-		}
-		if value == 0 {
-			entryComment = "`0`."
+			return "", err
 		}
 	}
-	if isDocString {
-		return entryComment, nil
-	} else {
-		return fmt.Sprintf("0x%.16X", value), nil
-	}
+	return fmt.Sprintf("0x%.16X", value), nil
 }
 
-func (g *Generator) PrefixForNamespace(namespace string) string {
-	switch namespace {
-	case "":
-		return g.ExtPrefix
-	case "webgpu":
-		return ""
+// Go-specific generator methods - only the ones used in templates
+func (g *Generator) GoConstantName(b Base) string {
+	return PascalCase(b.Name)
+}
+
+func (g *Generator) GoTypeName(b Base) string {
+	return PascalCase(b.Name)
+}
+
+func (g *Generator) GoEnumName(typ Base, entry Base) string {
+	return PascalCase(typ.Name) + PascalCase(entry.Name)
+}
+
+func (g *Generator) GoValue(s string) string {
+	switch s {
+	case "usize_max":
+		return "^uintptr(0)"
+	case "uint32_max":
+		return "^uint32(0)"
+	case "uint64_max":
+		return "^uint64(0)"
+	case "nan":
+		// Use a variable instead of function call in constant declaration
+		return "math.NaN()"
 	default:
-		return namespace
+		return s
 	}
 }
 
-func (g *Generator) StructMember(s Struct, memberIndex int) (string, error) {
+func (g *Generator) GoType(typ string) string {
+	switch typ {
+	case "bool":
+		return "bool"
+	case "uint16":
+		return "uint16"
+	case "uint32":
+		return "uint32"
+	case "uint64":
+		return "uint64"
+	case "usize":
+		return "uintptr"
+	case "int16":
+		return "int16"
+	case "int32":
+		return "int32"
+	case "float32", "nullable_float32":
+		return "float32"
+	case "float64", "float64_supertype":
+		return "float64"
+	case "nullable_string", "string_with_default_empty", "out_string":
+		return "string"
+	case "c_void":
+		return "unsafe.Pointer"
+	default:
+		// Handle type names prefixed with the type category
+		return g.GoTypeName(g.FindBaseType(typ))
+	}
+}
+
+func (g *Generator) GoFunctionName(b Base) string {
+	return PascalCase(b.Name)
+}
+
+func (g *Generator) GoParameterName(name string) string {
+	// Convert to camelCase first
+	camelName := CamelCase(name)
+
+	// Handle Go keywords by appending underscore or using alternative names
+	switch camelName {
+	case "type":
+		return "errorType"
+	case "func":
+		return "function"
+	case "var":
+		return "variable"
+	case "const":
+		return "constant"
+	case "struct":
+		return "structure"
+	case "interface":
+		return "iface"
+	case "package":
+		return "pkg"
+	case "import":
+		return "imp"
+	case "return":
+		return "ret"
+	case "if":
+		return "condition"
+	case "else":
+		return "alternative"
+	case "for":
+		return "loop"
+	case "range":
+		return "rng"
+	case "switch":
+		return "switchValue"
+	case "case":
+		return "caseValue"
+	case "default":
+		return "defaultValue"
+	case "go":
+		return "routine"
+	case "defer":
+		return "deferred"
+	case "select":
+		return "selector"
+	case "chan":
+		return "channel"
+	case "map":
+		return "mapping"
+	default:
+		return camelName
+	}
+}
+
+func (g *Generator) GoFunctionArgs(f Function, o *Object) string {
+	sb := &strings.Builder{}
+	// Handle context parameter for Go
+	if sb.Len() > 0 {
+		sb.WriteString(", ")
+	}
+	sb.WriteString("ctx context.Context")
+
+	for _, arg := range f.Args {
+		sb.WriteString(", ")
+		matches := arrayTypeRegexp.FindStringSubmatch(arg.Type)
+		if len(matches) == 2 {
+			fmt.Fprintf(sb, "%s []%s", g.GoParameterName(arg.Name), g.GoType(matches[1]))
+		} else {
+			fmt.Fprintf(sb, "%s %s", g.GoParameterName(arg.Name), g.GoType(arg.Type))
+		}
+	}
+	return sb.String()
+}
+
+func (g *Generator) GoFunctionReturns(f Function) string {
+	if f.Callback != nil {
+		return "Future"
+	}
+	if f.Returns != nil {
+		return fmt.Sprintf("(%s, error)", g.GoType(f.Returns.Type))
+	}
+	return "error"
+}
+
+func (g *Generator) GoStructMember(s Struct, memberIndex int) string {
 	member := s.Members[memberIndex]
 
 	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
 	if len(matches) == 2 {
-		panic("StructMember used on array type")
+		panic("GoStructMember used on array type")
 	}
 
-	sb := &strings.Builder{}
-	if member.Optional {
-		sb.WriteString("WGPU_NULLABLE ")
-	}
+	// Handle callback types
 	if strings.HasPrefix(member.Type, "callback.") {
-		fmt.Fprintf(sb, "%sCallbackInfo %s;", g.CType(member.Type, ""), CamelCase(member.Name))
-	} else {
-		fmt.Fprintf(sb, "%s %s;", g.CType(member.Type, member.Pointer), CamelCase(member.Name))
+		return fmt.Sprintf("%s %sCallbackInfo", PascalCase(member.Name), g.GoTypeName(g.FindBaseType(member.Type)))
 	}
-	return sb.String(), nil
+
+	return fmt.Sprintf("%s %s", PascalCase(member.Name), g.GoType(member.Type))
 }
 
-func (g *Generator) StructMemberArrayCount(s Struct, memberIndex int) (string, error) {
+func (g *Generator) GoStructMemberArray(s Struct, memberIndex int) string {
 	member := s.Members[memberIndex]
 
 	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
 	if len(matches) != 2 {
-		panic("StructMemberArrayCount used on non-array")
+		panic("GoStructMemberArray used on non-array")
 	}
 
-	return fmt.Sprintf("size_t %sCount;", CamelCase(Singularize(member.Name))), nil
+	return fmt.Sprintf("%s []%s", PascalCase(member.Name), g.GoType(matches[1]))
 }
 
-func (g *Generator) StructMemberArrayData(s Struct, memberIndex int) (string, error) {
-	member := s.Members[memberIndex]
-
-	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
-	if len(matches) != 2 {
-		panic("StructMemberArrayCount used on non-array")
+func fetchFile(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch %s: %w", url, err)
 	}
-
-	sb := &strings.Builder{}
-	if member.Optional {
-		sb.WriteString("WGPU_NULLABLE ")
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch %s: status %s", url, resp.Status)
 	}
-	fmt.Fprintf(sb, "%s %s;", g.CType(matches[1], member.Pointer), CamelCase(member.Name))
-	return sb.String(), nil
-}
-
-func (g *Generator) StructMemberInitializer(s Struct, memberIndex int) (string, error) {
-	member := s.Members[memberIndex]
-	sb := &strings.Builder{}
-	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
-	if len(matches) == 2 {
-		fmt.Fprintf(sb, "/*.%sCount=*/0 _wgpu_COMMA \\\n", CamelCase(Singularize(member.Name)))
-		fmt.Fprintf(sb, "    /*.%s=*/NULL _wgpu_COMMA \\", CamelCase(member.Name))
-	} else {
-		fmt.Fprintf(sb, "/*.%s=*/%s _wgpu_COMMA \\", CamelCase(member.Name), g.DefaultValue(member, false /* isDocString */))
-	}
-	return sb.String(), nil
-}
-
-func (g *Generator) DefaultValue(member ParameterType, isDocString bool) string {
-	ref := func(s string) string {
-		if isDocString {
-			return "@ref " + s
-		} else {
-			return s
-		}
-	}
-	literal := func(s string) string {
-		if isDocString {
-			return "`" + s + "`"
-		} else {
-			return s
-		}
-	}
-
-	switch {
-	case member.Pointer != "":
-		if member.Default != nil {
-			panic("pointer type should not have a default")
-		}
-		return literal("NULL")
-
-	// Cases that may have member.Default
-	case strings.HasPrefix(member.Type, "enum."):
-		if member.Default == nil {
-			if member.Type == "enum.optional_bool" {
-				// This Undefined is a special one that is not the zero-value, so that
-				// a stdbool.h bool cast correctly to WGPUOptionalBool; this means we
-				// must explicitly initialize it
-				return ref("WGPUOptionalBool_Undefined")
-			} else if isDocString {
-				return "(@ref " + g.CType(member.Type, "") + ")0"
-			} else {
-				return "_wgpu_ENUM_ZERO_INIT(" + g.CType(member.Type, "") + ")"
-			}
-		} else {
-			return ref(g.CType(member.Type, "") + "_" + PascalCase(*member.Default))
-		}
-	case strings.HasPrefix(member.Type, "bitflag."):
-		if member.Default == nil {
-			return ref(g.CType(member.Type, "") + "_None")
-		} else {
-			return ref(g.CType(member.Type, "") + "_" + PascalCase(*member.Default))
-		}
-	case member.Type == "uint16", member.Type == "uint32", member.Type == "uint64", member.Type == "usize", member.Type == "int32":
-		if member.Default == nil {
-			return literal("0")
-		} else if strings.HasPrefix(*member.Default, "constant.") {
-			return ref("WGPU_" + g.ConstantCaseName(g.FindBaseType(*member.Default)))
-		} else {
-			return literal(*member.Default)
-		}
-	case member.Type == "float32" || member.Type == "nullable_float32":
-		if member.Default == nil {
-			return literal("0.f")
-		} else if strings.HasPrefix(*member.Default, "constant.") {
-			return ref("WGPU_" + g.ConstantCaseName(g.FindBaseType(*member.Default)))
-		} else if strings.Contains(*member.Default, ".") {
-			return literal(*member.Default + "f")
-		} else {
-			return literal(*member.Default + ".f")
-		}
-	case member.Type == "float64" || member.Type == "float64_supertype":
-		if member.Default == nil {
-			return literal("0.")
-		} else if strings.HasPrefix(*member.Default, "constant.") {
-			return ref("WGPU_" + g.ConstantCaseName(g.FindBaseType(*member.Default)))
-		} else {
-			return literal(*member.Default)
-		}
-	case member.Type == "bool":
-		if member.Default == nil {
-			return literal("WGPU_FALSE")
-		} else if strings.HasPrefix(*member.Default, "constant.") {
-			return ref("WGPU_" + g.ConstantCaseName(g.FindBaseType(*member.Default)))
-		} else if *member.Default == "true" {
-			return literal("WGPU_TRUE")
-		} else if *member.Default == "false" {
-			return literal("WGPU_FALSE")
-		} else {
-			return *member.Default
-		}
-	case strings.HasPrefix(member.Type, "struct."):
-		if member.Optional {
-			return literal("NULL")
-		} else if member.Default == nil {
-			return ref("WGPU_" + g.ConstantCaseName(g.FindBaseType(member.Type)) + "_INIT")
-		} else if *member.Default == "zero" {
-			if isDocString {
-				return "zero (which sets the entry to `BindingNotUsed`)"
-			} else {
-				return literal("_wgpu_STRUCT_ZERO_INIT")
-			}
-		} else {
-			panic("unknown default for struct type")
-		}
-	case member.Default != nil:
-		panic(fmt.Errorf("type %s should not have a default", member.Type))
-
-	// Cases that should not have member.Default
-	case strings.HasPrefix(member.Type, "callback."):
-		return ref("WGPU_" + g.ConstantCaseName(g.FindBaseType(member.Type)) + "_CALLBACK_INFO_INIT")
-	case strings.HasPrefix(member.Type, "object."):
-		return literal("NULL")
-	case strings.HasPrefix(member.Type, "array<"):
-		return literal("NULL")
-	case member.Type == "out_string", member.Type == "string_with_default_empty", member.Type == "nullable_string":
-		return ref("WGPU_STRING_VIEW_INIT")
-	case member.Type == "c_void":
-		return literal("NULL")
-	default:
-		panic("invalid prefix: " + member.Type + " in member " + member.Name)
-	}
+	return io.ReadAll(resp.Body)
 }
 
 // Main function
 func main() {
-	flag.StringVar(&schemaPath, "schema", "", "path of the json schema")
-	flag.Var(&yamlPaths, "yaml", "path of the yaml spec")
-	flag.Var(&headerPaths, "header", "output path of the header")
+	flag.StringVar(&schemaPath, "schema", "", "path or URL of the json schema")
+	flag.Var(&yamlPaths, "yaml", "path or URL of the yaml spec")
+	flag.Var(&goPaths, "go", "output path of the go")
 	flag.BoolVar(&extPrefix, "extprefix", true, "append prefix to extension identifiers")
 	flag.Parse()
-	if schemaPath == "" || len(headerPaths) == 0 || len(yamlPaths) == 0 || len(headerPaths) != len(yamlPaths) {
+
+	// Use default URLs if not provided
+	if schemaPath == "" {
+		schemaPath = defaultSchemaURL
+	}
+	if len(yamlPaths) == 0 {
+		yamlPaths = append(yamlPaths, defaultYamlURL)
+	}
+	if len(goPaths) == 0 || len(goPaths) != len(yamlPaths) {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -1343,32 +949,84 @@ func main() {
 		panic(`"webgpu.yml" must be the first sequence in the order`)
 	}
 
-	// Validate the yaml files (jsonschema, duplications)
-	if err := ValidateYamls(schemaPath, yamlPaths); err != nil {
-		panic(err)
-	}
-
-	// Generate the header files
-	for i, yamlPath := range yamlPaths {
-		headerPath := headerPaths[i]
-		headerFileName := filepath.Base(headerPath)
-		headerFileNameSplit := strings.Split(headerFileName, ".")
-		if len(headerFileNameSplit) != 2 {
-			panic("got invalid header file name: " + headerFileName)
-		}
-
-		src, err := os.ReadFile(yamlPath)
+	// Download schema if it's a URL
+	var schemaData []byte
+	if strings.HasPrefix(schemaPath, "http://") || strings.HasPrefix(schemaPath, "https://") {
+		var err error
+		schemaData, err = fetchFile(schemaPath)
 		if err != nil {
 			panic(err)
 		}
+		// Save to a temporary file for jsonschema.MustCompile
+		tmpFile, err := os.CreateTemp("", "schema-*.json")
+		if err != nil {
+			panic(err)
+		}
+		defer os.Remove(tmpFile.Name())
+		if _, err := tmpFile.Write(schemaData); err != nil {
+			panic(err)
+		}
+		if err := tmpFile.Close(); err != nil {
+			panic(err)
+		}
+		schemaPath = tmpFile.Name()
+	}
 
-		dst, err := os.Create(headerPath)
+	// Download yamls if any are URLs
+	yamlDatas := make([][]byte, len(yamlPaths))
+	for i, yamlPath := range yamlPaths {
+		if strings.HasPrefix(yamlPath, "http://") || strings.HasPrefix(yamlPath, "https://") {
+			data, err := fetchFile(yamlPath)
+			if err != nil {
+				panic(err)
+			}
+			yamlDatas[i] = data
+		} else {
+			data, err := os.ReadFile(yamlPath)
+			if err != nil {
+				panic(err)
+			}
+			yamlDatas[i] = data
+		}
+	}
+
+	// Validate the yaml files (jsonschema, duplications)
+	// Save yamls to temp files for validation and further processing
+	tmpYamlPaths := make([]string, len(yamlDatas))
+	for i, data := range yamlDatas {
+		tmpFile, err := os.CreateTemp("", "yaml-*.yml")
+		if err != nil {
+			panic(err)
+		}
+		defer os.Remove(tmpFile.Name())
+		if _, err := tmpFile.Write(data); err != nil {
+			panic(err)
+		}
+		if err := tmpFile.Close(); err != nil {
+			panic(err)
+		}
+		tmpYamlPaths[i] = tmpFile.Name()
+	}
+	if err := ValidateYamls(schemaPath, tmpYamlPaths); err != nil {
+		panic(err)
+	}
+
+	// Generate the go files
+	for i := range yamlDatas {
+		goPath := goPaths[i]
+		goFileName := filepath.Base(goPath)
+		goFileNameSplit := strings.Split(goFileName, ".")
+		if len(goFileNameSplit) != 2 {
+			panic("got invalid go file name: " + goFileName)
+		}
+
+		dst, err := os.Create(goPath)
 		if err != nil {
 			panic(err)
 		}
 
 		var yml Yml
-		if err := yaml.Unmarshal(src, &yml); err != nil {
+		if err := yaml.Unmarshal(yamlDatas[i], &yml); err != nil {
 			panic(err)
 		}
 
@@ -1379,9 +1037,9 @@ func main() {
 			prefix = yml.Name
 		}
 		g := &Generator{
-			Yml:        &yml,
-			HeaderName: headerFileNameSplit[0],
-			ExtPrefix:  prefix,
+			Yml:       &yml,
+			GoName:    goFileNameSplit[0],
+			ExtPrefix: prefix,
 		}
 		if err := g.Gen(dst); err != nil {
 			panic(err)

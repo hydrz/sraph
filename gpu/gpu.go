@@ -1,3 +1,3 @@
-//go:generate go run gen.go -schema schema.json -yaml webgpu.yml -header webgpu.go
+//go:generate go run gen.go -go webgpu.go
 
 package gpu
