@@ -47,6 +47,11 @@ func newSurface(label string) Surface {
 	}
 }
 
+// NewSurface creates a new WebGPU surface (public factory function)
+func NewSurface(descriptor SurfaceDescriptor) Surface {
+	return newSurface(descriptor.Label)
+}
+
 // Configure configures the surface
 func (s *surface) Configure(config SurfaceConfiguration) error {
 	s.mu.Lock()
@@ -54,6 +59,26 @@ func (s *surface) Configure(config SurfaceConfiguration) error {
 
 	if s.destroyed {
 		return fmt.Errorf("surface has been destroyed")
+	}
+
+	// Validate configuration
+	if config.Device == nil {
+		return fmt.Errorf("device cannot be nil")
+	}
+	if config.Width == 0 || config.Height == 0 {
+		return fmt.Errorf("width and height must be greater than 0")
+	}
+
+	// Check if format is supported
+	formatSupported := false
+	for _, format := range s.capabilities.Formats {
+		if format == config.Format {
+			formatSupported = true
+			break
+		}
+	}
+	if !formatSupported {
+		return fmt.Errorf("format %v is not supported", config.Format)
 	}
 
 	s.config = config

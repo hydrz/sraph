@@ -3,6 +3,7 @@ package impl
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	. "github.com/opensraph/sraph/gpu/webgpu"
 )
@@ -111,41 +112,32 @@ func (a *adapter) HasFeature(feature FeatureName) (bool, error) {
 	return false, nil
 }
 
-// RequestDevice requests a WebGPU device
+// RequestDevice requests a WebGPU device with improved callback handling
 func (a *adapter) RequestDevice(descriptor DeviceDescriptor, callback RequestDeviceCallbackInfo) Future {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	// Create a future for async device request
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
 	if a.destroyed {
-		// Call callback with error if adapter is destroyed
-		go func() {
-			if callback.Callback != nil {
-				callback.Callback(RequestDeviceStatusError, nil, "adapter has been destroyed")
-			}
-		}()
+		// Use global callback registry for error
+		GlobalCallbackRegistry().RequestDevice(future.Id, callback, RequestDeviceStatusError, nil, "adapter has been destroyed")
+		GlobalCallbackManager().Complete(future.Id)
 		return future
 	}
 
-	// In a real implementation, this would initiate async device creation
+	// Start async device creation
 	go func() {
-		device := &device{
-			refCount:  1,
-			label:     descriptor.Label,
-			features:  descriptor.RequiredFeatures,
-			limits:    descriptor.RequiredLimits,
-			queue:     newQueue(descriptor.DefaultQueue),
-			destroyed: false,
-		}
+		// Simulate device creation process
+		time.Sleep(time.Millisecond * 10) // Simulate work
 
-		// Call callback with success
-		if callback.Callback != nil {
-			callback.Callback(RequestDeviceStatusSuccess, device, "")
-		}
+		device := NewDevice(descriptor)
+
+		// Register success callback
+		GlobalCallbackRegistry().RequestDevice(future.Id, callback, RequestDeviceStatusSuccess, device, "")
+		GlobalCallbackManager().Complete(future.Id)
 	}()
 
 	return future
@@ -179,42 +171,4 @@ func (a *adapter) Release() error {
 	}
 
 	return nil
-}
-
-// getDefaultLimits returns default WebGPU limits
-func getDefaultLimits() Limits {
-	return Limits{
-		MaxTextureDimension1D:                     8192,
-		MaxTextureDimension2D:                     8192,
-		MaxTextureDimension3D:                     2048,
-		MaxTextureArrayLayers:                     256,
-		MaxBindGroups:                             4,
-		MaxBindGroupsPlusVertexBuffers:            24,
-		MaxBindingsPerBindGroup:                   1000,
-		MaxDynamicUniformBuffersPerPipelineLayout: 8,
-		MaxDynamicStorageBuffersPerPipelineLayout: 4,
-		MaxSampledTexturesPerShaderStage:          16,
-		MaxSamplersPerShaderStage:                 16,
-		MaxStorageBuffersPerShaderStage:           8,
-		MaxStorageTexturesPerShaderStage:          4,
-		MaxUniformBuffersPerShaderStage:           12,
-		MaxUniformBufferBindingSize:               65536,
-		MaxStorageBufferBindingSize:               134217728,
-		MinUniformBufferOffsetAlignment:           256,
-		MinStorageBufferOffsetAlignment:           256,
-		MaxVertexBuffers:                          8,
-		MaxBufferSize:                             268435456,
-		MaxVertexAttributes:                       16,
-		MaxVertexBufferArrayStride:                2048,
-		MaxInterStageShaderVariables:              16,
-		MaxColorAttachments:                       8,
-		MaxColorAttachmentBytesPerSample:          32,
-		MaxComputeWorkgroupStorageSize:            16384,
-		MaxComputeInvocationsPerWorkgroup:         256,
-		MaxComputeWorkgroupSizeX:                  256,
-		MaxComputeWorkgroupSizeY:                  256,
-		MaxComputeWorkgroupSizeZ:                  64,
-		MaxComputeWorkgroupsPerDimension:          65535,
-		MaxImmediateSize:                          1024,
-	}
 }

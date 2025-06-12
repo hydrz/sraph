@@ -287,3 +287,22 @@ func (cp *ComputePipelineImpl) Release() error {
 
 	return nil
 }
+
+// NewComputePassEncoder creates a new compute pass encoder (public factory function)
+func NewComputePassEncoder(descriptor ComputePassDescriptor) ComputePassEncoder {
+	return &computePassEncoder{
+		refCount:        1,
+		label:           descriptor.Label,
+		timestampWrites: descriptor.TimestampWrites,
+	}
+}
+
+// NewComputePipeline creates a new compute pipeline (public factory function)
+func NewComputePipeline(descriptor ComputePipelineDescriptor) ComputePipeline {
+	return &ComputePipelineImpl{
+		refCount: 1,
+		label:    descriptor.Label,
+		layout:   descriptor.Layout,
+		compute:  descriptor.Compute,
+	}
+}

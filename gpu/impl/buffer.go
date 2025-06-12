@@ -138,10 +138,27 @@ func (b *buffer) MapAsync(mode MapMode, offset uintptr, size uintptr, callback B
 	defer b.mu.Unlock()
 
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
 	if b.destroyed {
+		// Register error callback
+		GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "buffer has been destroyed")
+		GlobalCallbackManager().Complete(future.Id)
+		return future
+	}
+
+	if b.mapState != BufferMapStateUnmapped {
+		// Register error callback
+		GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "buffer is already mapped")
+		GlobalCallbackManager().Complete(future.Id)
+		return future
+	}
+
+	// Validate parameters
+	if offset+size > uintptr(b.size) {
+		GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "offset and size exceed buffer bounds")
+		GlobalCallbackManager().Complete(future.Id)
 		return future
 	}
 
@@ -155,7 +172,14 @@ func (b *buffer) MapAsync(mode MapMode, offset uintptr, size uintptr, callback B
 			if b.data == nil {
 				b.data = make([]byte, b.size)
 			}
+
+			// Register success callback
+			GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusSuccess, "")
+		} else {
+			// Register error callback
+			GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "mapping failed")
 		}
+		GlobalCallbackManager().Complete(future.Id)
 	}()
 
 	return future

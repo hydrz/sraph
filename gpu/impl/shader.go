@@ -27,19 +27,37 @@ func newShaderModule(descriptor ShaderModuleDescriptor) ShaderModule {
 	}
 }
 
+// NewShaderModule creates a new WebGPU shader module (public factory function)
+func NewShaderModule(descriptor ShaderModuleDescriptor) ShaderModule {
+	return newShaderModule(descriptor)
+}
+
 // GetCompilationInfo gets compilation information
 func (sm *shaderModule) GetCompilationInfo(callback CompilationInfoCallbackInfo) Future {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
-	// In a real implementation, this would compile the shader and return info asynchronously
+	if sm.destroyed {
+		// Register error callback
+		GlobalCallbackRegistry().CompilationInfo(future.Id, callback, CompilationInfoRequestStatusCallbackCancelled, CompilationInfo{})
+		GlobalCallbackManager().Complete(future.Id)
+		return future
+	}
+
+	// Simulate async compilation
 	go func() {
 		// Mock compilation - in a real implementation this would compile WGSL/SPIR-V
-		_ = "compilation complete"
+		compilationInfo := CompilationInfo{
+			Messages: []CompilationMessage{},
+		}
+
+		// Register success callback
+		GlobalCallbackRegistry().CompilationInfo(future.Id, callback, CompilationInfoRequestStatusSuccess, compilationInfo)
+		GlobalCallbackManager().Complete(future.Id)
 	}()
 
 	return future

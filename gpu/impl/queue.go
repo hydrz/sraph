@@ -26,18 +26,32 @@ func newQueue(descriptor QueueDescriptor) Queue {
 	}
 }
 
+// NewQueue creates a new WebGPU queue (public factory function)
+func NewQueue(descriptor QueueDescriptor) Queue {
+	return newQueue(descriptor)
+}
+
 // OnSubmittedWorkDone adds a callback for when submitted work is done
 func (q *queueImp) OnSubmittedWorkDone(callback QueueWorkDoneCallbackInfo) Future {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
-	// In a real implementation, this would track work completion
+	if q.destroyed {
+		// Register error callback
+		GlobalCallbackRegistry().QueueWorkDone(future.Id, callback, QueueWorkDoneStatusError, "queue has been destroyed")
+		GlobalCallbackManager().Complete(future.Id)
+		return future
+	}
+
+	// Simulate async work completion
 	go func() {
-		// Simulate work completion
+		// In a real implementation, this would track actual work completion
+		GlobalCallbackRegistry().QueueWorkDone(future.Id, callback, QueueWorkDoneStatusSuccess, "")
+		GlobalCallbackManager().Complete(future.Id)
 	}()
 
 	return future

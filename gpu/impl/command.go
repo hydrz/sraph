@@ -19,6 +19,15 @@ type commandEncoder struct {
 	destroyed bool
 }
 
+// NewCommandEncoder creates a new WebGPU command encoder (public factory function)
+func NewCommandEncoder(descriptor CommandEncoderDescriptor) CommandEncoder {
+	return &commandEncoder{
+		refCount: 1,
+		label:    descriptor.Label,
+		commands: []interface{}{},
+	}
+}
+
 // BeginComputePass begins a compute pass
 func (ce *commandEncoder) BeginComputePass(descriptor ComputePassDescriptor) (ComputePassEncoder, error) {
 	ce.mu.RLock()
@@ -345,6 +354,15 @@ type commandBuffer struct {
 	label     string
 	commands  []interface{}
 	destroyed bool
+}
+
+// NewCommandBuffer creates a new command buffer (public factory function)
+func NewCommandBuffer(descriptor CommandBufferDescriptor) CommandBuffer {
+	return &commandBuffer{
+		refCount: 1,
+		label:    descriptor.Label,
+		commands: []interface{}{},
+	}
 }
 
 // SetLabel sets the command buffer label

@@ -28,8 +28,8 @@ type sampler struct {
 	destroyed     bool
 }
 
-// newSampler creates a new WebGPU sampler
-func newSampler(descriptor SamplerDescriptor) Sampler {
+// NewSampler creates a new WebGPU sampler (public factory function)
+func NewSampler(descriptor SamplerDescriptor) Sampler {
 	return &sampler{
 		refCount:      1,
 		label:         descriptor.Label,

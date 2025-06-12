@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	. "github.com/opensraph/sraph/gpu/webgpu"
 )
@@ -12,26 +13,24 @@ var _ Instance = (*instance)(nil)
 
 // instance implements the Instance interface
 type instance struct {
-	mu              sync.RWMutex
-	refCount        int32
-	features        []InstanceFeatureName
-	limits          InstanceLimits
-	destroyed       bool
-	callbackManager *CallbackTaskManager
-	callbackHelper  *CallbackHelper
+	mu               sync.RWMutex
+	refCount         int32
+	features         []InstanceFeatureName
+	limits           InstanceLimits
+	destroyed        bool
+	callbackManager  *CallbackManager
+	callbackRegistry *CallbackRegistry
 }
 
 // NewInstance creates a new WebGPU instance
 func NewInstance(descriptor InstanceDescriptor) *instance {
-	callbackManager := NewCallbackTaskManager()
-	callbackHelper := NewCallbackHelper(callbackManager)
-
+	callbackManager := NewCallbackManager()
 	instance := &instance{
-		refCount:        1,
-		features:        descriptor.RequiredFeatures,
-		limits:          descriptor.RequiredLimits,
-		callbackManager: callbackManager,
-		callbackHelper:  callbackHelper,
+		refCount:         1,
+		features:         descriptor.RequiredFeatures,
+		limits:           descriptor.RequiredLimits,
+		callbackManager:  callbackManager,
+		callbackRegistry: newCallbackRegistry(callbackManager),
 	}
 	return instance
 }
@@ -45,11 +44,7 @@ func (i *instance) CreateSurface(descriptor SurfaceDescriptor) (Surface, error) 
 		return nil, fmt.Errorf("instance has been destroyed")
 	}
 
-	surface := &surface{
-		refCount: 1,
-		label:    descriptor.Label,
-	}
-
+	surface := newSurface(descriptor.Label)
 	return surface, nil
 }
 
@@ -71,6 +66,44 @@ func (i *instance) GetWGSLLanguageFeatures(features SupportedWGSLLanguageFeature
 	return StatusSuccess, nil
 }
 
+// GetInstanceFeatures retrieves supported instance features
+func (i *instance) GetInstanceFeatures(features SupportedInstanceFeatures) error {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+
+	if i.destroyed {
+		return fmt.Errorf("instance has been destroyed")
+	}
+
+	features.Features = append(features.Features, i.features...)
+	return nil
+}
+
+// GetInstanceLimits retrieves instance limits
+func (i *instance) GetInstanceLimits(limits InstanceLimits) (Status, error) {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+
+	if i.destroyed {
+		return StatusError, fmt.Errorf("instance has been destroyed")
+	}
+
+	limits = i.limits
+	return StatusSuccess, nil
+}
+
+// HasInstanceFeature checks if an instance feature is supported (public method)
+func (i *instance) HasInstanceFeature(feature InstanceFeatureName) (bool, error) {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+
+	if i.destroyed {
+		return false, fmt.Errorf("instance has been destroyed")
+	}
+
+	return i.hasInstanceFeature(feature), nil
+}
+
 // HasWGSLLanguageFeature checks if a WGSL language feature is supported
 func (i *instance) HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool, error) {
 	i.mu.RLock()
@@ -80,7 +113,7 @@ func (i *instance) HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool
 		return false, fmt.Errorf("instance has been destroyed")
 	}
 
-	// Check supported WGSL language features
+	// In a real implementation, this would check against supported WGSL features
 	supportedFeatures := []WGSLLanguageFeatureName{
 		WGSLLanguageFeatureNameReadonlyAndReadwriteStorageTextures,
 		WGSLLanguageFeatureNamePacked4x8IntegerDotProduct,
@@ -94,7 +127,7 @@ func (i *instance) HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool
 	return false, nil
 }
 
-// ProcessEvents processes pending events
+// ProcessEvents processes pending events and callbacks with improved synchronization
 func (i *instance) ProcessEvents() error {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
@@ -103,71 +136,49 @@ func (i *instance) ProcessEvents() error {
 		return fmt.Errorf("instance has been destroyed")
 	}
 
-	// Process callbacks that are queued for event processing
-	return i.callbackManager.ProcessEvents()
+	// Process callbacks that are ready for event processing
+	i.callbackManager.ProcessEvents()
+	return nil
 }
 
-// RequestAdapter requests a WebGPU adapter
+// RequestAdapter requests a WebGPU adapter with improved callback handling
 func (i *instance) RequestAdapter(options RequestAdapterOptions, callback RequestAdapterCallbackInfo) Future {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
-	// Create a future for async adapter request
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
 	if i.destroyed {
-		// Register callback with error status
-		i.callbackHelper.RegisterRequestAdapterCallback(
-			future.Id,
-			callback,
-			RequestAdapterStatusError,
-			nil,
-			"instance has been destroyed",
-		)
-		// Complete the callback immediately
-		i.callbackManager.CompleteCallback(future.Id)
+		// Register error callback
+		i.callbackRegistry.RequestAdapter(future.Id, callback, RequestAdapterStatusError, nil, "instance has been destroyed")
+		i.callbackManager.Complete(future.Id)
 		return future
 	}
 
-	// Register the callback for async completion
-	i.callbackHelper.RegisterRequestAdapterCallback(
-		future.Id,
-		callback,
-		RequestAdapterStatusSuccess,
-		nil, // Will be set when adapter is created
-		"",
-	)
-
-	// In a real implementation, this would initiate async adapter creation
-	// and call the callback when complete
+	// Start async adapter creation
 	go func() {
-		adapter := &adapter{
-			refCount:    1,
-			backendType: options.BackendType,
-			adapterType: AdapterTypeDiscreteGPU, // Default to discrete GPU
-			features:    getDefaultAdapterFeatures(),
-			limits:      getDefaultAdapterLimits(),
+		// Simulate adapter creation process
+		time.Sleep(time.Millisecond * 10) // Simulate work
+
+		// Create adapter based on options
+		var backendType BackendType = BackendTypeVulkan
+		if options.BackendType != BackendTypeUndefined {
+			backendType = options.BackendType
 		}
 
-		// Update the callback with the actual adapter
-		i.callbackHelper.RegisterRequestAdapterCallback(
-			future.Id,
-			callback,
-			RequestAdapterStatusSuccess,
-			adapter,
-			"",
-		)
+		adapter := NewAdapter(backendType, AdapterTypeDiscreteGPU)
 
-		// Mark the callback as completed
-		i.callbackManager.CompleteCallback(future.Id)
+		// Register success callback
+		i.callbackRegistry.RequestAdapter(future.Id, callback, RequestAdapterStatusSuccess, adapter, "")
+		i.callbackManager.Complete(future.Id)
 	}()
 
 	return future
 }
 
-// WaitAny waits for any of the given futures to complete
+// WaitAny waits for any of the given futures to complete with improved implementation
 func (i *instance) WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutNS uint64) (WaitStatus, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
@@ -185,18 +196,20 @@ func (i *instance) WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutN
 		return WaitStatusError, fmt.Errorf("timed wait is not enabled")
 	}
 
-	// Wait for the specific future to complete
-	if i.callbackManager.WaitForCallback(futures.Future.Id, timeoutNS) {
-		futures.Completed = true
-		return WaitStatusSuccess, nil
+	timeout := time.Duration(timeoutNS) * time.Nanosecond
+
+	// Use the improved callback manager for waiting
+	if futures.Future.Id > 0 {
+		success := i.callbackManager.Wait(futures.Future.Id, timeout)
+		if success {
+			futures.Completed = true
+			return WaitStatusSuccess, nil
+		} else {
+			return WaitStatusTimedOut, nil
+		}
 	}
 
-	// Check if it timed out or errored
-	if timeoutNS > 0 {
-		return WaitStatusTimedOut, nil
-	}
-
-	return WaitStatusError, fmt.Errorf("failed to wait for future")
+	return WaitStatusError, fmt.Errorf("invalid future")
 }
 
 // AddRef increments the reference count
@@ -223,10 +236,8 @@ func (i *instance) Release() error {
 
 	if atomic.AddInt32(&i.refCount, -1) <= 0 {
 		i.destroyed = true
-		// Shutdown the callback manager
-		if i.callbackManager != nil {
-			i.callbackManager.Shutdown()
-		}
+		// Shutdown callback manager when instance is destroyed
+		i.callbackManager.Shutdown()
 	}
 
 	return nil
@@ -286,11 +297,4 @@ func getDefaultAdapterLimits() Limits {
 		MaxComputeWorkgroupsPerDimension:          65535,
 		MaxImmediateSize:                          16777216,
 	}
-}
-
-// Thread-safe future ID generation
-var futureIdCounter int64
-
-func generateFutureId() uint64 {
-	return uint64(atomic.AddInt64(&futureIdCounter, 1))
 }

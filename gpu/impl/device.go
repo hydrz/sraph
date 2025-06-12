@@ -3,6 +3,7 @@ package impl
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	. "github.com/opensraph/sraph/gpu/webgpu"
 )
@@ -20,8 +21,8 @@ type device struct {
 	destroyed bool
 }
 
-// newDevice creates a new WebGPU device
-func newDevice(descriptor DeviceDescriptor) Device {
+// NewDevice creates a new WebGPU device
+func NewDevice(descriptor DeviceDescriptor) Device {
 	d := &device{
 		refCount:  1,
 		label:     descriptor.Label,
@@ -132,24 +133,37 @@ func (d *device) CreateComputePipeline(descriptor ComputePipelineDescriptor) (Co
 	return pipeline, nil
 }
 
-// CreateComputePipelineAsync creates a compute pipeline asynchronously
+// CreateComputePipelineAsync creates a compute pipeline asynchronously with improved callback handling
 func (d *device) CreateComputePipelineAsync(descriptor ComputePipelineDescriptor, callback CreateComputePipelineAsyncCallbackInfo) Future {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
-	// In a real implementation, this would create the pipeline asynchronously
+	if d.destroyed {
+		// Use global callback registry for error
+		GlobalCallbackRegistry().CreateComputePipelineAsync(future.Id, callback, CreatePipelineAsyncStatusInternalError, nil, "device has been destroyed")
+		GlobalCallbackManager().Complete(future.Id)
+		return future
+	}
+
+	// Start async pipeline creation
 	go func() {
+		// Simulate pipeline creation process
+		time.Sleep(time.Millisecond * 5) // Simulate work
+
 		pipeline := &ComputePipelineImpl{
 			refCount: 1,
 			label:    descriptor.Label,
 			layout:   descriptor.Layout,
 			compute:  descriptor.Compute,
 		}
-		_ = pipeline
+
+		// Register success callback
+		GlobalCallbackRegistry().CreateComputePipelineAsync(future.Id, callback, CreatePipelineAsyncStatusSuccess, pipeline, "")
+		GlobalCallbackManager().Complete(future.Id)
 	}()
 
 	return future
@@ -235,17 +249,27 @@ func (d *device) CreateRenderPipeline(descriptor RenderPipelineDescriptor) (Rend
 	return pipeline, nil
 }
 
-// CreateRenderPipelineAsync creates a render pipeline asynchronously
+// CreateRenderPipelineAsync creates a render pipeline asynchronously with improved callback handling
 func (d *device) CreateRenderPipelineAsync(descriptor RenderPipelineDescriptor, callback CreateRenderPipelineAsyncCallbackInfo) Future {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
-	// In a real implementation, this would create the pipeline asynchronously
+	if d.destroyed {
+		// Use global callback registry for error
+		GlobalCallbackRegistry().CreateRenderPipelineAsync(future.Id, callback, CreatePipelineAsyncStatusInternalError, nil, "device has been destroyed")
+		GlobalCallbackManager().Complete(future.Id)
+		return future
+	}
+
+	// Start async pipeline creation
 	go func() {
+		// Simulate pipeline creation process
+		time.Sleep(time.Millisecond * 5) // Simulate work
+
 		pipeline := &RenderPipelineImpl{
 			refCount:     1,
 			label:        descriptor.Label,
@@ -256,7 +280,10 @@ func (d *device) CreateRenderPipelineAsync(descriptor RenderPipelineDescriptor, 
 			multisample:  descriptor.Multisample,
 			fragment:     descriptor.Fragment,
 		}
-		_ = pipeline
+
+		// Register success callback
+		GlobalCallbackRegistry().CreateRenderPipelineAsync(future.Id, callback, CreatePipelineAsyncStatusSuccess, pipeline, "")
+		GlobalCallbackManager().Complete(future.Id)
 	}()
 
 	return future
@@ -392,7 +419,7 @@ func (d *device) GetLostFuture() (Future, error) {
 	}
 
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
 	return future, nil
@@ -427,16 +454,29 @@ func (d *device) HasFeature(feature FeatureName) (bool, error) {
 	return false, nil
 }
 
-// PopErrorScope pops an error scope
+// PopErrorScope pops an error scope with improved callback handling
 func (d *device) PopErrorScope(callback PopErrorScopeCallbackInfo) Future {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	future := Future{
-		Id: generateFutureId(),
+		Id: GenerateFutureId(),
 	}
 
-	// In a real implementation, this would pop error scope asynchronously
+	if d.destroyed {
+		// Use global callback registry for error
+		GlobalCallbackRegistry().PopErrorScope(future.Id, callback, PopErrorScopeStatusError, ErrorTypeUnknown, "device has been destroyed")
+		GlobalCallbackManager().Complete(future.Id)
+		return future
+	}
+
+	// Simulate async error scope processing
+	go func() {
+		// In a real implementation, this would check for errors
+		GlobalCallbackRegistry().PopErrorScope(future.Id, callback, PopErrorScopeStatusSuccess, ErrorTypeNoError, "")
+		GlobalCallbackManager().Complete(future.Id)
+	}()
+
 	return future
 }
 

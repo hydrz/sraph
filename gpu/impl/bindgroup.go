@@ -63,6 +63,16 @@ func (bg *bindGroup) Release() error {
 	return nil
 }
 
+// NewBindGroup creates a new WebGPU bind group (public factory function)
+func NewBindGroup(descriptor BindGroupDescriptor) BindGroup {
+	return &bindGroup{
+		refCount: 1,
+		label:    descriptor.Label,
+		layout:   descriptor.Layout,
+		entries:  descriptor.Entries,
+	}
+}
+
 // bindGroupLayout implements the BindGroupLayout interface
 type bindGroupLayout struct {
 	mu        sync.RWMutex
@@ -113,4 +123,13 @@ func (bgl *bindGroupLayout) Release() error {
 	}
 
 	return nil
+}
+
+// NewBindGroupLayout creates a new WebGPU bind group layout (public factory function)
+func NewBindGroupLayout(descriptor BindGroupLayoutDescriptor) BindGroupLayout {
+	return &bindGroupLayout{
+		refCount: 1,
+		label:    descriptor.Label,
+		entries:  descriptor.Entries,
+	}
 }

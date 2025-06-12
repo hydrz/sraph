@@ -22,6 +22,18 @@ type renderPassEncoder struct {
 	destroyed              bool
 }
 
+// NewRenderPassEncoder creates a new render pass encoder (public factory function)
+func NewRenderPassEncoder(descriptor RenderPassDescriptor) RenderPassEncoder {
+	return &renderPassEncoder{
+		refCount:               1,
+		label:                  descriptor.Label,
+		colorAttachments:       descriptor.ColorAttachments,
+		depthStencilAttachment: descriptor.DepthStencilAttachment,
+		occlusionQuerySet:      descriptor.OcclusionQuerySet,
+		timestampWrites:        descriptor.TimestampWrites,
+	}
+}
+
 // BeginOcclusionQuery begins an occlusion query
 func (rpe *renderPassEncoder) BeginOcclusionQuery(queryIndex uint32) error {
 	rpe.mu.Lock()
@@ -457,6 +469,20 @@ type RenderPipelineImpl struct {
 	multisample  MultisampleState
 	fragment     FragmentState
 	destroyed    bool
+}
+
+// NewRenderPipeline creates a new render pipeline (public factory function)
+func NewRenderPipeline(descriptor RenderPipelineDescriptor) RenderPipeline {
+	return &RenderPipelineImpl{
+		refCount:     1,
+		label:        descriptor.Label,
+		layout:       descriptor.Layout,
+		vertex:       descriptor.Vertex,
+		primitive:    descriptor.Primitive,
+		depthStencil: descriptor.DepthStencil,
+		multisample:  descriptor.Multisample,
+		fragment:     descriptor.Fragment,
+	}
 }
 
 // GetBindGroupLayout gets a bind group layout at the specified index

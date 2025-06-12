@@ -8,6 +8,7 @@ import (
 )
 
 var _ Texture = (*texture)(nil)
+var _ TextureView = (*TextureViewImpl)(nil)
 
 // texture implements the Texture interface
 type texture struct {
@@ -24,8 +25,8 @@ type texture struct {
 	destroyed     bool
 }
 
-// newTexture creates a new WebGPU texture
-func newTexture(descriptor TextureDescriptor) Texture {
+// NewTexture creates a new WebGPU texture
+func NewTexture(descriptor TextureDescriptor) Texture {
 	return &texture{
 		refCount:      1,
 		label:         descriptor.Label,
@@ -48,7 +49,14 @@ func (t *texture) CreateView(descriptor TextureViewDescriptor) (TextureView, err
 		return nil, fmt.Errorf("texture has been destroyed")
 	}
 
-	view := &TextureViewImpl{
+	view := NewTextureView(descriptor, t)
+
+	return view, nil
+}
+
+// NewTextureView creates a new texture view (factory function)
+func NewTextureView(descriptor TextureViewDescriptor, texture *texture) TextureView {
+	return &TextureViewImpl{
 		refCount:        1,
 		label:           descriptor.Label,
 		format:          descriptor.Format,
@@ -59,10 +67,8 @@ func (t *texture) CreateView(descriptor TextureViewDescriptor) (TextureView, err
 		arrayLayerCount: descriptor.ArrayLayerCount,
 		aspect:          descriptor.Aspect,
 		usage:           descriptor.Usage,
-		texture:         t,
+		texture:         texture,
 	}
-
-	return view, nil
 }
 
 // Destroy destroys the texture

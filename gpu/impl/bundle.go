@@ -365,3 +365,25 @@ func (rbe *renderBundleEncoder) Release() error {
 
 	return nil
 }
+
+// NewRenderBundle creates a new render bundle (public factory function)
+func NewRenderBundle(descriptor RenderBundleDescriptor) RenderBundle {
+	return &renderBundle{
+		refCount: 1,
+		label:    descriptor.Label,
+		commands: []interface{}{},
+	}
+}
+
+// NewRenderBundleEncoder creates a new render bundle encoder (public factory function)
+func NewRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) RenderBundleEncoder {
+	return &renderBundleEncoder{
+		refCount:           1,
+		label:              descriptor.Label,
+		colorFormats:       descriptor.ColorFormats,
+		depthStencilFormat: descriptor.DepthStencilFormat,
+		sampleCount:        descriptor.SampleCount,
+		depthReadOnly:      descriptor.DepthReadOnly,
+		stencilReadOnly:    descriptor.StencilReadOnly,
+	}
+}

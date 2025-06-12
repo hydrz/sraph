@@ -29,6 +29,11 @@ func newPipelineLayout(descriptor PipelineLayoutDescriptor) PipelineLayout {
 	}
 }
 
+// NewPipelineLayout creates a new WebGPU pipeline layout (public factory function)
+func NewPipelineLayout(descriptor PipelineLayoutDescriptor) PipelineLayout {
+	return newPipelineLayout(descriptor)
+}
+
 // SetLabel sets the pipeline layout label
 func (pl *pipelineLayout) SetLabel(label string) error {
 	pl.mu.Lock()
