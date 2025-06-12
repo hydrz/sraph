@@ -1,8 +1,6 @@
 package gpu
 
-import (
-	"github.com/opensraph/sraph/gpu/impl"
-)
+import "github.com/opensraph/sraph/gpu/impl"
 
 //go:generate go run gen.go
 
