@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"unsafe"
@@ -26,7 +25,7 @@ func newQueue(descriptor QueueDescriptor) Queue {
 }
 
 // OnSubmittedWorkDone adds a callback for when submitted work is done
-func (q *queueImp) OnSubmittedWorkDone(ctx context.Context) Future {
+func (q *queueImp) OnSubmittedWorkDone(callback QueueWorkDoneCallbackInfo) Future {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
@@ -43,7 +42,7 @@ func (q *queueImp) OnSubmittedWorkDone(ctx context.Context) Future {
 }
 
 // SetLabel sets the queue label
-func (q *queueImp) SetLabel(ctx context.Context, label string) error {
+func (q *queueImp) SetLabel(label string) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -56,7 +55,7 @@ func (q *queueImp) SetLabel(ctx context.Context, label string) error {
 }
 
 // Submit submits command buffers to the queue
-func (q *queueImp) Submit(ctx context.Context, commands []CommandBuffer) error {
+func (q *queueImp) Submit(commands []CommandBuffer) error {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
@@ -73,7 +72,7 @@ func (q *queueImp) Submit(ctx context.Context, commands []CommandBuffer) error {
 }
 
 // WriteBuffer writes data to a buffer
-func (q *queueImp) WriteBuffer(ctx context.Context, buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr) error {
+func (q *queueImp) WriteBuffer(buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr) error {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
@@ -91,7 +90,7 @@ func (q *queueImp) WriteBuffer(ctx context.Context, buffer Buffer, bufferOffset 
 }
 
 // WriteTexture writes data to a texture
-func (q *queueImp) WriteTexture(ctx context.Context, destination TexelCopyTextureInfo, data unsafe.Pointer, dataSize uintptr, dataLayout TexelCopyBufferLayout, writeSize Extent3D) error {
+func (q *queueImp) WriteTexture(destination TexelCopyTextureInfo, data unsafe.Pointer, dataSize uintptr, dataLayout TexelCopyBufferLayout, writeSize Extent3D) error {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
@@ -110,7 +109,7 @@ func (q *queueImp) WriteTexture(ctx context.Context, destination TexelCopyTextur
 }
 
 // AddRef increments the reference count
-func (q *queueImp) AddRef(ctx context.Context) error {
+func (q *queueImp) AddRef() error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -123,7 +122,7 @@ func (q *queueImp) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (q *queueImp) Release(ctx context.Context) error {
+func (q *queueImp) Release() error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 

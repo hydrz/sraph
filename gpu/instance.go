@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -28,7 +27,7 @@ func newInstance(descriptor InstanceDescriptor) *instance {
 }
 
 // CreateSurface creates a new surface for rendering
-func (i *instance) CreateSurface(ctx context.Context, descriptor SurfaceDescriptor) (Surface, error) {
+func (i *instance) CreateSurface(descriptor SurfaceDescriptor) (Surface, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -45,7 +44,7 @@ func (i *instance) CreateSurface(ctx context.Context, descriptor SurfaceDescript
 }
 
 // GetFeatures retrieves supported features
-func (i *instance) GetFeatures(ctx context.Context, features SupportedInstanceFeatures) error {
+func (i *instance) GetFeatures(features SupportedInstanceFeatures) error {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -58,7 +57,7 @@ func (i *instance) GetFeatures(ctx context.Context, features SupportedInstanceFe
 }
 
 // GetLimits retrieves instance limits
-func (i *instance) GetLimits(ctx context.Context, limits InstanceLimits) (Status, error) {
+func (i *instance) GetLimits(limits InstanceLimits) (Status, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -71,7 +70,7 @@ func (i *instance) GetLimits(ctx context.Context, limits InstanceLimits) (Status
 }
 
 // GetWGSLLanguageFeatures retrieves supported WGSL language features
-func (i *instance) GetWGSLLanguageFeatures(ctx context.Context, features SupportedWGSLLanguageFeatures) (Status, error) {
+func (i *instance) GetWGSLLanguageFeatures(features SupportedWGSLLanguageFeatures) (Status, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -89,7 +88,7 @@ func (i *instance) GetWGSLLanguageFeatures(ctx context.Context, features Support
 }
 
 // HasFeature checks if an instance feature is supported
-func (i *instance) HasFeature(ctx context.Context, feature InstanceFeatureName) (bool, error) {
+func (i *instance) HasFeature(feature InstanceFeatureName) (bool, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -106,7 +105,7 @@ func (i *instance) HasFeature(ctx context.Context, feature InstanceFeatureName) 
 }
 
 // HasWGSLLanguageFeature checks if a WGSL language feature is supported
-func (i *instance) HasWGSLLanguageFeature(ctx context.Context, feature WGSLLanguageFeatureName) (bool, error) {
+func (i *instance) HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -129,7 +128,7 @@ func (i *instance) HasWGSLLanguageFeature(ctx context.Context, feature WGSLLangu
 }
 
 // ProcessEvents processes pending events
-func (i *instance) ProcessEvents(ctx context.Context) error {
+func (i *instance) ProcessEvents() error {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -143,7 +142,7 @@ func (i *instance) ProcessEvents(ctx context.Context) error {
 }
 
 // RequestAdapter requests a WebGPU adapter
-func (i *instance) RequestAdapter(ctx context.Context, options RequestAdapterOptions) Future {
+func (i *instance) RequestAdapter(options RequestAdapterOptions, callback RequestAdapterCallbackInfo) Future {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -170,7 +169,7 @@ func (i *instance) RequestAdapter(ctx context.Context, options RequestAdapterOpt
 }
 
 // WaitAny waits for any of the given futures to complete
-func (i *instance) WaitAny(ctx context.Context, futureCount uintptr, futures FutureWaitInfo, timeoutNS uint64) (WaitStatus, error) {
+func (i *instance) WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutNS uint64) (WaitStatus, error) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -178,13 +177,18 @@ func (i *instance) WaitAny(ctx context.Context, futureCount uintptr, futures Fut
 		return WaitStatusError, fmt.Errorf("instance has been destroyed")
 	}
 
-	// In a real implementation, this would wait for futures to complete
-	// For now, return success immediately
-	return WaitStatusSuccess, nil
+	if futureCount == 0 {
+		return WaitStatusError, fmt.Errorf("no futures to wait for")
+	}
+
+	// In a real implementation, this would wait for the futures to complete
+	status := WaitStatusSuccess
+
+	return status, nil
 }
 
 // AddRef increments the reference count
-func (i *instance) AddRef(ctx context.Context) error {
+func (i *instance) AddRef() error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -197,7 +201,7 @@ func (i *instance) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (i *instance) Release(ctx context.Context) error {
+func (i *instance) Release() error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 

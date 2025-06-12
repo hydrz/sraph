@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -18,7 +17,7 @@ type renderBundle struct {
 }
 
 // SetLabel sets the render bundle label
-func (rb *renderBundle) SetLabel(ctx context.Context, label string) error {
+func (rb *renderBundle) SetLabel(label string) error {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
 
@@ -31,7 +30,7 @@ func (rb *renderBundle) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (rb *renderBundle) AddRef(ctx context.Context) error {
+func (rb *renderBundle) AddRef() error {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
 
@@ -44,7 +43,7 @@ func (rb *renderBundle) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (rb *renderBundle) Release(ctx context.Context) error {
+func (rb *renderBundle) Release() error {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
 
@@ -75,7 +74,7 @@ type renderBundleEncoder struct {
 }
 
 // Draw draws vertices
-func (rbe *renderBundleEncoder) Draw(ctx context.Context, vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error {
+func (rbe *renderBundleEncoder) Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -97,7 +96,7 @@ func (rbe *renderBundleEncoder) Draw(ctx context.Context, vertexCount uint32, in
 }
 
 // DrawIndexed draws indexed vertices
-func (rbe *renderBundleEncoder) DrawIndexed(ctx context.Context, indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error {
+func (rbe *renderBundleEncoder) DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -120,7 +119,7 @@ func (rbe *renderBundleEncoder) DrawIndexed(ctx context.Context, indexCount uint
 }
 
 // DrawIndexedIndirect draws indexed vertices indirectly
-func (rbe *renderBundleEncoder) DrawIndexedIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error {
+func (rbe *renderBundleEncoder) DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -140,7 +139,7 @@ func (rbe *renderBundleEncoder) DrawIndexedIndirect(ctx context.Context, indirec
 }
 
 // DrawIndirect draws vertices indirectly
-func (rbe *renderBundleEncoder) DrawIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error {
+func (rbe *renderBundleEncoder) DrawIndirect(indirectBuffer Buffer, indirectOffset uint64) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -160,7 +159,7 @@ func (rbe *renderBundleEncoder) DrawIndirect(ctx context.Context, indirectBuffer
 }
 
 // Finish finishes the render bundle and returns it
-func (rbe *renderBundleEncoder) Finish(ctx context.Context, descriptor RenderBundleDescriptor) (RenderBundle, error) {
+func (rbe *renderBundleEncoder) Finish(descriptor RenderBundleDescriptor) (RenderBundle, error) {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -184,7 +183,7 @@ func (rbe *renderBundleEncoder) Finish(ctx context.Context, descriptor RenderBun
 }
 
 // InsertDebugMarker inserts a debug marker
-func (rbe *renderBundleEncoder) InsertDebugMarker(ctx context.Context, markerLabel string) error {
+func (rbe *renderBundleEncoder) InsertDebugMarker(markerLabel string) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -203,7 +202,7 @@ func (rbe *renderBundleEncoder) InsertDebugMarker(ctx context.Context, markerLab
 }
 
 // PopDebugGroup pops a debug group
-func (rbe *renderBundleEncoder) PopDebugGroup(ctx context.Context) error {
+func (rbe *renderBundleEncoder) PopDebugGroup() error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -220,7 +219,7 @@ func (rbe *renderBundleEncoder) PopDebugGroup(ctx context.Context) error {
 }
 
 // PushDebugGroup pushes a debug group
-func (rbe *renderBundleEncoder) PushDebugGroup(ctx context.Context, groupLabel string) error {
+func (rbe *renderBundleEncoder) PushDebugGroup(groupLabel string) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -239,7 +238,7 @@ func (rbe *renderBundleEncoder) PushDebugGroup(ctx context.Context, groupLabel s
 }
 
 // SetBindGroup sets a bind group
-func (rbe *renderBundleEncoder) SetBindGroup(ctx context.Context, groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error {
+func (rbe *renderBundleEncoder) SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -260,7 +259,7 @@ func (rbe *renderBundleEncoder) SetBindGroup(ctx context.Context, groupIndex uin
 }
 
 // SetIndexBuffer sets the index buffer
-func (rbe *renderBundleEncoder) SetIndexBuffer(ctx context.Context, buffer Buffer, format IndexFormat, offset uint64, size uint64) error {
+func (rbe *renderBundleEncoder) SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -282,7 +281,7 @@ func (rbe *renderBundleEncoder) SetIndexBuffer(ctx context.Context, buffer Buffe
 }
 
 // SetLabel sets the render bundle encoder label
-func (rbe *renderBundleEncoder) SetLabel(ctx context.Context, label string) error {
+func (rbe *renderBundleEncoder) SetLabel(label string) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -295,7 +294,7 @@ func (rbe *renderBundleEncoder) SetLabel(ctx context.Context, label string) erro
 }
 
 // SetPipeline sets the render pipeline
-func (rbe *renderBundleEncoder) SetPipeline(ctx context.Context, pipeline RenderPipeline) error {
+func (rbe *renderBundleEncoder) SetPipeline(pipeline RenderPipeline) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -314,7 +313,7 @@ func (rbe *renderBundleEncoder) SetPipeline(ctx context.Context, pipeline Render
 }
 
 // SetVertexBuffer sets a vertex buffer
-func (rbe *renderBundleEncoder) SetVertexBuffer(ctx context.Context, slot uint32, buffer Buffer, offset uint64, size uint64) error {
+func (rbe *renderBundleEncoder) SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -336,7 +335,7 @@ func (rbe *renderBundleEncoder) SetVertexBuffer(ctx context.Context, slot uint32
 }
 
 // AddRef increments the reference count
-func (rbe *renderBundleEncoder) AddRef(ctx context.Context) error {
+func (rbe *renderBundleEncoder) AddRef() error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 
@@ -349,7 +348,7 @@ func (rbe *renderBundleEncoder) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (rbe *renderBundleEncoder) Release(ctx context.Context) error {
+func (rbe *renderBundleEncoder) Release() error {
 	rbe.mu.Lock()
 	defer rbe.mu.Unlock()
 

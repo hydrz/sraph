@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -19,7 +18,7 @@ type computePassEncoder struct {
 }
 
 // DispatchWorkgroups dispatches compute workgroups
-func (cpe *computePassEncoder) DispatchWorkgroups(ctx context.Context, workgroupCountX uint32, workgroupCountY uint32, workgroupCountZ uint32) error {
+func (cpe *computePassEncoder) DispatchWorkgroups(workgroupCountX uint32, workgroupCountY uint32, workgroupCountZ uint32) error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -40,7 +39,7 @@ func (cpe *computePassEncoder) DispatchWorkgroups(ctx context.Context, workgroup
 }
 
 // DispatchWorkgroupsIndirect dispatches compute workgroups indirectly
-func (cpe *computePassEncoder) DispatchWorkgroupsIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error {
+func (cpe *computePassEncoder) DispatchWorkgroupsIndirect(indirectBuffer Buffer, indirectOffset uint64) error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -60,7 +59,7 @@ func (cpe *computePassEncoder) DispatchWorkgroupsIndirect(ctx context.Context, i
 }
 
 // End ends the compute pass
-func (cpe *computePassEncoder) End(ctx context.Context) error {
+func (cpe *computePassEncoder) End() error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -77,7 +76,7 @@ func (cpe *computePassEncoder) End(ctx context.Context) error {
 }
 
 // InsertDebugMarker inserts a debug marker
-func (cpe *computePassEncoder) InsertDebugMarker(ctx context.Context, markerLabel string) error {
+func (cpe *computePassEncoder) InsertDebugMarker(markerLabel string) error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -96,7 +95,7 @@ func (cpe *computePassEncoder) InsertDebugMarker(ctx context.Context, markerLabe
 }
 
 // PopDebugGroup pops a debug group
-func (cpe *computePassEncoder) PopDebugGroup(ctx context.Context) error {
+func (cpe *computePassEncoder) PopDebugGroup() error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -113,7 +112,7 @@ func (cpe *computePassEncoder) PopDebugGroup(ctx context.Context) error {
 }
 
 // PushDebugGroup pushes a debug group
-func (cpe *computePassEncoder) PushDebugGroup(ctx context.Context, groupLabel string) error {
+func (cpe *computePassEncoder) PushDebugGroup(groupLabel string) error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -132,7 +131,7 @@ func (cpe *computePassEncoder) PushDebugGroup(ctx context.Context, groupLabel st
 }
 
 // SetBindGroup sets a bind group
-func (cpe *computePassEncoder) SetBindGroup(ctx context.Context, groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error {
+func (cpe *computePassEncoder) SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -153,7 +152,7 @@ func (cpe *computePassEncoder) SetBindGroup(ctx context.Context, groupIndex uint
 }
 
 // SetLabel sets the compute pass encoder label
-func (cpe *computePassEncoder) SetLabel(ctx context.Context, label string) error {
+func (cpe *computePassEncoder) SetLabel(label string) error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -166,7 +165,7 @@ func (cpe *computePassEncoder) SetLabel(ctx context.Context, label string) error
 }
 
 // SetPipeline sets the compute pipeline
-func (cpe *computePassEncoder) SetPipeline(ctx context.Context, pipeline ComputePipeline) error {
+func (cpe *computePassEncoder) SetPipeline(pipeline ComputePipeline) error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -185,7 +184,7 @@ func (cpe *computePassEncoder) SetPipeline(ctx context.Context, pipeline Compute
 }
 
 // AddRef increments the reference count
-func (cpe *computePassEncoder) AddRef(ctx context.Context) error {
+func (cpe *computePassEncoder) AddRef() error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -198,7 +197,7 @@ func (cpe *computePassEncoder) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (cpe *computePassEncoder) Release(ctx context.Context) error {
+func (cpe *computePassEncoder) Release() error {
 	cpe.mu.Lock()
 	defer cpe.mu.Unlock()
 
@@ -225,7 +224,7 @@ type ComputePipelineImpl struct {
 }
 
 // GetBindGroupLayout gets a bind group layout at the specified index
-func (cp *ComputePipelineImpl) GetBindGroupLayout(ctx context.Context, groupIndex uint32) (BindGroupLayout, error) {
+func (cp *ComputePipelineImpl) GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error) {
 	cp.mu.RLock()
 	defer cp.mu.RUnlock()
 
@@ -245,7 +244,7 @@ func (cp *ComputePipelineImpl) GetBindGroupLayout(ctx context.Context, groupInde
 }
 
 // SetLabel sets the compute pipeline label
-func (cp *ComputePipelineImpl) SetLabel(ctx context.Context, label string) error {
+func (cp *ComputePipelineImpl) SetLabel(label string) error {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
 
@@ -258,7 +257,7 @@ func (cp *ComputePipelineImpl) SetLabel(ctx context.Context, label string) error
 }
 
 // AddRef increments the reference count
-func (cp *ComputePipelineImpl) AddRef(ctx context.Context) error {
+func (cp *ComputePipelineImpl) AddRef() error {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
 
@@ -271,7 +270,7 @@ func (cp *ComputePipelineImpl) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (cp *ComputePipelineImpl) Release(ctx context.Context) error {
+func (cp *ComputePipelineImpl) Release() error {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
 

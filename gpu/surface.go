@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -47,7 +46,7 @@ func newSurface(label string) Surface {
 }
 
 // Configure configures the surface
-func (s *surface) Configure(ctx context.Context, config SurfaceConfiguration) error {
+func (s *surface) Configure(config SurfaceConfiguration) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -61,7 +60,7 @@ func (s *surface) Configure(ctx context.Context, config SurfaceConfiguration) er
 }
 
 // GetCapabilities gets surface capabilities
-func (s *surface) GetCapabilities(ctx context.Context, adapter Adapter, capabilities SurfaceCapabilities) (Status, error) {
+func (s *surface) GetCapabilities(adapter Adapter, capabilities SurfaceCapabilities) (Status, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -78,7 +77,7 @@ func (s *surface) GetCapabilities(ctx context.Context, adapter Adapter, capabili
 }
 
 // GetCurrentTexture gets the current surface texture
-func (s *surface) GetCurrentTexture(ctx context.Context, surfaceTexture SurfaceTexture) error {
+func (s *surface) GetCurrentTexture(surfaceTexture SurfaceTexture) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -109,7 +108,7 @@ func (s *surface) GetCurrentTexture(ctx context.Context, surfaceTexture SurfaceT
 }
 
 // Present presents the current frame
-func (s *surface) Present(ctx context.Context) (Status, error) {
+func (s *surface) Present() (Status, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -126,7 +125,7 @@ func (s *surface) Present(ctx context.Context) (Status, error) {
 }
 
 // SetLabel sets the surface label
-func (s *surface) SetLabel(ctx context.Context, label string) error {
+func (s *surface) SetLabel(label string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -139,7 +138,7 @@ func (s *surface) SetLabel(ctx context.Context, label string) error {
 }
 
 // Unconfigure unconfigures the surface
-func (s *surface) Unconfigure(ctx context.Context) error {
+func (s *surface) Unconfigure() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -152,7 +151,7 @@ func (s *surface) Unconfigure(ctx context.Context) error {
 }
 
 // AddRef increments the reference count
-func (s *surface) AddRef(ctx context.Context) error {
+func (s *surface) AddRef() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -165,7 +164,7 @@ func (s *surface) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (s *surface) Release(ctx context.Context) error {
+func (s *surface) Release() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

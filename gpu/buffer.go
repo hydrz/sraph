@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"unsafe"
@@ -42,7 +41,7 @@ func NewBuffer(descriptor BufferDescriptor) Buffer {
 }
 
 // Destroy destroys the buffer
-func (b *buffer) Destroy(ctx context.Context) error {
+func (b *buffer) Destroy() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -56,7 +55,7 @@ func (b *buffer) Destroy(ctx context.Context) error {
 }
 
 // GetConstMappedRange gets a constant mapped range
-func (b *buffer) GetConstMappedRange(ctx context.Context, offset uintptr, size uintptr) (unsafe.Pointer, error) {
+func (b *buffer) GetConstMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -76,7 +75,7 @@ func (b *buffer) GetConstMappedRange(ctx context.Context, offset uintptr, size u
 }
 
 // GetMappedRange gets a mapped range
-func (b *buffer) GetMappedRange(ctx context.Context, offset uintptr, size uintptr) (unsafe.Pointer, error) {
+func (b *buffer) GetMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -96,7 +95,7 @@ func (b *buffer) GetMappedRange(ctx context.Context, offset uintptr, size uintpt
 }
 
 // GetMapState gets the buffer map state
-func (b *buffer) GetMapState(ctx context.Context) (BufferMapState, error) {
+func (b *buffer) GetMapState() (BufferMapState, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -108,7 +107,7 @@ func (b *buffer) GetMapState(ctx context.Context) (BufferMapState, error) {
 }
 
 // GetSize gets the buffer size
-func (b *buffer) GetSize(ctx context.Context) (uint64, error) {
+func (b *buffer) GetSize() (uint64, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -120,7 +119,7 @@ func (b *buffer) GetSize(ctx context.Context) (uint64, error) {
 }
 
 // GetUsage gets the buffer usage
-func (b *buffer) GetUsage(ctx context.Context) (BufferUsage, error) {
+func (b *buffer) GetUsage() (BufferUsage, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -132,7 +131,7 @@ func (b *buffer) GetUsage(ctx context.Context) (BufferUsage, error) {
 }
 
 // MapAsync maps the buffer asynchronously
-func (b *buffer) MapAsync(ctx context.Context, mode MapMode, offset uintptr, size uintptr) Future {
+func (b *buffer) MapAsync(mode MapMode, offset uintptr, size uintptr, callback BufferMapCallbackInfo) Future {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -161,7 +160,7 @@ func (b *buffer) MapAsync(ctx context.Context, mode MapMode, offset uintptr, siz
 }
 
 // ReadMappedRange reads from a mapped range
-func (b *buffer) ReadMappedRange(ctx context.Context, offset uintptr, data unsafe.Pointer, size uintptr) (Status, error) {
+func (b *buffer) ReadMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -186,7 +185,7 @@ func (b *buffer) ReadMappedRange(ctx context.Context, offset uintptr, data unsaf
 }
 
 // SetLabel sets the buffer label
-func (b *buffer) SetLabel(ctx context.Context, label string) error {
+func (b *buffer) SetLabel(label string) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -199,7 +198,7 @@ func (b *buffer) SetLabel(ctx context.Context, label string) error {
 }
 
 // Unmap unmaps the buffer
-func (b *buffer) Unmap(ctx context.Context) error {
+func (b *buffer) Unmap() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -215,7 +214,7 @@ func (b *buffer) Unmap(ctx context.Context) error {
 }
 
 // WriteMappedRange writes to a mapped range
-func (b *buffer) WriteMappedRange(ctx context.Context, offset uintptr, data unsafe.Pointer, size uintptr) (Status, error) {
+func (b *buffer) WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -240,7 +239,7 @@ func (b *buffer) WriteMappedRange(ctx context.Context, offset uintptr, data unsa
 }
 
 // AddRef increments the reference count
-func (b *buffer) AddRef(ctx context.Context) error {
+func (b *buffer) AddRef() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -253,7 +252,7 @@ func (b *buffer) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (b *buffer) Release(ctx context.Context) error {
+func (b *buffer) Release() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 

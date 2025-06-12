@@ -857,14 +857,10 @@ func (g *Generator) GoParameterName(name string) string {
 
 func (g *Generator) GoFunctionArgs(f Function, o *Object) string {
 	sb := &strings.Builder{}
-	// Handle context parameter for Go
-	if sb.Len() > 0 {
-		sb.WriteString(", ")
-	}
-	sb.WriteString("ctx context.Context")
-
 	for _, arg := range f.Args {
-		sb.WriteString(", ")
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
 		matches := arrayTypeRegexp.FindStringSubmatch(arg.Type)
 		if len(matches) == 2 {
 			fmt.Fprintf(sb, "%s []%s", g.GoParameterName(arg.Name), g.GoType(matches[1]))
@@ -872,6 +868,23 @@ func (g *Generator) GoFunctionArgs(f Function, o *Object) string {
 			fmt.Fprintf(sb, "%s %s", g.GoParameterName(arg.Name), g.GoType(arg.Type))
 		}
 	}
+
+	if f.Callback != nil {
+		if o != nil && o.IsStruct {
+			// If the function is a method of an object, use the object type as the first argument
+			if sb.Len() > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(fmt.Sprintf("%s *%s", g.GoParameterName("this"), g.GoType(o.Name)))
+		} else {
+			// If the function is not a method, use the callback type as the first argument
+			if sb.Len() > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(fmt.Sprintf("%s %sCallbackInfo", g.GoParameterName("callback"), g.GoTypeName(g.FindBaseType(*f.Callback))))
+		}
+	}
+
 	return sb.String()
 }
 

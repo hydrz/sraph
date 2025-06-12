@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -39,7 +38,7 @@ func newTexture(descriptor TextureDescriptor) Texture {
 }
 
 // CreateView creates a texture view
-func (t *texture) CreateView(ctx context.Context, descriptor TextureViewDescriptor) (TextureView, error) {
+func (t *texture) CreateView(descriptor TextureViewDescriptor) (TextureView, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -65,7 +64,7 @@ func (t *texture) CreateView(ctx context.Context, descriptor TextureViewDescript
 }
 
 // Destroy destroys the texture
-func (t *texture) Destroy(ctx context.Context) error {
+func (t *texture) Destroy() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -78,7 +77,7 @@ func (t *texture) Destroy(ctx context.Context) error {
 }
 
 // GetDepthOrArrayLayers gets the depth or array layers
-func (t *texture) GetDepthOrArrayLayers(ctx context.Context) (uint32, error) {
+func (t *texture) GetDepthOrArrayLayers() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -90,7 +89,7 @@ func (t *texture) GetDepthOrArrayLayers(ctx context.Context) (uint32, error) {
 }
 
 // GetDimension gets the texture dimension
-func (t *texture) GetDimension(ctx context.Context) (TextureDimension, error) {
+func (t *texture) GetDimension() (TextureDimension, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -102,7 +101,7 @@ func (t *texture) GetDimension(ctx context.Context) (TextureDimension, error) {
 }
 
 // GetFormat gets the texture format
-func (t *texture) GetFormat(ctx context.Context) (TextureFormat, error) {
+func (t *texture) GetFormat() (TextureFormat, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -114,7 +113,7 @@ func (t *texture) GetFormat(ctx context.Context) (TextureFormat, error) {
 }
 
 // GetHeight gets the texture height
-func (t *texture) GetHeight(ctx context.Context) (uint32, error) {
+func (t *texture) GetHeight() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -126,7 +125,7 @@ func (t *texture) GetHeight(ctx context.Context) (uint32, error) {
 }
 
 // GetMipLevelCount gets the mip level count
-func (t *texture) GetMipLevelCount(ctx context.Context) (uint32, error) {
+func (t *texture) GetMipLevelCount() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -138,7 +137,7 @@ func (t *texture) GetMipLevelCount(ctx context.Context) (uint32, error) {
 }
 
 // GetSampleCount gets the sample count
-func (t *texture) GetSampleCount(ctx context.Context) (uint32, error) {
+func (t *texture) GetSampleCount() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -150,7 +149,7 @@ func (t *texture) GetSampleCount(ctx context.Context) (uint32, error) {
 }
 
 // GetUsage gets the texture usage
-func (t *texture) GetUsage(ctx context.Context) (TextureUsage, error) {
+func (t *texture) GetUsage() (TextureUsage, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -162,7 +161,7 @@ func (t *texture) GetUsage(ctx context.Context) (TextureUsage, error) {
 }
 
 // GetWidth gets the texture width
-func (t *texture) GetWidth(ctx context.Context) (uint32, error) {
+func (t *texture) GetWidth() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -174,7 +173,7 @@ func (t *texture) GetWidth(ctx context.Context) (uint32, error) {
 }
 
 // SetLabel sets the texture label
-func (t *texture) SetLabel(ctx context.Context, label string) error {
+func (t *texture) SetLabel(label string) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -187,7 +186,7 @@ func (t *texture) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (t *texture) AddRef(ctx context.Context) error {
+func (t *texture) AddRef() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -200,7 +199,7 @@ func (t *texture) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (t *texture) Release(ctx context.Context) error {
+func (t *texture) Release() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -234,7 +233,7 @@ type TextureViewImpl struct {
 }
 
 // SetLabel sets the texture view label
-func (tv *TextureViewImpl) SetLabel(ctx context.Context, label string) error {
+func (tv *TextureViewImpl) SetLabel(label string) error {
 	tv.mu.Lock()
 	defer tv.mu.Unlock()
 
@@ -247,7 +246,7 @@ func (tv *TextureViewImpl) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (tv *TextureViewImpl) AddRef(ctx context.Context) error {
+func (tv *TextureViewImpl) AddRef() error {
 	tv.mu.Lock()
 	defer tv.mu.Unlock()
 
@@ -260,7 +259,7 @@ func (tv *TextureViewImpl) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (tv *TextureViewImpl) Release(ctx context.Context) error {
+func (tv *TextureViewImpl) Release() error {
 	tv.mu.Lock()
 	defer tv.mu.Unlock()
 

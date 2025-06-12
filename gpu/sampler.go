@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -46,7 +45,7 @@ func newSampler(descriptor SamplerDescriptor) Sampler {
 }
 
 // SetLabel sets the sampler label
-func (s *sampler) SetLabel(ctx context.Context, label string) error {
+func (s *sampler) SetLabel(label string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -59,7 +58,7 @@ func (s *sampler) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (s *sampler) AddRef(ctx context.Context) error {
+func (s *sampler) AddRef() error {
 	if atomic.LoadInt32(&s.refCount) <= 0 {
 		return fmt.Errorf("sampler has been destroyed")
 	}
@@ -69,7 +68,7 @@ func (s *sampler) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (s *sampler) Release(ctx context.Context) error {
+func (s *sampler) Release() error {
 	newCount := atomic.AddInt32(&s.refCount, -1)
 	if newCount == 0 {
 		s.mu.Lock()

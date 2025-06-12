@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -22,7 +21,7 @@ type renderPassEncoder struct {
 }
 
 // BeginOcclusionQuery begins an occlusion query
-func (rpe *renderPassEncoder) BeginOcclusionQuery(ctx context.Context, queryIndex uint32) error {
+func (rpe *renderPassEncoder) BeginOcclusionQuery(queryIndex uint32) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -41,7 +40,7 @@ func (rpe *renderPassEncoder) BeginOcclusionQuery(ctx context.Context, queryInde
 }
 
 // Draw draws vertices
-func (rpe *renderPassEncoder) Draw(ctx context.Context, vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error {
+func (rpe *renderPassEncoder) Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -63,7 +62,7 @@ func (rpe *renderPassEncoder) Draw(ctx context.Context, vertexCount uint32, inst
 }
 
 // DrawIndexed draws indexed vertices
-func (rpe *renderPassEncoder) DrawIndexed(ctx context.Context, indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error {
+func (rpe *renderPassEncoder) DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -86,7 +85,7 @@ func (rpe *renderPassEncoder) DrawIndexed(ctx context.Context, indexCount uint32
 }
 
 // DrawIndexedIndirect draws indexed vertices indirectly
-func (rpe *renderPassEncoder) DrawIndexedIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error {
+func (rpe *renderPassEncoder) DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -106,7 +105,7 @@ func (rpe *renderPassEncoder) DrawIndexedIndirect(ctx context.Context, indirectB
 }
 
 // DrawIndirect draws vertices indirectly
-func (rpe *renderPassEncoder) DrawIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error {
+func (rpe *renderPassEncoder) DrawIndirect(indirectBuffer Buffer, indirectOffset uint64) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -126,7 +125,7 @@ func (rpe *renderPassEncoder) DrawIndirect(ctx context.Context, indirectBuffer B
 }
 
 // End ends the render pass
-func (rpe *renderPassEncoder) End(ctx context.Context) error {
+func (rpe *renderPassEncoder) End() error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -143,7 +142,7 @@ func (rpe *renderPassEncoder) End(ctx context.Context) error {
 }
 
 // EndOcclusionQuery ends an occlusion query
-func (rpe *renderPassEncoder) EndOcclusionQuery(ctx context.Context) error {
+func (rpe *renderPassEncoder) EndOcclusionQuery() error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -160,7 +159,7 @@ func (rpe *renderPassEncoder) EndOcclusionQuery(ctx context.Context) error {
 }
 
 // ExecuteBundles executes render bundles
-func (rpe *renderPassEncoder) ExecuteBundles(ctx context.Context, bundles []RenderBundle) error {
+func (rpe *renderPassEncoder) ExecuteBundles(bundles []RenderBundle) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -179,7 +178,7 @@ func (rpe *renderPassEncoder) ExecuteBundles(ctx context.Context, bundles []Rend
 }
 
 // InsertDebugMarker inserts a debug marker
-func (rpe *renderPassEncoder) InsertDebugMarker(ctx context.Context, markerLabel string) error {
+func (rpe *renderPassEncoder) InsertDebugMarker(markerLabel string) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -198,7 +197,7 @@ func (rpe *renderPassEncoder) InsertDebugMarker(ctx context.Context, markerLabel
 }
 
 // PopDebugGroup pops a debug group
-func (rpe *renderPassEncoder) PopDebugGroup(ctx context.Context) error {
+func (rpe *renderPassEncoder) PopDebugGroup() error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -215,7 +214,7 @@ func (rpe *renderPassEncoder) PopDebugGroup(ctx context.Context) error {
 }
 
 // PushDebugGroup pushes a debug group
-func (rpe *renderPassEncoder) PushDebugGroup(ctx context.Context, groupLabel string) error {
+func (rpe *renderPassEncoder) PushDebugGroup(groupLabel string) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -234,7 +233,7 @@ func (rpe *renderPassEncoder) PushDebugGroup(ctx context.Context, groupLabel str
 }
 
 // SetBindGroup sets a bind group
-func (rpe *renderPassEncoder) SetBindGroup(ctx context.Context, groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error {
+func (rpe *renderPassEncoder) SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -255,7 +254,7 @@ func (rpe *renderPassEncoder) SetBindGroup(ctx context.Context, groupIndex uint3
 }
 
 // SetBlendConstant sets the blend constant
-func (rpe *renderPassEncoder) SetBlendConstant(ctx context.Context, color Color) error {
+func (rpe *renderPassEncoder) SetBlendConstant(color Color) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -274,7 +273,7 @@ func (rpe *renderPassEncoder) SetBlendConstant(ctx context.Context, color Color)
 }
 
 // SetIndexBuffer sets the index buffer
-func (rpe *renderPassEncoder) SetIndexBuffer(ctx context.Context, buffer Buffer, format IndexFormat, offset uint64, size uint64) error {
+func (rpe *renderPassEncoder) SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -296,7 +295,7 @@ func (rpe *renderPassEncoder) SetIndexBuffer(ctx context.Context, buffer Buffer,
 }
 
 // SetLabel sets the render pass encoder label
-func (rpe *renderPassEncoder) SetLabel(ctx context.Context, label string) error {
+func (rpe *renderPassEncoder) SetLabel(label string) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -309,7 +308,7 @@ func (rpe *renderPassEncoder) SetLabel(ctx context.Context, label string) error 
 }
 
 // SetPipeline sets the render pipeline
-func (rpe *renderPassEncoder) SetPipeline(ctx context.Context, pipeline RenderPipeline) error {
+func (rpe *renderPassEncoder) SetPipeline(pipeline RenderPipeline) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -328,7 +327,7 @@ func (rpe *renderPassEncoder) SetPipeline(ctx context.Context, pipeline RenderPi
 }
 
 // SetScissorRect sets the scissor rectangle
-func (rpe *renderPassEncoder) SetScissorRect(ctx context.Context, x uint32, y uint32, width uint32, height uint32) error {
+func (rpe *renderPassEncoder) SetScissorRect(x uint32, y uint32, width uint32, height uint32) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -350,7 +349,7 @@ func (rpe *renderPassEncoder) SetScissorRect(ctx context.Context, x uint32, y ui
 }
 
 // SetStencilReference sets the stencil reference value
-func (rpe *renderPassEncoder) SetStencilReference(ctx context.Context, reference uint32) error {
+func (rpe *renderPassEncoder) SetStencilReference(reference uint32) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -369,7 +368,7 @@ func (rpe *renderPassEncoder) SetStencilReference(ctx context.Context, reference
 }
 
 // SetVertexBuffer sets a vertex buffer
-func (rpe *renderPassEncoder) SetVertexBuffer(ctx context.Context, slot uint32, buffer Buffer, offset uint64, size uint64) error {
+func (rpe *renderPassEncoder) SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -391,7 +390,7 @@ func (rpe *renderPassEncoder) SetVertexBuffer(ctx context.Context, slot uint32, 
 }
 
 // SetViewport sets the viewport
-func (rpe *renderPassEncoder) SetViewport(ctx context.Context, x float32, y float32, width float32, height float32, minDepth float32, maxDepth float32) error {
+func (rpe *renderPassEncoder) SetViewport(x float32, y float32, width float32, height float32, minDepth float32, maxDepth float32) error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -415,7 +414,7 @@ func (rpe *renderPassEncoder) SetViewport(ctx context.Context, x float32, y floa
 }
 
 // AddRef increments the reference count
-func (rpe *renderPassEncoder) AddRef(ctx context.Context) error {
+func (rpe *renderPassEncoder) AddRef() error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -428,7 +427,7 @@ func (rpe *renderPassEncoder) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (rpe *renderPassEncoder) Release(ctx context.Context) error {
+func (rpe *renderPassEncoder) Release() error {
 	rpe.mu.Lock()
 	defer rpe.mu.Unlock()
 
@@ -459,7 +458,7 @@ type RenderPipelineImpl struct {
 }
 
 // GetBindGroupLayout gets a bind group layout at the specified index
-func (rp *RenderPipelineImpl) GetBindGroupLayout(ctx context.Context, groupIndex uint32) (BindGroupLayout, error) {
+func (rp *RenderPipelineImpl) GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error) {
 	rp.mu.RLock()
 	defer rp.mu.RUnlock()
 
@@ -479,7 +478,7 @@ func (rp *RenderPipelineImpl) GetBindGroupLayout(ctx context.Context, groupIndex
 }
 
 // SetLabel sets the render pipeline label
-func (rp *RenderPipelineImpl) SetLabel(ctx context.Context, label string) error {
+func (rp *RenderPipelineImpl) SetLabel(label string) error {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
@@ -492,7 +491,7 @@ func (rp *RenderPipelineImpl) SetLabel(ctx context.Context, label string) error 
 }
 
 // AddRef increments the reference count
-func (rp *RenderPipelineImpl) AddRef(ctx context.Context) error {
+func (rp *RenderPipelineImpl) AddRef() error {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
@@ -505,7 +504,7 @@ func (rp *RenderPipelineImpl) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (rp *RenderPipelineImpl) Release(ctx context.Context) error {
+func (rp *RenderPipelineImpl) Release() error {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 

@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -47,7 +46,7 @@ func NewAdapter(backendType BackendType, adapterType AdapterType) Adapter {
 }
 
 // GetFeatures retrieves supported features
-func (a *adapter) GetFeatures(ctx context.Context, features SupportedFeatures) error {
+func (a *adapter) GetFeatures(features SupportedFeatures) error {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -60,7 +59,7 @@ func (a *adapter) GetFeatures(ctx context.Context, features SupportedFeatures) e
 }
 
 // GetInfo retrieves adapter information
-func (a *adapter) GetInfo(ctx context.Context, info AdapterInfo) (Status, error) {
+func (a *adapter) GetInfo(info AdapterInfo) (Status, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -81,7 +80,7 @@ func (a *adapter) GetInfo(ctx context.Context, info AdapterInfo) (Status, error)
 }
 
 // GetLimits retrieves adapter limits
-func (a *adapter) GetLimits(ctx context.Context, limits Limits) (Status, error) {
+func (a *adapter) GetLimits(limits Limits) (Status, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -94,7 +93,7 @@ func (a *adapter) GetLimits(ctx context.Context, limits Limits) (Status, error) 
 }
 
 // HasFeature checks if a feature is supported
-func (a *adapter) HasFeature(ctx context.Context, feature FeatureName) (bool, error) {
+func (a *adapter) HasFeature(feature FeatureName) (bool, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -111,7 +110,7 @@ func (a *adapter) HasFeature(ctx context.Context, feature FeatureName) (bool, er
 }
 
 // RequestDevice requests a WebGPU device
-func (a *adapter) RequestDevice(ctx context.Context, descriptor DeviceDescriptor) Future {
+func (a *adapter) RequestDevice(descriptor DeviceDescriptor, callback RequestDeviceCallbackInfo) Future {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -139,7 +138,7 @@ func (a *adapter) RequestDevice(ctx context.Context, descriptor DeviceDescriptor
 }
 
 // AddRef increments the reference count
-func (a *adapter) AddRef(ctx context.Context) error {
+func (a *adapter) AddRef() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -152,7 +151,7 @@ func (a *adapter) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (a *adapter) Release(ctx context.Context) error {
+func (a *adapter) Release() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 

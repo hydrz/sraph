@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -19,7 +18,7 @@ type commandEncoder struct {
 }
 
 // BeginComputePass begins a compute pass
-func (ce *commandEncoder) BeginComputePass(ctx context.Context, descriptor ComputePassDescriptor) (ComputePassEncoder, error) {
+func (ce *commandEncoder) BeginComputePass(descriptor ComputePassDescriptor) (ComputePassEncoder, error) {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
 
@@ -41,7 +40,7 @@ func (ce *commandEncoder) BeginComputePass(ctx context.Context, descriptor Compu
 }
 
 // BeginRenderPass begins a render pass
-func (ce *commandEncoder) BeginRenderPass(ctx context.Context, descriptor RenderPassDescriptor) (RenderPassEncoder, error) {
+func (ce *commandEncoder) BeginRenderPass(descriptor RenderPassDescriptor) (RenderPassEncoder, error) {
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
 
@@ -66,7 +65,7 @@ func (ce *commandEncoder) BeginRenderPass(ctx context.Context, descriptor Render
 }
 
 // ClearBuffer clears a buffer
-func (ce *commandEncoder) ClearBuffer(ctx context.Context, buffer Buffer, offset uint64, size uint64) error {
+func (ce *commandEncoder) ClearBuffer(buffer Buffer, offset uint64, size uint64) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -87,7 +86,7 @@ func (ce *commandEncoder) ClearBuffer(ctx context.Context, buffer Buffer, offset
 }
 
 // CopyBufferToBuffer copies data between buffers
-func (ce *commandEncoder) CopyBufferToBuffer(ctx context.Context, source Buffer, sourceOffset uint64, destination Buffer, destinationOffset uint64, size uint64) error {
+func (ce *commandEncoder) CopyBufferToBuffer(source Buffer, sourceOffset uint64, destination Buffer, destinationOffset uint64, size uint64) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -110,7 +109,7 @@ func (ce *commandEncoder) CopyBufferToBuffer(ctx context.Context, source Buffer,
 }
 
 // CopyBufferToTexture copies data from buffer to texture
-func (ce *commandEncoder) CopyBufferToTexture(ctx context.Context, source TexelCopyBufferInfo, destination TexelCopyTextureInfo, copySize Extent3D) error {
+func (ce *commandEncoder) CopyBufferToTexture(source TexelCopyBufferInfo, destination TexelCopyTextureInfo, copySize Extent3D) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -131,7 +130,7 @@ func (ce *commandEncoder) CopyBufferToTexture(ctx context.Context, source TexelC
 }
 
 // CopyTextureToBuffer copies data from texture to buffer
-func (ce *commandEncoder) CopyTextureToBuffer(ctx context.Context, source TexelCopyTextureInfo, destination TexelCopyBufferInfo, copySize Extent3D) error {
+func (ce *commandEncoder) CopyTextureToBuffer(source TexelCopyTextureInfo, destination TexelCopyBufferInfo, copySize Extent3D) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -152,7 +151,7 @@ func (ce *commandEncoder) CopyTextureToBuffer(ctx context.Context, source TexelC
 }
 
 // CopyTextureToTexture copies data between textures
-func (ce *commandEncoder) CopyTextureToTexture(ctx context.Context, source TexelCopyTextureInfo, destination TexelCopyTextureInfo, copySize Extent3D) error {
+func (ce *commandEncoder) CopyTextureToTexture(source TexelCopyTextureInfo, destination TexelCopyTextureInfo, copySize Extent3D) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -173,7 +172,7 @@ func (ce *commandEncoder) CopyTextureToTexture(ctx context.Context, source Texel
 }
 
 // Finish finishes recording commands and returns a command buffer
-func (ce *commandEncoder) Finish(ctx context.Context, descriptor CommandBufferDescriptor) (CommandBuffer, error) {
+func (ce *commandEncoder) Finish(descriptor CommandBufferDescriptor) (CommandBuffer, error) {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -197,7 +196,7 @@ func (ce *commandEncoder) Finish(ctx context.Context, descriptor CommandBufferDe
 }
 
 // InsertDebugMarker inserts a debug marker
-func (ce *commandEncoder) InsertDebugMarker(ctx context.Context, markerLabel string) error {
+func (ce *commandEncoder) InsertDebugMarker(markerLabel string) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -216,7 +215,7 @@ func (ce *commandEncoder) InsertDebugMarker(ctx context.Context, markerLabel str
 }
 
 // PopDebugGroup pops a debug group
-func (ce *commandEncoder) PopDebugGroup(ctx context.Context) error {
+func (ce *commandEncoder) PopDebugGroup() error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -233,7 +232,7 @@ func (ce *commandEncoder) PopDebugGroup(ctx context.Context) error {
 }
 
 // PushDebugGroup pushes a debug group
-func (ce *commandEncoder) PushDebugGroup(ctx context.Context, groupLabel string) error {
+func (ce *commandEncoder) PushDebugGroup(groupLabel string) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -252,7 +251,7 @@ func (ce *commandEncoder) PushDebugGroup(ctx context.Context, groupLabel string)
 }
 
 // ResolveQuerySet resolves a query set
-func (ce *commandEncoder) ResolveQuerySet(ctx context.Context, querySet QuerySet, firstQuery uint32, queryCount uint32, destination Buffer, destinationOffset uint64) error {
+func (ce *commandEncoder) ResolveQuerySet(querySet QuerySet, firstQuery uint32, queryCount uint32, destination Buffer, destinationOffset uint64) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -275,7 +274,7 @@ func (ce *commandEncoder) ResolveQuerySet(ctx context.Context, querySet QuerySet
 }
 
 // SetLabel sets the command encoder label
-func (ce *commandEncoder) SetLabel(ctx context.Context, label string) error {
+func (ce *commandEncoder) SetLabel(label string) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -288,7 +287,7 @@ func (ce *commandEncoder) SetLabel(ctx context.Context, label string) error {
 }
 
 // WriteTimestamp writes a timestamp
-func (ce *commandEncoder) WriteTimestamp(ctx context.Context, querySet QuerySet, queryIndex uint32) error {
+func (ce *commandEncoder) WriteTimestamp(querySet QuerySet, queryIndex uint32) error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -308,7 +307,7 @@ func (ce *commandEncoder) WriteTimestamp(ctx context.Context, querySet QuerySet,
 }
 
 // AddRef increments the reference count
-func (ce *commandEncoder) AddRef(ctx context.Context) error {
+func (ce *commandEncoder) AddRef() error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -321,7 +320,7 @@ func (ce *commandEncoder) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (ce *commandEncoder) Release(ctx context.Context) error {
+func (ce *commandEncoder) Release() error {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
@@ -347,7 +346,7 @@ type commandBuffer struct {
 }
 
 // SetLabel sets the command buffer label
-func (cb *commandBuffer) SetLabel(ctx context.Context, label string) error {
+func (cb *commandBuffer) SetLabel(label string) error {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 
@@ -360,7 +359,7 @@ func (cb *commandBuffer) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (cb *commandBuffer) AddRef(ctx context.Context) error {
+func (cb *commandBuffer) AddRef() error {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 
@@ -373,7 +372,7 @@ func (cb *commandBuffer) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (cb *commandBuffer) Release(ctx context.Context) error {
+func (cb *commandBuffer) Release() error {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 

@@ -21,7 +21,6 @@
 package gpu
 
 import (
-	"context"
 	"math"
 	"unsafe"
 )
@@ -1574,105 +1573,105 @@ type RenderPipelineDescriptor struct {
 
 // GPU is the main interface for WebGPU operations
 type GPU interface {
-	CreateInstance(ctx context.Context, descriptor InstanceDescriptor) (Instance, error)
+	CreateInstance(descriptor InstanceDescriptor) (Instance, error)
 
-	GetInstanceFeatures(ctx context.Context, features SupportedInstanceFeatures) error
+	GetInstanceFeatures(features SupportedInstanceFeatures) error
 
-	GetInstanceLimits(ctx context.Context, limits InstanceLimits) (Status, error)
+	GetInstanceLimits(limits InstanceLimits) (Status, error)
 
-	HasInstanceFeature(ctx context.Context, feature InstanceFeatureName) (bool, error)
+	HasInstanceFeature(feature InstanceFeatureName) (bool, error)
 }
 
 // Adapter interface
 type Adapter interface {
-	GetFeatures(ctx context.Context, features SupportedFeatures) error
-	GetInfo(ctx context.Context, info AdapterInfo) (Status, error)
-	GetLimits(ctx context.Context, limits Limits) (Status, error)
-	HasFeature(ctx context.Context, feature FeatureName) (bool, error)
-	RequestDevice(ctx context.Context, descriptor DeviceDescriptor) Future
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	GetFeatures(features SupportedFeatures) error
+	GetInfo(info AdapterInfo) (Status, error)
+	GetLimits(limits Limits) (Status, error)
+	HasFeature(feature FeatureName) (bool, error)
+	RequestDevice(descriptor DeviceDescriptor, callback RequestDeviceCallbackInfo) Future
+	AddRef() error
+	Release() error
 }
 
 // BindGroup interface
 type BindGroup interface {
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // BindGroupLayout interface
 type BindGroupLayout interface {
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // Buffer interface
 type Buffer interface {
-	Destroy(ctx context.Context) error
-	GetConstMappedRange(ctx context.Context, offset uintptr, size uintptr) (unsafe.Pointer, error)
-	GetMappedRange(ctx context.Context, offset uintptr, size uintptr) (unsafe.Pointer, error)
-	GetMapState(ctx context.Context) (BufferMapState, error)
-	GetSize(ctx context.Context) (uint64, error)
-	GetUsage(ctx context.Context) (BufferUsage, error)
-	MapAsync(ctx context.Context, mode MapMode, offset uintptr, size uintptr) Future
-	ReadMappedRange(ctx context.Context, offset uintptr, data unsafe.Pointer, size uintptr) (Status, error)
-	SetLabel(ctx context.Context, label string) error
-	Unmap(ctx context.Context) error
-	WriteMappedRange(ctx context.Context, offset uintptr, data unsafe.Pointer, size uintptr) (Status, error)
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	Destroy() error
+	GetConstMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
+	GetMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
+	GetMapState() (BufferMapState, error)
+	GetSize() (uint64, error)
+	GetUsage() (BufferUsage, error)
+	MapAsync(mode MapMode, offset uintptr, size uintptr, callback BufferMapCallbackInfo) Future
+	ReadMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error)
+	SetLabel(label string) error
+	Unmap() error
+	WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error)
+	AddRef() error
+	Release() error
 }
 
 // CommandBuffer interface
 type CommandBuffer interface {
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // CommandEncoder interface
 type CommandEncoder interface {
-	BeginComputePass(ctx context.Context, descriptor ComputePassDescriptor) (ComputePassEncoder, error)
-	BeginRenderPass(ctx context.Context, descriptor RenderPassDescriptor) (RenderPassEncoder, error)
-	ClearBuffer(ctx context.Context, buffer Buffer, offset uint64, size uint64) error
-	CopyBufferToBuffer(ctx context.Context, source Buffer, sourceOffset uint64, destination Buffer, destinationOffset uint64, size uint64) error
-	CopyBufferToTexture(ctx context.Context, source TexelCopyBufferInfo, destination TexelCopyTextureInfo, copySize Extent3D) error
-	CopyTextureToBuffer(ctx context.Context, source TexelCopyTextureInfo, destination TexelCopyBufferInfo, copySize Extent3D) error
-	CopyTextureToTexture(ctx context.Context, source TexelCopyTextureInfo, destination TexelCopyTextureInfo, copySize Extent3D) error
-	Finish(ctx context.Context, descriptor CommandBufferDescriptor) (CommandBuffer, error)
-	InsertDebugMarker(ctx context.Context, markerLabel string) error
-	PopDebugGroup(ctx context.Context) error
-	PushDebugGroup(ctx context.Context, groupLabel string) error
-	ResolveQuerySet(ctx context.Context, querySet QuerySet, firstQuery uint32, queryCount uint32, destination Buffer, destinationOffset uint64) error
-	SetLabel(ctx context.Context, label string) error
-	WriteTimestamp(ctx context.Context, querySet QuerySet, queryIndex uint32) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	BeginComputePass(descriptor ComputePassDescriptor) (ComputePassEncoder, error)
+	BeginRenderPass(descriptor RenderPassDescriptor) (RenderPassEncoder, error)
+	ClearBuffer(buffer Buffer, offset uint64, size uint64) error
+	CopyBufferToBuffer(source Buffer, sourceOffset uint64, destination Buffer, destinationOffset uint64, size uint64) error
+	CopyBufferToTexture(source TexelCopyBufferInfo, destination TexelCopyTextureInfo, copySize Extent3D) error
+	CopyTextureToBuffer(source TexelCopyTextureInfo, destination TexelCopyBufferInfo, copySize Extent3D) error
+	CopyTextureToTexture(source TexelCopyTextureInfo, destination TexelCopyTextureInfo, copySize Extent3D) error
+	Finish(descriptor CommandBufferDescriptor) (CommandBuffer, error)
+	InsertDebugMarker(markerLabel string) error
+	PopDebugGroup() error
+	PushDebugGroup(groupLabel string) error
+	ResolveQuerySet(querySet QuerySet, firstQuery uint32, queryCount uint32, destination Buffer, destinationOffset uint64) error
+	SetLabel(label string) error
+	WriteTimestamp(querySet QuerySet, queryIndex uint32) error
+	AddRef() error
+	Release() error
 }
 
 // ComputePassEncoder interface
 type ComputePassEncoder interface {
-	DispatchWorkgroups(ctx context.Context, workgroupCountX uint32, workgroupCountY uint32, workgroupCountZ uint32) error
-	DispatchWorkgroupsIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error
-	End(ctx context.Context) error
-	InsertDebugMarker(ctx context.Context, markerLabel string) error
-	PopDebugGroup(ctx context.Context) error
-	PushDebugGroup(ctx context.Context, groupLabel string) error
-	SetBindGroup(ctx context.Context, groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
-	SetLabel(ctx context.Context, label string) error
-	SetPipeline(ctx context.Context, pipeline ComputePipeline) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	DispatchWorkgroups(workgroupCountX uint32, workgroupCountY uint32, workgroupCountZ uint32) error
+	DispatchWorkgroupsIndirect(indirectBuffer Buffer, indirectOffset uint64) error
+	End() error
+	InsertDebugMarker(markerLabel string) error
+	PopDebugGroup() error
+	PushDebugGroup(groupLabel string) error
+	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
+	SetLabel(label string) error
+	SetPipeline(pipeline ComputePipeline) error
+	AddRef() error
+	Release() error
 }
 
 // ComputePipeline interface
 type ComputePipeline interface {
-	GetBindGroupLayout(ctx context.Context, groupIndex uint32) (BindGroupLayout, error)
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // TODO
@@ -1681,182 +1680,182 @@ type ComputePipeline interface {
 // For more info, see @ref DeviceRelease.
 // Device interface
 type Device interface {
-	CreateBindGroup(ctx context.Context, descriptor BindGroupDescriptor) (BindGroup, error)
-	CreateBindGroupLayout(ctx context.Context, descriptor BindGroupLayoutDescriptor) (BindGroupLayout, error)
-	CreateBuffer(ctx context.Context, descriptor BufferDescriptor) (Buffer, error)
-	CreateCommandEncoder(ctx context.Context, descriptor CommandEncoderDescriptor) (CommandEncoder, error)
-	CreateComputePipeline(ctx context.Context, descriptor ComputePipelineDescriptor) (ComputePipeline, error)
-	CreateComputePipelineAsync(ctx context.Context, descriptor ComputePipelineDescriptor) Future
-	CreatePipelineLayout(ctx context.Context, descriptor PipelineLayoutDescriptor) (PipelineLayout, error)
-	CreateQuerySet(ctx context.Context, descriptor QuerySetDescriptor) (QuerySet, error)
-	CreateRenderBundleEncoder(ctx context.Context, descriptor RenderBundleEncoderDescriptor) (RenderBundleEncoder, error)
-	CreateRenderPipeline(ctx context.Context, descriptor RenderPipelineDescriptor) (RenderPipeline, error)
-	CreateRenderPipelineAsync(ctx context.Context, descriptor RenderPipelineDescriptor) Future
-	CreateSampler(ctx context.Context, descriptor SamplerDescriptor) (Sampler, error)
-	CreateShaderModule(ctx context.Context, descriptor ShaderModuleDescriptor) (ShaderModule, error)
-	CreateTexture(ctx context.Context, descriptor TextureDescriptor) (Texture, error)
-	Destroy(ctx context.Context) error
-	GetAdapterInfo(ctx context.Context, adapterInfo AdapterInfo) (Status, error)
-	GetFeatures(ctx context.Context, features SupportedFeatures) error
-	GetLimits(ctx context.Context, limits Limits) (Status, error)
-	GetLostFuture(ctx context.Context) (Future, error)
-	GetQueue(ctx context.Context) (Queue, error)
-	HasFeature(ctx context.Context, feature FeatureName) (bool, error)
-	PopErrorScope(ctx context.Context) Future
-	PushErrorScope(ctx context.Context, filter ErrorFilter) error
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	CreateBindGroup(descriptor BindGroupDescriptor) (BindGroup, error)
+	CreateBindGroupLayout(descriptor BindGroupLayoutDescriptor) (BindGroupLayout, error)
+	CreateBuffer(descriptor BufferDescriptor) (Buffer, error)
+	CreateCommandEncoder(descriptor CommandEncoderDescriptor) (CommandEncoder, error)
+	CreateComputePipeline(descriptor ComputePipelineDescriptor) (ComputePipeline, error)
+	CreateComputePipelineAsync(descriptor ComputePipelineDescriptor, callback CreateComputePipelineAsyncCallbackInfo) Future
+	CreatePipelineLayout(descriptor PipelineLayoutDescriptor) (PipelineLayout, error)
+	CreateQuerySet(descriptor QuerySetDescriptor) (QuerySet, error)
+	CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) (RenderBundleEncoder, error)
+	CreateRenderPipeline(descriptor RenderPipelineDescriptor) (RenderPipeline, error)
+	CreateRenderPipelineAsync(descriptor RenderPipelineDescriptor, callback CreateRenderPipelineAsyncCallbackInfo) Future
+	CreateSampler(descriptor SamplerDescriptor) (Sampler, error)
+	CreateShaderModule(descriptor ShaderModuleDescriptor) (ShaderModule, error)
+	CreateTexture(descriptor TextureDescriptor) (Texture, error)
+	Destroy() error
+	GetAdapterInfo(adapterInfo AdapterInfo) (Status, error)
+	GetFeatures(features SupportedFeatures) error
+	GetLimits(limits Limits) (Status, error)
+	GetLostFuture() (Future, error)
+	GetQueue() (Queue, error)
+	HasFeature(feature FeatureName) (bool, error)
+	PopErrorScope(callback PopErrorScopeCallbackInfo) Future
+	PushErrorScope(filter ErrorFilter) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // Instance interface
 type Instance interface {
-	CreateSurface(ctx context.Context, descriptor SurfaceDescriptor) (Surface, error)
-	GetWGSLLanguageFeatures(ctx context.Context, features SupportedWGSLLanguageFeatures) (Status, error)
-	HasWGSLLanguageFeature(ctx context.Context, feature WGSLLanguageFeatureName) (bool, error)
-	ProcessEvents(ctx context.Context) error
-	RequestAdapter(ctx context.Context, options RequestAdapterOptions) Future
-	WaitAny(ctx context.Context, futureCount uintptr, futures FutureWaitInfo, timeoutNS uint64) (WaitStatus, error)
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	CreateSurface(descriptor SurfaceDescriptor) (Surface, error)
+	GetWGSLLanguageFeatures(features SupportedWGSLLanguageFeatures) (Status, error)
+	HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool, error)
+	ProcessEvents() error
+	RequestAdapter(options RequestAdapterOptions, callback RequestAdapterCallbackInfo) Future
+	WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutNS uint64) (WaitStatus, error)
+	AddRef() error
+	Release() error
 }
 
 // PipelineLayout interface
 type PipelineLayout interface {
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // QuerySet interface
 type QuerySet interface {
-	Destroy(ctx context.Context) error
-	GetCount(ctx context.Context) (uint32, error)
-	GetType(ctx context.Context) (QueryType, error)
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	Destroy() error
+	GetCount() (uint32, error)
+	GetType() (QueryType, error)
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // Queue interface
 type Queue interface {
-	OnSubmittedWorkDone(ctx context.Context) Future
-	SetLabel(ctx context.Context, label string) error
-	Submit(ctx context.Context, commands []CommandBuffer) error
-	WriteBuffer(ctx context.Context, buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr) error
-	WriteTexture(ctx context.Context, destination TexelCopyTextureInfo, data unsafe.Pointer, dataSize uintptr, dataLayout TexelCopyBufferLayout, writeSize Extent3D) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	OnSubmittedWorkDone(callback QueueWorkDoneCallbackInfo) Future
+	SetLabel(label string) error
+	Submit(commands []CommandBuffer) error
+	WriteBuffer(buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr) error
+	WriteTexture(destination TexelCopyTextureInfo, data unsafe.Pointer, dataSize uintptr, dataLayout TexelCopyBufferLayout, writeSize Extent3D) error
+	AddRef() error
+	Release() error
 }
 
 // RenderBundle interface
 type RenderBundle interface {
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // RenderBundleEncoder interface
 type RenderBundleEncoder interface {
-	Draw(ctx context.Context, vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error
-	DrawIndexed(ctx context.Context, indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error
-	DrawIndexedIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error
-	DrawIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error
-	Finish(ctx context.Context, descriptor RenderBundleDescriptor) (RenderBundle, error)
-	InsertDebugMarker(ctx context.Context, markerLabel string) error
-	PopDebugGroup(ctx context.Context) error
-	PushDebugGroup(ctx context.Context, groupLabel string) error
-	SetBindGroup(ctx context.Context, groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
-	SetIndexBuffer(ctx context.Context, buffer Buffer, format IndexFormat, offset uint64, size uint64) error
-	SetLabel(ctx context.Context, label string) error
-	SetPipeline(ctx context.Context, pipeline RenderPipeline) error
-	SetVertexBuffer(ctx context.Context, slot uint32, buffer Buffer, offset uint64, size uint64) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error
+	DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error
+	DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64) error
+	DrawIndirect(indirectBuffer Buffer, indirectOffset uint64) error
+	Finish(descriptor RenderBundleDescriptor) (RenderBundle, error)
+	InsertDebugMarker(markerLabel string) error
+	PopDebugGroup() error
+	PushDebugGroup(groupLabel string) error
+	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
+	SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64) error
+	SetLabel(label string) error
+	SetPipeline(pipeline RenderPipeline) error
+	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error
+	AddRef() error
+	Release() error
 }
 
 // RenderPassEncoder interface
 type RenderPassEncoder interface {
-	BeginOcclusionQuery(ctx context.Context, queryIndex uint32) error
-	Draw(ctx context.Context, vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error
-	DrawIndexed(ctx context.Context, indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error
-	DrawIndexedIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error
-	DrawIndirect(ctx context.Context, indirectBuffer Buffer, indirectOffset uint64) error
-	End(ctx context.Context) error
-	EndOcclusionQuery(ctx context.Context) error
-	ExecuteBundles(ctx context.Context, bundles []RenderBundle) error
-	InsertDebugMarker(ctx context.Context, markerLabel string) error
-	PopDebugGroup(ctx context.Context) error
-	PushDebugGroup(ctx context.Context, groupLabel string) error
-	SetBindGroup(ctx context.Context, groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
-	SetBlendConstant(ctx context.Context, color Color) error
-	SetIndexBuffer(ctx context.Context, buffer Buffer, format IndexFormat, offset uint64, size uint64) error
-	SetLabel(ctx context.Context, label string) error
-	SetPipeline(ctx context.Context, pipeline RenderPipeline) error
-	SetScissorRect(ctx context.Context, x uint32, y uint32, width uint32, height uint32) error
-	SetStencilReference(ctx context.Context, reference uint32) error
-	SetVertexBuffer(ctx context.Context, slot uint32, buffer Buffer, offset uint64, size uint64) error
-	SetViewport(ctx context.Context, x float32, y float32, width float32, height float32, minDepth float32, maxDepth float32) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	BeginOcclusionQuery(queryIndex uint32) error
+	Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error
+	DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error
+	DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64) error
+	DrawIndirect(indirectBuffer Buffer, indirectOffset uint64) error
+	End() error
+	EndOcclusionQuery() error
+	ExecuteBundles(bundles []RenderBundle) error
+	InsertDebugMarker(markerLabel string) error
+	PopDebugGroup() error
+	PushDebugGroup(groupLabel string) error
+	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
+	SetBlendConstant(color Color) error
+	SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64) error
+	SetLabel(label string) error
+	SetPipeline(pipeline RenderPipeline) error
+	SetScissorRect(x uint32, y uint32, width uint32, height uint32) error
+	SetStencilReference(reference uint32) error
+	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error
+	SetViewport(x float32, y float32, width float32, height float32, minDepth float32, maxDepth float32) error
+	AddRef() error
+	Release() error
 }
 
 // RenderPipeline interface
 type RenderPipeline interface {
-	GetBindGroupLayout(ctx context.Context, groupIndex uint32) (BindGroupLayout, error)
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // Sampler interface
 type Sampler interface {
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // ShaderModule interface
 type ShaderModule interface {
-	GetCompilationInfo(ctx context.Context) Future
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	GetCompilationInfo(callback CompilationInfoCallbackInfo) Future
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // An object used to continuously present image data to the user, see @ref Surfaces for more details.
 // Surface interface
 type Surface interface {
-	Configure(ctx context.Context, config SurfaceConfiguration) error
-	GetCapabilities(ctx context.Context, adapter Adapter, capabilities SurfaceCapabilities) (Status, error)
-	GetCurrentTexture(ctx context.Context, surfaceTexture SurfaceTexture) error
-	Present(ctx context.Context) (Status, error)
-	SetLabel(ctx context.Context, label string) error
-	Unconfigure(ctx context.Context) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	Configure(config SurfaceConfiguration) error
+	GetCapabilities(adapter Adapter, capabilities SurfaceCapabilities) (Status, error)
+	GetCurrentTexture(surfaceTexture SurfaceTexture) error
+	Present() (Status, error)
+	SetLabel(label string) error
+	Unconfigure() error
+	AddRef() error
+	Release() error
 }
 
 // Texture interface
 type Texture interface {
-	CreateView(ctx context.Context, descriptor TextureViewDescriptor) (TextureView, error)
-	Destroy(ctx context.Context) error
-	GetDepthOrArrayLayers(ctx context.Context) (uint32, error)
-	GetDimension(ctx context.Context) (TextureDimension, error)
-	GetFormat(ctx context.Context) (TextureFormat, error)
-	GetHeight(ctx context.Context) (uint32, error)
-	GetMipLevelCount(ctx context.Context) (uint32, error)
-	GetSampleCount(ctx context.Context) (uint32, error)
-	GetUsage(ctx context.Context) (TextureUsage, error)
-	GetWidth(ctx context.Context) (uint32, error)
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	CreateView(descriptor TextureViewDescriptor) (TextureView, error)
+	Destroy() error
+	GetDepthOrArrayLayers() (uint32, error)
+	GetDimension() (TextureDimension, error)
+	GetFormat() (TextureFormat, error)
+	GetHeight() (uint32, error)
+	GetMipLevelCount() (uint32, error)
+	GetSampleCount() (uint32, error)
+	GetUsage() (TextureUsage, error)
+	GetWidth() (uint32, error)
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }
 
 // TextureView interface
 type TextureView interface {
-	SetLabel(ctx context.Context, label string) error
-	AddRef(ctx context.Context) error
-	Release(ctx context.Context) error
+	SetLabel(label string) error
+	AddRef() error
+	Release() error
 }

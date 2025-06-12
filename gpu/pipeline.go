@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -29,7 +28,7 @@ func newPipelineLayout(descriptor PipelineLayoutDescriptor) PipelineLayout {
 }
 
 // SetLabel sets the pipeline layout label
-func (pl *pipelineLayout) SetLabel(ctx context.Context, label string) error {
+func (pl *pipelineLayout) SetLabel(label string) error {
 	pl.mu.Lock()
 	defer pl.mu.Unlock()
 
@@ -42,7 +41,7 @@ func (pl *pipelineLayout) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (pl *pipelineLayout) AddRef(ctx context.Context) error {
+func (pl *pipelineLayout) AddRef() error {
 	if atomic.LoadInt32(&pl.refCount) <= 0 {
 		return fmt.Errorf("pipeline layout has been destroyed")
 	}
@@ -52,7 +51,7 @@ func (pl *pipelineLayout) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (pl *pipelineLayout) Release(ctx context.Context) error {
+func (pl *pipelineLayout) Release() error {
 	newCount := atomic.AddInt32(&pl.refCount, -1)
 	if newCount == 0 {
 		pl.mu.Lock()
@@ -85,7 +84,7 @@ func NewQuerySet(descriptor QuerySetDescriptor) QuerySet {
 }
 
 // Destroy destroys the query set
-func (qs *querySet) Destroy(ctx context.Context) error {
+func (qs *querySet) Destroy() error {
 	qs.mu.Lock()
 	defer qs.mu.Unlock()
 
@@ -98,7 +97,7 @@ func (qs *querySet) Destroy(ctx context.Context) error {
 }
 
 // GetCount gets the query count
-func (qs *querySet) GetCount(ctx context.Context) (uint32, error) {
+func (qs *querySet) GetCount() (uint32, error) {
 	qs.mu.RLock()
 	defer qs.mu.RUnlock()
 
@@ -110,7 +109,7 @@ func (qs *querySet) GetCount(ctx context.Context) (uint32, error) {
 }
 
 // GetType gets the query type
-func (qs *querySet) GetType(ctx context.Context) (QueryType, error) {
+func (qs *querySet) GetType() (QueryType, error) {
 	qs.mu.RLock()
 	defer qs.mu.RUnlock()
 
@@ -122,7 +121,7 @@ func (qs *querySet) GetType(ctx context.Context) (QueryType, error) {
 }
 
 // SetLabel sets the query set label
-func (qs *querySet) SetLabel(ctx context.Context, label string) error {
+func (qs *querySet) SetLabel(label string) error {
 	qs.mu.Lock()
 	defer qs.mu.Unlock()
 
@@ -135,7 +134,7 @@ func (qs *querySet) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (qs *querySet) AddRef(ctx context.Context) error {
+func (qs *querySet) AddRef() error {
 	if atomic.LoadInt32(&qs.refCount) <= 0 {
 		return fmt.Errorf("query set has been destroyed")
 	}
@@ -145,7 +144,7 @@ func (qs *querySet) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (qs *querySet) Release(ctx context.Context) error {
+func (qs *querySet) Release() error {
 	newCount := atomic.AddInt32(&qs.refCount, -1)
 	if newCount == 0 {
 		qs.mu.Lock()

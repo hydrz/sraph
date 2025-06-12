@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -20,7 +19,7 @@ type bindGroup struct {
 }
 
 // SetLabel sets the bind group label
-func (bg *bindGroup) SetLabel(ctx context.Context, label string) error {
+func (bg *bindGroup) SetLabel(label string) error {
 	bg.mu.Lock()
 	defer bg.mu.Unlock()
 
@@ -33,7 +32,7 @@ func (bg *bindGroup) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (bg *bindGroup) AddRef(ctx context.Context) error {
+func (bg *bindGroup) AddRef() error {
 	bg.mu.Lock()
 	defer bg.mu.Unlock()
 
@@ -46,7 +45,7 @@ func (bg *bindGroup) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (bg *bindGroup) Release(ctx context.Context) error {
+func (bg *bindGroup) Release() error {
 	bg.mu.Lock()
 	defer bg.mu.Unlock()
 
@@ -72,7 +71,7 @@ type bindGroupLayout struct {
 }
 
 // SetLabel sets the bind group layout label
-func (bgl *bindGroupLayout) SetLabel(ctx context.Context, label string) error {
+func (bgl *bindGroupLayout) SetLabel(label string) error {
 	bgl.mu.Lock()
 	defer bgl.mu.Unlock()
 
@@ -85,7 +84,7 @@ func (bgl *bindGroupLayout) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (bgl *bindGroupLayout) AddRef(ctx context.Context) error {
+func (bgl *bindGroupLayout) AddRef() error {
 	bgl.mu.Lock()
 	defer bgl.mu.Unlock()
 
@@ -98,7 +97,7 @@ func (bgl *bindGroupLayout) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (bgl *bindGroupLayout) Release(ctx context.Context) error {
+func (bgl *bindGroupLayout) Release() error {
 	bgl.mu.Lock()
 	defer bgl.mu.Unlock()
 

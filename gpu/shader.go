@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -27,7 +26,7 @@ func newShaderModule(descriptor ShaderModuleDescriptor) ShaderModule {
 }
 
 // GetCompilationInfo gets compilation information
-func (sm *shaderModule) GetCompilationInfo(ctx context.Context) Future {
+func (sm *shaderModule) GetCompilationInfo(callback CompilationInfoCallbackInfo) Future {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
@@ -45,7 +44,7 @@ func (sm *shaderModule) GetCompilationInfo(ctx context.Context) Future {
 }
 
 // SetLabel sets the shader module label
-func (sm *shaderModule) SetLabel(ctx context.Context, label string) error {
+func (sm *shaderModule) SetLabel(label string) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -58,7 +57,7 @@ func (sm *shaderModule) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (sm *shaderModule) AddRef(ctx context.Context) error {
+func (sm *shaderModule) AddRef() error {
 	if atomic.LoadInt32(&sm.refCount) <= 0 {
 		return fmt.Errorf("shader module has been destroyed")
 	}
@@ -68,7 +67,7 @@ func (sm *shaderModule) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (sm *shaderModule) Release(ctx context.Context) error {
+func (sm *shaderModule) Release() error {
 	newCount := atomic.AddInt32(&sm.refCount, -1)
 	if newCount == 0 {
 		sm.mu.Lock()

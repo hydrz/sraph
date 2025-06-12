@@ -1,7 +1,6 @@
 package gpu
 
 import (
-	"context"
 	"fmt"
 	"sync"
 )
@@ -33,7 +32,7 @@ func newDevice(descriptor DeviceDescriptor) Device {
 }
 
 // CreateBindGroup creates a new bind group
-func (d *device) CreateBindGroup(ctx context.Context, descriptor BindGroupDescriptor) (BindGroup, error) {
+func (d *device) CreateBindGroup(descriptor BindGroupDescriptor) (BindGroup, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -52,7 +51,7 @@ func (d *device) CreateBindGroup(ctx context.Context, descriptor BindGroupDescri
 }
 
 // CreateBindGroupLayout creates a new bind group layout
-func (d *device) CreateBindGroupLayout(ctx context.Context, descriptor BindGroupLayoutDescriptor) (BindGroupLayout, error) {
+func (d *device) CreateBindGroupLayout(descriptor BindGroupLayoutDescriptor) (BindGroupLayout, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -70,7 +69,7 @@ func (d *device) CreateBindGroupLayout(ctx context.Context, descriptor BindGroup
 }
 
 // CreateBuffer creates a new buffer
-func (d *device) CreateBuffer(ctx context.Context, descriptor BufferDescriptor) (Buffer, error) {
+func (d *device) CreateBuffer(descriptor BufferDescriptor) (Buffer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -96,7 +95,7 @@ func (d *device) CreateBuffer(ctx context.Context, descriptor BufferDescriptor) 
 }
 
 // CreateCommandEncoder creates a new command encoder
-func (d *device) CreateCommandEncoder(ctx context.Context, descriptor CommandEncoderDescriptor) (CommandEncoder, error) {
+func (d *device) CreateCommandEncoder(descriptor CommandEncoderDescriptor) (CommandEncoder, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -113,7 +112,7 @@ func (d *device) CreateCommandEncoder(ctx context.Context, descriptor CommandEnc
 }
 
 // CreateComputePipeline creates a new compute pipeline
-func (d *device) CreateComputePipeline(ctx context.Context, descriptor ComputePipelineDescriptor) (ComputePipeline, error) {
+func (d *device) CreateComputePipeline(descriptor ComputePipelineDescriptor) (ComputePipeline, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -132,7 +131,7 @@ func (d *device) CreateComputePipeline(ctx context.Context, descriptor ComputePi
 }
 
 // CreateComputePipelineAsync creates a compute pipeline asynchronously
-func (d *device) CreateComputePipelineAsync(ctx context.Context, descriptor ComputePipelineDescriptor) Future {
+func (d *device) CreateComputePipelineAsync(descriptor ComputePipelineDescriptor, callback CreateComputePipelineAsyncCallbackInfo) Future {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -155,7 +154,7 @@ func (d *device) CreateComputePipelineAsync(ctx context.Context, descriptor Comp
 }
 
 // CreatePipelineLayout creates a new pipeline layout
-func (d *device) CreatePipelineLayout(ctx context.Context, descriptor PipelineLayoutDescriptor) (PipelineLayout, error) {
+func (d *device) CreatePipelineLayout(descriptor PipelineLayoutDescriptor) (PipelineLayout, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -173,7 +172,7 @@ func (d *device) CreatePipelineLayout(ctx context.Context, descriptor PipelineLa
 }
 
 // CreateQuerySet creates a new query set
-func (d *device) CreateQuerySet(ctx context.Context, descriptor QuerySetDescriptor) (QuerySet, error) {
+func (d *device) CreateQuerySet(descriptor QuerySetDescriptor) (QuerySet, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -192,7 +191,7 @@ func (d *device) CreateQuerySet(ctx context.Context, descriptor QuerySetDescript
 }
 
 // CreateRenderBundleEncoder creates a new render bundle encoder
-func (d *device) CreateRenderBundleEncoder(ctx context.Context, descriptor RenderBundleEncoderDescriptor) (RenderBundleEncoder, error) {
+func (d *device) CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) (RenderBundleEncoder, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -212,7 +211,7 @@ func (d *device) CreateRenderBundleEncoder(ctx context.Context, descriptor Rende
 }
 
 // CreateRenderPipeline creates a new render pipeline
-func (d *device) CreateRenderPipeline(ctx context.Context, descriptor RenderPipelineDescriptor) (RenderPipeline, error) {
+func (d *device) CreateRenderPipeline(descriptor RenderPipelineDescriptor) (RenderPipeline, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -235,7 +234,7 @@ func (d *device) CreateRenderPipeline(ctx context.Context, descriptor RenderPipe
 }
 
 // CreateRenderPipelineAsync creates a render pipeline asynchronously
-func (d *device) CreateRenderPipelineAsync(ctx context.Context, descriptor RenderPipelineDescriptor) Future {
+func (d *device) CreateRenderPipelineAsync(descriptor RenderPipelineDescriptor, callback CreateRenderPipelineAsyncCallbackInfo) Future {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -262,7 +261,7 @@ func (d *device) CreateRenderPipelineAsync(ctx context.Context, descriptor Rende
 }
 
 // CreateSampler creates a new sampler
-func (d *device) CreateSampler(ctx context.Context, descriptor SamplerDescriptor) (Sampler, error) {
+func (d *device) CreateSampler(descriptor SamplerDescriptor) (Sampler, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -289,7 +288,7 @@ func (d *device) CreateSampler(ctx context.Context, descriptor SamplerDescriptor
 }
 
 // CreateShaderModule creates a new shader module
-func (d *device) CreateShaderModule(ctx context.Context, descriptor ShaderModuleDescriptor) (ShaderModule, error) {
+func (d *device) CreateShaderModule(descriptor ShaderModuleDescriptor) (ShaderModule, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -306,7 +305,7 @@ func (d *device) CreateShaderModule(ctx context.Context, descriptor ShaderModule
 }
 
 // CreateTexture creates a new texture
-func (d *device) CreateTexture(ctx context.Context, descriptor TextureDescriptor) (Texture, error) {
+func (d *device) CreateTexture(descriptor TextureDescriptor) (Texture, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -330,7 +329,7 @@ func (d *device) CreateTexture(ctx context.Context, descriptor TextureDescriptor
 }
 
 // Destroy destroys the device
-func (d *device) Destroy(ctx context.Context) error {
+func (d *device) Destroy() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -339,7 +338,7 @@ func (d *device) Destroy(ctx context.Context) error {
 }
 
 // GetAdapterInfo gets adapter information
-func (d *device) GetAdapterInfo(ctx context.Context, adapterInfo AdapterInfo) (Status, error) {
+func (d *device) GetAdapterInfo(adapterInfo AdapterInfo) (Status, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -356,7 +355,7 @@ func (d *device) GetAdapterInfo(ctx context.Context, adapterInfo AdapterInfo) (S
 }
 
 // GetFeatures retrieves supported features
-func (d *device) GetFeatures(ctx context.Context, features SupportedFeatures) error {
+func (d *device) GetFeatures(features SupportedFeatures) error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -369,7 +368,7 @@ func (d *device) GetFeatures(ctx context.Context, features SupportedFeatures) er
 }
 
 // GetLimits retrieves device limits
-func (d *device) GetLimits(ctx context.Context, limits Limits) (Status, error) {
+func (d *device) GetLimits(limits Limits) (Status, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -382,7 +381,7 @@ func (d *device) GetLimits(ctx context.Context, limits Limits) (Status, error) {
 }
 
 // GetLostFuture gets the device lost future
-func (d *device) GetLostFuture(ctx context.Context) (Future, error) {
+func (d *device) GetLostFuture() (Future, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -398,7 +397,7 @@ func (d *device) GetLostFuture(ctx context.Context) (Future, error) {
 }
 
 // GetQueue gets the device queue
-func (d *device) GetQueue(ctx context.Context) (Queue, error) {
+func (d *device) GetQueue() (Queue, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -410,7 +409,7 @@ func (d *device) GetQueue(ctx context.Context) (Queue, error) {
 }
 
 // HasFeature checks if a feature is supported
-func (d *device) HasFeature(ctx context.Context, feature FeatureName) (bool, error) {
+func (d *device) HasFeature(feature FeatureName) (bool, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -427,7 +426,7 @@ func (d *device) HasFeature(ctx context.Context, feature FeatureName) (bool, err
 }
 
 // PopErrorScope pops an error scope
-func (d *device) PopErrorScope(ctx context.Context) Future {
+func (d *device) PopErrorScope(callback PopErrorScopeCallbackInfo) Future {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -440,7 +439,7 @@ func (d *device) PopErrorScope(ctx context.Context) Future {
 }
 
 // PushErrorScope pushes an error scope
-func (d *device) PushErrorScope(ctx context.Context, filter ErrorFilter) error {
+func (d *device) PushErrorScope(filter ErrorFilter) error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -453,7 +452,7 @@ func (d *device) PushErrorScope(ctx context.Context, filter ErrorFilter) error {
 }
 
 // SetLabel sets the device label
-func (d *device) SetLabel(ctx context.Context, label string) error {
+func (d *device) SetLabel(label string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -466,7 +465,7 @@ func (d *device) SetLabel(ctx context.Context, label string) error {
 }
 
 // AddRef increments the reference count
-func (d *device) AddRef(ctx context.Context) error {
+func (d *device) AddRef() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -479,7 +478,7 @@ func (d *device) AddRef(ctx context.Context) error {
 }
 
 // Release decrements the reference count and destroys if zero
-func (d *device) Release(ctx context.Context) error {
+func (d *device) Release() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
