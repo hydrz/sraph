@@ -12,19 +12,26 @@ var _ Instance = (*instance)(nil)
 
 // instance implements the Instance interface
 type instance struct {
-	mu        sync.RWMutex
-	refCount  int32
-	features  []InstanceFeatureName
-	limits    InstanceLimits
-	destroyed bool
+	mu              sync.RWMutex
+	refCount        int32
+	features        []InstanceFeatureName
+	limits          InstanceLimits
+	destroyed       bool
+	callbackManager *CallbackTaskManager
+	callbackHelper  *CallbackHelper
 }
 
 // NewInstance creates a new WebGPU instance
 func NewInstance(descriptor InstanceDescriptor) *instance {
+	callbackManager := NewCallbackTaskManager()
+	callbackHelper := NewCallbackHelper(callbackManager)
+
 	instance := &instance{
-		refCount: 1,
-		features: descriptor.RequiredFeatures,
-		limits:   descriptor.RequiredLimits,
+		refCount:        1,
+		features:        descriptor.RequiredFeatures,
+		limits:          descriptor.RequiredLimits,
+		callbackManager: callbackManager,
+		callbackHelper:  callbackHelper,
 	}
 	return instance
 }
@@ -96,9 +103,8 @@ func (i *instance) ProcessEvents() error {
 		return fmt.Errorf("instance has been destroyed")
 	}
 
-	// Process any pending asynchronous operations
-	// In a real implementation, this would handle callbacks and async operations
-	return nil
+	// Process callbacks that are queued for event processing
+	return i.callbackManager.ProcessEvents()
 }
 
 // RequestAdapter requests a WebGPU adapter
@@ -112,14 +118,27 @@ func (i *instance) RequestAdapter(options RequestAdapterOptions, callback Reques
 	}
 
 	if i.destroyed {
-		// Call callback with error if instance is destroyed
-		go func() {
-			if callback.Callback != nil {
-				callback.Callback(RequestAdapterStatusError, nil, "instance has been destroyed")
-			}
-		}()
+		// Register callback with error status
+		i.callbackHelper.RegisterRequestAdapterCallback(
+			future.Id,
+			callback,
+			RequestAdapterStatusError,
+			nil,
+			"instance has been destroyed",
+		)
+		// Complete the callback immediately
+		i.callbackManager.CompleteCallback(future.Id)
 		return future
 	}
+
+	// Register the callback for async completion
+	i.callbackHelper.RegisterRequestAdapterCallback(
+		future.Id,
+		callback,
+		RequestAdapterStatusSuccess,
+		nil, // Will be set when adapter is created
+		"",
+	)
 
 	// In a real implementation, this would initiate async adapter creation
 	// and call the callback when complete
@@ -132,10 +151,17 @@ func (i *instance) RequestAdapter(options RequestAdapterOptions, callback Reques
 			limits:      getDefaultAdapterLimits(),
 		}
 
-		// Simulate async completion
-		if callback.Callback != nil {
-			callback.Callback(RequestAdapterStatusSuccess, adapter, "")
-		}
+		// Update the callback with the actual adapter
+		i.callbackHelper.RegisterRequestAdapterCallback(
+			future.Id,
+			callback,
+			RequestAdapterStatusSuccess,
+			adapter,
+			"",
+		)
+
+		// Mark the callback as completed
+		i.callbackManager.CompleteCallback(future.Id)
 	}()
 
 	return future
@@ -159,10 +185,18 @@ func (i *instance) WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutN
 		return WaitStatusError, fmt.Errorf("timed wait is not enabled")
 	}
 
-	// In a real implementation, this would wait for the futures to complete
-	// For now, we'll simulate immediate completion
-	futures.Completed = true
-	return WaitStatusSuccess, nil
+	// Wait for the specific future to complete
+	if i.callbackManager.WaitForCallback(futures.Future.Id, timeoutNS) {
+		futures.Completed = true
+		return WaitStatusSuccess, nil
+	}
+
+	// Check if it timed out or errored
+	if timeoutNS > 0 {
+		return WaitStatusTimedOut, nil
+	}
+
+	return WaitStatusError, fmt.Errorf("failed to wait for future")
 }
 
 // AddRef increments the reference count
@@ -189,6 +223,10 @@ func (i *instance) Release() error {
 
 	if atomic.AddInt32(&i.refCount, -1) <= 0 {
 		i.destroyed = true
+		// Shutdown the callback manager
+		if i.callbackManager != nil {
+			i.callbackManager.Shutdown()
+		}
 	}
 
 	return nil

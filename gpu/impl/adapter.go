@@ -121,6 +121,16 @@ func (a *adapter) RequestDevice(descriptor DeviceDescriptor, callback RequestDev
 		Id: generateFutureId(),
 	}
 
+	if a.destroyed {
+		// Call callback with error if adapter is destroyed
+		go func() {
+			if callback.Callback != nil {
+				callback.Callback(RequestDeviceStatusError, nil, "adapter has been destroyed")
+			}
+		}()
+		return future
+	}
+
 	// In a real implementation, this would initiate async device creation
 	go func() {
 		device := &device{
@@ -132,8 +142,10 @@ func (a *adapter) RequestDevice(descriptor DeviceDescriptor, callback RequestDev
 			destroyed: false,
 		}
 
-		// Simulate async completion
-		_ = device
+		// Call callback with success
+		if callback.Callback != nil {
+			callback.Callback(RequestDeviceStatusSuccess, device, "")
+		}
 	}()
 
 	return future

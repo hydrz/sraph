@@ -10,6 +10,7 @@ applyTo: "**/*.go"
 - Follow Go best practices for readability, maintainability, and simplicity.
 - Use standard libraries and idiomatic Go patterns.
 - Keep the order of implementation methods consistent with the order in the interface definition.
+- Use `TODO` comments to indicate areas that need improvement or further work.
 
 
 # Go Testing Guidelines
