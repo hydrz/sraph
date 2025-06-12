@@ -1,9 +1,11 @@
-package gpu
+package impl
 
 import (
 	"fmt"
 	"sync"
 	"unsafe"
+
+	. "github.com/opensraph/sraph/gpu/webgpu"
 )
 
 var _ Buffer = (*buffer)(nil)

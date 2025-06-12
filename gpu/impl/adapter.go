@@ -1,8 +1,10 @@
-package gpu
+package impl
 
 import (
 	"fmt"
 	"sync"
+
+	. "github.com/opensraph/sraph/gpu/webgpu"
 )
 
 var _ Adapter = (*adapter)(nil)

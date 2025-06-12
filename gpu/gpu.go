@@ -1,11 +1,10 @@
-//go:generate go run gen.go -go webgpu.go
-
 package gpu
 
 import (
-	_ "github.com/goccy/go-yaml"
-	_ "github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/opensraph/sraph/gpu/impl"
 )
+
+//go:generate go run gen.go
 
 var gpu = &gpuImpl{}
 
@@ -32,7 +31,7 @@ type gpuImpl struct{}
 
 // CreateInstance creates a new WebGPU instance
 func (g *gpuImpl) CreateInstance(descriptor InstanceDescriptor) (Instance, error) {
-	instance := newInstance(descriptor)
+	instance := impl.NewInstance(descriptor)
 	return instance, nil
 }
 

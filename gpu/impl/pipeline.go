@@ -1,9 +1,11 @@
-package gpu
+package impl
 
 import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+
+	. "github.com/opensraph/sraph/gpu/webgpu"
 )
 
 var _ PipelineLayout = (*pipelineLayout)(nil)
