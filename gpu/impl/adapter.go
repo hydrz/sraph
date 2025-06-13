@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	. "github.com/opensraph/sraph/gpu/webgpu"
+	. "github.com/opensraph/sraph/gpu/wgpu"
 )
 
 var _ Adapter = (*adapter)(nil)

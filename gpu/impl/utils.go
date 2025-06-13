@@ -3,7 +3,7 @@ package impl
 import (
 	"fmt"
 
-	. "github.com/opensraph/sraph/gpu/webgpu"
+	. "github.com/opensraph/sraph/gpu/wgpu"
 )
 
 // getDefaultLimits returns default WebGPU limits for devices

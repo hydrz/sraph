@@ -3,7 +3,7 @@ package impl
 import (
 	"fmt"
 
-	. "github.com/opensraph/sraph/gpu/webgpu"
+	. "github.com/opensraph/sraph/gpu/wgpu"
 )
 
 // ValidateBufferDescriptor validates a buffer descriptor

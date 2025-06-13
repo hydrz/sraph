@@ -1,6 +1,6 @@
-package webgpu
+package wgpu
 
-//go:generate go run gen.go -go webgpu.go
+//go:generate go run gen.go -go wgpu.go
 
 import (
 	_ "github.com/goccy/go-yaml"

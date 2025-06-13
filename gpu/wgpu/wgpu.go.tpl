@@ -4,7 +4,7 @@
 
 // Package gpu provides WebGPU implementation interfaces.
 {{ SCommentN .Doc 0 -}}
-package webgpu
+package wgpu
 
 import (
     "math"

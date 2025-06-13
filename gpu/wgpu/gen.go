@@ -29,7 +29,7 @@ import (
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 )
 
-//go:embed webgpu.go.tpl
+//go:embed wgpu.go.tpl
 var tmpl string
 
 const (

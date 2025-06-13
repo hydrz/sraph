@@ -18,7 +18,7 @@
 //
 // The standard include directive for this header is `#include <webgpu/webgpu.h>`
 // (if it is provided in a system-wide or toolchain-wide include directory).
-package webgpu
+package wgpu
 
 import (
 	"math"

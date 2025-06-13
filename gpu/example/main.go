@@ -7,14 +7,8 @@ import (
 )
 
 func main() {
-	// 1. Create GPU instance
-	instance, err := gpu.CreateInstance(gpu.InstanceDescriptor{})
-	if err != nil {
-		log.Fatalf("Failed to create GPU instance: %v", err)
-	}
-
 	// 2. Request GPU adapter
-	adapter, err := instance.RequestAdapter(gpu.RequestAdapterOptions{})
+	adapter, err := gpu.RequestAdapter(gpu.RequestAdapterOptions{})
 	if err != nil {
 		log.Fatalf("Failed to request GPU adapter: %v", err)
 	}

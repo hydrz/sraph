@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/opensraph/sraph/gpu/impl"
-	. "github.com/opensraph/sraph/gpu/webgpu"
+	. "github.com/opensraph/sraph/gpu/wgpu"
 )
 
 // VulkanDeviceWrapper wraps VulkanDevice to implement WebGPU Device interface

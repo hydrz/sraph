@@ -1,6 +1,6 @@
 package impl
 
-import . "github.com/opensraph/sraph/gpu/webgpu"
+import . "github.com/opensraph/sraph/gpu/wgpu"
 
 // Common shader stage combinations
 const (

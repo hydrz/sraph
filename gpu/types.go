@@ -2,298 +2,254 @@
 package gpu
 
 import (
-	"github.com/opensraph/sraph/gpu/webgpu"
+	"github.com/opensraph/sraph/gpu/wgpu"
 )
 
 // Adapter interface
-type Adapter = webgpu.Adapter
-type AdapterInfo = webgpu.AdapterInfo
-type AdapterType = webgpu.AdapterType
-type AddressMode = webgpu.AddressMode
-type BackendType = webgpu.BackendType
+type Adapter = wgpu.Adapter
+
+// ===== Structs =====
+type AdapterInfo = wgpu.AdapterInfo
+
+// ===== Enums =====
+type AdapterType = wgpu.AdapterType
+type AddressMode = wgpu.AddressMode
+type BackendType = wgpu.BackendType
 
 // BindGroup interface
-type BindGroup = webgpu.BindGroup
-type BindGroupDescriptor = webgpu.BindGroupDescriptor
-type BindGroupEntry = webgpu.BindGroupEntry
+type BindGroup = wgpu.BindGroup
+type BindGroupDescriptor = wgpu.BindGroupDescriptor
+type BindGroupEntry = wgpu.BindGroupEntry
 
 // BindGroupLayout interface
-type BindGroupLayout = webgpu.BindGroupLayout
-type BindGroupLayoutDescriptor = webgpu.BindGroupLayoutDescriptor
-type BindGroupLayoutEntry = webgpu.BindGroupLayoutEntry
-type BlendComponent = webgpu.BlendComponent
-type BlendFactor = webgpu.BlendFactor
-type BlendOperation = webgpu.BlendOperation
-type BlendState = webgpu.BlendState
+type BindGroupLayout = wgpu.BindGroupLayout
+type BindGroupLayoutDescriptor = wgpu.BindGroupLayoutDescriptor
+type BindGroupLayoutEntry = wgpu.BindGroupLayoutEntry
+type BlendComponent = wgpu.BlendComponent
+type BlendFactor = wgpu.BlendFactor
+type BlendOperation = wgpu.BlendOperation
+type BlendState = wgpu.BlendState
 
 // Buffer interface
-type Buffer = webgpu.Buffer
-type BufferBindingLayout = webgpu.BufferBindingLayout
-type BufferBindingType = webgpu.BufferBindingType
-type BufferDescriptor = webgpu.BufferDescriptor
-type BufferMapCallback = webgpu.BufferMapCallback
+type Buffer = wgpu.Buffer
+type BufferBindingLayout = wgpu.BufferBindingLayout
+type BufferBindingType = wgpu.BufferBindingType
+type BufferDescriptor = wgpu.BufferDescriptor
+type BufferMapState = wgpu.BufferMapState
 
-// BufferMapCallbackInfo contains callback configuration
-type BufferMapCallbackInfo = webgpu.BufferMapCallbackInfo
-type BufferMapState = webgpu.BufferMapState
-type BufferUsage = webgpu.BufferUsage
-
-// The callback mode controls how a callback for an asynchronous operation may be fired. See @ref Asynchronous-Operations for how these are used.
-type CallbackMode = webgpu.CallbackMode
+// ===== Bitflags =====
+type BufferUsage = wgpu.BufferUsage
 
 // An RGBA color. Represents a `f32`, `i32`, or `u32` color using @ref DoubleAsSupertype.
 //
 // If any channel is non-finite, produces a @ref NonFiniteFloatValueError.
-type Color = webgpu.Color
-type ColorTargetState = webgpu.ColorTargetState
-type ColorWriteMask = webgpu.ColorWriteMask
+type Color = wgpu.Color
+type ColorTargetState = wgpu.ColorTargetState
+type ColorWriteMask = wgpu.ColorWriteMask
 
 // CommandBuffer interface
-type CommandBuffer = webgpu.CommandBuffer
-type CommandBufferDescriptor = webgpu.CommandBufferDescriptor
+type CommandBuffer = wgpu.CommandBuffer
+type CommandBufferDescriptor = wgpu.CommandBufferDescriptor
 
 // CommandEncoder interface
-type CommandEncoder = webgpu.CommandEncoder
-type CommandEncoderDescriptor = webgpu.CommandEncoderDescriptor
-type CompareFunction = webgpu.CompareFunction
-type CompilationInfo = webgpu.CompilationInfo
-type CompilationInfoCallback = webgpu.CompilationInfoCallback
-
-// CompilationInfoCallbackInfo contains callback configuration
-type CompilationInfoCallbackInfo = webgpu.CompilationInfoCallbackInfo
-type CompilationInfoRequestStatus = webgpu.CompilationInfoRequestStatus
-type CompilationMessage = webgpu.CompilationMessage
-type CompilationMessageType = webgpu.CompilationMessageType
+type CommandEncoder = wgpu.CommandEncoder
+type CommandEncoderDescriptor = wgpu.CommandEncoderDescriptor
+type CompareFunction = wgpu.CompareFunction
+type CompilationInfo = wgpu.CompilationInfo
+type CompilationMessage = wgpu.CompilationMessage
+type CompilationMessageType = wgpu.CompilationMessageType
 
 // Describes how frames are composited with other contents on the screen when @ref wgpuSurfacePresent is called.
-type CompositeAlphaMode = webgpu.CompositeAlphaMode
-type ComputePassDescriptor = webgpu.ComputePassDescriptor
+type CompositeAlphaMode = wgpu.CompositeAlphaMode
+type ComputePassDescriptor = wgpu.ComputePassDescriptor
 
 // ComputePassEncoder interface
-type ComputePassEncoder = webgpu.ComputePassEncoder
+type ComputePassEncoder = wgpu.ComputePassEncoder
 
 // ComputePipeline interface
-type ComputePipeline = webgpu.ComputePipeline
-type ComputePipelineDescriptor = webgpu.ComputePipelineDescriptor
-type ComputeState = webgpu.ComputeState
-type ConstantEntry = webgpu.ConstantEntry
-type CreateComputePipelineAsyncCallback = webgpu.CreateComputePipelineAsyncCallback
-
-// CreateComputePipelineAsyncCallbackInfo contains callback configuration
-type CreateComputePipelineAsyncCallbackInfo = webgpu.CreateComputePipelineAsyncCallbackInfo
-type CreatePipelineAsyncStatus = webgpu.CreatePipelineAsyncStatus
-type CreateRenderPipelineAsyncCallback = webgpu.CreateRenderPipelineAsyncCallback
-
-// CreateRenderPipelineAsyncCallbackInfo contains callback configuration
-type CreateRenderPipelineAsyncCallbackInfo = webgpu.CreateRenderPipelineAsyncCallbackInfo
-type CullMode = webgpu.CullMode
-type DepthStencilState = webgpu.DepthStencilState
+type ComputePipeline = wgpu.ComputePipeline
+type ComputePipelineDescriptor = wgpu.ComputePipelineDescriptor
+type ComputeState = wgpu.ComputeState
+type ConstantEntry = wgpu.ConstantEntry
+type CullMode = wgpu.CullMode
+type DepthStencilState = wgpu.DepthStencilState
 
 // TODO
 //
 // Releasing the last ref to a `WGPUDevice` also calls @ref wgpuDeviceDestroy.
 // For more info, see @ref DeviceRelease.
 // Device interface
-type Device = webgpu.Device
-type DeviceDescriptor = webgpu.DeviceDescriptor
-type DeviceLostCallback = webgpu.DeviceLostCallback
-
-// DeviceLostCallbackInfo contains callback configuration
-type DeviceLostCallbackInfo = webgpu.DeviceLostCallbackInfo
-type DeviceLostReason = webgpu.DeviceLostReason
-type ErrorFilter = webgpu.ErrorFilter
-type ErrorType = webgpu.ErrorType
-type Extent3D = webgpu.Extent3D
+type Device = wgpu.Device
+type DeviceDescriptor = wgpu.DeviceDescriptor
+type DeviceLostReason = wgpu.DeviceLostReason
+type ErrorFilter = wgpu.ErrorFilter
+type ErrorType = wgpu.ErrorType
+type Extent3D = wgpu.Extent3D
 
 // See @ref WGPURequestAdapterOptions::featureLevel.
-type FeatureLevel = webgpu.FeatureLevel
-type FeatureName = webgpu.FeatureName
-type FilterMode = webgpu.FilterMode
-type FragmentState = webgpu.FragmentState
-type FrontFace = webgpu.FrontFace
+type FeatureLevel = wgpu.FeatureLevel
+type FeatureName = wgpu.FeatureName
+type FilterMode = wgpu.FilterMode
+type FragmentState = wgpu.FragmentState
+type FrontFace = wgpu.FrontFace
 
 // Opaque handle to an asynchronous operation. See @ref Asynchronous-Operations for more information.
-type Future = webgpu.Future
+type Future = wgpu.Future
 
 // Struct holding a future to wait on, and a `completed` boolean flag.
-type FutureWaitInfo = webgpu.FutureWaitInfo
+type FutureWaitInfo = wgpu.FutureWaitInfo
 
 // GPU is the main interface for WebGPU operations
-type GPU = webgpu.GPU
-type IndexFormat = webgpu.IndexFormat
+type GPU = wgpu.GPU
+type IndexFormat = wgpu.IndexFormat
 
 // Instance interface
-type Instance = webgpu.Instance
-type InstanceDescriptor = webgpu.InstanceDescriptor
-type InstanceFeatureName = webgpu.InstanceFeatureName
-type InstanceLimits = webgpu.InstanceLimits
-type Limits = webgpu.Limits
-type LoadOp = webgpu.LoadOp
-type MapAsyncStatus = webgpu.MapAsyncStatus
-type MapMode = webgpu.MapMode
-type MipmapFilterMode = webgpu.MipmapFilterMode
-type MultisampleState = webgpu.MultisampleState
-type OptionalBool = webgpu.OptionalBool
-type Origin3D = webgpu.Origin3D
-type PassTimestampWrites = webgpu.PassTimestampWrites
+type Instance = wgpu.Instance
+type InstanceDescriptor = wgpu.InstanceDescriptor
+type InstanceFeatureName = wgpu.InstanceFeatureName
+type InstanceLimits = wgpu.InstanceLimits
+type Limits = wgpu.Limits
+type LoadOp = wgpu.LoadOp
+type MapMode = wgpu.MapMode
+type MipmapFilterMode = wgpu.MipmapFilterMode
+type MultisampleState = wgpu.MultisampleState
+type OptionalBool = wgpu.OptionalBool
+type Origin3D = wgpu.Origin3D
+type PassTimestampWrites = wgpu.PassTimestampWrites
 
 // PipelineLayout interface
-type PipelineLayout = webgpu.PipelineLayout
-type PipelineLayoutDescriptor = webgpu.PipelineLayoutDescriptor
-type PopErrorScopeCallback = webgpu.PopErrorScopeCallback
-
-// PopErrorScopeCallbackInfo contains callback configuration
-type PopErrorScopeCallbackInfo = webgpu.PopErrorScopeCallbackInfo
-type PopErrorScopeStatus = webgpu.PopErrorScopeStatus
-type PowerPreference = webgpu.PowerPreference
-type PredefinedColorSpace = webgpu.PredefinedColorSpace
+type PipelineLayout = wgpu.PipelineLayout
+type PipelineLayoutDescriptor = wgpu.PipelineLayoutDescriptor
+type PowerPreference = wgpu.PowerPreference
+type PredefinedColorSpace = wgpu.PredefinedColorSpace
 
 // Describes when and in which order frames are presented on the screen when @ref wgpuSurfacePresent is called.
-type PresentMode = webgpu.PresentMode
-type PrimitiveState = webgpu.PrimitiveState
-type PrimitiveTopology = webgpu.PrimitiveTopology
+type PresentMode = wgpu.PresentMode
+type PrimitiveState = wgpu.PrimitiveState
+type PrimitiveTopology = wgpu.PrimitiveTopology
 
 // QuerySet interface
-type QuerySet = webgpu.QuerySet
-type QuerySetDescriptor = webgpu.QuerySetDescriptor
-type QueryType = webgpu.QueryType
+type QuerySet = wgpu.QuerySet
+type QuerySetDescriptor = wgpu.QuerySetDescriptor
+type QueryType = wgpu.QueryType
 
 // Queue interface
-type Queue = webgpu.Queue
-type QueueDescriptor = webgpu.QueueDescriptor
-type QueueWorkDoneCallback = webgpu.QueueWorkDoneCallback
-
-// QueueWorkDoneCallbackInfo contains callback configuration
-type QueueWorkDoneCallbackInfo = webgpu.QueueWorkDoneCallbackInfo
-type QueueWorkDoneStatus = webgpu.QueueWorkDoneStatus
+type Queue = wgpu.Queue
+type QueueDescriptor = wgpu.QueueDescriptor
 
 // RenderBundle interface
-type RenderBundle = webgpu.RenderBundle
-type RenderBundleDescriptor = webgpu.RenderBundleDescriptor
+type RenderBundle = wgpu.RenderBundle
+type RenderBundleDescriptor = wgpu.RenderBundleDescriptor
 
 // RenderBundleEncoder interface
-type RenderBundleEncoder = webgpu.RenderBundleEncoder
-type RenderBundleEncoderDescriptor = webgpu.RenderBundleEncoderDescriptor
-type RenderPassColorAttachment = webgpu.RenderPassColorAttachment
-type RenderPassDepthStencilAttachment = webgpu.RenderPassDepthStencilAttachment
-type RenderPassDescriptor = webgpu.RenderPassDescriptor
+type RenderBundleEncoder = wgpu.RenderBundleEncoder
+type RenderBundleEncoderDescriptor = wgpu.RenderBundleEncoderDescriptor
+type RenderPassColorAttachment = wgpu.RenderPassColorAttachment
+type RenderPassDepthStencilAttachment = wgpu.RenderPassDepthStencilAttachment
+type RenderPassDescriptor = wgpu.RenderPassDescriptor
 
 // RenderPassEncoder interface
-type RenderPassEncoder = webgpu.RenderPassEncoder
-type RenderPassMaxDrawCount = webgpu.RenderPassMaxDrawCount
+type RenderPassEncoder = wgpu.RenderPassEncoder
+type RenderPassMaxDrawCount = wgpu.RenderPassMaxDrawCount
 
 // RenderPipeline interface
-type RenderPipeline = webgpu.RenderPipeline
-type RenderPipelineDescriptor = webgpu.RenderPipelineDescriptor
-type RequestAdapterCallback = webgpu.RequestAdapterCallback
-
-// RequestAdapterCallbackInfo contains callback configuration
-type RequestAdapterCallbackInfo = webgpu.RequestAdapterCallbackInfo
-type RequestAdapterOptions = webgpu.RequestAdapterOptions
-type RequestAdapterStatus = webgpu.RequestAdapterStatus
+type RenderPipeline = wgpu.RenderPipeline
+type RenderPipelineDescriptor = wgpu.RenderPipelineDescriptor
+type RequestAdapterOptions = wgpu.RequestAdapterOptions
 
 // Extension providing requestAdapter options for implementations with WebXR interop (i.e. Wasm).
-type RequestAdapterWebXROptions = webgpu.RequestAdapterWebXROptions
-type RequestDeviceCallback = webgpu.RequestDeviceCallback
-
-// RequestDeviceCallbackInfo contains callback configuration
-type RequestDeviceCallbackInfo = webgpu.RequestDeviceCallbackInfo
-type RequestDeviceStatus = webgpu.RequestDeviceStatus
-type SType = webgpu.SType
+type RequestAdapterWebXROptions = wgpu.RequestAdapterWebXROptions
+type SType = wgpu.SType
 
 // Sampler interface
-type Sampler = webgpu.Sampler
-type SamplerBindingLayout = webgpu.SamplerBindingLayout
-type SamplerBindingType = webgpu.SamplerBindingType
-type SamplerDescriptor = webgpu.SamplerDescriptor
+type Sampler = wgpu.Sampler
+type SamplerBindingLayout = wgpu.SamplerBindingLayout
+type SamplerBindingType = wgpu.SamplerBindingType
+type SamplerDescriptor = wgpu.SamplerDescriptor
 
 // ShaderModule interface
-type ShaderModule = webgpu.ShaderModule
-type ShaderModuleDescriptor = webgpu.ShaderModuleDescriptor
-type ShaderSourceSPIRV = webgpu.ShaderSourceSPIRV
-type ShaderSourceWGSL = webgpu.ShaderSourceWGSL
-type ShaderStage = webgpu.ShaderStage
+type ShaderModule = wgpu.ShaderModule
+type ShaderModuleDescriptor = wgpu.ShaderModuleDescriptor
+type ShaderSourceSPIRV = wgpu.ShaderSourceSPIRV
+type ShaderSourceWGSL = wgpu.ShaderSourceWGSL
+type ShaderStage = wgpu.ShaderStage
 
 // Status code returned (synchronously) from many operations. Generally
 // indicates an invalid input like an unknown enum value or @ref OutStructChainError.
 // Read the function's documentation for specific error conditions.
-type Status = webgpu.Status
-type StencilFaceState = webgpu.StencilFaceState
-type StencilOperation = webgpu.StencilOperation
-type StorageTextureAccess = webgpu.StorageTextureAccess
-type StorageTextureBindingLayout = webgpu.StorageTextureBindingLayout
-type StoreOp = webgpu.StoreOp
-type SupportedFeatures = webgpu.SupportedFeatures
-type SupportedInstanceFeatures = webgpu.SupportedInstanceFeatures
-type SupportedWGSLLanguageFeatures = webgpu.SupportedWGSLLanguageFeatures
+type Status = wgpu.Status
+type StencilFaceState = wgpu.StencilFaceState
+type StencilOperation = wgpu.StencilOperation
+type StorageTextureAccess = wgpu.StorageTextureAccess
+type StorageTextureBindingLayout = wgpu.StorageTextureBindingLayout
+type StoreOp = wgpu.StoreOp
+type SupportedFeatures = wgpu.SupportedFeatures
+type SupportedInstanceFeatures = wgpu.SupportedInstanceFeatures
+type SupportedWGSLLanguageFeatures = wgpu.SupportedWGSLLanguageFeatures
 
 // An object used to continuously present image data to the user, see @ref Surfaces for more details.
 // Surface interface
-type Surface = webgpu.Surface
+type Surface = wgpu.Surface
 
 // Filled by @ref wgpuSurfaceGetCapabilities with what's supported for @ref wgpuSurfaceConfigure for a pair of @ref WGPUSurface and @ref WGPUAdapter.
-type SurfaceCapabilities = webgpu.SurfaceCapabilities
+type SurfaceCapabilities = wgpu.SurfaceCapabilities
 
 // Extension of @ref WGPUSurfaceConfiguration for color spaces and HDR.
-type SurfaceColorManagement = webgpu.SurfaceColorManagement
+type SurfaceColorManagement = wgpu.SurfaceColorManagement
 
 // Options to @ref wgpuSurfaceConfigure for defining how a @ref WGPUSurface will be rendered to and presented to the user.
 // See @ref Surface-Configuration for more details.
-type SurfaceConfiguration = webgpu.SurfaceConfiguration
+type SurfaceConfiguration = wgpu.SurfaceConfiguration
 
 // The root descriptor for the creation of an @ref WGPUSurface with @ref wgpuInstanceCreateSurface.
 // It isn't sufficient by itself and must have one of the `WGPUSurfaceSource*` in its chain.
 // See @ref Surface-Creation for more details.
-type SurfaceDescriptor = webgpu.SurfaceDescriptor
+type SurfaceDescriptor = wgpu.SurfaceDescriptor
 
 // The status enum for @ref wgpuSurfaceGetCurrentTexture.
-type SurfaceGetCurrentTextureStatus = webgpu.SurfaceGetCurrentTextureStatus
+type SurfaceGetCurrentTextureStatus = wgpu.SurfaceGetCurrentTextureStatus
 
 // Chained in @ref WGPUSurfaceDescriptor to make an @ref WGPUSurface wrapping an Android [`ANativeWindow`](https://developer.android.com/ndk/reference/group/a-native-window).
-type SurfaceSourceAndroidNativeWindow = webgpu.SurfaceSourceAndroidNativeWindow
+type SurfaceSourceAndroidNativeWindow = wgpu.SurfaceSourceAndroidNativeWindow
 
 // Chained in @ref WGPUSurfaceDescriptor to make an @ref WGPUSurface wrapping a [`CAMetalLayer`](https://developer.apple.com/documentation/quartzcore/cametallayer?language=objc).
-type SurfaceSourceMetalLayer = webgpu.SurfaceSourceMetalLayer
+type SurfaceSourceMetalLayer = wgpu.SurfaceSourceMetalLayer
 
 // Chained in @ref WGPUSurfaceDescriptor to make an @ref WGPUSurface wrapping a [Wayland](https://wayland.freedesktop.org/) [`wl_surface`](https://wayland.freedesktop.org/docs/html/apa.html#protocol-spec-wl_surface).
-type SurfaceSourceWaylandSurface = webgpu.SurfaceSourceWaylandSurface
+type SurfaceSourceWaylandSurface = wgpu.SurfaceSourceWaylandSurface
 
 // Chained in @ref WGPUSurfaceDescriptor to make an @ref WGPUSurface wrapping a Windows [`HWND`](https://learn.microsoft.com/en-us/windows/apps/develop/ui-input/retrieve-hwnd).
-type SurfaceSourceWindowsHWND = webgpu.SurfaceSourceWindowsHWND
+type SurfaceSourceWindowsHWND = wgpu.SurfaceSourceWindowsHWND
 
 // Chained in @ref WGPUSurfaceDescriptor to make an @ref WGPUSurface wrapping an [XCB](https://xcb.freedesktop.org/) `xcb_window_t`.
-type SurfaceSourceXCBWindow = webgpu.SurfaceSourceXCBWindow
+type SurfaceSourceXCBWindow = wgpu.SurfaceSourceXCBWindow
 
 // Chained in @ref WGPUSurfaceDescriptor to make an @ref WGPUSurface wrapping an [Xlib](https://www.x.org/releases/current/doc/libX11/libX11/libX11.html) `Window`.
-type SurfaceSourceXlibWindow = webgpu.SurfaceSourceXlibWindow
+type SurfaceSourceXlibWindow = wgpu.SurfaceSourceXlibWindow
 
 // Queried each frame from a @ref WGPUSurface to get a @ref WGPUTexture to render to along with some metadata.
 // See @ref Surface-Presenting for more details.
-type SurfaceTexture = webgpu.SurfaceTexture
-type TexelCopyBufferInfo = webgpu.TexelCopyBufferInfo
-type TexelCopyBufferLayout = webgpu.TexelCopyBufferLayout
-type TexelCopyTextureInfo = webgpu.TexelCopyTextureInfo
+type SurfaceTexture = wgpu.SurfaceTexture
+type TexelCopyBufferInfo = wgpu.TexelCopyBufferInfo
+type TexelCopyBufferLayout = wgpu.TexelCopyBufferLayout
+type TexelCopyTextureInfo = wgpu.TexelCopyTextureInfo
 
 // Texture interface
-type Texture = webgpu.Texture
-type TextureAspect = webgpu.TextureAspect
-type TextureBindingLayout = webgpu.TextureBindingLayout
-type TextureDescriptor = webgpu.TextureDescriptor
-type TextureDimension = webgpu.TextureDimension
-type TextureFormat = webgpu.TextureFormat
-type TextureSampleType = webgpu.TextureSampleType
-type TextureUsage = webgpu.TextureUsage
+type Texture = wgpu.Texture
+type TextureAspect = wgpu.TextureAspect
+type TextureBindingLayout = wgpu.TextureBindingLayout
+type TextureDescriptor = wgpu.TextureDescriptor
+type TextureDimension = wgpu.TextureDimension
+type TextureFormat = wgpu.TextureFormat
+type TextureSampleType = wgpu.TextureSampleType
+type TextureUsage = wgpu.TextureUsage
 
 // TextureView interface
-type TextureView = webgpu.TextureView
-type TextureViewDescriptor = webgpu.TextureViewDescriptor
-type TextureViewDimension = webgpu.TextureViewDimension
-type ToneMappingMode = webgpu.ToneMappingMode
-type UncapturedErrorCallback = webgpu.UncapturedErrorCallback
-
-// UncapturedErrorCallbackInfo contains callback configuration
-type UncapturedErrorCallbackInfo = webgpu.UncapturedErrorCallbackInfo
-type VertexAttribute = webgpu.VertexAttribute
+type TextureView = wgpu.TextureView
+type TextureViewDescriptor = wgpu.TextureViewDescriptor
+type TextureViewDimension = wgpu.TextureViewDimension
+type ToneMappingMode = wgpu.ToneMappingMode
+type VertexAttribute = wgpu.VertexAttribute
 
 // If `attributes` is empty *and* `stepMode` is @ref WGPUVertexStepMode_Undefined,
 // indicates a "hole" in the parent @ref WGPUVertexState `buffers` array,
@@ -307,562 +263,502 @@ type VertexAttribute = webgpu.VertexAttribute
 //
 // If `stepMode` is @ref WGPUVertexStepMode_Undefined but `attributes` is *not* empty,
 // `stepMode` [defaults](@ref SentinelValues) to @ref WGPUVertexStepMode_Vertex.
-type VertexBufferLayout = webgpu.VertexBufferLayout
-type VertexFormat = webgpu.VertexFormat
-type VertexState = webgpu.VertexState
-type VertexStepMode = webgpu.VertexStepMode
-type WGSLLanguageFeatureName = webgpu.WGSLLanguageFeatureName
-
-// Status returned from a call to ::wgpuInstanceWaitAny.
-type WaitStatus = webgpu.WaitStatus
+type VertexBufferLayout = wgpu.VertexBufferLayout
+type VertexFormat = wgpu.VertexFormat
+type VertexState = wgpu.VertexState
+type VertexStepMode = wgpu.VertexStepMode
+type WGSLLanguageFeatureName = wgpu.WGSLLanguageFeatureName
 
 const (
-	AdapterTypeCPU           = webgpu.AdapterTypeCPU
-	AdapterTypeDiscreteGPU   = webgpu.AdapterTypeDiscreteGPU
-	AdapterTypeIntegratedGPU = webgpu.AdapterTypeIntegratedGPU
-	AdapterTypeUnknown       = webgpu.AdapterTypeUnknown
-	AddressModeClampToEdge   = webgpu.AddressModeClampToEdge
-	AddressModeMirrorRepeat  = webgpu.AddressModeMirrorRepeat
-	AddressModeRepeat        = webgpu.AddressModeRepeat
+	AdapterTypeCPU           = wgpu.AdapterTypeCPU
+	AdapterTypeDiscreteGPU   = wgpu.AdapterTypeDiscreteGPU
+	AdapterTypeIntegratedGPU = wgpu.AdapterTypeIntegratedGPU
+	AdapterTypeUnknown       = wgpu.AdapterTypeUnknown
+	AddressModeClampToEdge   = wgpu.AddressModeClampToEdge
+	AddressModeMirrorRepeat  = wgpu.AddressModeMirrorRepeat
+	AddressModeRepeat        = wgpu.AddressModeRepeat
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	AddressModeUndefined = webgpu.AddressModeUndefined
+	AddressModeUndefined = wgpu.AddressModeUndefined
 	// Indicates no array layer count is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	ArrayLayerCountUndefined = webgpu.ArrayLayerCountUndefined
-	BackendTypeD3D11         = webgpu.BackendTypeD3D11
-	BackendTypeD3D12         = webgpu.BackendTypeD3D12
-	BackendTypeMetal         = webgpu.BackendTypeMetal
-	BackendTypeNull          = webgpu.BackendTypeNull
-	BackendTypeOpenGL        = webgpu.BackendTypeOpenGL
-	BackendTypeOpenGLES      = webgpu.BackendTypeOpenGLES
+	ArrayLayerCountUndefined = wgpu.ArrayLayerCountUndefined
+	BackendTypeD3D11         = wgpu.BackendTypeD3D11
+	BackendTypeD3D12         = wgpu.BackendTypeD3D12
+	BackendTypeMetal         = wgpu.BackendTypeMetal
+	BackendTypeNull          = wgpu.BackendTypeNull
+	BackendTypeOpenGL        = wgpu.BackendTypeOpenGL
+	BackendTypeOpenGLES      = wgpu.BackendTypeOpenGLES
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	BackendTypeUndefined         = webgpu.BackendTypeUndefined
-	BackendTypeVulkan            = webgpu.BackendTypeVulkan
-	BackendTypeWebGPU            = webgpu.BackendTypeWebGPU
-	BlendFactorConstant          = webgpu.BlendFactorConstant
-	BlendFactorDst               = webgpu.BlendFactorDst
-	BlendFactorDstAlpha          = webgpu.BlendFactorDstAlpha
-	BlendFactorOne               = webgpu.BlendFactorOne
-	BlendFactorOneMinusConstant  = webgpu.BlendFactorOneMinusConstant
-	BlendFactorOneMinusDst       = webgpu.BlendFactorOneMinusDst
-	BlendFactorOneMinusDstAlpha  = webgpu.BlendFactorOneMinusDstAlpha
-	BlendFactorOneMinusSrc       = webgpu.BlendFactorOneMinusSrc
-	BlendFactorOneMinusSrc1      = webgpu.BlendFactorOneMinusSrc1
-	BlendFactorOneMinusSrc1Alpha = webgpu.BlendFactorOneMinusSrc1Alpha
-	BlendFactorOneMinusSrcAlpha  = webgpu.BlendFactorOneMinusSrcAlpha
-	BlendFactorSrc               = webgpu.BlendFactorSrc
-	BlendFactorSrc1              = webgpu.BlendFactorSrc1
-	BlendFactorSrc1Alpha         = webgpu.BlendFactorSrc1Alpha
-	BlendFactorSrcAlpha          = webgpu.BlendFactorSrcAlpha
-	BlendFactorSrcAlphaSaturated = webgpu.BlendFactorSrcAlphaSaturated
+	BackendTypeUndefined         = wgpu.BackendTypeUndefined
+	BackendTypeVulkan            = wgpu.BackendTypeVulkan
+	BackendTypeWebGPU            = wgpu.BackendTypeWebGPU
+	BlendFactorConstant          = wgpu.BlendFactorConstant
+	BlendFactorDst               = wgpu.BlendFactorDst
+	BlendFactorDstAlpha          = wgpu.BlendFactorDstAlpha
+	BlendFactorOne               = wgpu.BlendFactorOne
+	BlendFactorOneMinusConstant  = wgpu.BlendFactorOneMinusConstant
+	BlendFactorOneMinusDst       = wgpu.BlendFactorOneMinusDst
+	BlendFactorOneMinusDstAlpha  = wgpu.BlendFactorOneMinusDstAlpha
+	BlendFactorOneMinusSrc       = wgpu.BlendFactorOneMinusSrc
+	BlendFactorOneMinusSrc1      = wgpu.BlendFactorOneMinusSrc1
+	BlendFactorOneMinusSrc1Alpha = wgpu.BlendFactorOneMinusSrc1Alpha
+	BlendFactorOneMinusSrcAlpha  = wgpu.BlendFactorOneMinusSrcAlpha
+	BlendFactorSrc               = wgpu.BlendFactorSrc
+	BlendFactorSrc1              = wgpu.BlendFactorSrc1
+	BlendFactorSrc1Alpha         = wgpu.BlendFactorSrc1Alpha
+	BlendFactorSrcAlpha          = wgpu.BlendFactorSrcAlpha
+	BlendFactorSrcAlphaSaturated = wgpu.BlendFactorSrcAlphaSaturated
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	BlendFactorUndefined          = webgpu.BlendFactorUndefined
-	BlendFactorZero               = webgpu.BlendFactorZero
-	BlendOperationAdd             = webgpu.BlendOperationAdd
-	BlendOperationMax             = webgpu.BlendOperationMax
-	BlendOperationMin             = webgpu.BlendOperationMin
-	BlendOperationReverseSubtract = webgpu.BlendOperationReverseSubtract
-	BlendOperationSubtract        = webgpu.BlendOperationSubtract
+	BlendFactorUndefined          = wgpu.BlendFactorUndefined
+	BlendFactorZero               = wgpu.BlendFactorZero
+	BlendOperationAdd             = wgpu.BlendOperationAdd
+	BlendOperationMax             = wgpu.BlendOperationMax
+	BlendOperationMin             = wgpu.BlendOperationMin
+	BlendOperationReverseSubtract = wgpu.BlendOperationReverseSubtract
+	BlendOperationSubtract        = wgpu.BlendOperationSubtract
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	BlendOperationUndefined = webgpu.BlendOperationUndefined
+	BlendOperationUndefined = wgpu.BlendOperationUndefined
 	// Indicates that this @ref WGPUBufferBindingLayout member of
 	// its parent @ref WGPUBindGroupLayoutEntry is not used.
 	// (See also @ref SentinelValues.)
-	BufferBindingTypeBindingNotUsed  = webgpu.BufferBindingTypeBindingNotUsed
-	BufferBindingTypeReadOnlyStorage = webgpu.BufferBindingTypeReadOnlyStorage
-	BufferBindingTypeStorage         = webgpu.BufferBindingTypeStorage
+	BufferBindingTypeBindingNotUsed  = wgpu.BufferBindingTypeBindingNotUsed
+	BufferBindingTypeReadOnlyStorage = wgpu.BufferBindingTypeReadOnlyStorage
+	BufferBindingTypeStorage         = wgpu.BufferBindingTypeStorage
 	// `1`. Indicates no value is passed for this argument. See @ref SentinelValues.
-	BufferBindingTypeUndefined = webgpu.BufferBindingTypeUndefined
-	BufferBindingTypeUniform   = webgpu.BufferBindingTypeUniform
-	BufferMapStateMapped       = webgpu.BufferMapStateMapped
-	BufferMapStatePending      = webgpu.BufferMapStatePending
-	BufferMapStateUnmapped     = webgpu.BufferMapStateUnmapped
+	BufferBindingTypeUndefined = wgpu.BufferBindingTypeUndefined
+	BufferBindingTypeUniform   = wgpu.BufferBindingTypeUniform
+	BufferMapStateMapped       = wgpu.BufferMapStateMapped
+	BufferMapStatePending      = wgpu.BufferMapStatePending
+	BufferMapStateUnmapped     = wgpu.BufferMapStateUnmapped
 	// The buffer can be used as the *destination* of a GPU-side copy operation.
-	BufferUsageCopyDst = webgpu.BufferUsageCopyDst
+	BufferUsageCopyDst = wgpu.BufferUsageCopyDst
 	// The buffer can be used as the *source* of a GPU-side copy operation.
-	BufferUsageCopySrc = webgpu.BufferUsageCopySrc
+	BufferUsageCopySrc = wgpu.BufferUsageCopySrc
 	// The buffer can be used as an Index buffer when doing indexed drawing in a render pipeline.
-	BufferUsageIndex = webgpu.BufferUsageIndex
+	BufferUsageIndex = wgpu.BufferUsageIndex
 	// The buffer can store arguments for an indirect draw call.
-	BufferUsageIndirect = webgpu.BufferUsageIndirect
+	BufferUsageIndirect = wgpu.BufferUsageIndirect
 	// The buffer can be *mapped* on the CPU side in *read* mode (using @ref WGPUMapMode_Read).
-	BufferUsageMapRead = webgpu.BufferUsageMapRead
+	BufferUsageMapRead = wgpu.BufferUsageMapRead
 	// The buffer can be *mapped* on the CPU side in *write* mode (using @ref WGPUMapMode_Write).
 	//
 	// @note This usage is **not** required to set `mappedAtCreation` to `true` in @ref WGPUBufferDescriptor.
-	BufferUsageMapWrite = webgpu.BufferUsageMapWrite
-	BufferUsageNone     = webgpu.BufferUsageNone
+	BufferUsageMapWrite = wgpu.BufferUsageMapWrite
+	BufferUsageNone     = wgpu.BufferUsageNone
 	// The buffer can store the result of a timestamp or occlusion query.
-	BufferUsageQueryResolve = webgpu.BufferUsageQueryResolve
+	BufferUsageQueryResolve = wgpu.BufferUsageQueryResolve
 	// The buffer can be bound to a shader as a storage buffer.
-	BufferUsageStorage = webgpu.BufferUsageStorage
+	BufferUsageStorage = wgpu.BufferUsageStorage
 	// The buffer can be bound to a shader as a uniform buffer.
-	BufferUsageUniform = webgpu.BufferUsageUniform
+	BufferUsageUniform = wgpu.BufferUsageUniform
 	// The buffer can be used as an Vertex buffer when using a render pipeline.
-	BufferUsageVertex = webgpu.BufferUsageVertex
-	// Callbacks created with `WGPUCallbackMode_AllowProcessEvents`:
-	// - fire for the same reasons as callbacks created with `WGPUCallbackMode_WaitAnyOnly`
-	// - fire inside a call to @ref wgpuInstanceProcessEvents if the asynchronous operation is complete.
-	CallbackModeAllowProcessEvents = webgpu.CallbackModeAllowProcessEvents
-	// Callbacks created with `WGPUCallbackMode_AllowSpontaneous`:
-	// - fire for the same reasons as callbacks created with `WGPUCallbackMode_AllowProcessEvents`
-	// - **may** fire spontaneously on an arbitrary or application thread, when the WebGPU implementations discovers that the asynchronous operation is complete.
-	//
-	// Implementations _should_ fire spontaneous callbacks as soon as possible.
-	//
-	// @note Because spontaneous callbacks may fire at an arbitrary time on an arbitrary thread, applications should take extra care when acquiring locks or mutating state inside the callback. It undefined behavior to re-entrantly call into the webgpu.h API if the callback fires while inside the callstack of another webgpu.h function that is not `wgpuInstanceWaitAny` or `wgpuInstanceProcessEvents`.
-	CallbackModeAllowSpontaneous = webgpu.CallbackModeAllowSpontaneous
-	// Callbacks created with `WGPUCallbackMode_WaitAnyOnly`:
-	// - fire when the asynchronous operation's future is passed to a call to @ref wgpuInstanceWaitAny
-	// AND the operation has already completed or it completes inside the call to @ref wgpuInstanceWaitAny.
-	CallbackModeWaitAnyOnly     = webgpu.CallbackModeWaitAnyOnly
-	ColorWriteMaskAll           = webgpu.ColorWriteMaskAll
-	ColorWriteMaskAlpha         = webgpu.ColorWriteMaskAlpha
-	ColorWriteMaskBlue          = webgpu.ColorWriteMaskBlue
-	ColorWriteMaskGreen         = webgpu.ColorWriteMaskGreen
-	ColorWriteMaskNone          = webgpu.ColorWriteMaskNone
-	ColorWriteMaskRed           = webgpu.ColorWriteMaskRed
-	CompareFunctionAlways       = webgpu.CompareFunctionAlways
-	CompareFunctionEqual        = webgpu.CompareFunctionEqual
-	CompareFunctionGreater      = webgpu.CompareFunctionGreater
-	CompareFunctionGreaterEqual = webgpu.CompareFunctionGreaterEqual
-	CompareFunctionLess         = webgpu.CompareFunctionLess
-	CompareFunctionLessEqual    = webgpu.CompareFunctionLessEqual
-	CompareFunctionNever        = webgpu.CompareFunctionNever
-	CompareFunctionNotEqual     = webgpu.CompareFunctionNotEqual
+	BufferUsageVertex           = wgpu.BufferUsageVertex
+	ColorWriteMaskAll           = wgpu.ColorWriteMaskAll
+	ColorWriteMaskAlpha         = wgpu.ColorWriteMaskAlpha
+	ColorWriteMaskBlue          = wgpu.ColorWriteMaskBlue
+	ColorWriteMaskGreen         = wgpu.ColorWriteMaskGreen
+	ColorWriteMaskNone          = wgpu.ColorWriteMaskNone
+	ColorWriteMaskRed           = wgpu.ColorWriteMaskRed
+	CompareFunctionAlways       = wgpu.CompareFunctionAlways
+	CompareFunctionEqual        = wgpu.CompareFunctionEqual
+	CompareFunctionGreater      = wgpu.CompareFunctionGreater
+	CompareFunctionGreaterEqual = wgpu.CompareFunctionGreaterEqual
+	CompareFunctionLess         = wgpu.CompareFunctionLess
+	CompareFunctionLessEqual    = wgpu.CompareFunctionLessEqual
+	CompareFunctionNever        = wgpu.CompareFunctionNever
+	CompareFunctionNotEqual     = wgpu.CompareFunctionNotEqual
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	CompareFunctionUndefined = webgpu.CompareFunctionUndefined
-	// See @ref CallbackStatuses.
-	CompilationInfoRequestStatusCallbackCancelled = webgpu.CompilationInfoRequestStatusCallbackCancelled
-	CompilationInfoRequestStatusSuccess           = webgpu.CompilationInfoRequestStatusSuccess
-	CompilationMessageTypeError                   = webgpu.CompilationMessageTypeError
-	CompilationMessageTypeInfo                    = webgpu.CompilationMessageTypeInfo
-	CompilationMessageTypeWarning                 = webgpu.CompilationMessageTypeWarning
+	CompareFunctionUndefined      = wgpu.CompareFunctionUndefined
+	CompilationMessageTypeError   = wgpu.CompilationMessageTypeError
+	CompilationMessageTypeInfo    = wgpu.CompilationMessageTypeInfo
+	CompilationMessageTypeWarning = wgpu.CompilationMessageTypeWarning
 	// Lets the WebGPU implementation choose the best mode (supported, and with the best performance) between @ref WGPUCompositeAlphaMode_Opaque or @ref WGPUCompositeAlphaMode_Inherit.
-	CompositeAlphaModeAuto = webgpu.CompositeAlphaModeAuto
+	CompositeAlphaModeAuto = wgpu.CompositeAlphaModeAuto
 	// The handling of the alpha component is unknown to WebGPU and should be handled by the application using system-specific APIs. This mode may be unavailable (for example on Wasm).
-	CompositeAlphaModeInherit = webgpu.CompositeAlphaModeInherit
+	CompositeAlphaModeInherit = wgpu.CompositeAlphaModeInherit
 	// The alpha component of the image is ignored and teated as if it is always 1.0.
-	CompositeAlphaModeOpaque = webgpu.CompositeAlphaModeOpaque
+	CompositeAlphaModeOpaque = wgpu.CompositeAlphaModeOpaque
 	// The alpha component is respected and non-alpha components are assumed to be already multiplied with the alpha component. For example, (0.5, 0, 0, 0.5) is semi-transparent bright red.
-	CompositeAlphaModePremultiplied = webgpu.CompositeAlphaModePremultiplied
+	CompositeAlphaModePremultiplied = wgpu.CompositeAlphaModePremultiplied
 	// The alpha component is respected and non-alpha components are assumed to NOT be already multiplied with the alpha component. For example, (1.0, 0, 0, 0.5) is semi-transparent bright red.
-	CompositeAlphaModeUnpremultiplied = webgpu.CompositeAlphaModeUnpremultiplied
+	CompositeAlphaModeUnpremultiplied = wgpu.CompositeAlphaModeUnpremultiplied
 	// Indicates no copy stride is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	CopyStrideUndefined = webgpu.CopyStrideUndefined
-	// See @ref CallbackStatuses.
-	CreatePipelineAsyncStatusCallbackCancelled = webgpu.CreatePipelineAsyncStatusCallbackCancelled
-	CreatePipelineAsyncStatusInternalError     = webgpu.CreatePipelineAsyncStatusInternalError
-	CreatePipelineAsyncStatusSuccess           = webgpu.CreatePipelineAsyncStatusSuccess
-	CreatePipelineAsyncStatusValidationError   = webgpu.CreatePipelineAsyncStatusValidationError
-	CullModeBack                               = webgpu.CullModeBack
-	CullModeFront                              = webgpu.CullModeFront
-	CullModeNone                               = webgpu.CullModeNone
+	CopyStrideUndefined = wgpu.CopyStrideUndefined
+	CullModeBack        = wgpu.CullModeBack
+	CullModeFront       = wgpu.CullModeFront
+	CullModeNone        = wgpu.CullModeNone
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	CullModeUndefined = webgpu.CullModeUndefined
+	CullModeUndefined = wgpu.CullModeUndefined
 	// Indicates no depth slice is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	DepthSliceUndefined = webgpu.DepthSliceUndefined
+	DepthSliceUndefined = wgpu.DepthSliceUndefined
 	// See @ref CallbackStatuses.
-	DeviceLostReasonCallbackCancelled = webgpu.DeviceLostReasonCallbackCancelled
-	DeviceLostReasonDestroyed         = webgpu.DeviceLostReasonDestroyed
-	DeviceLostReasonFailedCreation    = webgpu.DeviceLostReasonFailedCreation
-	DeviceLostReasonUnknown           = webgpu.DeviceLostReasonUnknown
-	ErrorFilterInternal               = webgpu.ErrorFilterInternal
-	ErrorFilterOutOfMemory            = webgpu.ErrorFilterOutOfMemory
-	ErrorFilterValidation             = webgpu.ErrorFilterValidation
-	ErrorTypeInternal                 = webgpu.ErrorTypeInternal
-	ErrorTypeNoError                  = webgpu.ErrorTypeNoError
-	ErrorTypeOutOfMemory              = webgpu.ErrorTypeOutOfMemory
-	ErrorTypeUnknown                  = webgpu.ErrorTypeUnknown
-	ErrorTypeValidation               = webgpu.ErrorTypeValidation
+	DeviceLostReasonCallbackCancelled = wgpu.DeviceLostReasonCallbackCancelled
+	DeviceLostReasonDestroyed         = wgpu.DeviceLostReasonDestroyed
+	DeviceLostReasonFailedCreation    = wgpu.DeviceLostReasonFailedCreation
+	DeviceLostReasonUnknown           = wgpu.DeviceLostReasonUnknown
+	ErrorFilterInternal               = wgpu.ErrorFilterInternal
+	ErrorFilterOutOfMemory            = wgpu.ErrorFilterOutOfMemory
+	ErrorFilterValidation             = wgpu.ErrorFilterValidation
+	ErrorTypeInternal                 = wgpu.ErrorTypeInternal
+	ErrorTypeNoError                  = wgpu.ErrorTypeNoError
+	ErrorTypeOutOfMemory              = wgpu.ErrorTypeOutOfMemory
+	ErrorTypeUnknown                  = wgpu.ErrorTypeUnknown
+	ErrorTypeValidation               = wgpu.ErrorTypeValidation
 	// "Compatibility" profile which can be supported on OpenGL ES 3.1 and D3D11.
-	FeatureLevelCompatibility = webgpu.FeatureLevelCompatibility
+	FeatureLevelCompatibility = wgpu.FeatureLevelCompatibility
 	// "Core" profile which can be supported on Vulkan/Metal/D3D12 (at least).
-	FeatureLevelCore = webgpu.FeatureLevelCore
+	FeatureLevelCore = wgpu.FeatureLevelCore
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	FeatureLevelUndefined                     = webgpu.FeatureLevelUndefined
-	FeatureNameBGRA8UnormStorage              = webgpu.FeatureNameBGRA8UnormStorage
-	FeatureNameClipDistances                  = webgpu.FeatureNameClipDistances
-	FeatureNameDepth32FloatStencil8           = webgpu.FeatureNameDepth32FloatStencil8
-	FeatureNameDepthClipControl               = webgpu.FeatureNameDepthClipControl
-	FeatureNameDualSourceBlending             = webgpu.FeatureNameDualSourceBlending
-	FeatureNameFloat32Blendable               = webgpu.FeatureNameFloat32Blendable
-	FeatureNameFloat32Filterable              = webgpu.FeatureNameFloat32Filterable
-	FeatureNameIndirectFirstInstance          = webgpu.FeatureNameIndirectFirstInstance
-	FeatureNameRG11B10UfloatRenderable        = webgpu.FeatureNameRG11B10UfloatRenderable
-	FeatureNameShaderF16                      = webgpu.FeatureNameShaderF16
-	FeatureNameSubgroups                      = webgpu.FeatureNameSubgroups
-	FeatureNameTextureCompressionASTC         = webgpu.FeatureNameTextureCompressionASTC
-	FeatureNameTextureCompressionASTCSliced3D = webgpu.FeatureNameTextureCompressionASTCSliced3D
-	FeatureNameTextureCompressionBC           = webgpu.FeatureNameTextureCompressionBC
-	FeatureNameTextureCompressionBCSliced3D   = webgpu.FeatureNameTextureCompressionBCSliced3D
-	FeatureNameTextureCompressionETC2         = webgpu.FeatureNameTextureCompressionETC2
-	FeatureNameTimestampQuery                 = webgpu.FeatureNameTimestampQuery
-	FilterModeLinear                          = webgpu.FilterModeLinear
-	FilterModeNearest                         = webgpu.FilterModeNearest
+	FeatureLevelUndefined                     = wgpu.FeatureLevelUndefined
+	FeatureNameBGRA8UnormStorage              = wgpu.FeatureNameBGRA8UnormStorage
+	FeatureNameClipDistances                  = wgpu.FeatureNameClipDistances
+	FeatureNameDepth32FloatStencil8           = wgpu.FeatureNameDepth32FloatStencil8
+	FeatureNameDepthClipControl               = wgpu.FeatureNameDepthClipControl
+	FeatureNameDualSourceBlending             = wgpu.FeatureNameDualSourceBlending
+	FeatureNameFloat32Blendable               = wgpu.FeatureNameFloat32Blendable
+	FeatureNameFloat32Filterable              = wgpu.FeatureNameFloat32Filterable
+	FeatureNameIndirectFirstInstance          = wgpu.FeatureNameIndirectFirstInstance
+	FeatureNameRG11B10UfloatRenderable        = wgpu.FeatureNameRG11B10UfloatRenderable
+	FeatureNameShaderF16                      = wgpu.FeatureNameShaderF16
+	FeatureNameSubgroups                      = wgpu.FeatureNameSubgroups
+	FeatureNameTextureCompressionASTC         = wgpu.FeatureNameTextureCompressionASTC
+	FeatureNameTextureCompressionASTCSliced3D = wgpu.FeatureNameTextureCompressionASTCSliced3D
+	FeatureNameTextureCompressionBC           = wgpu.FeatureNameTextureCompressionBC
+	FeatureNameTextureCompressionBCSliced3D   = wgpu.FeatureNameTextureCompressionBCSliced3D
+	FeatureNameTextureCompressionETC2         = wgpu.FeatureNameTextureCompressionETC2
+	FeatureNameTimestampQuery                 = wgpu.FeatureNameTimestampQuery
+	FilterModeLinear                          = wgpu.FilterModeLinear
+	FilterModeNearest                         = wgpu.FilterModeNearest
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	FilterModeUndefined = webgpu.FilterModeUndefined
-	FrontFaceCCW        = webgpu.FrontFaceCCW
-	FrontFaceCW         = webgpu.FrontFaceCW
+	FilterModeUndefined = wgpu.FilterModeUndefined
+	FrontFaceCCW        = wgpu.FrontFaceCCW
+	FrontFaceCW         = wgpu.FrontFaceCW
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	FrontFaceUndefined = webgpu.FrontFaceUndefined
-	IndexFormatUint16  = webgpu.IndexFormatUint16
-	IndexFormatUint32  = webgpu.IndexFormatUint32
+	FrontFaceUndefined = wgpu.FrontFaceUndefined
+	IndexFormatUint16  = wgpu.IndexFormatUint16
+	IndexFormatUint32  = wgpu.IndexFormatUint32
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	IndexFormatUndefined = webgpu.IndexFormatUndefined
+	IndexFormatUndefined = wgpu.IndexFormatUndefined
 	// Normally, a @ref WGPUAdapter can only create a single device. If this is
 	// available and enabled, then adapters won't immediately expire when they
 	// create a device, so can be reused to make multiple devices. They may
 	// still expire for other reasons.
-	InstanceFeatureNameMultipleDevicesPerAdapter = webgpu.InstanceFeatureNameMultipleDevicesPerAdapter
+	InstanceFeatureNameMultipleDevicesPerAdapter = wgpu.InstanceFeatureNameMultipleDevicesPerAdapter
 	// Enable passing SPIR-V shaders to @ref wgpuDeviceCreateShaderModule,
 	// via @ref WGPUShaderSourceSPIRV.
-	InstanceFeatureNameShaderSourceSPIRV = webgpu.InstanceFeatureNameShaderSourceSPIRV
+	InstanceFeatureNameShaderSourceSPIRV = wgpu.InstanceFeatureNameShaderSourceSPIRV
 	// Enable use of ::wgpuInstanceWaitAny with `timeoutNS > 0`.
-	InstanceFeatureNameTimedWaitAnyEnable = webgpu.InstanceFeatureNameTimedWaitAnyEnable
+	InstanceFeatureNameTimedWaitAnyEnable = wgpu.InstanceFeatureNameTimedWaitAnyEnable
 	// For `uint32_t` limits, indicates no limit value is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	LimitU32Undefined = webgpu.LimitU32Undefined
+	LimitU32Undefined = wgpu.LimitU32Undefined
 	// For `uint64_t` limits, indicates no limit value is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	LimitU64Undefined = webgpu.LimitU64Undefined
-	LoadOpClear       = webgpu.LoadOpClear
-	LoadOpLoad        = webgpu.LoadOpLoad
+	LimitU64Undefined = wgpu.LimitU64Undefined
+	LoadOpClear       = wgpu.LoadOpClear
+	LoadOpLoad        = wgpu.LoadOpLoad
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	LoadOpUndefined       = webgpu.LoadOpUndefined
-	MapAsyncStatusAborted = webgpu.MapAsyncStatusAborted
-	// See @ref CallbackStatuses.
-	MapAsyncStatusCallbackCancelled = webgpu.MapAsyncStatusCallbackCancelled
-	MapAsyncStatusError             = webgpu.MapAsyncStatusError
-	MapAsyncStatusSuccess           = webgpu.MapAsyncStatusSuccess
-	MapModeNone                     = webgpu.MapModeNone
-	MapModeRead                     = webgpu.MapModeRead
-	MapModeWrite                    = webgpu.MapModeWrite
+	LoadOpUndefined = wgpu.LoadOpUndefined
+	MapModeNone     = wgpu.MapModeNone
+	MapModeRead     = wgpu.MapModeRead
+	MapModeWrite    = wgpu.MapModeWrite
 	// Indicates no mip level count is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	MipLevelCountUndefined  = webgpu.MipLevelCountUndefined
-	MipmapFilterModeLinear  = webgpu.MipmapFilterModeLinear
-	MipmapFilterModeNearest = webgpu.MipmapFilterModeNearest
+	MipLevelCountUndefined  = wgpu.MipLevelCountUndefined
+	MipmapFilterModeLinear  = wgpu.MipmapFilterModeLinear
+	MipmapFilterModeNearest = wgpu.MipmapFilterModeNearest
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	MipmapFilterModeUndefined = webgpu.MipmapFilterModeUndefined
-	OptionalBoolFalse         = webgpu.OptionalBoolFalse
-	OptionalBoolTrue          = webgpu.OptionalBoolTrue
-	OptionalBoolUndefined     = webgpu.OptionalBoolUndefined
-	// See @ref CallbackStatuses.
-	PopErrorScopeStatusCallbackCancelled = webgpu.PopErrorScopeStatusCallbackCancelled
-	// The error scope stack could not be popped, because it was empty.
-	PopErrorScopeStatusError = webgpu.PopErrorScopeStatusError
-	// The error scope stack was successfully popped and a result was reported.
-	PopErrorScopeStatusSuccess     = webgpu.PopErrorScopeStatusSuccess
-	PowerPreferenceHighPerformance = webgpu.PowerPreferenceHighPerformance
-	PowerPreferenceLowPower        = webgpu.PowerPreferenceLowPower
+	MipmapFilterModeUndefined      = wgpu.MipmapFilterModeUndefined
+	OptionalBoolFalse              = wgpu.OptionalBoolFalse
+	OptionalBoolTrue               = wgpu.OptionalBoolTrue
+	OptionalBoolUndefined          = wgpu.OptionalBoolUndefined
+	PowerPreferenceHighPerformance = wgpu.PowerPreferenceHighPerformance
+	PowerPreferenceLowPower        = wgpu.PowerPreferenceLowPower
 	// No preference. (See also @ref SentinelValues.)
-	PowerPreferenceUndefined      = webgpu.PowerPreferenceUndefined
-	PredefinedColorSpaceDisplayP3 = webgpu.PredefinedColorSpaceDisplayP3
-	PredefinedColorSpaceSRGB      = webgpu.PredefinedColorSpaceSRGB
+	PowerPreferenceUndefined      = wgpu.PowerPreferenceUndefined
+	PredefinedColorSpaceDisplayP3 = wgpu.PredefinedColorSpaceDisplayP3
+	PredefinedColorSpaceSRGB      = wgpu.PredefinedColorSpaceSRGB
 	// The presentation of the image to the user waits for the next vertical blanking period to update in a first-in, first-out manner.
 	// Tearing cannot be observed and frame-loop will be limited to the display's refresh rate.
 	// This is the only mode that's always available.
-	PresentModeFifo = webgpu.PresentModeFifo
+	PresentModeFifo = wgpu.PresentModeFifo
 	// The presentation of the image to the user tries to wait for the next vertical blanking period but may decide to not wait if a frame is presented late.
 	// Tearing can sometimes be observed but late-frame don't produce a full-frame stutter in the presentation.
 	// This is still a first-in, first-out mechanism so a frame-loop will be limited to the display's refresh rate.
-	PresentModeFifoRelaxed = webgpu.PresentModeFifoRelaxed
+	PresentModeFifoRelaxed = wgpu.PresentModeFifoRelaxed
 	// The presentation of the image to the user is updated immediately without waiting for a vertical blank.
 	// Tearing can be observed but latency is minimized.
-	PresentModeImmediate = webgpu.PresentModeImmediate
+	PresentModeImmediate = wgpu.PresentModeImmediate
 	// The presentation of the image to the user waits for the next vertical blanking period to update to the latest provided image.
 	// Tearing cannot be observed and a frame-loop is not limited to the display's refresh rate.
-	PresentModeMailbox = webgpu.PresentModeMailbox
+	PresentModeMailbox = wgpu.PresentModeMailbox
 	// Present mode is not specified. Use the default.
-	PresentModeUndefined           = webgpu.PresentModeUndefined
-	PrimitiveTopologyLineList      = webgpu.PrimitiveTopologyLineList
-	PrimitiveTopologyLineStrip     = webgpu.PrimitiveTopologyLineStrip
-	PrimitiveTopologyPointList     = webgpu.PrimitiveTopologyPointList
-	PrimitiveTopologyTriangleList  = webgpu.PrimitiveTopologyTriangleList
-	PrimitiveTopologyTriangleStrip = webgpu.PrimitiveTopologyTriangleStrip
+	PresentModeUndefined           = wgpu.PresentModeUndefined
+	PrimitiveTopologyLineList      = wgpu.PrimitiveTopologyLineList
+	PrimitiveTopologyLineStrip     = wgpu.PrimitiveTopologyLineStrip
+	PrimitiveTopologyPointList     = wgpu.PrimitiveTopologyPointList
+	PrimitiveTopologyTriangleList  = wgpu.PrimitiveTopologyTriangleList
+	PrimitiveTopologyTriangleStrip = wgpu.PrimitiveTopologyTriangleStrip
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	PrimitiveTopologyUndefined = webgpu.PrimitiveTopologyUndefined
+	PrimitiveTopologyUndefined = wgpu.PrimitiveTopologyUndefined
 	// Indicates no query set index is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	QuerySetIndexUndefined = webgpu.QuerySetIndexUndefined
-	QueryTypeOcclusion     = webgpu.QueryTypeOcclusion
-	QueryTypeTimestamp     = webgpu.QueryTypeTimestamp
-	// See @ref CallbackStatuses.
-	QueueWorkDoneStatusCallbackCancelled = webgpu.QueueWorkDoneStatusCallbackCancelled
-	// There was some deterministic error. (Note this is currently never used,
-	// but it will be relevant when it's possible to create a queue object.)
-	QueueWorkDoneStatusError   = webgpu.QueueWorkDoneStatusError
-	QueueWorkDoneStatusSuccess = webgpu.QueueWorkDoneStatusSuccess
-	// See @ref CallbackStatuses.
-	RequestAdapterStatusCallbackCancelled = webgpu.RequestAdapterStatusCallbackCancelled
-	RequestAdapterStatusError             = webgpu.RequestAdapterStatusError
-	RequestAdapterStatusSuccess           = webgpu.RequestAdapterStatusSuccess
-	RequestAdapterStatusUnavailable       = webgpu.RequestAdapterStatusUnavailable
-	// See @ref CallbackStatuses.
-	RequestDeviceStatusCallbackCancelled  = webgpu.RequestDeviceStatusCallbackCancelled
-	RequestDeviceStatusError              = webgpu.RequestDeviceStatusError
-	RequestDeviceStatusSuccess            = webgpu.RequestDeviceStatusSuccess
-	STypeRenderPassMaxDrawCount           = webgpu.STypeRenderPassMaxDrawCount
-	STypeRequestAdapterWebXROptions       = webgpu.STypeRequestAdapterWebXROptions
-	STypeShaderSourceSPIRV                = webgpu.STypeShaderSourceSPIRV
-	STypeShaderSourceWGSL                 = webgpu.STypeShaderSourceWGSL
-	STypeSurfaceColorManagement           = webgpu.STypeSurfaceColorManagement
-	STypeSurfaceSourceAndroidNativeWindow = webgpu.STypeSurfaceSourceAndroidNativeWindow
-	STypeSurfaceSourceMetalLayer          = webgpu.STypeSurfaceSourceMetalLayer
-	STypeSurfaceSourceWaylandSurface      = webgpu.STypeSurfaceSourceWaylandSurface
-	STypeSurfaceSourceWindowsHWND         = webgpu.STypeSurfaceSourceWindowsHWND
-	STypeSurfaceSourceXCBWindow           = webgpu.STypeSurfaceSourceXCBWindow
-	STypeSurfaceSourceXlibWindow          = webgpu.STypeSurfaceSourceXlibWindow
+	QuerySetIndexUndefined                = wgpu.QuerySetIndexUndefined
+	QueryTypeOcclusion                    = wgpu.QueryTypeOcclusion
+	QueryTypeTimestamp                    = wgpu.QueryTypeTimestamp
+	STypeRenderPassMaxDrawCount           = wgpu.STypeRenderPassMaxDrawCount
+	STypeRequestAdapterWebXROptions       = wgpu.STypeRequestAdapterWebXROptions
+	STypeShaderSourceSPIRV                = wgpu.STypeShaderSourceSPIRV
+	STypeShaderSourceWGSL                 = wgpu.STypeShaderSourceWGSL
+	STypeSurfaceColorManagement           = wgpu.STypeSurfaceColorManagement
+	STypeSurfaceSourceAndroidNativeWindow = wgpu.STypeSurfaceSourceAndroidNativeWindow
+	STypeSurfaceSourceMetalLayer          = wgpu.STypeSurfaceSourceMetalLayer
+	STypeSurfaceSourceWaylandSurface      = wgpu.STypeSurfaceSourceWaylandSurface
+	STypeSurfaceSourceWindowsHWND         = wgpu.STypeSurfaceSourceWindowsHWND
+	STypeSurfaceSourceXCBWindow           = wgpu.STypeSurfaceSourceXCBWindow
+	STypeSurfaceSourceXlibWindow          = wgpu.STypeSurfaceSourceXlibWindow
 	// Indicates that this @ref WGPUSamplerBindingLayout member of
 	// its parent @ref WGPUBindGroupLayoutEntry is not used.
 	// (See also @ref SentinelValues.)
-	SamplerBindingTypeBindingNotUsed = webgpu.SamplerBindingTypeBindingNotUsed
-	SamplerBindingTypeComparison     = webgpu.SamplerBindingTypeComparison
-	SamplerBindingTypeFiltering      = webgpu.SamplerBindingTypeFiltering
-	SamplerBindingTypeNonFiltering   = webgpu.SamplerBindingTypeNonFiltering
+	SamplerBindingTypeBindingNotUsed = wgpu.SamplerBindingTypeBindingNotUsed
+	SamplerBindingTypeComparison     = wgpu.SamplerBindingTypeComparison
+	SamplerBindingTypeFiltering      = wgpu.SamplerBindingTypeFiltering
+	SamplerBindingTypeNonFiltering   = wgpu.SamplerBindingTypeNonFiltering
 	// `1`. Indicates no value is passed for this argument. See @ref SentinelValues.
-	SamplerBindingTypeUndefined    = webgpu.SamplerBindingTypeUndefined
-	ShaderStageCompute             = webgpu.ShaderStageCompute
-	ShaderStageFragment            = webgpu.ShaderStageFragment
-	ShaderStageNone                = webgpu.ShaderStageNone
-	ShaderStageVertex              = webgpu.ShaderStageVertex
-	StatusError                    = webgpu.StatusError
-	StatusSuccess                  = webgpu.StatusSuccess
-	StencilOperationDecrementClamp = webgpu.StencilOperationDecrementClamp
-	StencilOperationDecrementWrap  = webgpu.StencilOperationDecrementWrap
-	StencilOperationIncrementClamp = webgpu.StencilOperationIncrementClamp
-	StencilOperationIncrementWrap  = webgpu.StencilOperationIncrementWrap
-	StencilOperationInvert         = webgpu.StencilOperationInvert
-	StencilOperationKeep           = webgpu.StencilOperationKeep
-	StencilOperationReplace        = webgpu.StencilOperationReplace
+	SamplerBindingTypeUndefined    = wgpu.SamplerBindingTypeUndefined
+	ShaderStageCompute             = wgpu.ShaderStageCompute
+	ShaderStageFragment            = wgpu.ShaderStageFragment
+	ShaderStageNone                = wgpu.ShaderStageNone
+	ShaderStageVertex              = wgpu.ShaderStageVertex
+	StatusError                    = wgpu.StatusError
+	StatusSuccess                  = wgpu.StatusSuccess
+	StencilOperationDecrementClamp = wgpu.StencilOperationDecrementClamp
+	StencilOperationDecrementWrap  = wgpu.StencilOperationDecrementWrap
+	StencilOperationIncrementClamp = wgpu.StencilOperationIncrementClamp
+	StencilOperationIncrementWrap  = wgpu.StencilOperationIncrementWrap
+	StencilOperationInvert         = wgpu.StencilOperationInvert
+	StencilOperationKeep           = wgpu.StencilOperationKeep
+	StencilOperationReplace        = wgpu.StencilOperationReplace
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	StencilOperationUndefined = webgpu.StencilOperationUndefined
-	StencilOperationZero      = webgpu.StencilOperationZero
+	StencilOperationUndefined = wgpu.StencilOperationUndefined
+	StencilOperationZero      = wgpu.StencilOperationZero
 	// Indicates that this @ref WGPUStorageTextureBindingLayout member of
 	// its parent @ref WGPUBindGroupLayoutEntry is not used.
 	// (See also @ref SentinelValues.)
-	StorageTextureAccessBindingNotUsed = webgpu.StorageTextureAccessBindingNotUsed
-	StorageTextureAccessReadOnly       = webgpu.StorageTextureAccessReadOnly
-	StorageTextureAccessReadWrite      = webgpu.StorageTextureAccessReadWrite
+	StorageTextureAccessBindingNotUsed = wgpu.StorageTextureAccessBindingNotUsed
+	StorageTextureAccessReadOnly       = wgpu.StorageTextureAccessReadOnly
+	StorageTextureAccessReadWrite      = wgpu.StorageTextureAccessReadWrite
 	// `1`. Indicates no value is passed for this argument. See @ref SentinelValues.
-	StorageTextureAccessUndefined = webgpu.StorageTextureAccessUndefined
-	StorageTextureAccessWriteOnly = webgpu.StorageTextureAccessWriteOnly
-	StoreOpDiscard                = webgpu.StoreOpDiscard
-	StoreOpStore                  = webgpu.StoreOpStore
+	StorageTextureAccessUndefined = wgpu.StorageTextureAccessUndefined
+	StorageTextureAccessWriteOnly = wgpu.StorageTextureAccessWriteOnly
+	StoreOpDiscard                = wgpu.StoreOpDiscard
+	StoreOpStore                  = wgpu.StoreOpStore
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	StoreOpUndefined = webgpu.StoreOpUndefined
+	StoreOpUndefined = wgpu.StoreOpUndefined
 	// Sentinel value used in @ref WGPUStringView to indicate that the pointer
 	// is to a null-terminated string, rather than an explicitly-sized string.
-	Strlen = webgpu.Strlen
+	Strlen = wgpu.Strlen
 	// There was some deterministic error (for example, the surface is not configured, or there was an @ref OutStructChainError). Should produce @ref ImplementationDefinedLogging containing details.
-	SurfaceGetCurrentTextureStatusError = webgpu.SurfaceGetCurrentTextureStatusError
+	SurfaceGetCurrentTextureStatusError = wgpu.SurfaceGetCurrentTextureStatusError
 	// The connection to whatever owns the surface was lost, or generally needs to be fully reinitialized.
-	SurfaceGetCurrentTextureStatusLost = webgpu.SurfaceGetCurrentTextureStatusLost
+	SurfaceGetCurrentTextureStatusLost = wgpu.SurfaceGetCurrentTextureStatusLost
 	// The surface is too different to be used, compared to when it was originally created.
-	SurfaceGetCurrentTextureStatusOutdated = webgpu.SurfaceGetCurrentTextureStatusOutdated
+	SurfaceGetCurrentTextureStatusOutdated = wgpu.SurfaceGetCurrentTextureStatusOutdated
 	// Yay! Everything is good and we can render this frame.
-	SurfaceGetCurrentTextureStatusSuccessOptimal = webgpu.SurfaceGetCurrentTextureStatusSuccessOptimal
+	SurfaceGetCurrentTextureStatusSuccessOptimal = wgpu.SurfaceGetCurrentTextureStatusSuccessOptimal
 	// Still OK - the surface can present the frame, but in a suboptimal way. The surface may need reconfiguration.
-	SurfaceGetCurrentTextureStatusSuccessSuboptimal = webgpu.SurfaceGetCurrentTextureStatusSuccessSuboptimal
+	SurfaceGetCurrentTextureStatusSuccessSuboptimal = wgpu.SurfaceGetCurrentTextureStatusSuccessSuboptimal
 	// Some operation timed out while trying to acquire the frame.
-	SurfaceGetCurrentTextureStatusTimeout = webgpu.SurfaceGetCurrentTextureStatusTimeout
-	TextureAspectAll                      = webgpu.TextureAspectAll
-	TextureAspectDepthOnly                = webgpu.TextureAspectDepthOnly
-	TextureAspectStencilOnly              = webgpu.TextureAspectStencilOnly
+	SurfaceGetCurrentTextureStatusTimeout = wgpu.SurfaceGetCurrentTextureStatusTimeout
+	TextureAspectAll                      = wgpu.TextureAspectAll
+	TextureAspectDepthOnly                = wgpu.TextureAspectDepthOnly
+	TextureAspectStencilOnly              = wgpu.TextureAspectStencilOnly
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	TextureAspectUndefined = webgpu.TextureAspectUndefined
-	TextureDimension1D     = webgpu.TextureDimension1D
-	TextureDimension2D     = webgpu.TextureDimension2D
-	TextureDimension3D     = webgpu.TextureDimension3D
+	TextureAspectUndefined = wgpu.TextureAspectUndefined
+	TextureDimension1D     = wgpu.TextureDimension1D
+	TextureDimension2D     = wgpu.TextureDimension2D
+	TextureDimension3D     = wgpu.TextureDimension3D
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	TextureDimensionUndefined         = webgpu.TextureDimensionUndefined
-	TextureFormatASTC10x10Unorm       = webgpu.TextureFormatASTC10x10Unorm
-	TextureFormatASTC10x10UnormSrgb   = webgpu.TextureFormatASTC10x10UnormSrgb
-	TextureFormatASTC10x5Unorm        = webgpu.TextureFormatASTC10x5Unorm
-	TextureFormatASTC10x5UnormSrgb    = webgpu.TextureFormatASTC10x5UnormSrgb
-	TextureFormatASTC10x6Unorm        = webgpu.TextureFormatASTC10x6Unorm
-	TextureFormatASTC10x6UnormSrgb    = webgpu.TextureFormatASTC10x6UnormSrgb
-	TextureFormatASTC10x8Unorm        = webgpu.TextureFormatASTC10x8Unorm
-	TextureFormatASTC10x8UnormSrgb    = webgpu.TextureFormatASTC10x8UnormSrgb
-	TextureFormatASTC12x10Unorm       = webgpu.TextureFormatASTC12x10Unorm
-	TextureFormatASTC12x10UnormSrgb   = webgpu.TextureFormatASTC12x10UnormSrgb
-	TextureFormatASTC12x12Unorm       = webgpu.TextureFormatASTC12x12Unorm
-	TextureFormatASTC12x12UnormSrgb   = webgpu.TextureFormatASTC12x12UnormSrgb
-	TextureFormatASTC4x4Unorm         = webgpu.TextureFormatASTC4x4Unorm
-	TextureFormatASTC4x4UnormSrgb     = webgpu.TextureFormatASTC4x4UnormSrgb
-	TextureFormatASTC5x4Unorm         = webgpu.TextureFormatASTC5x4Unorm
-	TextureFormatASTC5x4UnormSrgb     = webgpu.TextureFormatASTC5x4UnormSrgb
-	TextureFormatASTC5x5Unorm         = webgpu.TextureFormatASTC5x5Unorm
-	TextureFormatASTC5x5UnormSrgb     = webgpu.TextureFormatASTC5x5UnormSrgb
-	TextureFormatASTC6x5Unorm         = webgpu.TextureFormatASTC6x5Unorm
-	TextureFormatASTC6x5UnormSrgb     = webgpu.TextureFormatASTC6x5UnormSrgb
-	TextureFormatASTC6x6Unorm         = webgpu.TextureFormatASTC6x6Unorm
-	TextureFormatASTC6x6UnormSrgb     = webgpu.TextureFormatASTC6x6UnormSrgb
-	TextureFormatASTC8x5Unorm         = webgpu.TextureFormatASTC8x5Unorm
-	TextureFormatASTC8x5UnormSrgb     = webgpu.TextureFormatASTC8x5UnormSrgb
-	TextureFormatASTC8x6Unorm         = webgpu.TextureFormatASTC8x6Unorm
-	TextureFormatASTC8x6UnormSrgb     = webgpu.TextureFormatASTC8x6UnormSrgb
-	TextureFormatASTC8x8Unorm         = webgpu.TextureFormatASTC8x8Unorm
-	TextureFormatASTC8x8UnormSrgb     = webgpu.TextureFormatASTC8x8UnormSrgb
-	TextureFormatBC1RGBAUnorm         = webgpu.TextureFormatBC1RGBAUnorm
-	TextureFormatBC1RGBAUnormSrgb     = webgpu.TextureFormatBC1RGBAUnormSrgb
-	TextureFormatBC2RGBAUnorm         = webgpu.TextureFormatBC2RGBAUnorm
-	TextureFormatBC2RGBAUnormSrgb     = webgpu.TextureFormatBC2RGBAUnormSrgb
-	TextureFormatBC3RGBAUnorm         = webgpu.TextureFormatBC3RGBAUnorm
-	TextureFormatBC3RGBAUnormSrgb     = webgpu.TextureFormatBC3RGBAUnormSrgb
-	TextureFormatBC4RSnorm            = webgpu.TextureFormatBC4RSnorm
-	TextureFormatBC4RUnorm            = webgpu.TextureFormatBC4RUnorm
-	TextureFormatBC5RGSnorm           = webgpu.TextureFormatBC5RGSnorm
-	TextureFormatBC5RGUnorm           = webgpu.TextureFormatBC5RGUnorm
-	TextureFormatBC6HRGBFloat         = webgpu.TextureFormatBC6HRGBFloat
-	TextureFormatBC6HRGBUfloat        = webgpu.TextureFormatBC6HRGBUfloat
-	TextureFormatBC7RGBAUnorm         = webgpu.TextureFormatBC7RGBAUnorm
-	TextureFormatBC7RGBAUnormSrgb     = webgpu.TextureFormatBC7RGBAUnormSrgb
-	TextureFormatBGRA8Unorm           = webgpu.TextureFormatBGRA8Unorm
-	TextureFormatBGRA8UnormSrgb       = webgpu.TextureFormatBGRA8UnormSrgb
-	TextureFormatDepth16Unorm         = webgpu.TextureFormatDepth16Unorm
-	TextureFormatDepth24Plus          = webgpu.TextureFormatDepth24Plus
-	TextureFormatDepth24PlusStencil8  = webgpu.TextureFormatDepth24PlusStencil8
-	TextureFormatDepth32Float         = webgpu.TextureFormatDepth32Float
-	TextureFormatDepth32FloatStencil8 = webgpu.TextureFormatDepth32FloatStencil8
-	TextureFormatEACR11Snorm          = webgpu.TextureFormatEACR11Snorm
-	TextureFormatEACR11Unorm          = webgpu.TextureFormatEACR11Unorm
-	TextureFormatEACRG11Snorm         = webgpu.TextureFormatEACRG11Snorm
-	TextureFormatEACRG11Unorm         = webgpu.TextureFormatEACRG11Unorm
-	TextureFormatETC2RGB8A1Unorm      = webgpu.TextureFormatETC2RGB8A1Unorm
-	TextureFormatETC2RGB8A1UnormSrgb  = webgpu.TextureFormatETC2RGB8A1UnormSrgb
-	TextureFormatETC2RGB8Unorm        = webgpu.TextureFormatETC2RGB8Unorm
-	TextureFormatETC2RGB8UnormSrgb    = webgpu.TextureFormatETC2RGB8UnormSrgb
-	TextureFormatETC2RGBA8Unorm       = webgpu.TextureFormatETC2RGBA8Unorm
-	TextureFormatETC2RGBA8UnormSrgb   = webgpu.TextureFormatETC2RGBA8UnormSrgb
-	TextureFormatR16Float             = webgpu.TextureFormatR16Float
-	TextureFormatR16Sint              = webgpu.TextureFormatR16Sint
-	TextureFormatR16Uint              = webgpu.TextureFormatR16Uint
-	TextureFormatR32Float             = webgpu.TextureFormatR32Float
-	TextureFormatR32Sint              = webgpu.TextureFormatR32Sint
-	TextureFormatR32Uint              = webgpu.TextureFormatR32Uint
-	TextureFormatR8Sint               = webgpu.TextureFormatR8Sint
-	TextureFormatR8Snorm              = webgpu.TextureFormatR8Snorm
-	TextureFormatR8Uint               = webgpu.TextureFormatR8Uint
-	TextureFormatR8Unorm              = webgpu.TextureFormatR8Unorm
-	TextureFormatRG11B10Ufloat        = webgpu.TextureFormatRG11B10Ufloat
-	TextureFormatRG16Float            = webgpu.TextureFormatRG16Float
-	TextureFormatRG16Sint             = webgpu.TextureFormatRG16Sint
-	TextureFormatRG16Uint             = webgpu.TextureFormatRG16Uint
-	TextureFormatRG32Float            = webgpu.TextureFormatRG32Float
-	TextureFormatRG32Sint             = webgpu.TextureFormatRG32Sint
-	TextureFormatRG32Uint             = webgpu.TextureFormatRG32Uint
-	TextureFormatRG8Sint              = webgpu.TextureFormatRG8Sint
-	TextureFormatRG8Snorm             = webgpu.TextureFormatRG8Snorm
-	TextureFormatRG8Uint              = webgpu.TextureFormatRG8Uint
-	TextureFormatRG8Unorm             = webgpu.TextureFormatRG8Unorm
-	TextureFormatRGB10A2Uint          = webgpu.TextureFormatRGB10A2Uint
-	TextureFormatRGB10A2Unorm         = webgpu.TextureFormatRGB10A2Unorm
-	TextureFormatRGB9E5Ufloat         = webgpu.TextureFormatRGB9E5Ufloat
-	TextureFormatRGBA16Float          = webgpu.TextureFormatRGBA16Float
-	TextureFormatRGBA16Sint           = webgpu.TextureFormatRGBA16Sint
-	TextureFormatRGBA16Uint           = webgpu.TextureFormatRGBA16Uint
-	TextureFormatRGBA32Float          = webgpu.TextureFormatRGBA32Float
-	TextureFormatRGBA32Sint           = webgpu.TextureFormatRGBA32Sint
-	TextureFormatRGBA32Uint           = webgpu.TextureFormatRGBA32Uint
-	TextureFormatRGBA8Sint            = webgpu.TextureFormatRGBA8Sint
-	TextureFormatRGBA8Snorm           = webgpu.TextureFormatRGBA8Snorm
-	TextureFormatRGBA8Uint            = webgpu.TextureFormatRGBA8Uint
-	TextureFormatRGBA8Unorm           = webgpu.TextureFormatRGBA8Unorm
-	TextureFormatRGBA8UnormSrgb       = webgpu.TextureFormatRGBA8UnormSrgb
-	TextureFormatStencil8             = webgpu.TextureFormatStencil8
+	TextureDimensionUndefined         = wgpu.TextureDimensionUndefined
+	TextureFormatASTC10x10Unorm       = wgpu.TextureFormatASTC10x10Unorm
+	TextureFormatASTC10x10UnormSrgb   = wgpu.TextureFormatASTC10x10UnormSrgb
+	TextureFormatASTC10x5Unorm        = wgpu.TextureFormatASTC10x5Unorm
+	TextureFormatASTC10x5UnormSrgb    = wgpu.TextureFormatASTC10x5UnormSrgb
+	TextureFormatASTC10x6Unorm        = wgpu.TextureFormatASTC10x6Unorm
+	TextureFormatASTC10x6UnormSrgb    = wgpu.TextureFormatASTC10x6UnormSrgb
+	TextureFormatASTC10x8Unorm        = wgpu.TextureFormatASTC10x8Unorm
+	TextureFormatASTC10x8UnormSrgb    = wgpu.TextureFormatASTC10x8UnormSrgb
+	TextureFormatASTC12x10Unorm       = wgpu.TextureFormatASTC12x10Unorm
+	TextureFormatASTC12x10UnormSrgb   = wgpu.TextureFormatASTC12x10UnormSrgb
+	TextureFormatASTC12x12Unorm       = wgpu.TextureFormatASTC12x12Unorm
+	TextureFormatASTC12x12UnormSrgb   = wgpu.TextureFormatASTC12x12UnormSrgb
+	TextureFormatASTC4x4Unorm         = wgpu.TextureFormatASTC4x4Unorm
+	TextureFormatASTC4x4UnormSrgb     = wgpu.TextureFormatASTC4x4UnormSrgb
+	TextureFormatASTC5x4Unorm         = wgpu.TextureFormatASTC5x4Unorm
+	TextureFormatASTC5x4UnormSrgb     = wgpu.TextureFormatASTC5x4UnormSrgb
+	TextureFormatASTC5x5Unorm         = wgpu.TextureFormatASTC5x5Unorm
+	TextureFormatASTC5x5UnormSrgb     = wgpu.TextureFormatASTC5x5UnormSrgb
+	TextureFormatASTC6x5Unorm         = wgpu.TextureFormatASTC6x5Unorm
+	TextureFormatASTC6x5UnormSrgb     = wgpu.TextureFormatASTC6x5UnormSrgb
+	TextureFormatASTC6x6Unorm         = wgpu.TextureFormatASTC6x6Unorm
+	TextureFormatASTC6x6UnormSrgb     = wgpu.TextureFormatASTC6x6UnormSrgb
+	TextureFormatASTC8x5Unorm         = wgpu.TextureFormatASTC8x5Unorm
+	TextureFormatASTC8x5UnormSrgb     = wgpu.TextureFormatASTC8x5UnormSrgb
+	TextureFormatASTC8x6Unorm         = wgpu.TextureFormatASTC8x6Unorm
+	TextureFormatASTC8x6UnormSrgb     = wgpu.TextureFormatASTC8x6UnormSrgb
+	TextureFormatASTC8x8Unorm         = wgpu.TextureFormatASTC8x8Unorm
+	TextureFormatASTC8x8UnormSrgb     = wgpu.TextureFormatASTC8x8UnormSrgb
+	TextureFormatBC1RGBAUnorm         = wgpu.TextureFormatBC1RGBAUnorm
+	TextureFormatBC1RGBAUnormSrgb     = wgpu.TextureFormatBC1RGBAUnormSrgb
+	TextureFormatBC2RGBAUnorm         = wgpu.TextureFormatBC2RGBAUnorm
+	TextureFormatBC2RGBAUnormSrgb     = wgpu.TextureFormatBC2RGBAUnormSrgb
+	TextureFormatBC3RGBAUnorm         = wgpu.TextureFormatBC3RGBAUnorm
+	TextureFormatBC3RGBAUnormSrgb     = wgpu.TextureFormatBC3RGBAUnormSrgb
+	TextureFormatBC4RSnorm            = wgpu.TextureFormatBC4RSnorm
+	TextureFormatBC4RUnorm            = wgpu.TextureFormatBC4RUnorm
+	TextureFormatBC5RGSnorm           = wgpu.TextureFormatBC5RGSnorm
+	TextureFormatBC5RGUnorm           = wgpu.TextureFormatBC5RGUnorm
+	TextureFormatBC6HRGBFloat         = wgpu.TextureFormatBC6HRGBFloat
+	TextureFormatBC6HRGBUfloat        = wgpu.TextureFormatBC6HRGBUfloat
+	TextureFormatBC7RGBAUnorm         = wgpu.TextureFormatBC7RGBAUnorm
+	TextureFormatBC7RGBAUnormSrgb     = wgpu.TextureFormatBC7RGBAUnormSrgb
+	TextureFormatBGRA8Unorm           = wgpu.TextureFormatBGRA8Unorm
+	TextureFormatBGRA8UnormSrgb       = wgpu.TextureFormatBGRA8UnormSrgb
+	TextureFormatDepth16Unorm         = wgpu.TextureFormatDepth16Unorm
+	TextureFormatDepth24Plus          = wgpu.TextureFormatDepth24Plus
+	TextureFormatDepth24PlusStencil8  = wgpu.TextureFormatDepth24PlusStencil8
+	TextureFormatDepth32Float         = wgpu.TextureFormatDepth32Float
+	TextureFormatDepth32FloatStencil8 = wgpu.TextureFormatDepth32FloatStencil8
+	TextureFormatEACR11Snorm          = wgpu.TextureFormatEACR11Snorm
+	TextureFormatEACR11Unorm          = wgpu.TextureFormatEACR11Unorm
+	TextureFormatEACRG11Snorm         = wgpu.TextureFormatEACRG11Snorm
+	TextureFormatEACRG11Unorm         = wgpu.TextureFormatEACRG11Unorm
+	TextureFormatETC2RGB8A1Unorm      = wgpu.TextureFormatETC2RGB8A1Unorm
+	TextureFormatETC2RGB8A1UnormSrgb  = wgpu.TextureFormatETC2RGB8A1UnormSrgb
+	TextureFormatETC2RGB8Unorm        = wgpu.TextureFormatETC2RGB8Unorm
+	TextureFormatETC2RGB8UnormSrgb    = wgpu.TextureFormatETC2RGB8UnormSrgb
+	TextureFormatETC2RGBA8Unorm       = wgpu.TextureFormatETC2RGBA8Unorm
+	TextureFormatETC2RGBA8UnormSrgb   = wgpu.TextureFormatETC2RGBA8UnormSrgb
+	TextureFormatR16Float             = wgpu.TextureFormatR16Float
+	TextureFormatR16Sint              = wgpu.TextureFormatR16Sint
+	TextureFormatR16Uint              = wgpu.TextureFormatR16Uint
+	TextureFormatR32Float             = wgpu.TextureFormatR32Float
+	TextureFormatR32Sint              = wgpu.TextureFormatR32Sint
+	TextureFormatR32Uint              = wgpu.TextureFormatR32Uint
+	TextureFormatR8Sint               = wgpu.TextureFormatR8Sint
+	TextureFormatR8Snorm              = wgpu.TextureFormatR8Snorm
+	TextureFormatR8Uint               = wgpu.TextureFormatR8Uint
+	TextureFormatR8Unorm              = wgpu.TextureFormatR8Unorm
+	TextureFormatRG11B10Ufloat        = wgpu.TextureFormatRG11B10Ufloat
+	TextureFormatRG16Float            = wgpu.TextureFormatRG16Float
+	TextureFormatRG16Sint             = wgpu.TextureFormatRG16Sint
+	TextureFormatRG16Uint             = wgpu.TextureFormatRG16Uint
+	TextureFormatRG32Float            = wgpu.TextureFormatRG32Float
+	TextureFormatRG32Sint             = wgpu.TextureFormatRG32Sint
+	TextureFormatRG32Uint             = wgpu.TextureFormatRG32Uint
+	TextureFormatRG8Sint              = wgpu.TextureFormatRG8Sint
+	TextureFormatRG8Snorm             = wgpu.TextureFormatRG8Snorm
+	TextureFormatRG8Uint              = wgpu.TextureFormatRG8Uint
+	TextureFormatRG8Unorm             = wgpu.TextureFormatRG8Unorm
+	TextureFormatRGB10A2Uint          = wgpu.TextureFormatRGB10A2Uint
+	TextureFormatRGB10A2Unorm         = wgpu.TextureFormatRGB10A2Unorm
+	TextureFormatRGB9E5Ufloat         = wgpu.TextureFormatRGB9E5Ufloat
+	TextureFormatRGBA16Float          = wgpu.TextureFormatRGBA16Float
+	TextureFormatRGBA16Sint           = wgpu.TextureFormatRGBA16Sint
+	TextureFormatRGBA16Uint           = wgpu.TextureFormatRGBA16Uint
+	TextureFormatRGBA32Float          = wgpu.TextureFormatRGBA32Float
+	TextureFormatRGBA32Sint           = wgpu.TextureFormatRGBA32Sint
+	TextureFormatRGBA32Uint           = wgpu.TextureFormatRGBA32Uint
+	TextureFormatRGBA8Sint            = wgpu.TextureFormatRGBA8Sint
+	TextureFormatRGBA8Snorm           = wgpu.TextureFormatRGBA8Snorm
+	TextureFormatRGBA8Uint            = wgpu.TextureFormatRGBA8Uint
+	TextureFormatRGBA8Unorm           = wgpu.TextureFormatRGBA8Unorm
+	TextureFormatRGBA8UnormSrgb       = wgpu.TextureFormatRGBA8UnormSrgb
+	TextureFormatStencil8             = wgpu.TextureFormatStencil8
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	TextureFormatUndefined = webgpu.TextureFormatUndefined
+	TextureFormatUndefined = wgpu.TextureFormatUndefined
 	// Indicates that this @ref WGPUTextureBindingLayout member of
 	// its parent @ref WGPUBindGroupLayoutEntry is not used.
 	// (See also @ref SentinelValues.)
-	TextureSampleTypeBindingNotUsed = webgpu.TextureSampleTypeBindingNotUsed
-	TextureSampleTypeDepth          = webgpu.TextureSampleTypeDepth
-	TextureSampleTypeFloat          = webgpu.TextureSampleTypeFloat
-	TextureSampleTypeSint           = webgpu.TextureSampleTypeSint
-	TextureSampleTypeUint           = webgpu.TextureSampleTypeUint
+	TextureSampleTypeBindingNotUsed = wgpu.TextureSampleTypeBindingNotUsed
+	TextureSampleTypeDepth          = wgpu.TextureSampleTypeDepth
+	TextureSampleTypeFloat          = wgpu.TextureSampleTypeFloat
+	TextureSampleTypeSint           = wgpu.TextureSampleTypeSint
+	TextureSampleTypeUint           = wgpu.TextureSampleTypeUint
 	// `1`. Indicates no value is passed for this argument. See @ref SentinelValues.
-	TextureSampleTypeUndefined         = webgpu.TextureSampleTypeUndefined
-	TextureSampleTypeUnfilterableFloat = webgpu.TextureSampleTypeUnfilterableFloat
-	TextureUsageCopyDst                = webgpu.TextureUsageCopyDst
-	TextureUsageCopySrc                = webgpu.TextureUsageCopySrc
-	TextureUsageNone                   = webgpu.TextureUsageNone
-	TextureUsageRenderAttachment       = webgpu.TextureUsageRenderAttachment
-	TextureUsageStorageBinding         = webgpu.TextureUsageStorageBinding
-	TextureUsageTextureBinding         = webgpu.TextureUsageTextureBinding
-	TextureViewDimension1D             = webgpu.TextureViewDimension1D
-	TextureViewDimension2D             = webgpu.TextureViewDimension2D
-	TextureViewDimension2DArray        = webgpu.TextureViewDimension2DArray
-	TextureViewDimension3D             = webgpu.TextureViewDimension3D
-	TextureViewDimensionCube           = webgpu.TextureViewDimensionCube
-	TextureViewDimensionCubeArray      = webgpu.TextureViewDimensionCubeArray
+	TextureSampleTypeUndefined         = wgpu.TextureSampleTypeUndefined
+	TextureSampleTypeUnfilterableFloat = wgpu.TextureSampleTypeUnfilterableFloat
+	TextureUsageCopyDst                = wgpu.TextureUsageCopyDst
+	TextureUsageCopySrc                = wgpu.TextureUsageCopySrc
+	TextureUsageNone                   = wgpu.TextureUsageNone
+	TextureUsageRenderAttachment       = wgpu.TextureUsageRenderAttachment
+	TextureUsageStorageBinding         = wgpu.TextureUsageStorageBinding
+	TextureUsageTextureBinding         = wgpu.TextureUsageTextureBinding
+	TextureViewDimension1D             = wgpu.TextureViewDimension1D
+	TextureViewDimension2D             = wgpu.TextureViewDimension2D
+	TextureViewDimension2DArray        = wgpu.TextureViewDimension2DArray
+	TextureViewDimension3D             = wgpu.TextureViewDimension3D
+	TextureViewDimensionCube           = wgpu.TextureViewDimensionCube
+	TextureViewDimensionCubeArray      = wgpu.TextureViewDimensionCubeArray
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	TextureViewDimensionUndefined = webgpu.TextureViewDimensionUndefined
-	ToneMappingModeExtended       = webgpu.ToneMappingModeExtended
-	ToneMappingModeStandard       = webgpu.ToneMappingModeStandard
-	VertexFormatFloat16           = webgpu.VertexFormatFloat16
-	VertexFormatFloat16x2         = webgpu.VertexFormatFloat16x2
-	VertexFormatFloat16x4         = webgpu.VertexFormatFloat16x4
-	VertexFormatFloat32           = webgpu.VertexFormatFloat32
-	VertexFormatFloat32x2         = webgpu.VertexFormatFloat32x2
-	VertexFormatFloat32x3         = webgpu.VertexFormatFloat32x3
-	VertexFormatFloat32x4         = webgpu.VertexFormatFloat32x4
-	VertexFormatSint16            = webgpu.VertexFormatSint16
-	VertexFormatSint16x2          = webgpu.VertexFormatSint16x2
-	VertexFormatSint16x4          = webgpu.VertexFormatSint16x4
-	VertexFormatSint32            = webgpu.VertexFormatSint32
-	VertexFormatSint32x2          = webgpu.VertexFormatSint32x2
-	VertexFormatSint32x3          = webgpu.VertexFormatSint32x3
-	VertexFormatSint32x4          = webgpu.VertexFormatSint32x4
-	VertexFormatSint8             = webgpu.VertexFormatSint8
-	VertexFormatSint8x2           = webgpu.VertexFormatSint8x2
-	VertexFormatSint8x4           = webgpu.VertexFormatSint8x4
-	VertexFormatSnorm16           = webgpu.VertexFormatSnorm16
-	VertexFormatSnorm16x2         = webgpu.VertexFormatSnorm16x2
-	VertexFormatSnorm16x4         = webgpu.VertexFormatSnorm16x4
-	VertexFormatSnorm8            = webgpu.VertexFormatSnorm8
-	VertexFormatSnorm8x2          = webgpu.VertexFormatSnorm8x2
-	VertexFormatSnorm8x4          = webgpu.VertexFormatSnorm8x4
-	VertexFormatUint16            = webgpu.VertexFormatUint16
-	VertexFormatUint16x2          = webgpu.VertexFormatUint16x2
-	VertexFormatUint16x4          = webgpu.VertexFormatUint16x4
-	VertexFormatUint32            = webgpu.VertexFormatUint32
-	VertexFormatUint32x2          = webgpu.VertexFormatUint32x2
-	VertexFormatUint32x3          = webgpu.VertexFormatUint32x3
-	VertexFormatUint32x4          = webgpu.VertexFormatUint32x4
-	VertexFormatUint8             = webgpu.VertexFormatUint8
-	VertexFormatUint8x2           = webgpu.VertexFormatUint8x2
-	VertexFormatUint8x4           = webgpu.VertexFormatUint8x4
-	VertexFormatUnorm10_10_10_2   = webgpu.VertexFormatUnorm10_10_10_2
-	VertexFormatUnorm16           = webgpu.VertexFormatUnorm16
-	VertexFormatUnorm16x2         = webgpu.VertexFormatUnorm16x2
-	VertexFormatUnorm16x4         = webgpu.VertexFormatUnorm16x4
-	VertexFormatUnorm8            = webgpu.VertexFormatUnorm8
-	VertexFormatUnorm8x2          = webgpu.VertexFormatUnorm8x2
-	VertexFormatUnorm8x4          = webgpu.VertexFormatUnorm8x4
-	VertexFormatUnorm8x4BGRA      = webgpu.VertexFormatUnorm8x4BGRA
-	VertexStepModeInstance        = webgpu.VertexStepModeInstance
+	TextureViewDimensionUndefined = wgpu.TextureViewDimensionUndefined
+	ToneMappingModeExtended       = wgpu.ToneMappingModeExtended
+	ToneMappingModeStandard       = wgpu.ToneMappingModeStandard
+	VertexFormatFloat16           = wgpu.VertexFormatFloat16
+	VertexFormatFloat16x2         = wgpu.VertexFormatFloat16x2
+	VertexFormatFloat16x4         = wgpu.VertexFormatFloat16x4
+	VertexFormatFloat32           = wgpu.VertexFormatFloat32
+	VertexFormatFloat32x2         = wgpu.VertexFormatFloat32x2
+	VertexFormatFloat32x3         = wgpu.VertexFormatFloat32x3
+	VertexFormatFloat32x4         = wgpu.VertexFormatFloat32x4
+	VertexFormatSint16            = wgpu.VertexFormatSint16
+	VertexFormatSint16x2          = wgpu.VertexFormatSint16x2
+	VertexFormatSint16x4          = wgpu.VertexFormatSint16x4
+	VertexFormatSint32            = wgpu.VertexFormatSint32
+	VertexFormatSint32x2          = wgpu.VertexFormatSint32x2
+	VertexFormatSint32x3          = wgpu.VertexFormatSint32x3
+	VertexFormatSint32x4          = wgpu.VertexFormatSint32x4
+	VertexFormatSint8             = wgpu.VertexFormatSint8
+	VertexFormatSint8x2           = wgpu.VertexFormatSint8x2
+	VertexFormatSint8x4           = wgpu.VertexFormatSint8x4
+	VertexFormatSnorm16           = wgpu.VertexFormatSnorm16
+	VertexFormatSnorm16x2         = wgpu.VertexFormatSnorm16x2
+	VertexFormatSnorm16x4         = wgpu.VertexFormatSnorm16x4
+	VertexFormatSnorm8            = wgpu.VertexFormatSnorm8
+	VertexFormatSnorm8x2          = wgpu.VertexFormatSnorm8x2
+	VertexFormatSnorm8x4          = wgpu.VertexFormatSnorm8x4
+	VertexFormatUint16            = wgpu.VertexFormatUint16
+	VertexFormatUint16x2          = wgpu.VertexFormatUint16x2
+	VertexFormatUint16x4          = wgpu.VertexFormatUint16x4
+	VertexFormatUint32            = wgpu.VertexFormatUint32
+	VertexFormatUint32x2          = wgpu.VertexFormatUint32x2
+	VertexFormatUint32x3          = wgpu.VertexFormatUint32x3
+	VertexFormatUint32x4          = wgpu.VertexFormatUint32x4
+	VertexFormatUint8             = wgpu.VertexFormatUint8
+	VertexFormatUint8x2           = wgpu.VertexFormatUint8x2
+	VertexFormatUint8x4           = wgpu.VertexFormatUint8x4
+	VertexFormatUnorm10_10_10_2   = wgpu.VertexFormatUnorm10_10_10_2
+	VertexFormatUnorm16           = wgpu.VertexFormatUnorm16
+	VertexFormatUnorm16x2         = wgpu.VertexFormatUnorm16x2
+	VertexFormatUnorm16x4         = wgpu.VertexFormatUnorm16x4
+	VertexFormatUnorm8            = wgpu.VertexFormatUnorm8
+	VertexFormatUnorm8x2          = wgpu.VertexFormatUnorm8x2
+	VertexFormatUnorm8x4          = wgpu.VertexFormatUnorm8x4
+	VertexFormatUnorm8x4BGRA      = wgpu.VertexFormatUnorm8x4BGRA
+	VertexStepModeInstance        = wgpu.VertexStepModeInstance
 	// Indicates no value is passed for this argument. See @ref SentinelValues.
-	VertexStepModeUndefined                                    = webgpu.VertexStepModeUndefined
-	VertexStepModeVertex                                       = webgpu.VertexStepModeVertex
-	WGSLLanguageFeatureNamePacked4x8IntegerDotProduct          = webgpu.WGSLLanguageFeatureNamePacked4x8IntegerDotProduct
-	WGSLLanguageFeatureNamePointerCompositeAccess              = webgpu.WGSLLanguageFeatureNamePointerCompositeAccess
-	WGSLLanguageFeatureNameReadonlyAndReadwriteStorageTextures = webgpu.WGSLLanguageFeatureNameReadonlyAndReadwriteStorageTextures
-	WGSLLanguageFeatureNameUnrestrictedPointerParameters       = webgpu.WGSLLanguageFeatureNameUnrestrictedPointerParameters
-	// The call was invalid for some reason (see @ref Wait-Any).
-	// Should produce @ref ImplementationDefinedLogging containing details.
-	WaitStatusError = webgpu.WaitStatusError
-	// At least one WGPUFuture completed successfully.
-	WaitStatusSuccess = webgpu.WaitStatusSuccess
-	// The wait operation succeeded, but no WGPUFutures completed within the timeout.
-	WaitStatusTimedOut = webgpu.WaitStatusTimedOut
+	VertexStepModeUndefined                                    = wgpu.VertexStepModeUndefined
+	VertexStepModeVertex                                       = wgpu.VertexStepModeVertex
+	WGSLLanguageFeatureNamePacked4x8IntegerDotProduct          = wgpu.WGSLLanguageFeatureNamePacked4x8IntegerDotProduct
+	WGSLLanguageFeatureNamePointerCompositeAccess              = wgpu.WGSLLanguageFeatureNamePointerCompositeAccess
+	WGSLLanguageFeatureNameReadonlyAndReadwriteStorageTextures = wgpu.WGSLLanguageFeatureNameReadonlyAndReadwriteStorageTextures
+	WGSLLanguageFeatureNameUnrestrictedPointerParameters       = wgpu.WGSLLanguageFeatureNameUnrestrictedPointerParameters
 	// Indicates a size extending to the end of the buffer. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	WholeMapSize = webgpu.WholeMapSize
+	WholeMapSize = wgpu.WholeMapSize
 	// Indicates a size extending to the end of the buffer. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
-	WholeSize = webgpu.WholeSize
+	WholeSize = wgpu.WholeSize
 )

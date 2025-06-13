@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/opensraph/sraph/gpu/impl"
-	. "github.com/opensraph/sraph/gpu/webgpu"
+	. "github.com/opensraph/sraph/gpu/wgpu"
 )
 
 // VulkanAdapter implements the WebGPU Adapter interface using Vulkan

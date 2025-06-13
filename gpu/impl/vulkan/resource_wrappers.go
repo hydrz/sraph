@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/opensraph/sraph/gpu/impl"
-	. "github.com/opensraph/sraph/gpu/webgpu"
+	. "github.com/opensraph/sraph/gpu/wgpu"
 )
 
 // VulkanBufferWrapper wraps Vulkan buffer to implement WebGPU Buffer interface

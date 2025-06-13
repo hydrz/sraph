@@ -3,7 +3,7 @@ package impl
 import (
 	"unsafe"
 
-	. "github.com/opensraph/sraph/gpu/webgpu"
+	. "github.com/opensraph/sraph/gpu/wgpu"
 )
 
 // CreateSurfaceFromMetalLayer creates a surface from a Metal layer

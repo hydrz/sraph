@@ -22,14 +22,14 @@ const pkgName = "gpu"
 const outputFile = "types.go"
 
 // inputPkg is the import path for the webgpu package.
-const inputPkg = "github.com/opensraph/sraph/gpu/webgpu"
+const inputPkg = "github.com/opensraph/sraph/gpu/wgpu"
 
 // inputDir is the relative path to the webgpu package.
-const inputDir = "./webgpu"
+const inputDir = "./wgpu"
 
 // inputFiles is the list of files to parse.
 var inputFiles = []string{
-	"webgpu.go",
+	"wgpu.go",
 }
 
 func main() {
