@@ -28,26 +28,54 @@ type VulkanEvent struct {
 	mu        sync.RWMutex
 	handle    uintptr // VkEvent handle
 	device    *VulkanDevice
+	set       bool
 	destroyed bool
 }
 
+// VulkanSemaphoreCreateInfo contains semaphore creation parameters
+type VulkanSemaphoreCreateInfo struct {
+	Flags uint32
+}
+
+// VulkanFenceCreateInfo contains fence creation parameters
+type VulkanFenceCreateInfo struct {
+	Flags uint32 // VK_FENCE_CREATE_SIGNALED_BIT if initially signaled
+}
+
+// VulkanEventCreateInfo contains event creation parameters
+type VulkanEventCreateInfo struct {
+	Flags uint32
+}
+
+// Semaphore methods
+
 // NewVulkanSemaphore creates a new Vulkan semaphore
-func NewVulkanSemaphore(device *VulkanDevice) (*VulkanSemaphore, error) {
+func NewVulkanSemaphore(device *VulkanDevice, createInfo *VulkanSemaphoreCreateInfo) (*VulkanSemaphore, error) {
 	semaphore := &VulkanSemaphore{
 		device: device,
 	}
 
-	if err := semaphore.create(); err != nil {
-		return nil, fmt.Errorf("failed to create semaphore: %v", err)
+	// Create the semaphore
+	if err := semaphore.createSemaphore(createInfo); err != nil {
+		return nil, err
 	}
 
 	return semaphore, nil
 }
 
-// create creates the actual Vulkan semaphore
-func (vs *VulkanSemaphore) create() error {
-	// In a real implementation, this would call vkCreateSemaphore
-	vs.handle = uintptr(0xAABBCCDD)
+// createSemaphore creates the actual Vulkan semaphore
+func (vs *VulkanSemaphore) createSemaphore(createInfo *VulkanSemaphoreCreateInfo) error {
+	vs.mu.Lock()
+	defer vs.mu.Unlock()
+
+	if vs.destroyed {
+		return fmt.Errorf("semaphore has been destroyed")
+	}
+
+	// Note: In a real implementation, you would call vkCreateSemaphore
+	// For now, we'll simulate it
+	vs.handle = uintptr(12345) // Placeholder handle
+
 	return nil
 }
 
@@ -67,36 +95,42 @@ func (vs *VulkanSemaphore) Destroy() error {
 		return nil
 	}
 
-	// In a real implementation, this would call vkDestroySemaphore
-	vs.handle = 0
-	vs.destroyed = true
+	// Destroy semaphore
+	if vs.handle != 0 {
+		// Note: In a real implementation, you would call vkDestroySemaphore
+		vs.handle = 0
+	}
 
+	vs.destroyed = true
 	return nil
 }
 
+// IsDestroyed checks if the semaphore is destroyed
+func (vs *VulkanSemaphore) IsDestroyed() bool {
+	vs.mu.RLock()
+	defer vs.mu.RUnlock()
+	return vs.destroyed
+}
+
+// Fence methods
+
 // NewVulkanFence creates a new Vulkan fence
-func NewVulkanFence(device *VulkanDevice, signaled bool) (*VulkanFence, error) {
+func NewVulkanFence(device *VulkanDevice, createInfo *VulkanFenceCreateInfo) (*VulkanFence, error) {
 	fence := &VulkanFence{
 		device:   device,
-		signaled: signaled,
+		signaled: (createInfo.Flags & 0x1) != 0, // VK_FENCE_CREATE_SIGNALED_BIT
 	}
 
-	if err := fence.create(); err != nil {
-		return nil, fmt.Errorf("failed to create fence: %v", err)
+	// Create the fence
+	if err := fence.createFence(createInfo); err != nil {
+		return nil, err
 	}
 
 	return fence, nil
 }
 
-// create creates the actual Vulkan fence
-func (vf *VulkanFence) create() error {
-	// In a real implementation, this would call vkCreateFence
-	vf.handle = uintptr(0xBBCCDDEE)
-	return nil
-}
-
-// Wait waits for the fence to be signaled with timeout
-func (vf *VulkanFence) Wait(timeoutNS uint64) error {
+// createFence creates the actual Vulkan fence
+func (vf *VulkanFence) createFence(createInfo *VulkanFenceCreateInfo) error {
 	vf.mu.Lock()
 	defer vf.mu.Unlock()
 
@@ -104,27 +138,58 @@ func (vf *VulkanFence) Wait(timeoutNS uint64) error {
 		return fmt.Errorf("fence has been destroyed")
 	}
 
-	// In a real implementation, this would call vkWaitForFences
-	// Simulate waiting with timeout
-	if timeoutNS > 0 {
-		timeout := time.Duration(timeoutNS) * time.Nanosecond
-		timer := time.NewTimer(timeout)
-		defer timer.Stop()
+	// Note: In a real implementation, you would call vkCreateFence
+	// For now, we'll simulate it
+	vf.handle = uintptr(23456) // Placeholder handle
 
-		// Simulate fence signaling
-		go func() {
-			time.Sleep(time.Millisecond * 10)
-			vf.mu.Lock()
-			if !vf.destroyed {
-				vf.signaled = true
-			}
-			vf.mu.Unlock()
-		}()
+	return nil
+}
 
-		<-timer.C
+// Wait waits for the fence to be signaled
+func (vf *VulkanFence) Wait(timeout uint64) error {
+	vf.mu.RLock()
+	destroyed := vf.destroyed
+	signaled := vf.signaled
+	vf.mu.RUnlock()
+
+	if destroyed {
+		return fmt.Errorf("fence has been destroyed")
 	}
 
-	vf.signaled = true
+	if signaled {
+		return nil
+	}
+
+	// Simulate waiting
+	if timeout == ^uint64(0) { // UINT64_MAX for infinite timeout
+		// Wait indefinitely
+		for {
+			vf.mu.RLock()
+			if vf.signaled || vf.destroyed {
+				vf.mu.RUnlock()
+				break
+			}
+			vf.mu.RUnlock()
+		}
+	} else {
+		// Wait with timeout
+		start := time.Now()
+		for {
+			vf.mu.RLock()
+			if vf.signaled || vf.destroyed {
+				vf.mu.RUnlock()
+				break
+			}
+			vf.mu.RUnlock()
+
+			if time.Since(start) > time.Duration(timeout)*time.Nanosecond {
+				return fmt.Errorf("fence wait timeout")
+			}
+			time.Sleep(1 * time.Millisecond)
+		}
+	}
+
+	// Note: In a real implementation, you would call vkWaitForFences
 	return nil
 }
 
@@ -137,16 +202,30 @@ func (vf *VulkanFence) Reset() error {
 		return fmt.Errorf("fence has been destroyed")
 	}
 
-	// In a real implementation, this would call vkResetFences
+	// Note: In a real implementation, you would call vkResetFences
 	vf.signaled = false
+
 	return nil
 }
 
-// GetStatus returns the fence status
-func (vf *VulkanFence) GetStatus() bool {
+// GetStatus gets the fence status
+func (vf *VulkanFence) GetStatus() (bool, error) {
 	vf.mu.RLock()
 	defer vf.mu.RUnlock()
-	return vf.signaled
+
+	if vf.destroyed {
+		return false, fmt.Errorf("fence has been destroyed")
+	}
+
+	// Note: In a real implementation, you would call vkGetFenceStatus
+	return vf.signaled, nil
+}
+
+// Signal signals the fence (for testing purposes)
+func (vf *VulkanFence) Signal() {
+	vf.mu.Lock()
+	defer vf.mu.Unlock()
+	vf.signaled = true
 }
 
 // GetHandle returns the fence handle
@@ -165,31 +244,96 @@ func (vf *VulkanFence) Destroy() error {
 		return nil
 	}
 
-	// In a real implementation, this would call vkDestroyFence
-	vf.handle = 0
-	vf.destroyed = true
+	// Destroy fence
+	if vf.handle != 0 {
+		// Note: In a real implementation, you would call vkDestroyFence
+		vf.handle = 0
+	}
 
+	vf.destroyed = true
 	return nil
 }
 
+// IsDestroyed checks if the fence is destroyed
+func (vf *VulkanFence) IsDestroyed() bool {
+	vf.mu.RLock()
+	defer vf.mu.RUnlock()
+	return vf.destroyed
+}
+
+// Event methods
+
 // NewVulkanEvent creates a new Vulkan event
-func NewVulkanEvent(device *VulkanDevice) (*VulkanEvent, error) {
+func NewVulkanEvent(device *VulkanDevice, createInfo *VulkanEventCreateInfo) (*VulkanEvent, error) {
 	event := &VulkanEvent{
 		device: device,
 	}
 
-	if err := event.create(); err != nil {
-		return nil, fmt.Errorf("failed to create event: %v", err)
+	// Create the event
+	if err := event.createEvent(createInfo); err != nil {
+		return nil, err
 	}
 
 	return event, nil
 }
 
-// create creates the actual Vulkan event
-func (ve *VulkanEvent) create() error {
-	// In a real implementation, this would call vkCreateEvent
-	ve.handle = uintptr(0xCCDDEEFF)
+// createEvent creates the actual Vulkan event
+func (ve *VulkanEvent) createEvent(createInfo *VulkanEventCreateInfo) error {
+	ve.mu.Lock()
+	defer ve.mu.Unlock()
+
+	if ve.destroyed {
+		return fmt.Errorf("event has been destroyed")
+	}
+
+	// Note: In a real implementation, you would call vkCreateEvent
+	// For now, we'll simulate it
+	ve.handle = uintptr(34567) // Placeholder handle
+
 	return nil
+}
+
+// Set sets the event
+func (ve *VulkanEvent) Set() error {
+	ve.mu.Lock()
+	defer ve.mu.Unlock()
+
+	if ve.destroyed {
+		return fmt.Errorf("event has been destroyed")
+	}
+
+	// Note: In a real implementation, you would call vkSetEvent
+	ve.set = true
+
+	return nil
+}
+
+// Reset resets the event
+func (ve *VulkanEvent) Reset() error {
+	ve.mu.Lock()
+	defer ve.mu.Unlock()
+
+	if ve.destroyed {
+		return fmt.Errorf("event has been destroyed")
+	}
+
+	// Note: In a real implementation, you would call vkResetEvent
+	ve.set = false
+
+	return nil
+}
+
+// GetStatus gets the event status
+func (ve *VulkanEvent) GetStatus() (bool, error) {
+	ve.mu.RLock()
+	defer ve.mu.RUnlock()
+
+	if ve.destroyed {
+		return false, fmt.Errorf("event has been destroyed")
+	}
+
+	// Note: In a real implementation, you would call vkGetEventStatus
+	return ve.set, nil
 }
 
 // GetHandle returns the event handle
@@ -208,125 +352,73 @@ func (ve *VulkanEvent) Destroy() error {
 		return nil
 	}
 
-	// In a real implementation, this would call vkDestroyEvent
-	ve.handle = 0
+	// Destroy event
+	if ve.handle != 0 {
+		// Note: In a real implementation, you would call vkDestroyEvent
+		ve.handle = 0
+	}
+
 	ve.destroyed = true
-
 	return nil
 }
 
-// VulkanSynchronization manages synchronization objects
-type VulkanSynchronization struct {
-	mu         sync.RWMutex
-	device     *VulkanDevice
-	semaphores map[uintptr]*VulkanSemaphore
-	fences     map[uintptr]*VulkanFence
-	events     map[uintptr]*VulkanEvent
+// IsDestroyed checks if the event is destroyed
+func (ve *VulkanEvent) IsDestroyed() bool {
+	ve.mu.RLock()
+	defer ve.mu.RUnlock()
+	return ve.destroyed
 }
 
-// NewVulkanSynchronization creates a new synchronization manager
-func NewVulkanSynchronization(device *VulkanDevice) *VulkanSynchronization {
-	return &VulkanSynchronization{
-		device:     device,
-		semaphores: make(map[uintptr]*VulkanSemaphore),
-		fences:     make(map[uintptr]*VulkanFence),
-		events:     make(map[uintptr]*VulkanEvent),
+// Utility functions for synchronization
+
+// WaitForFences waits for multiple fences
+func WaitForFences(device *VulkanDevice, fences []*VulkanFence, waitAll bool, timeout uint64) error {
+	if len(fences) == 0 {
+		return nil
+	}
+
+	start := time.Now()
+
+	for {
+		allSignaled := true
+		anySignaled := false
+
+		for _, fence := range fences {
+			signaled, err := fence.GetStatus()
+			if err != nil {
+				return err
+			}
+
+			if signaled {
+				anySignaled = true
+			} else {
+				allSignaled = false
+			}
+		}
+
+		// Check completion condition
+		if waitAll && allSignaled {
+			return nil
+		}
+		if !waitAll && anySignaled {
+			return nil
+		}
+
+		// Check timeout
+		if timeout != ^uint64(0) && time.Since(start) > time.Duration(timeout)*time.Nanosecond {
+			return fmt.Errorf("fence wait timeout")
+		}
+
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 
-// CreateSemaphore creates and tracks a semaphore
-func (vs *VulkanSynchronization) CreateSemaphore() (*VulkanSemaphore, error) {
-	semaphore, err := NewVulkanSemaphore(vs.device)
-	if err != nil {
-		return nil, err
+// ResetFences resets multiple fences
+func ResetFences(device *VulkanDevice, fences []*VulkanFence) error {
+	for _, fence := range fences {
+		if err := fence.Reset(); err != nil {
+			return err
+		}
 	}
-
-	vs.mu.Lock()
-	vs.semaphores[semaphore.GetHandle()] = semaphore
-	vs.mu.Unlock()
-
-	return semaphore, nil
-}
-
-// CreateFence creates and tracks a fence
-func (vs *VulkanSynchronization) CreateFence(signaled bool) (*VulkanFence, error) {
-	fence, err := NewVulkanFence(vs.device, signaled)
-	if err != nil {
-		return nil, err
-	}
-
-	vs.mu.Lock()
-	vs.fences[fence.GetHandle()] = fence
-	vs.mu.Unlock()
-
-	return fence, nil
-}
-
-// CreateEvent creates and tracks an event
-func (vs *VulkanSynchronization) CreateEvent() (*VulkanEvent, error) {
-	event, err := NewVulkanEvent(vs.device)
-	if err != nil {
-		return nil, err
-	}
-
-	vs.mu.Lock()
-	vs.events[event.GetHandle()] = event
-	vs.mu.Unlock()
-
-	return event, nil
-}
-
-// DestroyAll destroys all synchronization objects
-func (vs *VulkanSynchronization) DestroyAll() error {
-	vs.mu.Lock()
-	defer vs.mu.Unlock()
-
-	// Destroy all semaphores
-	for _, semaphore := range vs.semaphores {
-		semaphore.Destroy()
-	}
-	vs.semaphores = make(map[uintptr]*VulkanSemaphore)
-
-	// Destroy all fences
-	for _, fence := range vs.fences {
-		fence.Destroy()
-	}
-	vs.fences = make(map[uintptr]*VulkanFence)
-
-	// Destroy all events
-	for _, event := range vs.events {
-		event.Destroy()
-	}
-	vs.events = make(map[uintptr]*VulkanEvent)
-
 	return nil
-}
-
-// WaitIdle waits for all operations to complete
-func (vs *VulkanSynchronization) WaitIdle() error {
-	if vs.device == nil {
-		return fmt.Errorf("device is nil")
-	}
-	return vs.device.WaitIdle()
-}
-
-// GetSemaphoreCount returns the number of tracked semaphores
-func (vs *VulkanSynchronization) GetSemaphoreCount() int {
-	vs.mu.RLock()
-	defer vs.mu.RUnlock()
-	return len(vs.semaphores)
-}
-
-// GetFenceCount returns the number of tracked fences
-func (vs *VulkanSynchronization) GetFenceCount() int {
-	vs.mu.RLock()
-	defer vs.mu.RUnlock()
-	return len(vs.fences)
-}
-
-// GetEventCount returns the number of tracked events
-func (vs *VulkanSynchronization) GetEventCount() int {
-	vs.mu.RLock()
-	defer vs.mu.RUnlock()
-	return len(vs.events)
 }

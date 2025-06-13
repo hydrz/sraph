@@ -3,69 +3,65 @@ package vulkan
 import (
 	"fmt"
 	"sync"
+	"unsafe"
 )
 
 // VulkanInstance manages Vulkan instance
 type VulkanInstance struct {
 	mu                sync.RWMutex
-	handle            uintptr // VkInstance handle
+	handle            VkInstance
 	physicalDevices   []VulkanPhysicalDevice
 	enabledLayers     []string
 	enabledExtensions []string
-	debugMessenger    uintptr // VkDebugUtilsMessengerEXT handle
+	debugMessenger    VkDebugUtilsMessengerEXT
 	destroyed         bool
 }
 
 // VulkanPhysicalDevice represents a Vulkan physical device
 type VulkanPhysicalDevice struct {
-	Handle           uintptr // VkPhysicalDevice handle
-	Properties       VulkanDeviceProperties
-	Features         VulkanDeviceFeatures
-	QueueFamilyProps []VulkanQueueFamilyProperties
-	MemoryProperties VulkanPhysicalDeviceMemoryProperties
-	SurfaceSupport   bool
+	handle              VkPhysicalDevice
+	properties          VkPhysicalDeviceProperties
+	features            VkPhysicalDeviceFeatures
+	queueFamilies       []VkQueueFamilyProperties
+	memoryProperties    VkPhysicalDeviceMemoryProperties
+	supportedExtensions []string
 }
 
 // VulkanDeviceProperties contains device properties
 type VulkanDeviceProperties struct {
-	DeviceName     string
-	DeviceType     uint32
-	VendorID       uint32
-	DeviceID       uint32
-	DriverVersion  uint32
-	APIVersion     uint32
-	MaxTextureSize uint32
-	MaxBufferSize  uint64
+	ApiVersion        uint32
+	DriverVersion     uint32
+	VendorID          uint32
+	DeviceID          uint32
+	DeviceType        uint32
+	DeviceName        string
+	PipelineCacheUUID [16]byte
 }
 
 // VulkanDeviceFeatures contains device features
 type VulkanDeviceFeatures struct {
-	GeometryShader       bool
-	TessellationShader   bool
-	MultiViewport        bool
-	SamplerAnisotropy    bool
-	TextureCompressionBC bool
-	DepthClamp           bool
+	RobustBufferAccess  bool
+	FullDrawIndexUint32 bool
+	ImageCubeArray      bool
+	IndependentBlend    bool
+	GeometryShader      bool
+	TessellationShader  bool
+	SampleRateShading   bool
+	// Add more features as needed
 }
 
 // VulkanQueueFamilyProperties contains queue family properties
 type VulkanQueueFamilyProperties struct {
-	QueueFlags       uint32
-	QueueCount       uint32
-	TimestampBits    uint32
-	SupportsGraphics bool
-	SupportsCompute  bool
-	SupportsTransfer bool
-	SupportsSparse   bool
-	SupportsPresent  bool
+	QueueFlags                  uint32
+	QueueCount                  uint32
+	TimestampValidBits          uint32
+	MinImageTransferGranularity VkExtent3D
 }
 
 // VulkanPhysicalDeviceMemoryProperties contains memory properties
 type VulkanPhysicalDeviceMemoryProperties struct {
-	MemoryTypeCount uint32
-	MemoryHeapCount uint32
-	MemoryTypes     []VulkanMemoryType
-	MemoryHeaps     []VulkanMemoryHeap
+	MemoryTypes []VulkanMemoryType
+	MemoryHeaps []VulkanMemoryHeap
 }
 
 // VulkanMemoryType represents a memory type
@@ -81,108 +77,120 @@ type VulkanMemoryHeap struct {
 }
 
 // NewVulkanInstance creates a new Vulkan instance
-func NewVulkanInstance(enableDebug bool) (*VulkanInstance, error) {
-	instance := &VulkanInstance{
-		enabledLayers:     []string{},
-		enabledExtensions: []string{},
+func NewVulkanInstance(appName, engineName string, enableValidation bool) (*VulkanInstance, error) {
+	// Ensure Vulkan library is loaded
+	if vulkanLib == 0 {
+		if err := LoadVulkanLibrary(); err != nil {
+			return nil, fmt.Errorf("failed to load Vulkan library: %v", err)
+		}
 	}
 
-	if enableDebug {
+	instance := &VulkanInstance{
+		enabledLayers:     make([]string, 0),
+		enabledExtensions: make([]string, 0),
+	}
+
+	// Add validation layers if requested
+	if enableValidation {
 		instance.enabledLayers = append(instance.enabledLayers, "VK_LAYER_KHRONOS_validation")
 		instance.enabledExtensions = append(instance.enabledExtensions, "VK_EXT_debug_utils")
 	}
 
-	// Add required extensions
-	instance.enabledExtensions = append(instance.enabledExtensions,
-		"VK_KHR_surface",
-		"VK_KHR_win32_surface", // Platform specific, should be conditional
-	)
-
-	if err := instance.createInstance(); err != nil {
-		return nil, fmt.Errorf("failed to create Vulkan instance: %v", err)
+	// Create the instance
+	if err := instance.createInstance(appName, engineName); err != nil {
+		return nil, err
 	}
 
+	// Enumerate physical devices
 	if err := instance.enumeratePhysicalDevices(); err != nil {
 		instance.Destroy()
-		return nil, fmt.Errorf("failed to enumerate physical devices: %v", err)
+		return nil, err
 	}
 
 	return instance, nil
 }
 
 // createInstance creates the Vulkan instance using real Vulkan API
-func (vi *VulkanInstance) createInstance() error {
-	// Create application info
-	appInfo := VkApplicationInfo{
-		SType:              VK_STRUCTURE_TYPE_APPLICATION_INFO,
-		PNext:              nil,
-		PApplicationName:   toCString("WebGPU Application"),
-		ApplicationVersion: 1,
-		PEngineName:        toCString("WebGPU Engine"),
-		EngineVersion:      1,
-		ApiVersion:         0x00401000, // Vulkan 1.1
+func (vi *VulkanInstance) createInstance(appName, engineName string) error {
+	vi.mu.Lock()
+	defer vi.mu.Unlock()
+
+	if vi.destroyed {
+		return fmt.Errorf("instance has been destroyed")
 	}
 
-	// Convert layer names to C strings
-	layerNames, layerCStrs := toCStringArray(vi.enabledLayers)
-	defer func() {
-		// Keep cstrs alive
-		_ = layerCStrs
-	}()
+	// Application info
+	appInfo := VkApplicationInfo{
+		SType:              VK_STRUCTURE_TYPE_APPLICATION_INFO,
+		PNext:              0,
+		PApplicationName:   cString(appName),
+		ApplicationVersion: VK_API_VERSION_1_0,
+		PEngineName:        cString(engineName),
+		EngineVersion:      VK_API_VERSION_1_0,
+		ApiVersion:         VK_API_VERSION_1_0,
+	}
+	// Convert layer names
+	var layerNames **byte
+	if len(vi.enabledLayers) > 0 {
+		layerNames, _ = cStringArray(vi.enabledLayers)
+	}
 
-	// Convert extension names to C strings
-	extNames, extCStrs := toCStringArray(vi.enabledExtensions)
-	defer func() {
-		// Keep cstrs alive
-		_ = extCStrs
-	}()
+	// Convert extension names
+	var extensionNames **byte
+	if len(vi.enabledExtensions) > 0 {
+		extensionNames, _ = cStringArray(vi.enabledExtensions)
+	}
 
-	// Create instance info
+	// Instance create info
 	createInfo := VkInstanceCreateInfo{
 		SType:                   VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-		PNext:                   nil,
+		PNext:                   0,
 		Flags:                   0,
 		PApplicationInfo:        &appInfo,
 		EnabledLayerCount:       uint32(len(vi.enabledLayers)),
 		PpEnabledLayerNames:     layerNames,
 		EnabledExtensionCount:   uint32(len(vi.enabledExtensions)),
-		PpEnabledExtensionNames: extNames,
+		PpEnabledExtensionNames: extensionNames,
 	}
 
-	var instance VkInstance
-	result := vkCreateInstance(&createInfo, nil, &instance)
+	// Create instance
+	result := vkCreateInstance(&createInfo, 0, &vi.handle)
 	if result != VK_SUCCESS {
-		return fmt.Errorf("vkCreateInstance failed with result %d", result)
+		return fmt.Errorf("failed to create Vulkan instance: %d", result)
 	}
 
-	vi.handle = uintptr(instance)
 	return nil
 }
 
 // enumeratePhysicalDevices enumerates available physical devices using real Vulkan API
 func (vi *VulkanInstance) enumeratePhysicalDevices() error {
-	instance := VkInstance(vi.handle)
+	vi.mu.Lock()
+	defer vi.mu.Unlock()
 
-	// Get device count
+	if vi.destroyed {
+		return fmt.Errorf("instance has been destroyed")
+	}
+
+	// First call to get count
 	var deviceCount uint32
-	result := vkEnumeratePhysicalDevices(instance, &deviceCount, nil)
+	result := vkEnumeratePhysicalDevices(vi.handle, &deviceCount, nil)
 	if result != VK_SUCCESS {
-		return fmt.Errorf("vkEnumeratePhysicalDevices failed with result %d", result)
+		return fmt.Errorf("failed to enumerate physical devices: %d", result)
 	}
 
 	if deviceCount == 0 {
-		return fmt.Errorf("no Vulkan physical devices found")
+		return fmt.Errorf("no Vulkan-compatible devices found")
 	}
 
-	// Get devices
+	// Second call to get devices
 	devices := make([]VkPhysicalDevice, deviceCount)
-	result = vkEnumeratePhysicalDevices(instance, &deviceCount, &devices[0])
+	result = vkEnumeratePhysicalDevices(vi.handle, &deviceCount, &devices[0])
 	if result != VK_SUCCESS {
-		return fmt.Errorf("vkEnumeratePhysicalDevices failed with result %d", result)
+		return fmt.Errorf("failed to get physical devices: %d", result)
 	}
 
-	// Convert to internal format
-	vi.physicalDevices = make([]VulkanPhysicalDevice, deviceCount)
+	// Convert to VulkanPhysicalDevice
+	vi.physicalDevices = make([]VulkanPhysicalDevice, len(devices))
 	for i, device := range devices {
 		vulkanDevice, err := vi.convertPhysicalDevice(device)
 		if err != nil {
@@ -196,106 +204,51 @@ func (vi *VulkanInstance) enumeratePhysicalDevices() error {
 
 // convertPhysicalDevice converts VkPhysicalDevice to VulkanPhysicalDevice
 func (vi *VulkanInstance) convertPhysicalDevice(device VkPhysicalDevice) (VulkanPhysicalDevice, error) {
-	var properties VkPhysicalDeviceProperties
-	vkGetPhysicalDeviceProperties(device, &properties)
+	var vulkanDevice VulkanPhysicalDevice
+	vulkanDevice.handle = device
 
-	var features VkPhysicalDeviceFeatures
-	vkGetPhysicalDeviceFeatures(device, &features)
+	// Get device properties
+	vkGetPhysicalDeviceProperties(device, &vulkanDevice.properties)
 
-	var memoryProperties VkPhysicalDeviceMemoryProperties
-	vkGetPhysicalDeviceMemoryProperties(device, &memoryProperties)
+	// Get device features
+	vkGetPhysicalDeviceFeatures(device, &vulkanDevice.features)
 
 	// Get queue family properties
 	var queueFamilyCount uint32
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nil)
 
-	queueFamilies := make([]VkQueueFamilyProperties, queueFamilyCount)
 	if queueFamilyCount > 0 {
+		queueFamilies := make([]VkQueueFamilyProperties, queueFamilyCount)
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, &queueFamilies[0])
+		vulkanDevice.queueFamilies = queueFamilies
 	}
 
-	// Convert properties
-	vulkanDevice := VulkanPhysicalDevice{
-		Handle: uintptr(device),
-		Properties: VulkanDeviceProperties{
-			DeviceName:     cStringToGo(properties.DeviceName[:]),
-			DeviceType:     properties.DeviceType,
-			VendorID:       properties.VendorID,
-			DeviceID:       properties.DeviceID,
-			DriverVersion:  properties.DriverVersion,
-			APIVersion:     properties.ApiVersion,
-			MaxTextureSize: properties.Limits.MaxImageDimension2D,
-			MaxBufferSize:  uint64(properties.Limits.MaxStorageBufferRange),
-		},
-		Features: VulkanDeviceFeatures{
-			GeometryShader:       features.GeometryShader != 0,
-			TessellationShader:   features.TessellationShader != 0,
-			MultiViewport:        features.MultiViewport != 0,
-			SamplerAnisotropy:    features.SamplerAnisotropy != 0,
-			TextureCompressionBC: features.TextureCompressionBC != 0,
-			DepthClamp:           features.DepthClamp != 0,
-		},
-		QueueFamilyProps: convertQueueFamilyProperties(queueFamilies),
-		MemoryProperties: convertMemoryProperties(memoryProperties),
-		SurfaceSupport:   true, // Assume surface support for now
-	}
+	// Get memory properties
+	vkGetPhysicalDeviceMemoryProperties(device, &vulkanDevice.memoryProperties)
 
 	return vulkanDevice, nil
 }
 
-// Helper functions for conversion
-func cStringToGo(data []byte) string {
-	// Find null terminator
-	end := 0
-	for i, b := range data {
-		if b == 0 {
-			end = i
-			break
-		}
-	}
-	return string(data[:end])
+// GetPhysicalDevices returns all physical devices
+func (vi *VulkanInstance) GetPhysicalDevices() []VulkanPhysicalDevice {
+	vi.mu.RLock()
+	defer vi.mu.RUnlock()
+
+	devices := make([]VulkanPhysicalDevice, len(vi.physicalDevices))
+	copy(devices, vi.physicalDevices)
+	return devices
 }
 
-func convertQueueFamilyProperties(props []VkQueueFamilyProperties) []VulkanQueueFamilyProperties {
-	result := make([]VulkanQueueFamilyProperties, len(props))
-	for i, prop := range props {
-		result[i] = VulkanQueueFamilyProperties{
-			QueueFlags:       prop.QueueFlags,
-			QueueCount:       prop.QueueCount,
-			TimestampBits:    prop.TimestampValidBits,
-			SupportsGraphics: (prop.QueueFlags & VK_QUEUE_GRAPHICS_BIT) != 0,
-			SupportsCompute:  (prop.QueueFlags & VK_QUEUE_COMPUTE_BIT) != 0,
-			SupportsTransfer: (prop.QueueFlags & VK_QUEUE_TRANSFER_BIT) != 0,
-			SupportsSparse:   (prop.QueueFlags & VK_QUEUE_SPARSE_BINDING_BIT) != 0,
-			SupportsPresent:  true, // Check surface support separately
-		}
-	}
-	return result
-}
+// GetPhysicalDevice returns a specific physical device by index
+func (vi *VulkanInstance) GetPhysicalDevice(index int) (*VulkanPhysicalDevice, error) {
+	vi.mu.RLock()
+	defer vi.mu.RUnlock()
 
-func convertMemoryProperties(props VkPhysicalDeviceMemoryProperties) VulkanPhysicalDeviceMemoryProperties {
-	memTypes := make([]VulkanMemoryType, props.MemoryTypeCount)
-	for i := uint32(0); i < props.MemoryTypeCount; i++ {
-		memTypes[i] = VulkanMemoryType{
-			PropertyFlags: props.MemoryTypes[i].PropertyFlags,
-			HeapIndex:     props.MemoryTypes[i].HeapIndex,
-		}
+	if index < 0 || index >= len(vi.physicalDevices) {
+		return nil, fmt.Errorf("invalid physical device index: %d", index)
 	}
 
-	memHeaps := make([]VulkanMemoryHeap, props.MemoryHeapCount)
-	for i := uint32(0); i < props.MemoryHeapCount; i++ {
-		memHeaps[i] = VulkanMemoryHeap{
-			Size:  props.MemoryHeaps[i].Size,
-			Flags: props.MemoryHeaps[i].Flags,
-		}
-	}
-
-	return VulkanPhysicalDeviceMemoryProperties{
-		MemoryTypeCount: props.MemoryTypeCount,
-		MemoryHeapCount: props.MemoryHeapCount,
-		MemoryTypes:     memTypes,
-		MemoryHeaps:     memHeaps,
-	}
+	return &vi.physicalDevices[index], nil
 }
 
 // Destroy destroys the Vulkan instance using real Vulkan API
@@ -307,14 +260,19 @@ func (vi *VulkanInstance) Destroy() error {
 		return nil
 	}
 
+	// Destroy debug messenger if created
+	if vi.debugMessenger != 0 {
+		// vkDestroyDebugUtilsMessengerEXT would be called here
+		vi.debugMessenger = 0
+	}
+
+	// Destroy instance
 	if vi.handle != 0 {
-		vkDestroyInstance(VkInstance(vi.handle), nil)
+		vkDestroyInstance(vi.handle, 0)
 		vi.handle = 0
 	}
 
-	vi.physicalDevices = nil
 	vi.destroyed = true
-
 	return nil
 }
 
@@ -326,8 +284,71 @@ func (vi *VulkanInstance) IsDestroyed() bool {
 }
 
 // GetHandle returns the Vulkan instance handle
-func (vi *VulkanInstance) GetHandle() uintptr {
+func (vi *VulkanInstance) GetHandle() VkInstance {
 	vi.mu.RLock()
 	defer vi.mu.RUnlock()
 	return vi.handle
+}
+
+// Helper functions for conversion
+func (vd *VulkanPhysicalDevice) GetDeviceType() string {
+	switch vd.properties.DeviceType {
+	case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+		return "Integrated GPU"
+	case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+		return "Discrete GPU"
+	case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+		return "Virtual GPU"
+	case VK_PHYSICAL_DEVICE_TYPE_CPU:
+		return "CPU"
+	default:
+		return "Other"
+	}
+}
+
+func (vd *VulkanPhysicalDevice) GetDeviceName() string {
+	// Convert C string to Go string
+	name := (*[256]byte)(unsafe.Pointer(&vd.properties.DeviceName[0]))
+	for i, b := range name {
+		if b == 0 {
+			return string(name[:i])
+		}
+	}
+	return string(name[:])
+}
+
+func (vd *VulkanPhysicalDevice) HasGraphicsQueue() bool {
+	for _, qf := range vd.queueFamilies {
+		if qf.QueueFlags&VK_QUEUE_GRAPHICS_BIT != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (vd *VulkanPhysicalDevice) HasComputeQueue() bool {
+	for _, qf := range vd.queueFamilies {
+		if qf.QueueFlags&VK_QUEUE_COMPUTE_BIT != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (vd *VulkanPhysicalDevice) GetGraphicsQueueFamilyIndex() (uint32, bool) {
+	for i, qf := range vd.queueFamilies {
+		if qf.QueueFlags&VK_QUEUE_GRAPHICS_BIT != 0 {
+			return uint32(i), true
+		}
+	}
+	return 0, false
+}
+
+func (vd *VulkanPhysicalDevice) GetComputeQueueFamilyIndex() (uint32, bool) {
+	for i, qf := range vd.queueFamilies {
+		if qf.QueueFlags&VK_QUEUE_COMPUTE_BIT != 0 {
+			return uint32(i), true
+		}
+	}
+	return 0, false
 }

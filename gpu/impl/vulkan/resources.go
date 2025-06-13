@@ -3,11 +3,9 @@ package vulkan
 import (
 	"fmt"
 	"sync"
-
-	. "github.com/opensraph/sraph/gpu/webgpu"
 )
 
-// VulkanBuffer represents a Vulkan buffer resource
+// VulkanBuffer represents a Vulkan buffer
 type VulkanBuffer struct {
 	mu         sync.RWMutex
 	handle     uintptr // VkBuffer handle
@@ -576,6 +574,7 @@ func ConvertWebGPUToVulkanTextureUsage(usage TextureUsage) uint32 {
 		vulkanUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT
 	}
 	if (usage & TextureUsageCopyDst) != 0 {
+		vulkanUsage
 		vulkanUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT
 	}
 	if (usage & TextureUsageTextureBinding) != 0 {
