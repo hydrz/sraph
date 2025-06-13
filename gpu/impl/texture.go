@@ -81,8 +81,8 @@ func (t *texture) Destroy() error {
 	return nil
 }
 
-// GetDepthOrArrayLayers gets the depth or array layers
-func (t *texture) GetDepthOrArrayLayers() (uint32, error) {
+// DepthOrArrayLayers implements Texture.DepthOrArrayLayers.
+func (t *texture) DepthOrArrayLayers() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -93,8 +93,8 @@ func (t *texture) GetDepthOrArrayLayers() (uint32, error) {
 	return t.size.DepthOrArrayLayers, nil
 }
 
-// GetDimension gets the texture dimension
-func (t *texture) GetDimension() (TextureDimension, error) {
+// Dimension implements Texture.Dimension.
+func (t *texture) Dimension() (TextureDimension, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -105,8 +105,8 @@ func (t *texture) GetDimension() (TextureDimension, error) {
 	return t.dimension, nil
 }
 
-// GetFormat gets the texture format
-func (t *texture) GetFormat() (TextureFormat, error) {
+// Format implements Texture.Format.
+func (t *texture) Format() (TextureFormat, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -117,8 +117,8 @@ func (t *texture) GetFormat() (TextureFormat, error) {
 	return t.format, nil
 }
 
-// GetHeight gets the texture height
-func (t *texture) GetHeight() (uint32, error) {
+// Height implements Texture.Height.
+func (t *texture) Height() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -129,8 +129,8 @@ func (t *texture) GetHeight() (uint32, error) {
 	return t.size.Height, nil
 }
 
-// GetMipLevelCount gets the mip level count
-func (t *texture) GetMipLevelCount() (uint32, error) {
+// MipLevelCount implements Texture.MipLevelCount.
+func (t *texture) MipLevelCount() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -141,8 +141,8 @@ func (t *texture) GetMipLevelCount() (uint32, error) {
 	return t.mipLevelCount, nil
 }
 
-// GetSampleCount gets the sample count
-func (t *texture) GetSampleCount() (uint32, error) {
+// SampleCount implements Texture.SampleCount.
+func (t *texture) SampleCount() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -153,8 +153,8 @@ func (t *texture) GetSampleCount() (uint32, error) {
 	return t.sampleCount, nil
 }
 
-// GetUsage gets the texture usage
-func (t *texture) GetUsage() (TextureUsage, error) {
+// Usage implements Texture.Usage.
+func (t *texture) Usage() (TextureUsage, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -165,8 +165,8 @@ func (t *texture) GetUsage() (TextureUsage, error) {
 	return t.usage, nil
 }
 
-// GetWidth gets the texture width
-func (t *texture) GetWidth() (uint32, error) {
+// Width implements Texture.Width.
+func (t *texture) Width() (uint32, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 

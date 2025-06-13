@@ -75,8 +75,8 @@ func (qs *querySet) Destroy() error {
 	return nil
 }
 
-// GetCount gets the query count
-func (qs *querySet) GetCount() (uint32, error) {
+// Count gets the query count
+func (qs *querySet) Count() (uint32, error) {
 	qs.mu.RLock()
 	defer qs.mu.RUnlock()
 
@@ -87,8 +87,8 @@ func (qs *querySet) GetCount() (uint32, error) {
 	return qs.count, nil
 }
 
-// GetType gets the query type
-func (qs *querySet) GetType() (QueryType, error) {
+// Type gets the query type
+func (qs *querySet) Type() (QueryType, error) {
 	qs.mu.RLock()
 	defer qs.mu.RUnlock()
 

@@ -11,7 +11,7 @@ import (
     "unsafe"
 )
 
-// Constants
+// ===== Constants =====
 const (
 {{- range .Constants -}}
 	{{- if ne .Value "nan" }}
@@ -30,12 +30,16 @@ var (
 {{ end -}}
 )
 
+// ===== Typedefs =====
 {{ range .Typedefs}}
 {{- SComment .Doc 0 -}}
 type {{GoTypeName .Base}} {{GoType .Type}}
 {{ end }}
 
+// ===== Enums =====
 {{ range $enum := .Enums}}
+{{- if and (HasSuffix .Base.Name "_status") (ne .Base.Name "surface_get_current_texture_status") }} {{continue -}} {{end}}
+{{- if eq .Base.Name "callback_mode"}} {{continue -}} {{end}}
 {{- SComment .Doc 0 -}}
 type {{GoTypeName .Base}} uint32
 
@@ -49,6 +53,7 @@ const (
 )
 {{ end }}
 
+// ===== Bitflags =====
 {{ range $bitflag := .Bitflags}}
 {{- SComment .Doc 0 -}}
 type {{GoTypeName .Base}} uint64
@@ -61,36 +66,15 @@ const (
 )
 {{ end }}
 
-{{ range .Callbacks}}
-{{- SComment .Doc 0 -}}
-type {{GoTypeName .Base}}Callback func({{- range $i, $arg := .Args -}}{{- if $i}}, {{end -}}
-{{GoParameterName $arg.Name}} {{if (.Type | IsArray)}}[]{{GoType $arg.Type}}{{else}}{{GoType $arg.Type}}{{end }}
-{{- end }})
-
-{{ if eq .Style "callback_mode" }}
-// {{GoTypeName .Base}}CallbackInfo contains callback configuration
-type {{GoTypeName .Base}}CallbackInfo struct {
-    Mode CallbackMode
-    Callback {{GoTypeName .Base}}Callback
-    Userdata1 unsafe.Pointer
-    Userdata2 unsafe.Pointer
-}
-{{ else }}
-// {{GoTypeName .Base}}CallbackInfo contains callback configuration
-type {{GoTypeName .Base}}CallbackInfo struct {
-    Callback {{GoTypeName .Base}}Callback
-    Userdata1 unsafe.Pointer
-    Userdata2 unsafe.Pointer
-}
-{{ end }}
-{{ end }}
-
+// ===== Structs =====
 {{ range $struct := .Structs}}
 {{- SComment .Doc 0 -}}
 type {{GoTypeName .Base}} struct {
 {{- range $memberIndex, $_ := .Members}}
 {{- if (.Type | IsArray)}}
     {{GoStructMemberArray $struct $memberIndex -}}
+{{ else if (.Type | IsCallback)}}
+	{{continue -}}
 {{ else }}
     {{GoStructMember $struct $memberIndex -}}
 {{ end  -}}
@@ -102,20 +86,32 @@ type {{GoTypeName .Base}} struct {
 // GPU is the main interface for WebGPU operations
 type GPU interface {
 {{ range .Functions}}
-    {{GoFunctionName .Base}}({{GoFunctionArgs . nil}}) {{GoFunctionReturns .}}
+    {{GoFunctionName .Base}}({{GoFunctionArgs . }}) {{GoFunctionReturns .}}
 {{ end }}
 }
 
-{{ range $object := .Objects}}
-{{ if not .IsStruct}}
+// ===== Objects =====
 
+// Instance interface
+type Instance interface {
+	CreateSurface(descriptor SurfaceDescriptor) (Surface, error)
+	WGSLLanguageFeatures() (*SupportedWGSLLanguageFeatures, error)
+	HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool, error)
+	RequestAdapter(options RequestAdapterOptions) (Adapter, error)
+}
+
+{{ range $object := .Objects}}
+{{- if eq .Base.Name "instance"}} {{continue -}} {{end}}
+
+{{ if not .IsStruct}}
 {{ if .Doc }}
 {{- SComment .Doc 0 -}}
 {{ end -}}
 // {{GoTypeName $object.Base}} interface
 type {{GoTypeName $object.Base}} interface {
 {{- range $object.Methods }}
-    {{GoFunctionName .Base}}({{GoFunctionArgs . nil}}) {{GoFunctionReturns . -}}
+	{{- if HasSuffix .Base.Name "_async"}} {{continue -}} {{end}}
+    {{GoFunctionName .Base}}({{GoFunctionArgs . }}) {{GoFunctionReturns . -}}
 {{ end -}}
 }
 {{ end }}

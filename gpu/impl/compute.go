@@ -193,8 +193,8 @@ type ComputePipelineImpl struct {
 	destroyed bool
 }
 
-// GetBindGroupLayout gets a bind group layout at the specified index
-func (cp *ComputePipelineImpl) GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error) {
+// BindGroupLayout gets a bind group layout at the specified index
+func (cp *ComputePipelineImpl) BindGroupLayout(groupIndex uint32) (BindGroupLayout, error) {
 	cp.mu.RLock()
 	defer cp.mu.RUnlock()
 

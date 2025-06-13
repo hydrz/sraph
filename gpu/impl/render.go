@@ -451,8 +451,8 @@ func NewRenderPipeline(descriptor RenderPipelineDescriptor) RenderPipeline {
 	}
 }
 
-// GetBindGroupLayout gets a bind group layout at the specified index
-func (rp *RenderPipelineImpl) GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error) {
+// BindGroupLayout gets a bind group layout at the specified index
+func (rp *RenderPipelineImpl) BindGroupLayout(groupIndex uint32) (BindGroupLayout, error) {
 	rp.mu.RLock()
 	defer rp.mu.RUnlock()
 

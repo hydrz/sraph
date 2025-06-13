@@ -3,7 +3,6 @@ package impl
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	. "github.com/opensraph/sraph/gpu/webgpu"
 )
@@ -46,54 +45,45 @@ func NewAdapter(backendType BackendType, adapterType AdapterType) Adapter {
 	return adapter
 }
 
-// GetFeatures retrieves supported features
-func (a *adapter) GetFeatures(features SupportedFeatures) error {
+// Features implements Adapter.Features.
+func (a *adapter) Features() (*SupportedFeatures, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
 	if a.destroyed {
-		return fmt.Errorf("adapter has been destroyed")
+		return nil, fmt.Errorf("adapter has been destroyed")
 	}
 
-	features.Features = append(features.Features, a.features...)
-	return nil
+	return &SupportedFeatures{Features: append([]FeatureName{}, a.features...)}, nil
 }
 
-// GetInfo retrieves adapter information
-func (a *adapter) GetInfo(info AdapterInfo) (Status, error) {
+// Info implements Adapter.Info.
+func (a *adapter) Info() (*AdapterInfo, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
 	if a.destroyed {
-		return StatusError, fmt.Errorf("adapter has been destroyed")
+		return nil, fmt.Errorf("adapter has been destroyed")
 	}
 
-	info.Vendor = a.info.Vendor
-	info.Architecture = a.info.Architecture
-	info.Device = a.info.Device
-	info.Description = a.info.Description
-	info.BackendType = a.info.BackendType
-	info.AdapterType = a.info.AdapterType
-	info.VendorID = a.info.VendorID
-	info.DeviceID = a.info.DeviceID
-
-	return StatusSuccess, nil
+	info := a.info
+	return &info, nil
 }
 
-// GetLimits retrieves adapter limits
-func (a *adapter) GetLimits(limits Limits) (Status, error) {
+// Limits implements Adapter.Limits.
+func (a *adapter) Limits() (*Limits, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
 	if a.destroyed {
-		return StatusError, fmt.Errorf("adapter has been destroyed")
+		return nil, fmt.Errorf("adapter has been destroyed")
 	}
 
-	limits = a.limits
-	return StatusSuccess, nil
+	limits := a.limits
+	return &limits, nil
 }
 
-// HasFeature checks if a feature is supported
+// HasFeature implements Adapter.HasFeature.
 func (a *adapter) HasFeature(feature FeatureName) (bool, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
@@ -110,33 +100,14 @@ func (a *adapter) HasFeature(feature FeatureName) (bool, error) {
 	return false, nil
 }
 
-// RequestDevice requests a WebGPU device with improved callback handling
-func (a *adapter) RequestDevice(descriptor DeviceDescriptor, callback RequestDeviceCallbackInfo) Future {
+// RequestDevice implements Adapter.RequestDevice.
+func (a *adapter) RequestDevice(descriptor DeviceDescriptor) (Device, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
 	if a.destroyed {
-		// Use global callback registry for error
-		GlobalCallbackRegistry().RequestDevice(future.Id, callback, RequestDeviceStatusError, nil, "adapter has been destroyed")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
+		return nil, fmt.Errorf("adapter has been destroyed")
 	}
 
-	// Start async device creation
-	go func() {
-		// Simulate device creation process
-		time.Sleep(time.Millisecond * 10) // Simulate work
-
-		device := NewDevice(descriptor)
-
-		// Register success callback
-		GlobalCallbackRegistry().RequestDevice(future.Id, callback, RequestDeviceStatusSuccess, device, "")
-		GlobalCallbackManager().Complete(future.Id)
-	}()
-
-	return future
+	return NewDevice(descriptor), nil
 }

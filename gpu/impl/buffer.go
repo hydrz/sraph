@@ -40,7 +40,8 @@ func NewBuffer(descriptor BufferDescriptor) Buffer {
 	return buffer
 }
 
-// Destroy destroys the buffer
+// Destroy implements Buffer.Destroy.
+// Destroys the buffer, releasing any resources associated with it.
 func (b *buffer) Destroy() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -54,8 +55,9 @@ func (b *buffer) Destroy() error {
 	return nil
 }
 
-// GetConstMappedRange gets a constant mapped range
-func (b *buffer) GetConstMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error) {
+// ConstMappedRange implements Buffer.ConstMappedRange.
+// Gets a constant mapped range from the buffer.
+func (b *buffer) ConstMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -74,8 +76,9 @@ func (b *buffer) GetConstMappedRange(offset uintptr, size uintptr) (unsafe.Point
 	return unsafe.Pointer(&b.data[offset]), nil
 }
 
-// GetMappedRange gets a mapped range
-func (b *buffer) GetMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error) {
+// MappedRange implements Buffer.MappedRange.
+// Gets a mapped range from the buffer.
+func (b *buffer) MappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -94,8 +97,9 @@ func (b *buffer) GetMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, e
 	return unsafe.Pointer(&b.data[offset]), nil
 }
 
-// GetMapState gets the buffer map state
-func (b *buffer) GetMapState() (BufferMapState, error) {
+// MapState implements Buffer.MapState.
+// Gets the buffer map state.
+func (b *buffer) MapState() (BufferMapState, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -106,8 +110,9 @@ func (b *buffer) GetMapState() (BufferMapState, error) {
 	return b.mapState, nil
 }
 
-// GetSize gets the buffer size
-func (b *buffer) GetSize() (uint64, error) {
+// Size implements Buffer.Size.
+// Gets the buffer size.
+func (b *buffer) Size() (uint64, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -118,8 +123,9 @@ func (b *buffer) GetSize() (uint64, error) {
 	return b.size, nil
 }
 
-// GetUsage gets the buffer usage
-func (b *buffer) GetUsage() (BufferUsage, error) {
+// Usage implements Buffer.Usage.
+// Gets the buffer usage.
+func (b *buffer) Usage() (BufferUsage, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -130,85 +136,33 @@ func (b *buffer) GetUsage() (BufferUsage, error) {
 	return b.usage, nil
 }
 
-// MapAsync maps the buffer asynchronously
-func (b *buffer) MapAsync(mode MapMode, offset uintptr, size uintptr, callback BufferMapCallbackInfo) Future {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
-	if b.destroyed {
-		// Register error callback
-		GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "buffer has been destroyed")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
-	}
-
-	if b.mapState != BufferMapStateUnmapped {
-		// Register error callback
-		GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "buffer is already mapped")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
-	}
-
-	// Validate parameters
-	if offset+size > uintptr(b.size) {
-		GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "offset and size exceed buffer bounds")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
-	}
-
-	// Simulate async mapping
-	go func() {
-		b.mu.Lock()
-		defer b.mu.Unlock()
-
-		if !b.destroyed && b.mapState == BufferMapStateUnmapped {
-			b.mapState = BufferMapStateMapped
-			if b.data == nil {
-				b.data = make([]byte, b.size)
-			}
-
-			// Register success callback
-			GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusSuccess, "")
-		} else {
-			// Register error callback
-			GlobalCallbackRegistry().BufferMap(future.Id, callback, MapAsyncStatusError, "mapping failed")
-		}
-		GlobalCallbackManager().Complete(future.Id)
-	}()
-
-	return future
-}
-
-// ReadMappedRange reads from a mapped range
-func (b *buffer) ReadMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error) {
+// ReadMappedRange implements Buffer.ReadMappedRange.
+// Reads from a mapped range in the buffer.
+func (b *buffer) ReadMappedRange(offset uintptr, data *unsafe.Pointer, size uintptr) error {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
 	if b.destroyed {
-		return StatusError, fmt.Errorf("buffer has been destroyed")
+		return fmt.Errorf("buffer has been destroyed")
 	}
 
 	if b.mapState != BufferMapStateMapped {
-		return StatusError, fmt.Errorf("buffer is not mapped")
+		return fmt.Errorf("buffer is not mapped")
 	}
 
 	if offset+size > uintptr(len(b.data)) {
-		return StatusError, fmt.Errorf("offset and size exceed buffer bounds")
+		return fmt.Errorf("offset and size exceed buffer bounds")
 	}
 
-	// Copy data from buffer to provided pointer
 	src := b.data[offset : offset+size]
-	dst := (*[1 << 30]byte)(data)[:size:size]
+	dst := (*[1 << 30]byte)(*data)[:size:size]
 	copy(dst, src)
 
-	return StatusSuccess, nil
+	return nil
 }
 
-// SetLabel sets the buffer label
+// SetLabel implements Buffer.SetLabel.
+// Sets the buffer label.
 func (b *buffer) SetLabel(label string) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -221,7 +175,8 @@ func (b *buffer) SetLabel(label string) error {
 	return nil
 }
 
-// Unmap unmaps the buffer
+// Unmap implements Buffer.Unmap.
+// Unmaps the buffer, making it no longer accessible.
 func (b *buffer) Unmap() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -237,27 +192,27 @@ func (b *buffer) Unmap() error {
 	return nil
 }
 
-// WriteMappedRange writes to a mapped range
-func (b *buffer) WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error) {
+// WriteMappedRange implements Buffer.WriteMappedRange.
+// Writes to a mapped range in the buffer.
+func (b *buffer) WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	if b.destroyed {
-		return StatusError, fmt.Errorf("buffer has been destroyed")
+		return fmt.Errorf("buffer has been destroyed")
 	}
 
 	if b.mapState != BufferMapStateMapped {
-		return StatusError, fmt.Errorf("buffer is not mapped")
+		return fmt.Errorf("buffer is not mapped")
 	}
 
 	if offset+size > uintptr(len(b.data)) {
-		return StatusError, fmt.Errorf("offset and size exceed buffer bounds")
+		return fmt.Errorf("offset and size exceed buffer bounds")
 	}
 
-	// Copy data from provided pointer to buffer
 	src := (*[1 << 30]byte)(data)[:size:size]
 	dst := b.data[offset : offset+size]
 	copy(dst, src)
 
-	return StatusSuccess, nil
+	return nil
 }

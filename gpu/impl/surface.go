@@ -84,25 +84,50 @@ func (s *surface) Configure(config SurfaceConfiguration) error {
 	return nil
 }
 
-// GetCapabilities gets surface capabilities
-func (s *surface) GetCapabilities(adapter Adapter, capabilities SurfaceCapabilities) (Status, error) {
+// Capabilities implements Surface.Capabilities.
+func (s *surface) Capabilities(adapter Adapter) (*SurfaceCapabilities, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	if s.destroyed {
-		return StatusError, fmt.Errorf("surface has been destroyed")
+		return nil, fmt.Errorf("surface has been destroyed")
 	}
 
-	capabilities.Usages = s.capabilities.Usages
-	capabilities.Formats = append(capabilities.Formats, s.capabilities.Formats...)
-	capabilities.PresentModes = append(capabilities.PresentModes, s.capabilities.PresentModes...)
-	capabilities.AlphaModes = append(capabilities.AlphaModes, s.capabilities.AlphaModes...)
-
-	return StatusSuccess, nil
+	caps := s.capabilities
+	return &caps, nil
 }
 
-// GetCurrentTexture gets the current surface texture
-func (s *surface) GetCurrentTexture(surfaceTexture SurfaceTexture) error {
+// CurrentTexture implements Surface.CurrentTexture.
+func (s *surface) CurrentTexture() (*SurfaceTexture, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.destroyed {
+		return nil, fmt.Errorf("surface has been destroyed")
+	}
+
+	if !s.configured {
+		return nil, fmt.Errorf("surface is not configured")
+	}
+
+	texture := &texture{
+		label:         "Surface Texture",
+		usage:         s.config.Usage,
+		dimension:     TextureDimension2D,
+		size:          Extent3D{Width: s.config.Width, Height: s.config.Height, DepthOrArrayLayers: 1},
+		format:        s.config.Format,
+		mipLevelCount: 1,
+		sampleCount:   1,
+	}
+
+	return &SurfaceTexture{
+		Texture: texture,
+		Status:  SurfaceGetCurrentTextureStatusSuccessOptimal,
+	}, nil
+}
+
+// Present implements Surface.Present.
+func (s *surface) Present() error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -114,38 +139,8 @@ func (s *surface) GetCurrentTexture(surfaceTexture SurfaceTexture) error {
 		return fmt.Errorf("surface is not configured")
 	}
 
-	// Create a new texture for the current frame
-	texture := &texture{
-		label:         "Surface Texture",
-		usage:         s.config.Usage,
-		dimension:     TextureDimension2D,
-		size:          Extent3D{Width: s.config.Width, Height: s.config.Height, DepthOrArrayLayers: 1},
-		format:        s.config.Format,
-		mipLevelCount: 1,
-		sampleCount:   1,
-	}
-
-	surfaceTexture.Texture = texture
-	surfaceTexture.Status = SurfaceGetCurrentTextureStatusSuccessOptimal
-
-	return nil
-}
-
-// Present presents the current frame
-func (s *surface) Present() (Status, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if s.destroyed {
-		return StatusError, fmt.Errorf("surface has been destroyed")
-	}
-
-	if !s.configured {
-		return StatusError, fmt.Errorf("surface is not configured")
-	}
-
 	// In a real implementation, this would present the frame to the display
-	return StatusSuccess, nil
+	return nil
 }
 
 // SetLabel sets the surface label

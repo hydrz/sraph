@@ -29,13 +29,154 @@ import (
 	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 )
 
-//go:embed webgpu.tmpl
+//go:embed webgpu.go.tpl
 var tmpl string
 
 const (
 	defaultSchemaURL = "https://raw.githubusercontent.com/webgpu-native/webgpu-headers/refs/heads/main/schema.json"
 	defaultYamlURL   = "https://raw.githubusercontent.com/webgpu-native/webgpu-headers/refs/heads/main/webgpu.yml"
 )
+
+// Global variables
+var arrayTypeRegexp = regexp.MustCompile(`array<([a-zA-Z0-9._]+)>`)
+
+var (
+	schemaPath string
+	goPaths    StringListFlag
+	yamlPaths  StringListFlag
+	extPrefix  bool
+)
+
+// StringListFlag implementation
+type StringListFlag []string
+
+var StringListFlagI flag.Value = &StringListFlag{}
+
+func (f *StringListFlag) String() string     { return fmt.Sprintf("%#v", f) }
+func (f *StringListFlag) Set(v string) error { *f = append(*f, v); return nil }
+
+// Main function
+func main() {
+	flag.StringVar(&schemaPath, "schema", "", "path or URL of the json schema")
+	flag.Var(&yamlPaths, "yaml", "path or URL of the yaml spec")
+	flag.Var(&goPaths, "go", "output path of the go")
+	flag.BoolVar(&extPrefix, "extprefix", true, "append prefix to extension identifiers")
+	flag.Parse()
+
+	// Use default URLs if not provided
+	if schemaPath == "" {
+		schemaPath = defaultSchemaURL
+	}
+	if len(yamlPaths) == 0 {
+		yamlPaths = append(yamlPaths, defaultYamlURL)
+	}
+	if len(goPaths) == 0 || len(goPaths) != len(yamlPaths) {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	// Order matters for validation steps, so enforce it.
+	if len(yamlPaths) > 1 && filepath.Base(yamlPaths[0]) != "webgpu.yml" {
+		panic(`"webgpu.yml" must be the first sequence in the order`)
+	}
+
+	// Download schema if it's a URL
+	var schemaData []byte
+	if strings.HasPrefix(schemaPath, "http://") || strings.HasPrefix(schemaPath, "https://") {
+		var err error
+		schemaData, err = FetchFile(schemaPath)
+		if err != nil {
+			panic(err)
+		}
+		// Save to a temporary file for jsonschema.MustCompile
+		tmpFile, err := os.CreateTemp("", "schema-*.json")
+		if err != nil {
+			panic(err)
+		}
+		defer os.Remove(tmpFile.Name())
+		if _, err := tmpFile.Write(schemaData); err != nil {
+			panic(err)
+		}
+		if err := tmpFile.Close(); err != nil {
+			panic(err)
+		}
+		schemaPath = tmpFile.Name()
+	}
+
+	// Download yamls if any are URLs
+	yamlDatas := make([][]byte, len(yamlPaths))
+	for i, yamlPath := range yamlPaths {
+		if strings.HasPrefix(yamlPath, "http://") || strings.HasPrefix(yamlPath, "https://") {
+			data, err := FetchFile(yamlPath)
+			if err != nil {
+				panic(err)
+			}
+			yamlDatas[i] = data
+		} else {
+			data, err := os.ReadFile(yamlPath)
+			if err != nil {
+				panic(err)
+			}
+			yamlDatas[i] = data
+		}
+	}
+
+	// Validate the yaml files (jsonschema, duplications)
+	// Save yamls to temp files for validation and further processing
+	tmpYamlPaths := make([]string, len(yamlDatas))
+	for i, data := range yamlDatas {
+		tmpFile, err := os.CreateTemp("", "yaml-*.yml")
+		if err != nil {
+			panic(err)
+		}
+		defer os.Remove(tmpFile.Name())
+		if _, err := tmpFile.Write(data); err != nil {
+			panic(err)
+		}
+		if err := tmpFile.Close(); err != nil {
+			panic(err)
+		}
+		tmpYamlPaths[i] = tmpFile.Name()
+	}
+	if err := ValidateYamls(schemaPath, tmpYamlPaths); err != nil {
+		panic(err)
+	}
+
+	// Generate the go files
+	for i := range yamlDatas {
+		goPath := goPaths[i]
+		goFileName := filepath.Base(goPath)
+		goFileNameSplit := strings.Split(goFileName, ".")
+		if len(goFileNameSplit) != 2 {
+			panic("got invalid go file name: " + goFileName)
+		}
+
+		dst, err := os.Create(goPath)
+		if err != nil {
+			panic(err)
+		}
+
+		var yml Yml
+		if err := yaml.Unmarshal(yamlDatas[i], &yml); err != nil {
+			panic(err)
+		}
+
+		SortAndTransform(&yml)
+
+		prefix := ""
+		if yml.Name != "webgpu" && extPrefix {
+			prefix = yml.Name
+		}
+		g := &Generator{
+			Yml:       &yml,
+			GoName:    goFileNameSplit[0],
+			ExtPrefix: prefix,
+		}
+		if err := g.Gen(dst); err != nil {
+			panic(err)
+		}
+	}
+}
 
 // Yml structure and related types
 type Yml struct {
@@ -136,24 +277,6 @@ type Object struct {
 	IsStruct bool `yaml:"-"`
 }
 
-// Global variables
-var arrayTypeRegexp = regexp.MustCompile(`array<([a-zA-Z0-9._]+)>`)
-
-var (
-	schemaPath string
-	goPaths    StringListFlag
-	yamlPaths  StringListFlag
-	extPrefix  bool
-)
-
-// StringListFlag implementation
-type StringListFlag []string
-
-var StringListFlagI flag.Value = &StringListFlag{}
-
-func (f *StringListFlag) String() string     { return fmt.Sprintf("%#v", f) }
-func (f *StringListFlag) Set(v string) error { *f = append(*f, v); return nil }
-
 // Comment types
 type CommentType uint8
 
@@ -167,6 +290,426 @@ type Generator struct {
 	ExtPrefix string
 	GoName    string
 	*Yml
+}
+
+// Generator methods
+func (g *Generator) Gen(dst io.Writer) error {
+	t := template.
+		New("").
+		Funcs(template.FuncMap{
+			"SComment":   func(v string, indent int) string { return Comment(v, CommentTypeSingleLine, indent, true) },
+			"SCommentN":  func(v string, indent int) string { return Comment(v, CommentTypeSingleLine, indent, false) },
+			"IsArray":    func(typ string) bool { return arrayTypeRegexp.Match([]byte(typ)) },
+			"IsCallback": func(typ string) bool { return strings.HasPrefix(typ, "callback.") },
+			"IsLast":     func(i int, s any) bool { return i == reflect.ValueOf(s).Len()-1 },
+			"HasSuffix":  strings.HasSuffix,
+			// Go template functions - only the ones actually used
+			"GoConstantName":      g.GoConstantName,
+			"GoTypeName":          g.GoTypeName,
+			"GoEnumName":          g.GoEnumName,
+			"GoValue":             g.GoValue,
+			"GoType":              g.GoType,
+			"GoFunctionName":      g.GoFunctionName,
+			"GoParameterName":     g.GoParameterName,
+			"GoFunctionArgs":      g.GoFunctionArgs,
+			"GoFunctionReturns":   g.GoFunctionReturns,
+			"GoStructMember":      g.GoStructMember,
+			"GoStructMemberArray": g.GoStructMemberArray,
+			"EnumValue32":         g.EnumValue32,
+			"BitflagValue": func(b Bitflag, entryIndex int) (string, error) {
+				return g.BitflagValue(b, entryIndex, false)
+			},
+		})
+	t, err := t.Parse(tmpl)
+	if err != nil {
+		return fmt.Errorf("GenCHeader: failed to parse template: %w", err)
+	}
+
+	// Render template to buffer
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, g); err != nil {
+		return fmt.Errorf("GenCHeader: failed to execute template: %w", err)
+	}
+
+	// Format Go code
+	formatted, err := format.Source(buf.Bytes())
+	if err != nil {
+		// If formatting fails, write unformatted code for easier debugging
+		_, _ = dst.Write(buf.Bytes())
+		return fmt.Errorf("GenCHeader: gofmt failed: %w", err)
+	}
+
+	_, err = dst.Write(formatted)
+	if err != nil {
+		return fmt.Errorf("GenCHeader: failed to write formatted code: %w", err)
+	}
+	return nil
+}
+
+func (g *Generator) FindBaseType(typ string) Base {
+	// Handle type names prefixed with the type category.
+	category, name, found := strings.Cut(typ, ".")
+	if !found {
+		panic("Cannot find base type for invalid type identifier: " + typ)
+	}
+
+	switch category {
+	case "constant":
+		idx := slices.IndexFunc(g.Constants, func(c Constant) bool { return c.Name == name })
+		if idx == -1 {
+			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
+		}
+		return g.Constants[idx].Base
+	case "typedef":
+		idx := slices.IndexFunc(g.Typedefs, func(t Typedef) bool { return t.Name == name })
+		if idx == -1 {
+			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
+		}
+		return g.Typedefs[idx].Base
+	case "enum":
+		idx := slices.IndexFunc(g.Enums, func(e Enum) bool { return e.Name == name })
+		if idx == -1 {
+			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
+		}
+		return g.Enums[idx].Base
+	case "bitflag":
+		idx := slices.IndexFunc(g.Bitflags, func(b Bitflag) bool { return b.Name == name })
+		if idx == -1 {
+			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
+		}
+		return g.Bitflags[idx].Base
+	case "struct":
+		idx := slices.IndexFunc(g.Structs, func(s Struct) bool { return s.Name == name })
+		if idx == -1 {
+			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
+		}
+		return g.Structs[idx].Base
+	case "callback":
+		idx := slices.IndexFunc(g.Callbacks, func(c Callback) bool { return c.Name == name })
+		if idx == -1 {
+			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
+		}
+		return g.Callbacks[idx].Base
+	case "object":
+		idx := slices.IndexFunc(g.Objects, func(o Object) bool { return o.Name == name })
+		if idx == -1 {
+			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
+		}
+		return g.Objects[idx].Base
+	default:
+		panic("Unable to find unknown category type: " + category + " for identifier: " + typ)
+	}
+}
+
+func (g *Generator) FindCallback(typ string) Callback {
+	// Handle type names prefixed with the type category.
+	category, name, found := strings.Cut(typ, ".")
+	if !found {
+		panic("Cannot find base type for invalid type identifier: " + typ)
+	}
+
+	if category != "callback" {
+		panic("FindCallback: expected type to be a callback, got: " + typ)
+	}
+	idx := slices.IndexFunc(g.Callbacks, func(c Callback) bool { return c.Name == name })
+	if idx == -1 {
+		panic("FindCallback: callback not found: " + typ)
+	}
+	return g.Callbacks[idx]
+}
+
+func (g *Generator) PrefixForNamespace(namespace string) string {
+	switch namespace {
+	case "":
+		return g.ExtPrefix
+	case "webgpu":
+		return ""
+	default:
+		return namespace
+	}
+}
+
+func (g *Generator) EnumValue32(e Enum, entryIndex int) (uint32, error) {
+	entry := e.Entries[entryIndex]
+	var value16 uint16
+	if entry.Value == "" {
+		value16 = uint16(entryIndex)
+	} else {
+		var num string
+		var base int
+		if strings.HasPrefix(entry.Value, "0x") {
+			base = 16
+			num = strings.TrimPrefix(entry.Value, "0x")
+		} else {
+			base = 10
+			num = entry.Value
+		}
+		v, err := strconv.ParseUint(num, base, 16)
+		if err != nil {
+			return 0, err
+		}
+		value16 = uint16(v)
+	}
+	return uint32(g.EnumPrefix)<<16 | uint32(value16), nil
+}
+
+func (g *Generator) BitflagValue(b Bitflag, entryIndex int, isDocString bool) (string, error) {
+	entry := b.Entries[entryIndex]
+
+	var value uint64
+	if len(entry.ValueCombination) > 0 {
+		if entry.Value != "" {
+			return "", fmt.Errorf("BitflagValue: found conflicting 'value' and 'value_combination' in '%s'", b.Name)
+		}
+		for _, v := range entry.ValueCombination {
+			// find the value by searching in b, bitwise-OR it into the result
+			for searchIndex, search := range b.Entries {
+				if search.Name == v {
+					searchValue, err := BitflagEntryValue(search, searchIndex)
+					if err != nil {
+						return "", err
+					}
+					value |= searchValue
+					break
+				}
+			}
+		}
+	} else {
+		var err error
+		value, err = BitflagEntryValue(entry, entryIndex)
+		if err != nil {
+			return "", err
+		}
+	}
+	return fmt.Sprintf("0x%.16X", value), nil
+}
+
+// Go-specific generator methods - only the ones used in templates
+func (g *Generator) GoConstantName(b Base) string {
+	return PascalCase(b.Name)
+}
+
+func (g *Generator) GoTypeName(b Base) string {
+	return PascalCase(b.Name)
+}
+
+func (g *Generator) GoEnumName(typ Base, entry Base) string {
+	return PascalCase(typ.Name) + PascalCase(entry.Name)
+}
+
+func (g *Generator) GoValue(s string) string {
+	switch s {
+	case "usize_max":
+		return "^uintptr(0)"
+	case "uint32_max":
+		return "^uint32(0)"
+	case "uint64_max":
+		return "^uint64(0)"
+	case "nan":
+		// Use a variable instead of function call in constant declaration
+		return "math.NaN()"
+	default:
+		return s
+	}
+}
+
+func (g *Generator) GoType(typ string) string {
+	switch typ {
+	case "bool":
+		return "bool"
+	case "uint16":
+		return "uint16"
+	case "uint32":
+		return "uint32"
+	case "uint64":
+		return "uint64"
+	case "usize":
+		return "uintptr"
+	case "int16":
+		return "int16"
+	case "int32":
+		return "int32"
+	case "float32", "nullable_float32":
+		return "float32"
+	case "float64", "float64_supertype":
+		return "float64"
+	case "nullable_string", "string_with_default_empty", "out_string":
+		return "string"
+	case "c_void":
+		return "unsafe.Pointer"
+	default:
+		// Handle type names prefixed with the type category
+		return g.GoTypeName(g.FindBaseType(typ))
+	}
+}
+
+func (g *Generator) GoFunctionName(b Base) string {
+	if strings.HasPrefix(b.Name, "get_") {
+		// For getter functions, we use the name without the "get_" prefix
+		return PascalCase(strings.TrimPrefix(b.Name, "get_"))
+	}
+
+	return PascalCase(b.Name)
+}
+
+func (g *Generator) GoParameterName(name string) string {
+	// Convert to camelCase first
+	camelName := CamelCase(name)
+
+	// Handle Go keywords by appending underscore or using alternative names
+	switch camelName {
+	case "type":
+		return "errorType"
+	case "func":
+		return "function"
+	case "var":
+		return "variable"
+	case "const":
+		return "constant"
+	case "struct":
+		return "structure"
+	case "interface":
+		return "iface"
+	case "package":
+		return "pkg"
+	case "import":
+		return "imp"
+	case "return":
+		return "ret"
+	case "if":
+		return "condition"
+	case "else":
+		return "alternative"
+	case "for":
+		return "loop"
+	case "range":
+		return "rng"
+	case "switch":
+		return "switchValue"
+	case "case":
+		return "caseValue"
+	case "default":
+		return "defaultValue"
+	case "go":
+		return "routine"
+	case "defer":
+		return "deferred"
+	case "select":
+		return "selector"
+	case "chan":
+		return "channel"
+	case "map":
+		return "mapping"
+	default:
+		return camelName
+	}
+}
+
+func (g *Generator) GoFunctionArgs(f Function) string {
+	sb := &strings.Builder{}
+	for _, arg := range f.Args {
+		if strings.HasPrefix(f.Name, "get_") && arg.Pointer == PointerTypeMutable {
+			// If the function is a getter, we don't want to include mutable pointers in the arguments.
+			// This is because getters are expected to return values, not modify them.
+			continue
+		}
+
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+
+		pointer := ""
+		if arg.Pointer == PointerTypeMutable {
+			pointer = "*"
+		}
+
+		matches := arrayTypeRegexp.FindStringSubmatch(arg.Type)
+		if len(matches) == 2 {
+			fmt.Fprintf(sb, "%s %s[]%s", g.GoParameterName(arg.Name), pointer, g.GoType(matches[1]))
+		} else {
+			fmt.Fprintf(sb, "%s %s%s", g.GoParameterName(arg.Name), pointer, g.GoType(arg.Type))
+		}
+	}
+
+	return sb.String()
+}
+
+func (g *Generator) GoFunctionReturns(f Function) string {
+	sb := &strings.Builder{}
+
+	for _, arg := range f.Args {
+		if strings.HasPrefix(f.Name, "get_") && arg.Pointer == PointerTypeMutable {
+			if sb.Len() > 0 {
+				sb.WriteString(", ")
+			}
+			pointer := ""
+			if arg.Pointer == PointerTypeMutable {
+				pointer = "*"
+			}
+			matches := arrayTypeRegexp.FindStringSubmatch(arg.Type)
+			if len(matches) == 2 {
+				fmt.Fprintf(sb, "%s[]%s", pointer, g.GoType(matches[1]))
+			} else {
+				fmt.Fprintf(sb, "%s%s", pointer, g.GoType(arg.Type))
+			}
+		}
+	}
+
+	if f.Callback != nil {
+		cb := g.FindCallback(*f.Callback)
+		for _, arg := range cb.Args {
+			if !strings.HasPrefix(arg.Type, "object.") {
+				continue
+			}
+
+			if sb.Len() > 0 {
+				sb.WriteString(", ")
+			}
+			fmt.Fprintf(sb, "%s", g.GoTypeName(g.FindBaseType(arg.Type)))
+		}
+	}
+
+	// In go, we don't use "enum.status" as a return type, we use "error" instead.
+	if f.Returns != nil && f.Returns.Type != "enum.status" {
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+
+		sb.WriteString(g.GoType(f.Returns.Type))
+	}
+
+	if sb.Len() == 0 {
+		return "error"
+	}
+
+	return fmt.Sprintf("(%s, %s)", sb.String(), "error")
+}
+
+func (g *Generator) GoStructMember(s Struct, memberIndex int) string {
+	member := s.Members[memberIndex]
+
+	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
+	if len(matches) == 2 {
+		panic("GoStructMember used on array type")
+	}
+
+	// Handle callback types
+	if strings.HasPrefix(member.Type, "callback.") {
+		return fmt.Sprintf("%s %sCallbackInfo", PascalCase(member.Name), g.GoTypeName(g.FindBaseType(member.Type)))
+	}
+
+	return fmt.Sprintf("%s %s", PascalCase(member.Name), g.GoType(member.Type))
+}
+
+func (g *Generator) GoStructMemberArray(s Struct, memberIndex int) string {
+	member := s.Members[memberIndex]
+
+	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
+	if len(matches) != 2 {
+		panic("GoStructMemberArray used on non-array")
+	}
+
+	return fmt.Sprintf("%s []%s", PascalCase(member.Name), g.GoType(matches[1]))
 }
 
 // Utility functions - only keep those used in templates
@@ -213,6 +756,18 @@ func Comment(in string, mode CommentType, indent int, newline bool) string {
 		out.WriteString(" */")
 	}
 	return out.String()
+}
+
+func FetchFile(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch %s: status %s", url, resp.Status)
+	}
+	return io.ReadAll(resp.Body)
 }
 
 func PascalCase(s string) string {
@@ -525,151 +1080,7 @@ func SortAndTransform(yml *Yml) {
 	}
 }
 
-// Generator methods
-func (g *Generator) Gen(dst io.Writer) error {
-	t := template.
-		New("").
-		Funcs(template.FuncMap{
-			"SComment":  func(v string, indent int) string { return Comment(v, CommentTypeSingleLine, indent, true) },
-			"SCommentN": func(v string, indent int) string { return Comment(v, CommentTypeSingleLine, indent, false) },
-			"IsArray": func(typ string) bool {
-				return arrayTypeRegexp.Match([]byte(typ))
-			},
-			"IsLast": func(i int, s any) bool { return i == reflect.ValueOf(s).Len()-1 },
-			// Go template functions - only the ones actually used
-			"GoConstantName":      g.GoConstantName,
-			"GoTypeName":          g.GoTypeName,
-			"GoEnumName":          g.GoEnumName,
-			"GoValue":             g.GoValue,
-			"GoType":              g.GoType,
-			"GoFunctionName":      g.GoFunctionName,
-			"GoParameterName":     g.GoParameterName,
-			"GoFunctionArgs":      g.GoFunctionArgs,
-			"GoFunctionReturns":   g.GoFunctionReturns,
-			"GoStructMember":      g.GoStructMember,
-			"GoStructMemberArray": g.GoStructMemberArray,
-			"EnumValue32":         g.EnumValue32,
-			"BitflagValue": func(b Bitflag, entryIndex int) (string, error) {
-				return g.BitflagValue(b, entryIndex, false)
-			},
-		})
-	t, err := t.Parse(tmpl)
-	if err != nil {
-		return fmt.Errorf("GenCHeader: failed to parse template: %w", err)
-	}
-
-	// Render template to buffer
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, g); err != nil {
-		return fmt.Errorf("GenCHeader: failed to execute template: %w", err)
-	}
-
-	// Format Go code
-	formatted, err := format.Source(buf.Bytes())
-	if err != nil {
-		// If formatting fails, write unformatted code for easier debugging
-		_, _ = dst.Write(buf.Bytes())
-		return fmt.Errorf("GenCHeader: gofmt failed: %w", err)
-	}
-
-	_, err = dst.Write(formatted)
-	if err != nil {
-		return fmt.Errorf("GenCHeader: failed to write formatted code: %w", err)
-	}
-	return nil
-}
-
-func (g *Generator) FindBaseType(typ string) Base {
-	// Handle type names prefixed with the type category.
-	category, name, found := strings.Cut(typ, ".")
-	if !found {
-		panic("Cannot find base type for invalid type identifier: " + typ)
-	}
-
-	switch category {
-	case "constant":
-		idx := slices.IndexFunc(g.Constants, func(c Constant) bool { return c.Name == name })
-		if idx == -1 {
-			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
-		}
-		return g.Constants[idx].Base
-	case "typedef":
-		idx := slices.IndexFunc(g.Typedefs, func(t Typedef) bool { return t.Name == name })
-		if idx == -1 {
-			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
-		}
-		return g.Typedefs[idx].Base
-	case "enum":
-		idx := slices.IndexFunc(g.Enums, func(e Enum) bool { return e.Name == name })
-		if idx == -1 {
-			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
-		}
-		return g.Enums[idx].Base
-	case "bitflag":
-		idx := slices.IndexFunc(g.Bitflags, func(b Bitflag) bool { return b.Name == name })
-		if idx == -1 {
-			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
-		}
-		return g.Bitflags[idx].Base
-	case "struct":
-		idx := slices.IndexFunc(g.Structs, func(s Struct) bool { return s.Name == name })
-		if idx == -1 {
-			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
-		}
-		return g.Structs[idx].Base
-	case "callback":
-		idx := slices.IndexFunc(g.Callbacks, func(c Callback) bool { return c.Name == name })
-		if idx == -1 {
-			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
-		}
-		return g.Callbacks[idx].Base
-	case "object":
-		idx := slices.IndexFunc(g.Objects, func(o Object) bool { return o.Name == name })
-		if idx == -1 {
-			return Base{Name: name, Namespace: g.PrefixForNamespace("")}
-		}
-		return g.Objects[idx].Base
-	default:
-		panic("Unable to find unknown category type: " + category + " for identifier: " + typ)
-	}
-}
-
-func (g *Generator) PrefixForNamespace(namespace string) string {
-	switch namespace {
-	case "":
-		return g.ExtPrefix
-	case "webgpu":
-		return ""
-	default:
-		return namespace
-	}
-}
-
-func (g *Generator) EnumValue32(e Enum, entryIndex int) (uint32, error) {
-	entry := e.Entries[entryIndex]
-	var value16 uint16
-	if entry.Value == "" {
-		value16 = uint16(entryIndex)
-	} else {
-		var num string
-		var base int
-		if strings.HasPrefix(entry.Value, "0x") {
-			base = 16
-			num = strings.TrimPrefix(entry.Value, "0x")
-		} else {
-			base = 10
-			num = entry.Value
-		}
-		v, err := strconv.ParseUint(num, base, 16)
-		if err != nil {
-			return 0, err
-		}
-		value16 = uint16(v)
-	}
-	return uint32(g.EnumPrefix)<<16 | uint32(value16), nil
-}
-
-func bitflagEntryValue(entry BitflagEntry, entryIndex int) (uint64, error) {
+func BitflagEntryValue(entry BitflagEntry, entryIndex int) (uint64, error) {
 	if entry.Value == "" {
 		value := uint64(math.Pow(2, float64(entryIndex-1)))
 		return value, nil
@@ -684,357 +1095,5 @@ func bitflagEntryValue(entry BitflagEntry, entryIndex int) (uint64, error) {
 			num = entry.Value
 		}
 		return strconv.ParseUint(num, base, 64)
-	}
-}
-
-func (g *Generator) BitflagValue(b Bitflag, entryIndex int, isDocString bool) (string, error) {
-	entry := b.Entries[entryIndex]
-
-	var value uint64
-	if len(entry.ValueCombination) > 0 {
-		if entry.Value != "" {
-			return "", fmt.Errorf("BitflagValue: found conflicting 'value' and 'value_combination' in '%s'", b.Name)
-		}
-		for _, v := range entry.ValueCombination {
-			// find the value by searching in b, bitwise-OR it into the result
-			for searchIndex, search := range b.Entries {
-				if search.Name == v {
-					searchValue, err := bitflagEntryValue(search, searchIndex)
-					if err != nil {
-						return "", err
-					}
-					value |= searchValue
-					break
-				}
-			}
-		}
-	} else {
-		var err error
-		value, err = bitflagEntryValue(entry, entryIndex)
-		if err != nil {
-			return "", err
-		}
-	}
-	return fmt.Sprintf("0x%.16X", value), nil
-}
-
-// Go-specific generator methods - only the ones used in templates
-func (g *Generator) GoConstantName(b Base) string {
-	return PascalCase(b.Name)
-}
-
-func (g *Generator) GoTypeName(b Base) string {
-	return PascalCase(b.Name)
-}
-
-func (g *Generator) GoEnumName(typ Base, entry Base) string {
-	return PascalCase(typ.Name) + PascalCase(entry.Name)
-}
-
-func (g *Generator) GoValue(s string) string {
-	switch s {
-	case "usize_max":
-		return "^uintptr(0)"
-	case "uint32_max":
-		return "^uint32(0)"
-	case "uint64_max":
-		return "^uint64(0)"
-	case "nan":
-		// Use a variable instead of function call in constant declaration
-		return "math.NaN()"
-	default:
-		return s
-	}
-}
-
-func (g *Generator) GoType(typ string) string {
-	switch typ {
-	case "bool":
-		return "bool"
-	case "uint16":
-		return "uint16"
-	case "uint32":
-		return "uint32"
-	case "uint64":
-		return "uint64"
-	case "usize":
-		return "uintptr"
-	case "int16":
-		return "int16"
-	case "int32":
-		return "int32"
-	case "float32", "nullable_float32":
-		return "float32"
-	case "float64", "float64_supertype":
-		return "float64"
-	case "nullable_string", "string_with_default_empty", "out_string":
-		return "string"
-	case "c_void":
-		return "unsafe.Pointer"
-	default:
-		// Handle type names prefixed with the type category
-		return g.GoTypeName(g.FindBaseType(typ))
-	}
-}
-
-func (g *Generator) GoFunctionName(b Base) string {
-	return PascalCase(b.Name)
-}
-
-func (g *Generator) GoParameterName(name string) string {
-	// Convert to camelCase first
-	camelName := CamelCase(name)
-
-	// Handle Go keywords by appending underscore or using alternative names
-	switch camelName {
-	case "type":
-		return "errorType"
-	case "func":
-		return "function"
-	case "var":
-		return "variable"
-	case "const":
-		return "constant"
-	case "struct":
-		return "structure"
-	case "interface":
-		return "iface"
-	case "package":
-		return "pkg"
-	case "import":
-		return "imp"
-	case "return":
-		return "ret"
-	case "if":
-		return "condition"
-	case "else":
-		return "alternative"
-	case "for":
-		return "loop"
-	case "range":
-		return "rng"
-	case "switch":
-		return "switchValue"
-	case "case":
-		return "caseValue"
-	case "default":
-		return "defaultValue"
-	case "go":
-		return "routine"
-	case "defer":
-		return "deferred"
-	case "select":
-		return "selector"
-	case "chan":
-		return "channel"
-	case "map":
-		return "mapping"
-	default:
-		return camelName
-	}
-}
-
-func (g *Generator) GoFunctionArgs(f Function, o *Object) string {
-	sb := &strings.Builder{}
-	for _, arg := range f.Args {
-		if sb.Len() > 0 {
-			sb.WriteString(", ")
-		}
-		matches := arrayTypeRegexp.FindStringSubmatch(arg.Type)
-		if len(matches) == 2 {
-			fmt.Fprintf(sb, "%s []%s", g.GoParameterName(arg.Name), g.GoType(matches[1]))
-		} else {
-			fmt.Fprintf(sb, "%s %s", g.GoParameterName(arg.Name), g.GoType(arg.Type))
-		}
-	}
-
-	if f.Callback != nil {
-		if o != nil && o.IsStruct {
-			// If the function is a method of an object, use the object type as the first argument
-			if sb.Len() > 0 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(fmt.Sprintf("%s *%s", g.GoParameterName("this"), g.GoType(o.Name)))
-		} else {
-			// If the function is not a method, use the callback type as the first argument
-			if sb.Len() > 0 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(fmt.Sprintf("%s %sCallbackInfo", g.GoParameterName("callback"), g.GoTypeName(g.FindBaseType(*f.Callback))))
-		}
-	}
-
-	return sb.String()
-}
-
-func (g *Generator) GoFunctionReturns(f Function) string {
-	if f.Callback != nil {
-		return "Future"
-	}
-	if f.Returns != nil {
-		return fmt.Sprintf("(%s, error)", g.GoType(f.Returns.Type))
-	}
-	return "error"
-}
-
-func (g *Generator) GoStructMember(s Struct, memberIndex int) string {
-	member := s.Members[memberIndex]
-
-	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
-	if len(matches) == 2 {
-		panic("GoStructMember used on array type")
-	}
-
-	// Handle callback types
-	if strings.HasPrefix(member.Type, "callback.") {
-		return fmt.Sprintf("%s %sCallbackInfo", PascalCase(member.Name), g.GoTypeName(g.FindBaseType(member.Type)))
-	}
-
-	return fmt.Sprintf("%s %s", PascalCase(member.Name), g.GoType(member.Type))
-}
-
-func (g *Generator) GoStructMemberArray(s Struct, memberIndex int) string {
-	member := s.Members[memberIndex]
-
-	matches := arrayTypeRegexp.FindStringSubmatch(member.Type)
-	if len(matches) != 2 {
-		panic("GoStructMemberArray used on non-array")
-	}
-
-	return fmt.Sprintf("%s []%s", PascalCase(member.Name), g.GoType(matches[1]))
-}
-
-func fetchFile(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch %s: %w", url, err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch %s: status %s", url, resp.Status)
-	}
-	return io.ReadAll(resp.Body)
-}
-
-// Main function
-func main() {
-	flag.StringVar(&schemaPath, "schema", "", "path or URL of the json schema")
-	flag.Var(&yamlPaths, "yaml", "path or URL of the yaml spec")
-	flag.Var(&goPaths, "go", "output path of the go")
-	flag.BoolVar(&extPrefix, "extprefix", true, "append prefix to extension identifiers")
-	flag.Parse()
-
-	// Use default URLs if not provided
-	if schemaPath == "" {
-		schemaPath = defaultSchemaURL
-	}
-	if len(yamlPaths) == 0 {
-		yamlPaths = append(yamlPaths, defaultYamlURL)
-	}
-	if len(goPaths) == 0 || len(goPaths) != len(yamlPaths) {
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	// Order matters for validation steps, so enforce it.
-	if len(yamlPaths) > 1 && filepath.Base(yamlPaths[0]) != "webgpu.yml" {
-		panic(`"webgpu.yml" must be the first sequence in the order`)
-	}
-
-	// Download schema if it's a URL
-	var schemaData []byte
-	if strings.HasPrefix(schemaPath, "http://") || strings.HasPrefix(schemaPath, "https://") {
-		var err error
-		schemaData, err = fetchFile(schemaPath)
-		if err != nil {
-			panic(err)
-		}
-		// Save to a temporary file for jsonschema.MustCompile
-		tmpFile, err := os.CreateTemp("", "schema-*.json")
-		if err != nil {
-			panic(err)
-		}
-		defer os.Remove(tmpFile.Name())
-		if _, err := tmpFile.Write(schemaData); err != nil {
-			panic(err)
-		}
-		if err := tmpFile.Close(); err != nil {
-			panic(err)
-		}
-		schemaPath = tmpFile.Name()
-	}
-
-	// Download yamls if any are URLs
-	yamlDatas := make([][]byte, len(yamlPaths))
-	for i, yamlPath := range yamlPaths {
-		if strings.HasPrefix(yamlPath, "http://") || strings.HasPrefix(yamlPath, "https://") {
-			data, err := fetchFile(yamlPath)
-			if err != nil {
-				panic(err)
-			}
-			yamlDatas[i] = data
-		} else {
-			data, err := os.ReadFile(yamlPath)
-			if err != nil {
-				panic(err)
-			}
-			yamlDatas[i] = data
-		}
-	}
-
-	// Validate the yaml files (jsonschema, duplications)
-	// Save yamls to temp files for validation and further processing
-	tmpYamlPaths := make([]string, len(yamlDatas))
-	for i, data := range yamlDatas {
-		tmpFile, err := os.CreateTemp("", "yaml-*.yml")
-		if err != nil {
-			panic(err)
-		}
-		defer os.Remove(tmpFile.Name())
-		if _, err := tmpFile.Write(data); err != nil {
-			panic(err)
-		}
-		if err := tmpFile.Close(); err != nil {
-			panic(err)
-		}
-		tmpYamlPaths[i] = tmpFile.Name()
-	}
-	if err := ValidateYamls(schemaPath, tmpYamlPaths); err != nil {
-		panic(err)
-	}
-
-	// Generate the go files
-	for i := range yamlDatas {
-		goPath := goPaths[i]
-		goFileName := filepath.Base(goPath)
-		goFileNameSplit := strings.Split(goFileName, ".")
-		if len(goFileNameSplit) != 2 {
-			panic("got invalid go file name: " + goFileName)
-		}
-
-		dst, err := os.Create(goPath)
-		if err != nil {
-			panic(err)
-		}
-
-		var yml Yml
-		if err := yaml.Unmarshal(yamlDatas[i], &yml); err != nil {
-			panic(err)
-		}
-
-		SortAndTransform(&yml)
-
-		prefix := ""
-		if yml.Name != "webgpu" && extPrefix {
-			prefix = yml.Name
-		}
-		g := &Generator{
-			Yml:       &yml,
-			GoName:    goFileNameSplit[0],
-			ExtPrefix: prefix,
-		}
-		if err := g.Gen(dst); err != nil {
-			panic(err)
-		}
 	}
 }

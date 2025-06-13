@@ -6,7 +6,7 @@ import "github.com/opensraph/sraph/gpu/impl"
 
 var gpu = impl.NewGPU()
 
-func NewInstance(descriptor InstanceDescriptor) (Instance, error) {
+func CreateInstance(descriptor InstanceDescriptor) (Instance, error) {
 	return gpu.CreateInstance(descriptor)
 }
 

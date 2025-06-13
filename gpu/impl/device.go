@@ -3,7 +3,6 @@ package impl
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	. "github.com/opensraph/sraph/gpu/webgpu"
 )
@@ -32,7 +31,7 @@ func NewDevice(descriptor DeviceDescriptor) Device {
 	return d
 }
 
-// CreateBindGroup creates a new bind group
+// CreateBindGroup implements Device.CreateBindGroup.
 func (d *device) CreateBindGroup(descriptor BindGroupDescriptor) (BindGroup, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -50,7 +49,7 @@ func (d *device) CreateBindGroup(descriptor BindGroupDescriptor) (BindGroup, err
 	return bindGroup, nil
 }
 
-// CreateBindGroupLayout creates a new bind group layout
+// CreateBindGroupLayout implements Device.CreateBindGroupLayout.
 func (d *device) CreateBindGroupLayout(descriptor BindGroupLayoutDescriptor) (BindGroupLayout, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -68,7 +67,7 @@ func (d *device) CreateBindGroupLayout(descriptor BindGroupLayoutDescriptor) (Bi
 	return layout, nil
 }
 
-// CreateBuffer creates a new buffer
+// CreateBuffer implements Device.CreateBuffer.
 func (d *device) CreateBuffer(descriptor BufferDescriptor) (Buffer, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -77,24 +76,10 @@ func (d *device) CreateBuffer(descriptor BufferDescriptor) (Buffer, error) {
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	buffer := &buffer{
-
-		label:            descriptor.Label,
-		usage:            descriptor.Usage,
-		size:             descriptor.Size,
-		mappedAtCreation: descriptor.MappedAtCreation,
-		mapState:         BufferMapStateUnmapped,
-	}
-
-	if descriptor.MappedAtCreation {
-		buffer.mapState = BufferMapStateMapped
-		buffer.data = make([]byte, descriptor.Size)
-	}
-
-	return buffer, nil
+	return NewBuffer(descriptor), nil
 }
 
-// CreateCommandEncoder creates a new command encoder
+// CreateCommandEncoder implements Device.CreateCommandEncoder.
 func (d *device) CreateCommandEncoder(descriptor CommandEncoderDescriptor) (CommandEncoder, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -111,7 +96,7 @@ func (d *device) CreateCommandEncoder(descriptor CommandEncoderDescriptor) (Comm
 	return encoder, nil
 }
 
-// CreateComputePipeline creates a new compute pipeline
+// CreateComputePipeline implements Device.CreateComputePipeline.
 func (d *device) CreateComputePipeline(descriptor ComputePipelineDescriptor) (ComputePipeline, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -120,53 +105,10 @@ func (d *device) CreateComputePipeline(descriptor ComputePipelineDescriptor) (Co
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	pipeline := &ComputePipelineImpl{
-
-		label:   descriptor.Label,
-		layout:  descriptor.Layout,
-		compute: descriptor.Compute,
-	}
-
-	return pipeline, nil
+	return NewComputePipeline(descriptor), nil
 }
 
-// CreateComputePipelineAsync creates a compute pipeline asynchronously with improved callback handling
-func (d *device) CreateComputePipelineAsync(descriptor ComputePipelineDescriptor, callback CreateComputePipelineAsyncCallbackInfo) Future {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
-	if d.destroyed {
-		// Use global callback registry for error
-		GlobalCallbackRegistry().CreateComputePipelineAsync(future.Id, callback, CreatePipelineAsyncStatusInternalError, nil, "device has been destroyed")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
-	}
-
-	// Start async pipeline creation
-	go func() {
-		// Simulate pipeline creation process
-		time.Sleep(time.Millisecond * 5) // Simulate work
-
-		pipeline := &ComputePipelineImpl{
-
-			label:   descriptor.Label,
-			layout:  descriptor.Layout,
-			compute: descriptor.Compute,
-		}
-
-		// Register success callback
-		GlobalCallbackRegistry().CreateComputePipelineAsync(future.Id, callback, CreatePipelineAsyncStatusSuccess, pipeline, "")
-		GlobalCallbackManager().Complete(future.Id)
-	}()
-
-	return future
-}
-
-// CreatePipelineLayout creates a new pipeline layout
+// CreatePipelineLayout implements Device.CreatePipelineLayout.
 func (d *device) CreatePipelineLayout(descriptor PipelineLayoutDescriptor) (PipelineLayout, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -175,16 +117,10 @@ func (d *device) CreatePipelineLayout(descriptor PipelineLayoutDescriptor) (Pipe
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	layout := &pipelineLayout{
-
-		label:            descriptor.Label,
-		bindGroupLayouts: descriptor.BindGroupLayouts,
-	}
-
-	return layout, nil
+	return NewPipelineLayout(descriptor), nil
 }
 
-// CreateQuerySet creates a new query set
+// CreateQuerySet implements Device.CreateQuerySet.
 func (d *device) CreateQuerySet(descriptor QuerySetDescriptor) (QuerySet, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -193,17 +129,10 @@ func (d *device) CreateQuerySet(descriptor QuerySetDescriptor) (QuerySet, error)
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	querySet := &querySet{
-
-		label: descriptor.Label,
-		qType: descriptor.Type,
-		count: descriptor.Count,
-	}
-
-	return querySet, nil
+	return NewQuerySet(descriptor), nil
 }
 
-// CreateRenderBundleEncoder creates a new render bundle encoder
+// CreateRenderBundleEncoder implements Device.CreateRenderBundleEncoder.
 func (d *device) CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) (RenderBundleEncoder, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -212,17 +141,10 @@ func (d *device) CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescrip
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	encoder := &renderBundleEncoder{
-		label:              descriptor.Label,
-		colorFormats:       descriptor.ColorFormats,
-		depthStencilFormat: descriptor.DepthStencilFormat,
-		sampleCount:        descriptor.SampleCount,
-	}
-
-	return encoder, nil
+	return NewRenderBundleEncoder(descriptor), nil
 }
 
-// CreateRenderPipeline creates a new render pipeline
+// CreateRenderPipeline implements Device.CreateRenderPipeline.
 func (d *device) CreateRenderPipeline(descriptor RenderPipelineDescriptor) (RenderPipeline, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -231,59 +153,10 @@ func (d *device) CreateRenderPipeline(descriptor RenderPipelineDescriptor) (Rend
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	pipeline := &RenderPipelineImpl{
-		label:        descriptor.Label,
-		layout:       descriptor.Layout,
-		vertex:       descriptor.Vertex,
-		primitive:    descriptor.Primitive,
-		depthStencil: descriptor.DepthStencil,
-		multisample:  descriptor.Multisample,
-		fragment:     descriptor.Fragment,
-	}
-
-	return pipeline, nil
+	return NewRenderPipeline(descriptor), nil
 }
 
-// CreateRenderPipelineAsync creates a render pipeline asynchronously with improved callback handling
-func (d *device) CreateRenderPipelineAsync(descriptor RenderPipelineDescriptor, callback CreateRenderPipelineAsyncCallbackInfo) Future {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
-	if d.destroyed {
-		// Use global callback registry for error
-		GlobalCallbackRegistry().CreateRenderPipelineAsync(future.Id, callback, CreatePipelineAsyncStatusInternalError, nil, "device has been destroyed")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
-	}
-
-	// Start async pipeline creation
-	go func() {
-		// Simulate pipeline creation process
-		time.Sleep(time.Millisecond * 5) // Simulate work
-
-		pipeline := &RenderPipelineImpl{
-			label:        descriptor.Label,
-			layout:       descriptor.Layout,
-			vertex:       descriptor.Vertex,
-			primitive:    descriptor.Primitive,
-			depthStencil: descriptor.DepthStencil,
-			multisample:  descriptor.Multisample,
-			fragment:     descriptor.Fragment,
-		}
-
-		// Register success callback
-		GlobalCallbackRegistry().CreateRenderPipelineAsync(future.Id, callback, CreatePipelineAsyncStatusSuccess, pipeline, "")
-		GlobalCallbackManager().Complete(future.Id)
-	}()
-
-	return future
-}
-
-// CreateSampler creates a new sampler
+// CreateSampler implements Device.CreateSampler.
 func (d *device) CreateSampler(descriptor SamplerDescriptor) (Sampler, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -292,24 +165,10 @@ func (d *device) CreateSampler(descriptor SamplerDescriptor) (Sampler, error) {
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	sampler := &sampler{
-		label:         descriptor.Label,
-		addressModeU:  descriptor.AddressModeU,
-		addressModeV:  descriptor.AddressModeV,
-		addressModeW:  descriptor.AddressModeW,
-		magFilter:     descriptor.MagFilter,
-		minFilter:     descriptor.MinFilter,
-		mipmapFilter:  descriptor.MipmapFilter,
-		lodMinClamp:   descriptor.LodMinClamp,
-		lodMaxClamp:   descriptor.LodMaxClamp,
-		compare:       descriptor.Compare,
-		maxAnisotropy: descriptor.MaxAnisotropy,
-	}
-
-	return sampler, nil
+	return NewSampler(descriptor), nil
 }
 
-// CreateShaderModule creates a new shader module
+// CreateShaderModule implements Device.CreateShaderModule.
 func (d *device) CreateShaderModule(descriptor ShaderModuleDescriptor) (ShaderModule, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -318,15 +177,10 @@ func (d *device) CreateShaderModule(descriptor ShaderModuleDescriptor) (ShaderMo
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	shaderModule := &shaderModule{
-
-		label: descriptor.Label,
-	}
-
-	return shaderModule, nil
+	return NewShaderModule(descriptor), nil
 }
 
-// CreateTexture creates a new texture
+// CreateTexture implements Device.CreateTexture.
 func (d *device) CreateTexture(descriptor TextureDescriptor) (Texture, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -335,21 +189,10 @@ func (d *device) CreateTexture(descriptor TextureDescriptor) (Texture, error) {
 		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	texture := &texture{
-		label:         descriptor.Label,
-		usage:         descriptor.Usage,
-		dimension:     descriptor.Dimension,
-		size:          descriptor.Size,
-		format:        descriptor.Format,
-		mipLevelCount: descriptor.MipLevelCount,
-		sampleCount:   descriptor.SampleCount,
-		viewFormats:   descriptor.ViewFormats,
-	}
-
-	return texture, nil
+	return NewTexture(descriptor), nil
 }
 
-// Destroy destroys the device
+// Destroy implements Device.Destroy.
 func (d *device) Destroy() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -358,67 +201,55 @@ func (d *device) Destroy() error {
 	return nil
 }
 
-// GetAdapterInfo gets adapter information
-func (d *device) GetAdapterInfo(adapterInfo AdapterInfo) (Status, error) {
+// AdapterInfo implements Device.AdapterInfo.
+func (d *device) AdapterInfo() (*AdapterInfo, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	if d.destroyed {
-		return StatusError, fmt.Errorf("device has been destroyed")
+		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	// Return default adapter info
-	adapterInfo.Vendor = "WebGPU Implementation"
-	adapterInfo.Device = "Generic Device"
-	adapterInfo.Description = "WebGPU Device"
-
-	return StatusSuccess, nil
+	info := &AdapterInfo{
+		Vendor:      "WebGPU Implementation",
+		Device:      "Generic Device",
+		Description: "WebGPU Device",
+	}
+	return info, nil
 }
 
-// GetFeatures retrieves supported features
-func (d *device) GetFeatures(features SupportedFeatures) error {
+// Features implements Device.Features.
+func (d *device) Features() (*SupportedFeatures, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	if d.destroyed {
-		return fmt.Errorf("device has been destroyed")
+		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	features.Features = append(features.Features, d.features...)
-	return nil
+	return &SupportedFeatures{Features: append([]FeatureName{}, d.features...)}, nil
 }
 
-// GetLimits retrieves device limits
-func (d *device) GetLimits(limits Limits) (Status, error) {
+// Limits implements Device.Limits.
+func (d *device) Limits() (*Limits, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
 	if d.destroyed {
-		return StatusError, fmt.Errorf("device has been destroyed")
+		return nil, fmt.Errorf("device has been destroyed")
 	}
 
-	limits = d.limits
-	return StatusSuccess, nil
+	limits := d.limits
+	return &limits, nil
 }
 
-// GetLostFuture gets the device lost future
-func (d *device) GetLostFuture() (Future, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	if d.destroyed {
-		return Future{}, fmt.Errorf("device has been destroyed")
-	}
-
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
-	return future, nil
+// LostFuture implements Device.LostFuture.
+func (d *device) LostFuture() (Future, error) {
+	return Future{}, fmt.Errorf("LostFuture is not implemented in this version of the device")
 }
 
-// GetQueue gets the device queue
-func (d *device) GetQueue() (Queue, error) {
+// Queue implements Device.Queue.
+func (d *device) Queue() (Queue, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
@@ -429,7 +260,7 @@ func (d *device) GetQueue() (Queue, error) {
 	return d.queue, nil
 }
 
-// HasFeature checks if a feature is supported
+// HasFeature implements Device.HasFeature.
 func (d *device) HasFeature(feature FeatureName) (bool, error) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -446,33 +277,20 @@ func (d *device) HasFeature(feature FeatureName) (bool, error) {
 	return false, nil
 }
 
-// PopErrorScope pops an error scope with improved callback handling
-func (d *device) PopErrorScope(callback PopErrorScopeCallbackInfo) Future {
+// PopErrorScope implements Device.PopErrorScope.
+func (d *device) PopErrorScope() error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
 	if d.destroyed {
-		// Use global callback registry for error
-		GlobalCallbackRegistry().PopErrorScope(future.Id, callback, PopErrorScopeStatusError, ErrorTypeUnknown, "device has been destroyed")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
+		return fmt.Errorf("device has been destroyed")
 	}
 
-	// Simulate async error scope processing
-	go func() {
-		// In a real implementation, this would check for errors
-		GlobalCallbackRegistry().PopErrorScope(future.Id, callback, PopErrorScopeStatusSuccess, ErrorTypeNoError, "")
-		GlobalCallbackManager().Complete(future.Id)
-	}()
-
-	return future
+	// TODO: Implement error scope stack logic if needed
+	return nil
 }
 
-// PushErrorScope pushes an error scope
+// PushErrorScope implements Device.PushErrorScope.
 func (d *device) PushErrorScope(filter ErrorFilter) error {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
@@ -481,11 +299,11 @@ func (d *device) PushErrorScope(filter ErrorFilter) error {
 		return fmt.Errorf("device has been destroyed")
 	}
 
-	// In a real implementation, this would push error scope
+	// TODO: Implement error scope stack logic if needed
 	return nil
 }
 
-// SetLabel sets the device label
+// SetLabel implements Device.SetLabel.
 func (d *device) SetLabel(label string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

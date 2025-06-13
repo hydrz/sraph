@@ -29,30 +29,17 @@ func NewQueue(descriptor QueueDescriptor) Queue {
 	return newQueue(descriptor)
 }
 
-// OnSubmittedWorkDone adds a callback for when submitted work is done
-func (q *queueImp) OnSubmittedWorkDone(callback QueueWorkDoneCallbackInfo) Future {
+// OnSubmittedWorkDone implements Queue.OnSubmittedWorkDone.
+func (q *queueImp) OnSubmittedWorkDone() error {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
 	if q.destroyed {
-		// Register error callback
-		GlobalCallbackRegistry().QueueWorkDone(future.Id, callback, QueueWorkDoneStatusError, "queue has been destroyed")
-		GlobalCallbackManager().Complete(future.Id)
-		return future
+		return fmt.Errorf("queue has been destroyed")
 	}
 
-	// Simulate async work completion
-	go func() {
-		// In a real implementation, this would track actual work completion
-		GlobalCallbackRegistry().QueueWorkDone(future.Id, callback, QueueWorkDoneStatusSuccess, "")
-		GlobalCallbackManager().Complete(future.Id)
-	}()
-
-	return future
+	// In a real implementation, this would track actual work completion
+	return nil
 }
 
 // SetLabel sets the queue label

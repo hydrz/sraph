@@ -29,38 +29,21 @@ func NewShaderModule(descriptor ShaderModuleDescriptor) ShaderModule {
 	return newShaderModule(descriptor)
 }
 
-// GetCompilationInfo gets compilation information
-func (sm *shaderModule) GetCompilationInfo(callback CompilationInfoCallbackInfo) Future {
+// CompilationInfo implements ShaderModule.CompilationInfo.
+// Returns nil as a stub, since async callback is not part of the interface.
+func (sm *shaderModule) CompilationInfo() error {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 
-	future := Future{
-		Id: GenerateFutureId(),
-	}
-
 	if sm.destroyed {
-		// Register error callback
-		GlobalCallbackRegistry().CompilationInfo(future.Id, callback, CompilationInfoRequestStatusCallbackCancelled, CompilationInfo{})
-		GlobalCallbackManager().Complete(future.Id)
-		return future
+		return fmt.Errorf("shader module has been destroyed")
 	}
 
-	// Simulate async compilation
-	go func() {
-		// Mock compilation - in a real implementation this would compile WGSL/SPIR-V
-		compilationInfo := CompilationInfo{
-			Messages: []CompilationMessage{},
-		}
-
-		// Register success callback
-		GlobalCallbackRegistry().CompilationInfo(future.Id, callback, CompilationInfoRequestStatusSuccess, compilationInfo)
-		GlobalCallbackManager().Complete(future.Id)
-	}()
-
-	return future
+	// TODO: Implement actual compilation info retrieval if needed.
+	return nil
 }
 
-// SetLabel sets the shader module label
+// SetLabel implements ShaderModule.SetLabel.
 func (sm *shaderModule) SetLabel(label string) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()

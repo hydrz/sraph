@@ -25,7 +25,7 @@ import (
 	"unsafe"
 )
 
-// Constants
+// ===== Constants =====
 const (
 	// Indicates no array layer count is specified. For more info,
 	// see @ref SentinelValues and the places that use this sentinel value.
@@ -74,6 +74,9 @@ var (
 	DepthClearValueUndefined = math.NaN()
 )
 
+// ===== Typedefs =====
+
+// ===== Enums =====
 type AdapterType uint32
 
 const (
@@ -167,30 +170,6 @@ const (
 	BufferMapStateMapped   BufferMapState = 3
 )
 
-// The callback mode controls how a callback for an asynchronous operation may be fired. See @ref Asynchronous-Operations for how these are used.
-type CallbackMode uint32
-
-const (
-	// Callbacks created with `WGPUCallbackMode_WaitAnyOnly`:
-	// - fire when the asynchronous operation's future is passed to a call to @ref wgpuInstanceWaitAny
-	//   AND the operation has already completed or it completes inside the call to @ref wgpuInstanceWaitAny.
-	CallbackModeWaitAnyOnly CallbackMode = 1
-
-	// Callbacks created with `WGPUCallbackMode_AllowProcessEvents`:
-	// - fire for the same reasons as callbacks created with `WGPUCallbackMode_WaitAnyOnly`
-	// - fire inside a call to @ref wgpuInstanceProcessEvents if the asynchronous operation is complete.
-	CallbackModeAllowProcessEvents CallbackMode = 2
-
-	// Callbacks created with `WGPUCallbackMode_AllowSpontaneous`:
-	// - fire for the same reasons as callbacks created with `WGPUCallbackMode_AllowProcessEvents`
-	// - **may** fire spontaneously on an arbitrary or application thread, when the WebGPU implementations discovers that the asynchronous operation is complete.
-	//
-	//   Implementations _should_ fire spontaneous callbacks as soon as possible.
-	//
-	// @note Because spontaneous callbacks may fire at an arbitrary time on an arbitrary thread, applications should take extra care when acquiring locks or mutating state inside the callback. It undefined behavior to re-entrantly call into the webgpu.h API if the callback fires while inside the callstack of another webgpu.h function that is not `wgpuInstanceWaitAny` or `wgpuInstanceProcessEvents`.
-	CallbackModeAllowSpontaneous CallbackMode = 3
-)
-
 type CompareFunction uint32
 
 const (
@@ -204,15 +183,6 @@ const (
 	CompareFunctionNotEqual     CompareFunction = 6
 	CompareFunctionGreaterEqual CompareFunction = 7
 	CompareFunctionAlways       CompareFunction = 8
-)
-
-type CompilationInfoRequestStatus uint32
-
-const (
-	CompilationInfoRequestStatusSuccess CompilationInfoRequestStatus = 1
-
-	// See @ref CallbackStatuses.
-	CompilationInfoRequestStatusCallbackCancelled CompilationInfoRequestStatus = 2
 )
 
 type CompilationMessageType uint32
@@ -241,17 +211,6 @@ const (
 
 	// The handling of the alpha component is unknown to WebGPU and should be handled by the application using system-specific APIs. This mode may be unavailable (for example on Wasm).
 	CompositeAlphaModeInherit CompositeAlphaMode = 4
-)
-
-type CreatePipelineAsyncStatus uint32
-
-const (
-	CreatePipelineAsyncStatusSuccess CreatePipelineAsyncStatus = 1
-
-	// See @ref CallbackStatuses.
-	CreatePipelineAsyncStatusCallbackCancelled CreatePipelineAsyncStatus = 2
-	CreatePipelineAsyncStatusValidationError   CreatePipelineAsyncStatus = 3
-	CreatePipelineAsyncStatusInternalError     CreatePipelineAsyncStatus = 4
 )
 
 type CullMode uint32
@@ -382,17 +341,6 @@ const (
 	LoadOpClear     LoadOp = 2
 )
 
-type MapAsyncStatus uint32
-
-const (
-	MapAsyncStatusSuccess MapAsyncStatus = 1
-
-	// See @ref CallbackStatuses.
-	MapAsyncStatusCallbackCancelled MapAsyncStatus = 2
-	MapAsyncStatusError             MapAsyncStatus = 3
-	MapAsyncStatusAborted           MapAsyncStatus = 4
-)
-
 type MipmapFilterMode uint32
 
 const (
@@ -408,19 +356,6 @@ const (
 	OptionalBoolFalse     OptionalBool = 0
 	OptionalBoolTrue      OptionalBool = 1
 	OptionalBoolUndefined OptionalBool = 2
-)
-
-type PopErrorScopeStatus uint32
-
-const (
-	// The error scope stack was successfully popped and a result was reported.
-	PopErrorScopeStatusSuccess PopErrorScopeStatus = 1
-
-	// See @ref CallbackStatuses.
-	PopErrorScopeStatusCallbackCancelled PopErrorScopeStatus = 2
-
-	// The error scope stack could not be popped, because it was empty.
-	PopErrorScopeStatusError PopErrorScopeStatus = 3
 )
 
 type PowerPreference uint32
@@ -482,40 +417,6 @@ type QueryType uint32
 const (
 	QueryTypeOcclusion QueryType = 1
 	QueryTypeTimestamp QueryType = 2
-)
-
-type QueueWorkDoneStatus uint32
-
-const (
-	QueueWorkDoneStatusSuccess QueueWorkDoneStatus = 1
-
-	// See @ref CallbackStatuses.
-	QueueWorkDoneStatusCallbackCancelled QueueWorkDoneStatus = 2
-
-	// There was some deterministic error. (Note this is currently never used,
-	// but it will be relevant when it's possible to create a queue object.)
-	QueueWorkDoneStatusError QueueWorkDoneStatus = 3
-)
-
-type RequestAdapterStatus uint32
-
-const (
-	RequestAdapterStatusSuccess RequestAdapterStatus = 1
-
-	// See @ref CallbackStatuses.
-	RequestAdapterStatusCallbackCancelled RequestAdapterStatus = 2
-	RequestAdapterStatusUnavailable       RequestAdapterStatus = 3
-	RequestAdapterStatusError             RequestAdapterStatus = 4
-)
-
-type RequestDeviceStatus uint32
-
-const (
-	RequestDeviceStatusSuccess RequestDeviceStatus = 1
-
-	// See @ref CallbackStatuses.
-	RequestDeviceStatusCallbackCancelled RequestDeviceStatus = 2
-	RequestDeviceStatusError             RequestDeviceStatus = 3
 )
 
 type SamplerBindingType uint32
@@ -835,21 +736,6 @@ const (
 	VertexStepModeInstance  VertexStepMode = 2
 )
 
-// Status returned from a call to ::wgpuInstanceWaitAny.
-type WaitStatus uint32
-
-const (
-	// At least one WGPUFuture completed successfully.
-	WaitStatusSuccess WaitStatus = 1
-
-	// The wait operation succeeded, but no WGPUFutures completed within the timeout.
-	WaitStatusTimedOut WaitStatus = 2
-
-	// The call was invalid for some reason (see @ref Wait-Any).
-	// Should produce @ref ImplementationDefinedLogging containing details.
-	WaitStatusError WaitStatus = 3
-)
-
 type WGSLLanguageFeatureName uint32
 
 const (
@@ -859,6 +745,7 @@ const (
 	WGSLLanguageFeatureNamePointerCompositeAccess              WGSLLanguageFeatureName = 4
 )
 
+// ===== Bitflags =====
 type BufferUsage uint64
 
 const (
@@ -936,105 +823,7 @@ const (
 	TextureUsageRenderAttachment TextureUsage = 0x0000000000000010
 )
 
-type BufferMapCallback func(status MapAsyncStatus, message string)
-
-// BufferMapCallbackInfo contains callback configuration
-type BufferMapCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  BufferMapCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type CompilationInfoCallback func(status CompilationInfoRequestStatus, compilationInfo CompilationInfo)
-
-// CompilationInfoCallbackInfo contains callback configuration
-type CompilationInfoCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  CompilationInfoCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type CreateComputePipelineAsyncCallback func(status CreatePipelineAsyncStatus, pipeline ComputePipeline, message string)
-
-// CreateComputePipelineAsyncCallbackInfo contains callback configuration
-type CreateComputePipelineAsyncCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  CreateComputePipelineAsyncCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type CreateRenderPipelineAsyncCallback func(status CreatePipelineAsyncStatus, pipeline RenderPipeline, message string)
-
-// CreateRenderPipelineAsyncCallbackInfo contains callback configuration
-type CreateRenderPipelineAsyncCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  CreateRenderPipelineAsyncCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type DeviceLostCallback func(device Device, reason DeviceLostReason, message string)
-
-// DeviceLostCallbackInfo contains callback configuration
-type DeviceLostCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  DeviceLostCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type PopErrorScopeCallback func(status PopErrorScopeStatus, errorType ErrorType, message string)
-
-// PopErrorScopeCallbackInfo contains callback configuration
-type PopErrorScopeCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  PopErrorScopeCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type QueueWorkDoneCallback func(status QueueWorkDoneStatus, message string)
-
-// QueueWorkDoneCallbackInfo contains callback configuration
-type QueueWorkDoneCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  QueueWorkDoneCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type RequestAdapterCallback func(status RequestAdapterStatus, adapter Adapter, message string)
-
-// RequestAdapterCallbackInfo contains callback configuration
-type RequestAdapterCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  RequestAdapterCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type RequestDeviceCallback func(status RequestDeviceStatus, device Device, message string)
-
-// RequestDeviceCallbackInfo contains callback configuration
-type RequestDeviceCallbackInfo struct {
-	Mode      CallbackMode
-	Callback  RequestDeviceCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
-type UncapturedErrorCallback func(device Device, errorType ErrorType, message string)
-
-// UncapturedErrorCallbackInfo contains callback configuration
-type UncapturedErrorCallbackInfo struct {
-	Callback  UncapturedErrorCallback
-	Userdata1 unsafe.Pointer
-	Userdata2 unsafe.Pointer
-}
-
+// ===== Structs =====
 type AdapterInfo struct {
 	Vendor          string
 	Architecture    string
@@ -1434,12 +1223,10 @@ type DepthStencilState struct {
 }
 
 type DeviceDescriptor struct {
-	Label                       string
-	RequiredFeatures            []FeatureName
-	RequiredLimits              Limits
-	DefaultQueue                QueueDescriptor
-	DeviceLostCallbackInfo      DeviceLostCallbackInfo
-	UncapturedErrorCallbackInfo UncapturedErrorCallbackInfo
+	Label            string
+	RequiredFeatures []FeatureName
+	RequiredLimits   Limits
+	DefaultQueue     QueueDescriptor
 }
 
 // Struct holding a future to wait on, and a `completed` boolean flag.
@@ -1575,20 +1362,30 @@ type RenderPipelineDescriptor struct {
 type GPU interface {
 	CreateInstance(descriptor InstanceDescriptor) (Instance, error)
 
-	GetInstanceFeatures(features SupportedInstanceFeatures) error
+	InstanceFeatures() (*SupportedInstanceFeatures, error)
 
-	GetInstanceLimits(limits InstanceLimits) (Status, error)
+	InstanceLimits() (*InstanceLimits, error)
 
 	HasInstanceFeature(feature InstanceFeatureName) (bool, error)
 }
 
+// ===== Objects =====
+
+// Instance interface
+type Instance interface {
+	CreateSurface(descriptor SurfaceDescriptor) (Surface, error)
+	WGSLLanguageFeatures() (*SupportedWGSLLanguageFeatures, error)
+	HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool, error)
+	RequestAdapter(options RequestAdapterOptions) (Adapter, error)
+}
+
 // Adapter interface
 type Adapter interface {
-	GetFeatures(features SupportedFeatures) error
-	GetInfo(info AdapterInfo) (Status, error)
-	GetLimits(limits Limits) (Status, error)
+	Features() (*SupportedFeatures, error)
+	Info() (*AdapterInfo, error)
+	Limits() (*Limits, error)
 	HasFeature(feature FeatureName) (bool, error)
-	RequestDevice(descriptor DeviceDescriptor, callback RequestDeviceCallbackInfo) Future
+	RequestDevice(descriptor DeviceDescriptor) (Device, error)
 }
 
 // BindGroup interface
@@ -1604,16 +1401,15 @@ type BindGroupLayout interface {
 // Buffer interface
 type Buffer interface {
 	Destroy() error
-	GetConstMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
-	GetMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
-	GetMapState() (BufferMapState, error)
-	GetSize() (uint64, error)
-	GetUsage() (BufferUsage, error)
-	MapAsync(mode MapMode, offset uintptr, size uintptr, callback BufferMapCallbackInfo) Future
-	ReadMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error)
+	ConstMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
+	MappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
+	MapState() (BufferMapState, error)
+	Size() (uint64, error)
+	Usage() (BufferUsage, error)
+	ReadMappedRange(offset uintptr, data *unsafe.Pointer, size uintptr) error
 	SetLabel(label string) error
 	Unmap() error
-	WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error)
+	WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) error
 }
 
 // CommandBuffer interface
@@ -1654,7 +1450,7 @@ type ComputePassEncoder interface {
 
 // ComputePipeline interface
 type ComputePipeline interface {
-	GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
+	BindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
 	SetLabel(label string) error
 }
 
@@ -1669,35 +1465,23 @@ type Device interface {
 	CreateBuffer(descriptor BufferDescriptor) (Buffer, error)
 	CreateCommandEncoder(descriptor CommandEncoderDescriptor) (CommandEncoder, error)
 	CreateComputePipeline(descriptor ComputePipelineDescriptor) (ComputePipeline, error)
-	CreateComputePipelineAsync(descriptor ComputePipelineDescriptor, callback CreateComputePipelineAsyncCallbackInfo) Future
 	CreatePipelineLayout(descriptor PipelineLayoutDescriptor) (PipelineLayout, error)
 	CreateQuerySet(descriptor QuerySetDescriptor) (QuerySet, error)
 	CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) (RenderBundleEncoder, error)
 	CreateRenderPipeline(descriptor RenderPipelineDescriptor) (RenderPipeline, error)
-	CreateRenderPipelineAsync(descriptor RenderPipelineDescriptor, callback CreateRenderPipelineAsyncCallbackInfo) Future
 	CreateSampler(descriptor SamplerDescriptor) (Sampler, error)
 	CreateShaderModule(descriptor ShaderModuleDescriptor) (ShaderModule, error)
 	CreateTexture(descriptor TextureDescriptor) (Texture, error)
 	Destroy() error
-	GetAdapterInfo(adapterInfo AdapterInfo) (Status, error)
-	GetFeatures(features SupportedFeatures) error
-	GetLimits(limits Limits) (Status, error)
-	GetLostFuture() (Future, error)
-	GetQueue() (Queue, error)
+	AdapterInfo() (*AdapterInfo, error)
+	Features() (*SupportedFeatures, error)
+	Limits() (*Limits, error)
+	LostFuture() (Future, error)
+	Queue() (Queue, error)
 	HasFeature(feature FeatureName) (bool, error)
-	PopErrorScope(callback PopErrorScopeCallbackInfo) Future
+	PopErrorScope() error
 	PushErrorScope(filter ErrorFilter) error
 	SetLabel(label string) error
-}
-
-// Instance interface
-type Instance interface {
-	CreateSurface(descriptor SurfaceDescriptor) (Surface, error)
-	GetWGSLLanguageFeatures(features SupportedWGSLLanguageFeatures) (Status, error)
-	HasWGSLLanguageFeature(feature WGSLLanguageFeatureName) (bool, error)
-	ProcessEvents() error
-	RequestAdapter(options RequestAdapterOptions, callback RequestAdapterCallbackInfo) Future
-	WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutNS uint64) (WaitStatus, error)
 }
 
 // PipelineLayout interface
@@ -1708,14 +1492,14 @@ type PipelineLayout interface {
 // QuerySet interface
 type QuerySet interface {
 	Destroy() error
-	GetCount() (uint32, error)
-	GetType() (QueryType, error)
+	Count() (uint32, error)
+	Type() (QueryType, error)
 	SetLabel(label string) error
 }
 
 // Queue interface
 type Queue interface {
-	OnSubmittedWorkDone(callback QueueWorkDoneCallbackInfo) Future
+	OnSubmittedWorkDone() error
 	SetLabel(label string) error
 	Submit(commands []CommandBuffer) error
 	WriteBuffer(buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr) error
@@ -1770,7 +1554,7 @@ type RenderPassEncoder interface {
 
 // RenderPipeline interface
 type RenderPipeline interface {
-	GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
+	BindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
 	SetLabel(label string) error
 }
 
@@ -1781,7 +1565,7 @@ type Sampler interface {
 
 // ShaderModule interface
 type ShaderModule interface {
-	GetCompilationInfo(callback CompilationInfoCallbackInfo) Future
+	CompilationInfo() error
 	SetLabel(label string) error
 }
 
@@ -1789,9 +1573,9 @@ type ShaderModule interface {
 // Surface interface
 type Surface interface {
 	Configure(config SurfaceConfiguration) error
-	GetCapabilities(adapter Adapter, capabilities SurfaceCapabilities) (Status, error)
-	GetCurrentTexture(surfaceTexture SurfaceTexture) error
-	Present() (Status, error)
+	Capabilities(adapter Adapter) (*SurfaceCapabilities, error)
+	CurrentTexture() (*SurfaceTexture, error)
+	Present() error
 	SetLabel(label string) error
 	Unconfigure() error
 }
@@ -1800,14 +1584,14 @@ type Surface interface {
 type Texture interface {
 	CreateView(descriptor TextureViewDescriptor) (TextureView, error)
 	Destroy() error
-	GetDepthOrArrayLayers() (uint32, error)
-	GetDimension() (TextureDimension, error)
-	GetFormat() (TextureFormat, error)
-	GetHeight() (uint32, error)
-	GetMipLevelCount() (uint32, error)
-	GetSampleCount() (uint32, error)
-	GetUsage() (TextureUsage, error)
-	GetWidth() (uint32, error)
+	DepthOrArrayLayers() (uint32, error)
+	Dimension() (TextureDimension, error)
+	Format() (TextureFormat, error)
+	Height() (uint32, error)
+	MipLevelCount() (uint32, error)
+	SampleCount() (uint32, error)
+	Usage() (TextureUsage, error)
+	Width() (uint32, error)
 	SetLabel(label string) error
 }
 
