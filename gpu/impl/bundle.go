@@ -12,7 +12,6 @@ var _ RenderBundle = (*renderBundle)(nil)
 // renderBundle implements the RenderBundle interface
 type renderBundle struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	commands  []interface{} // Store rendering commands
 	destroyed bool
@@ -31,40 +30,9 @@ func (rb *renderBundle) SetLabel(label string) error {
 	return nil
 }
 
-// AddRef increments the reference count
-func (rb *renderBundle) AddRef() error {
-	rb.mu.Lock()
-	defer rb.mu.Unlock()
-
-	if rb.destroyed {
-		return fmt.Errorf("render bundle has been destroyed")
-	}
-
-	rb.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (rb *renderBundle) Release() error {
-	rb.mu.Lock()
-	defer rb.mu.Unlock()
-
-	if rb.destroyed {
-		return fmt.Errorf("render bundle has been destroyed")
-	}
-
-	rb.refCount--
-	if rb.refCount <= 0 {
-		rb.destroyed = true
-	}
-
-	return nil
-}
-
 // renderBundleEncoder implements the RenderBundleEncoder interface
 type renderBundleEncoder struct {
 	mu                 sync.RWMutex
-	refCount           int32
 	label              string
 	colorFormats       []TextureFormat
 	depthStencilFormat TextureFormat
@@ -176,7 +144,6 @@ func (rbe *renderBundleEncoder) Finish(descriptor RenderBundleDescriptor) (Rende
 	rbe.finished = true
 
 	bundle := &renderBundle{
-		refCount: 1,
 		label:    descriptor.Label,
 		commands: []interface{}{}, // Copy commands here in real implementation
 	}
@@ -336,40 +303,9 @@ func (rbe *renderBundleEncoder) SetVertexBuffer(slot uint32, buffer Buffer, offs
 	return nil
 }
 
-// AddRef increments the reference count
-func (rbe *renderBundleEncoder) AddRef() error {
-	rbe.mu.Lock()
-	defer rbe.mu.Unlock()
-
-	if rbe.destroyed {
-		return fmt.Errorf("render bundle encoder has been destroyed")
-	}
-
-	rbe.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (rbe *renderBundleEncoder) Release() error {
-	rbe.mu.Lock()
-	defer rbe.mu.Unlock()
-
-	if rbe.destroyed {
-		return fmt.Errorf("render bundle encoder has been destroyed")
-	}
-
-	rbe.refCount--
-	if rbe.refCount <= 0 {
-		rbe.destroyed = true
-	}
-
-	return nil
-}
-
 // NewRenderBundle creates a new render bundle (public factory function)
 func NewRenderBundle(descriptor RenderBundleDescriptor) RenderBundle {
 	return &renderBundle{
-		refCount: 1,
 		label:    descriptor.Label,
 		commands: []interface{}{},
 	}
@@ -378,7 +314,6 @@ func NewRenderBundle(descriptor RenderBundleDescriptor) RenderBundle {
 // NewRenderBundleEncoder creates a new render bundle encoder (public factory function)
 func NewRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) RenderBundleEncoder {
 	return &renderBundleEncoder{
-		refCount:           1,
 		label:              descriptor.Label,
 		colorFormats:       descriptor.ColorFormats,
 		depthStencilFormat: descriptor.DepthStencilFormat,

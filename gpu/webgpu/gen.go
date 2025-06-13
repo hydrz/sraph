@@ -523,27 +523,6 @@ func SortAndTransform(yml *Yml) {
 			return strings.Compare(UpperConcatCase(a.Name), UpperConcatCase(b.Name))
 		})
 	}
-
-	// Add add_ref and release methods for objects
-	for i, o := range yml.Objects {
-		if !o.Extended && !o.IsStruct {
-			yml.Objects[i].Methods = append(yml.Objects[i].Methods,
-				Function{
-					Base: Base{
-						Name:      "add_ref",
-						Namespace: o.Namespace,
-						Doc:       "TODO",
-					},
-				},
-				Function{
-					Base: Base{
-						Name:      "release",
-						Namespace: o.Namespace,
-						Doc:       "TODO",
-					},
-				})
-		}
-	}
 }
 
 // Generator methods

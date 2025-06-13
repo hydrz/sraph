@@ -13,7 +13,6 @@ type DebugInfo struct {
 	ObjectID    uint64
 	Label       string
 	CreatedAt   time.Time
-	RefCount    int32
 	IsDestroyed bool
 }
 
@@ -61,28 +60,10 @@ func RegisterDebugObject(objectType, label string) uint64 {
 		ObjectID:    objectID,
 		Label:       label,
 		CreatedAt:   time.Now(),
-		RefCount:    1,
 		IsDestroyed: false,
 	}
 
 	return objectID
-}
-
-// UpdateRefCount updates the reference count for an object
-func UpdateDebugRefCount(objectID uint64, delta int32) {
-	if !globalDebugManager.enabled || objectID == 0 {
-		return
-	}
-
-	globalDebugManager.mu.Lock()
-	defer globalDebugManager.mu.Unlock()
-
-	if info, exists := globalDebugManager.objects[objectID]; exists {
-		info.RefCount += delta
-		if info.RefCount <= 0 {
-			info.IsDestroyed = true
-		}
-	}
 }
 
 // GetDebugReport returns a debug report of all objects
@@ -105,8 +86,8 @@ func GetDebugReport() string {
 		}
 
 		builder.WriteString(fmt.Sprintf(
-			"[%s] %s '%s' - RefCount: %d, Created: %s\n",
-			status, info.ObjectType, info.Label, info.RefCount, info.CreatedAt.Format(time.RFC3339),
+			"[%s] %s '%s' , Created: %s\n",
+			status, info.ObjectType, info.Label, info.CreatedAt.Format(time.RFC3339),
 		))
 	}
 

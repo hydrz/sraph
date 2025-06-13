@@ -3,7 +3,6 @@ package impl
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	. "github.com/opensraph/sraph/gpu/webgpu"
@@ -14,7 +13,6 @@ var _ Instance = (*instance)(nil)
 // instance implements the Instance interface
 type instance struct {
 	mu               sync.RWMutex
-	refCount         int32
 	features         []InstanceFeatureName
 	limits           InstanceLimits
 	destroyed        bool
@@ -26,7 +24,6 @@ type instance struct {
 func NewInstance(descriptor InstanceDescriptor) *instance {
 	callbackManager := NewCallbackManager()
 	instance := &instance{
-		refCount:         1,
 		features:         descriptor.RequiredFeatures,
 		limits:           descriptor.RequiredLimits,
 		callbackManager:  callbackManager,
@@ -210,37 +207,6 @@ func (i *instance) WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutN
 	}
 
 	return WaitStatusError, fmt.Errorf("invalid future")
-}
-
-// AddRef increments the reference count
-func (i *instance) AddRef() error {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-
-	if i.destroyed {
-		return fmt.Errorf("instance has been destroyed")
-	}
-
-	atomic.AddInt32(&i.refCount, 1)
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (i *instance) Release() error {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-
-	if i.destroyed {
-		return fmt.Errorf("instance has been destroyed")
-	}
-
-	if atomic.AddInt32(&i.refCount, -1) <= 0 {
-		i.destroyed = true
-		// Shutdown callback manager when instance is destroyed
-		i.callbackManager.Shutdown()
-	}
-
-	return nil
 }
 
 // hasInstanceFeature checks if an instance feature is supported internally

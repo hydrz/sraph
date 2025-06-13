@@ -3,7 +3,6 @@ package impl
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 )
 
 // ResourceTracker tracks WebGPU resources for debugging and cleanup
@@ -17,7 +16,6 @@ type ResourceTracker struct {
 type ResourceInfo struct {
 	Type      string
 	Label     string
-	RefCount  int32
 	CreatedAt string // stack trace or timestamp
 }
 
@@ -38,7 +36,6 @@ func TrackResource(ptr uintptr, resourceType, label string) {
 	globalResourceTracker.resources[ptr] = &ResourceInfo{
 		Type:      resourceType,
 		Label:     label,
-		RefCount:  1,
 		CreatedAt: "TODO: stack trace",
 	}
 }
@@ -55,38 +52,6 @@ func UntrackResource(ptr uintptr) {
 	delete(globalResourceTracker.resources, ptr)
 }
 
-// AddResourceRef increments reference count
-func AddResourceRef(ptr uintptr) {
-	if !globalResourceTracker.enabled {
-		return
-	}
-
-	globalResourceTracker.mu.RLock()
-	resource, exists := globalResourceTracker.resources[ptr]
-	globalResourceTracker.mu.RUnlock()
-
-	if exists {
-		atomic.AddInt32(&resource.RefCount, 1)
-	}
-}
-
-// ReleaseResourceRef decrements reference count
-func ReleaseResourceRef(ptr uintptr) {
-	if !globalResourceTracker.enabled {
-		return
-	}
-
-	globalResourceTracker.mu.RLock()
-	resource, exists := globalResourceTracker.resources[ptr]
-	globalResourceTracker.mu.RUnlock()
-
-	if exists {
-		if atomic.AddInt32(&resource.RefCount, -1) <= 0 {
-			UntrackResource(ptr)
-		}
-	}
-}
-
 // GetResourceReport returns a report of all tracked resources
 func GetResourceReport() string {
 	if !globalResourceTracker.enabled {
@@ -98,7 +63,7 @@ func GetResourceReport() string {
 
 	report := fmt.Sprintf("Active WebGPU Resources: %d\n", len(globalResourceTracker.resources))
 	for ptr, info := range globalResourceTracker.resources {
-		report += fmt.Sprintf("  %x: %s '%s' (refs: %d)\n", ptr, info.Type, info.Label, info.RefCount)
+		report += fmt.Sprintf("  %x: %s '%s' \n", ptr, info.Type, info.Label)
 	}
 
 	return report

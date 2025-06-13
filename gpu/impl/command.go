@@ -12,7 +12,6 @@ var _ CommandEncoder = (*commandEncoder)(nil)
 // commandEncoder implements the CommandEncoder interface
 type commandEncoder struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	commands  []interface{} // Store commands for later execution
 	finished  bool
@@ -22,7 +21,6 @@ type commandEncoder struct {
 // NewCommandEncoder creates a new WebGPU command encoder (public factory function)
 func NewCommandEncoder(descriptor CommandEncoderDescriptor) CommandEncoder {
 	return &commandEncoder{
-		refCount: 1,
 		label:    descriptor.Label,
 		commands: []interface{}{},
 	}
@@ -42,7 +40,6 @@ func (ce *commandEncoder) BeginComputePass(descriptor ComputePassDescriptor) (Co
 	}
 
 	encoder := &computePassEncoder{
-		refCount:        1,
 		label:           descriptor.Label,
 		timestampWrites: descriptor.TimestampWrites,
 	}
@@ -64,7 +61,6 @@ func (ce *commandEncoder) BeginRenderPass(descriptor RenderPassDescriptor) (Rend
 	}
 
 	encoder := &renderPassEncoder{
-		refCount:               1,
 		label:                  descriptor.Label,
 		colorAttachments:       descriptor.ColorAttachments,
 		depthStencilAttachment: descriptor.DepthStencilAttachment,
@@ -198,7 +194,6 @@ func (ce *commandEncoder) Finish(descriptor CommandBufferDescriptor) (CommandBuf
 	ce.finished = true
 
 	commandBuffer := &commandBuffer{
-		refCount: 1,
 		label:    descriptor.Label,
 		commands: ce.commands,
 	}
@@ -317,40 +312,9 @@ func (ce *commandEncoder) WriteTimestamp(querySet QuerySet, queryIndex uint32) e
 	return nil
 }
 
-// AddRef increments the reference count
-func (ce *commandEncoder) AddRef() error {
-	ce.mu.Lock()
-	defer ce.mu.Unlock()
-
-	if ce.destroyed {
-		return fmt.Errorf("command encoder has been destroyed")
-	}
-
-	ce.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (ce *commandEncoder) Release() error {
-	ce.mu.Lock()
-	defer ce.mu.Unlock()
-
-	if ce.destroyed {
-		return fmt.Errorf("command encoder has been destroyed")
-	}
-
-	ce.refCount--
-	if ce.refCount <= 0 {
-		ce.destroyed = true
-	}
-
-	return nil
-}
-
 // commandBuffer implements the CommandBuffer interface
 type commandBuffer struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	commands  []interface{}
 	destroyed bool
@@ -359,7 +323,6 @@ type commandBuffer struct {
 // NewCommandBuffer creates a new command buffer (public factory function)
 func NewCommandBuffer(descriptor CommandBufferDescriptor) CommandBuffer {
 	return &commandBuffer{
-		refCount: 1,
 		label:    descriptor.Label,
 		commands: []interface{}{},
 	}
@@ -375,35 +338,5 @@ func (cb *commandBuffer) SetLabel(label string) error {
 	}
 
 	cb.label = label
-	return nil
-}
-
-// AddRef increments the reference count
-func (cb *commandBuffer) AddRef() error {
-	cb.mu.Lock()
-	defer cb.mu.Unlock()
-
-	if cb.destroyed {
-		return fmt.Errorf("command buffer has been destroyed")
-	}
-
-	cb.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (cb *commandBuffer) Release() error {
-	cb.mu.Lock()
-	defer cb.mu.Unlock()
-
-	if cb.destroyed {
-		return fmt.Errorf("command buffer has been destroyed")
-	}
-
-	cb.refCount--
-	if cb.refCount <= 0 {
-		cb.destroyed = true
-	}
-
 	return nil
 }

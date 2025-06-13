@@ -78,14 +78,6 @@ func (vbw *VulkanBufferWrapper) WriteMappedRange(offset uintptr, data unsafe.Poi
 	return vbw.baseBuffer.WriteMappedRange(offset, data, size)
 }
 
-func (vbw *VulkanBufferWrapper) AddRef() error {
-	return vbw.baseBuffer.AddRef()
-}
-
-func (vbw *VulkanBufferWrapper) Release() error {
-	return vbw.baseBuffer.Release()
-}
-
 // VulkanTextureWrapper wraps Vulkan texture to implement WebGPU Texture interface
 type VulkanTextureWrapper struct {
 	vulkanTexture interface{} // Should be *vulkan.VulkanTexture
@@ -154,14 +146,6 @@ func (vtw *VulkanTextureWrapper) SetLabel(label string) error {
 	return vtw.baseTexture.SetLabel(label)
 }
 
-func (vtw *VulkanTextureWrapper) AddRef() error {
-	return vtw.baseTexture.AddRef()
-}
-
-func (vtw *VulkanTextureWrapper) Release() error {
-	return vtw.baseTexture.Release()
-}
-
 // VulkanSamplerWrapper wraps Vulkan sampler to implement WebGPU Sampler interface
 type VulkanSamplerWrapper struct {
 	vulkanSampler interface{} // Should be *vulkan.VulkanSampler
@@ -181,14 +165,6 @@ func NewVulkanSamplerWrapper(vulkanSampler interface{}, descriptor SamplerDescri
 // Delegate Sampler interface methods to base sampler
 func (vsw *VulkanSamplerWrapper) SetLabel(label string) error {
 	return vsw.baseSampler.SetLabel(label)
-}
-
-func (vsw *VulkanSamplerWrapper) AddRef() error {
-	return vsw.baseSampler.AddRef()
-}
-
-func (vsw *VulkanSamplerWrapper) Release() error {
-	return vsw.baseSampler.Release()
 }
 
 // ResourceWrapper provides a generic interface for all resource wrappers

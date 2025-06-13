@@ -13,7 +13,6 @@ var _ TextureView = (*TextureViewImpl)(nil)
 // texture implements the Texture interface
 type texture struct {
 	mu            sync.RWMutex
-	refCount      int32
 	label         string
 	usage         TextureUsage
 	dimension     TextureDimension
@@ -28,7 +27,6 @@ type texture struct {
 // NewTexture creates a new WebGPU texture
 func NewTexture(descriptor TextureDescriptor) Texture {
 	return &texture{
-		refCount:      1,
 		label:         descriptor.Label,
 		usage:         descriptor.Usage,
 		dimension:     descriptor.Dimension,
@@ -57,7 +55,6 @@ func (t *texture) CreateView(descriptor TextureViewDescriptor) (TextureView, err
 // NewTextureView creates a new texture view (factory function)
 func NewTextureView(descriptor TextureViewDescriptor, texture *texture) TextureView {
 	return &TextureViewImpl{
-		refCount:        1,
 		label:           descriptor.Label,
 		format:          descriptor.Format,
 		dimension:       descriptor.Dimension,
@@ -193,40 +190,9 @@ func (t *texture) SetLabel(label string) error {
 	return nil
 }
 
-// AddRef increments the reference count
-func (t *texture) AddRef() error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if t.destroyed {
-		return fmt.Errorf("texture has been destroyed")
-	}
-
-	t.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (t *texture) Release() error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if t.destroyed {
-		return fmt.Errorf("texture has been destroyed")
-	}
-
-	t.refCount--
-	if t.refCount <= 0 {
-		t.destroyed = true
-	}
-
-	return nil
-}
-
 // TextureViewImpl implements the TextureView interface
 type TextureViewImpl struct {
 	mu              sync.RWMutex
-	refCount        int32
 	label           string
 	format          TextureFormat
 	dimension       TextureViewDimension
@@ -250,35 +216,5 @@ func (tv *TextureViewImpl) SetLabel(label string) error {
 	}
 
 	tv.label = label
-	return nil
-}
-
-// AddRef increments the reference count
-func (tv *TextureViewImpl) AddRef() error {
-	tv.mu.Lock()
-	defer tv.mu.Unlock()
-
-	if tv.destroyed {
-		return fmt.Errorf("texture view has been destroyed")
-	}
-
-	tv.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (tv *TextureViewImpl) Release() error {
-	tv.mu.Lock()
-	defer tv.mu.Unlock()
-
-	if tv.destroyed {
-		return fmt.Errorf("texture view has been destroyed")
-	}
-
-	tv.refCount--
-	if tv.refCount <= 0 {
-		tv.destroyed = true
-	}
-
 	return nil
 }

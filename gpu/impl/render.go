@@ -12,7 +12,6 @@ var _ RenderPassEncoder = (*renderPassEncoder)(nil)
 // renderPassEncoder implements the RenderPassEncoder interface
 type renderPassEncoder struct {
 	mu                     sync.RWMutex
-	refCount               int32
 	label                  string
 	colorAttachments       []RenderPassColorAttachment
 	depthStencilAttachment RenderPassDepthStencilAttachment
@@ -25,7 +24,6 @@ type renderPassEncoder struct {
 // NewRenderPassEncoder creates a new render pass encoder (public factory function)
 func NewRenderPassEncoder(descriptor RenderPassDescriptor) RenderPassEncoder {
 	return &renderPassEncoder{
-		refCount:               1,
 		label:                  descriptor.Label,
 		colorAttachments:       descriptor.ColorAttachments,
 		depthStencilAttachment: descriptor.DepthStencilAttachment,
@@ -427,40 +425,9 @@ func (rpe *renderPassEncoder) SetViewport(x float32, y float32, width float32, h
 	return nil
 }
 
-// AddRef increments the reference count
-func (rpe *renderPassEncoder) AddRef() error {
-	rpe.mu.Lock()
-	defer rpe.mu.Unlock()
-
-	if rpe.destroyed {
-		return fmt.Errorf("render pass encoder has been destroyed")
-	}
-
-	rpe.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (rpe *renderPassEncoder) Release() error {
-	rpe.mu.Lock()
-	defer rpe.mu.Unlock()
-
-	if rpe.destroyed {
-		return fmt.Errorf("render pass encoder has been destroyed")
-	}
-
-	rpe.refCount--
-	if rpe.refCount <= 0 {
-		rpe.destroyed = true
-	}
-
-	return nil
-}
-
 // RenderPipelineImpl implements the RenderPipeline interface
 type RenderPipelineImpl struct {
 	mu           sync.RWMutex
-	refCount     int32
 	label        string
 	layout       PipelineLayout
 	vertex       VertexState
@@ -474,7 +441,6 @@ type RenderPipelineImpl struct {
 // NewRenderPipeline creates a new render pipeline (public factory function)
 func NewRenderPipeline(descriptor RenderPipelineDescriptor) RenderPipeline {
 	return &RenderPipelineImpl{
-		refCount:     1,
 		label:        descriptor.Label,
 		layout:       descriptor.Layout,
 		vertex:       descriptor.Vertex,
@@ -497,9 +463,8 @@ func (rp *RenderPipelineImpl) GetBindGroupLayout(groupIndex uint32) (BindGroupLa
 	// In a real implementation, this would return the actual bind group layout
 	// For now, create a default one
 	layout := &bindGroupLayout{
-		refCount: 1,
-		label:    fmt.Sprintf("Bind Group Layout %d", groupIndex),
-		entries:  []BindGroupLayoutEntry{},
+		label:   fmt.Sprintf("Bind Group Layout %d", groupIndex),
+		entries: []BindGroupLayoutEntry{},
 	}
 
 	return layout, nil
@@ -515,35 +480,5 @@ func (rp *RenderPipelineImpl) SetLabel(label string) error {
 	}
 
 	rp.label = label
-	return nil
-}
-
-// AddRef increments the reference count
-func (rp *RenderPipelineImpl) AddRef() error {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-
-	if rp.destroyed {
-		return fmt.Errorf("render pipeline has been destroyed")
-	}
-
-	rp.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (rp *RenderPipelineImpl) Release() error {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-
-	if rp.destroyed {
-		return fmt.Errorf("render pipeline has been destroyed")
-	}
-
-	rp.refCount--
-	if rp.refCount <= 0 {
-		rp.destroyed = true
-	}
-
 	return nil
 }

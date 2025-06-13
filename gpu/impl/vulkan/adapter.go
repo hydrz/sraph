@@ -12,7 +12,6 @@ import (
 // VulkanAdapter implements the WebGPU Adapter interface using Vulkan
 type VulkanAdapter struct {
 	mu             sync.RWMutex
-	refCount       int32
 	backend        *VulkanBackend
 	physicalDevice *VulkanPhysicalDevice
 	adapterIndex   int
@@ -26,7 +25,6 @@ func NewVulkanAdapter(backend *VulkanBackend, physicalDevice *VulkanPhysicalDevi
 	baseAdapter := impl.NewAdapter(BackendTypeVulkan, convertDeviceType(physicalDevice.Properties.DeviceType))
 
 	return &VulkanAdapter{
-		refCount:       1,
 		backend:        backend,
 		physicalDevice: physicalDevice,
 		adapterIndex:   index,
@@ -140,35 +138,6 @@ func (va *VulkanAdapter) RequestDevice(descriptor DeviceDescriptor, callback Req
 	}()
 
 	return future
-}
-
-// AddRef and Release delegate to base adapter
-func (va *VulkanAdapter) AddRef() error {
-	va.mu.Lock()
-	defer va.mu.Unlock()
-
-	if va.destroyed {
-		return fmt.Errorf("adapter has been destroyed")
-	}
-
-	va.refCount++
-	return va.baseAdapter.AddRef()
-}
-
-func (va *VulkanAdapter) Release() error {
-	va.mu.Lock()
-	defer va.mu.Unlock()
-
-	if va.destroyed {
-		return fmt.Errorf("adapter has been destroyed")
-	}
-
-	va.refCount--
-	if va.refCount <= 0 {
-		va.destroyed = true
-	}
-
-	return va.baseAdapter.Release()
 }
 
 // Private helper methods for Vulkan-specific functionality

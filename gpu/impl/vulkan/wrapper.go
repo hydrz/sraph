@@ -177,14 +177,6 @@ func (vdw *VulkanDeviceWrapper) SetLabel(label string) error {
 	return vdw.baseDevice.SetLabel(label)
 }
 
-func (vdw *VulkanDeviceWrapper) AddRef() error {
-	return vdw.baseDevice.AddRef()
-}
-
-func (vdw *VulkanDeviceWrapper) Release() error {
-	return vdw.baseDevice.Release()
-}
-
 // Helper function to convert Vulkan device limits
 func getVulkanDeviceLimits(vulkanDevice *VulkanDevice) Limits {
 	physicalDevice := vulkanDevice.GetPhysicalDevice()

@@ -3,7 +3,6 @@ package impl
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 
 	. "github.com/opensraph/sraph/gpu/webgpu"
 )
@@ -13,7 +12,6 @@ var _ ShaderModule = (*shaderModule)(nil)
 // shaderModule implements the ShaderModule interface
 type shaderModule struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	code      string
 	destroyed bool
@@ -22,8 +20,7 @@ type shaderModule struct {
 // newShaderModule creates a new WebGPU shader module
 func newShaderModule(descriptor ShaderModuleDescriptor) ShaderModule {
 	return &shaderModule{
-		refCount: 1,
-		label:    descriptor.Label,
+		label: descriptor.Label,
 	}
 }
 
@@ -73,28 +70,5 @@ func (sm *shaderModule) SetLabel(label string) error {
 	}
 
 	sm.label = label
-	return nil
-}
-
-// AddRef increments the reference count
-func (sm *shaderModule) AddRef() error {
-	if atomic.LoadInt32(&sm.refCount) <= 0 {
-		return fmt.Errorf("shader module has been destroyed")
-	}
-
-	atomic.AddInt32(&sm.refCount, 1)
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (sm *shaderModule) Release() error {
-	newCount := atomic.AddInt32(&sm.refCount, -1)
-	if newCount == 0 {
-		sm.mu.Lock()
-		sm.destroyed = true
-		sm.mu.Unlock()
-	} else if newCount < 0 {
-		return fmt.Errorf("reference count cannot be negative")
-	}
 	return nil
 }

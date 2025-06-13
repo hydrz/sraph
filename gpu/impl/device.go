@@ -13,7 +13,6 @@ var _ Device = (*device)(nil)
 // device implements the Device interface
 type device struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	features  []FeatureName
 	limits    Limits
@@ -24,7 +23,6 @@ type device struct {
 // NewDevice creates a new WebGPU device
 func NewDevice(descriptor DeviceDescriptor) Device {
 	d := &device{
-		refCount:  1,
 		label:     descriptor.Label,
 		features:  descriptor.RequiredFeatures,
 		limits:    descriptor.RequiredLimits,
@@ -44,10 +42,9 @@ func (d *device) CreateBindGroup(descriptor BindGroupDescriptor) (BindGroup, err
 	}
 
 	bindGroup := &bindGroup{
-		refCount: 1,
-		label:    descriptor.Label,
-		layout:   descriptor.Layout,
-		entries:  descriptor.Entries,
+		label:   descriptor.Label,
+		layout:  descriptor.Layout,
+		entries: descriptor.Entries,
 	}
 
 	return bindGroup, nil
@@ -63,9 +60,9 @@ func (d *device) CreateBindGroupLayout(descriptor BindGroupLayoutDescriptor) (Bi
 	}
 
 	layout := &bindGroupLayout{
-		refCount: 1,
-		label:    descriptor.Label,
-		entries:  descriptor.Entries,
+
+		label:   descriptor.Label,
+		entries: descriptor.Entries,
 	}
 
 	return layout, nil
@@ -81,7 +78,7 @@ func (d *device) CreateBuffer(descriptor BufferDescriptor) (Buffer, error) {
 	}
 
 	buffer := &buffer{
-		refCount:         1,
+
 		label:            descriptor.Label,
 		usage:            descriptor.Usage,
 		size:             descriptor.Size,
@@ -107,8 +104,8 @@ func (d *device) CreateCommandEncoder(descriptor CommandEncoderDescriptor) (Comm
 	}
 
 	encoder := &commandEncoder{
-		refCount: 1,
-		label:    descriptor.Label,
+
+		label: descriptor.Label,
 	}
 
 	return encoder, nil
@@ -124,10 +121,10 @@ func (d *device) CreateComputePipeline(descriptor ComputePipelineDescriptor) (Co
 	}
 
 	pipeline := &ComputePipelineImpl{
-		refCount: 1,
-		label:    descriptor.Label,
-		layout:   descriptor.Layout,
-		compute:  descriptor.Compute,
+
+		label:   descriptor.Label,
+		layout:  descriptor.Layout,
+		compute: descriptor.Compute,
 	}
 
 	return pipeline, nil
@@ -155,10 +152,10 @@ func (d *device) CreateComputePipelineAsync(descriptor ComputePipelineDescriptor
 		time.Sleep(time.Millisecond * 5) // Simulate work
 
 		pipeline := &ComputePipelineImpl{
-			refCount: 1,
-			label:    descriptor.Label,
-			layout:   descriptor.Layout,
-			compute:  descriptor.Compute,
+
+			label:   descriptor.Label,
+			layout:  descriptor.Layout,
+			compute: descriptor.Compute,
 		}
 
 		// Register success callback
@@ -179,7 +176,7 @@ func (d *device) CreatePipelineLayout(descriptor PipelineLayoutDescriptor) (Pipe
 	}
 
 	layout := &pipelineLayout{
-		refCount:         1,
+
 		label:            descriptor.Label,
 		bindGroupLayouts: descriptor.BindGroupLayouts,
 	}
@@ -197,10 +194,10 @@ func (d *device) CreateQuerySet(descriptor QuerySetDescriptor) (QuerySet, error)
 	}
 
 	querySet := &querySet{
-		refCount: 1,
-		label:    descriptor.Label,
-		qType:    descriptor.Type,
-		count:    descriptor.Count,
+
+		label: descriptor.Label,
+		qType: descriptor.Type,
+		count: descriptor.Count,
 	}
 
 	return querySet, nil
@@ -216,7 +213,6 @@ func (d *device) CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescrip
 	}
 
 	encoder := &renderBundleEncoder{
-		refCount:           1,
 		label:              descriptor.Label,
 		colorFormats:       descriptor.ColorFormats,
 		depthStencilFormat: descriptor.DepthStencilFormat,
@@ -236,7 +232,6 @@ func (d *device) CreateRenderPipeline(descriptor RenderPipelineDescriptor) (Rend
 	}
 
 	pipeline := &RenderPipelineImpl{
-		refCount:     1,
 		label:        descriptor.Label,
 		layout:       descriptor.Layout,
 		vertex:       descriptor.Vertex,
@@ -271,7 +266,6 @@ func (d *device) CreateRenderPipelineAsync(descriptor RenderPipelineDescriptor, 
 		time.Sleep(time.Millisecond * 5) // Simulate work
 
 		pipeline := &RenderPipelineImpl{
-			refCount:     1,
 			label:        descriptor.Label,
 			layout:       descriptor.Layout,
 			vertex:       descriptor.Vertex,
@@ -299,7 +293,6 @@ func (d *device) CreateSampler(descriptor SamplerDescriptor) (Sampler, error) {
 	}
 
 	sampler := &sampler{
-		refCount:      1,
 		label:         descriptor.Label,
 		addressModeU:  descriptor.AddressModeU,
 		addressModeV:  descriptor.AddressModeV,
@@ -326,8 +319,8 @@ func (d *device) CreateShaderModule(descriptor ShaderModuleDescriptor) (ShaderMo
 	}
 
 	shaderModule := &shaderModule{
-		refCount: 1,
-		label:    descriptor.Label,
+
+		label: descriptor.Label,
 	}
 
 	return shaderModule, nil
@@ -343,7 +336,6 @@ func (d *device) CreateTexture(descriptor TextureDescriptor) (Texture, error) {
 	}
 
 	texture := &texture{
-		refCount:      1,
 		label:         descriptor.Label,
 		usage:         descriptor.Usage,
 		dimension:     descriptor.Dimension,
@@ -503,35 +495,5 @@ func (d *device) SetLabel(label string) error {
 	}
 
 	d.label = label
-	return nil
-}
-
-// AddRef increments the reference count
-func (d *device) AddRef() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if d.destroyed {
-		return fmt.Errorf("device has been destroyed")
-	}
-
-	d.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (d *device) Release() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if d.destroyed {
-		return fmt.Errorf("device has been destroyed")
-	}
-
-	d.refCount--
-	if d.refCount <= 0 {
-		d.destroyed = true
-	}
-
 	return nil
 }

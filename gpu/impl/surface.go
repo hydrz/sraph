@@ -12,7 +12,6 @@ var _ Surface = (*surface)(nil)
 // surface implements the Surface interface
 type surface struct {
 	mu           sync.RWMutex
-	refCount     int32
 	label        string
 	configured   bool
 	config       SurfaceConfiguration
@@ -23,7 +22,6 @@ type surface struct {
 // newSurface creates a new WebGPU surface
 func newSurface(label string) Surface {
 	return &surface{
-		refCount:   1,
 		label:      label,
 		configured: false,
 		capabilities: SurfaceCapabilities{
@@ -118,7 +116,6 @@ func (s *surface) GetCurrentTexture(surfaceTexture SurfaceTexture) error {
 
 	// Create a new texture for the current frame
 	texture := &texture{
-		refCount:      1,
 		label:         "Surface Texture",
 		usage:         s.config.Usage,
 		dimension:     TextureDimension2D,
@@ -174,35 +171,5 @@ func (s *surface) Unconfigure() error {
 	}
 
 	s.configured = false
-	return nil
-}
-
-// AddRef increments the reference count
-func (s *surface) AddRef() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.destroyed {
-		return fmt.Errorf("surface has been destroyed")
-	}
-
-	s.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (s *surface) Release() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.destroyed {
-		return fmt.Errorf("surface has been destroyed")
-	}
-
-	s.refCount--
-	if s.refCount <= 0 {
-		s.destroyed = true
-	}
-
 	return nil
 }

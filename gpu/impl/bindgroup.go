@@ -13,7 +13,6 @@ var _ BindGroupLayout = (*bindGroupLayout)(nil)
 // bindGroup implements the BindGroup interface
 type bindGroup struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	layout    BindGroupLayout
 	entries   []BindGroupEntry
@@ -33,50 +32,18 @@ func (bg *bindGroup) SetLabel(label string) error {
 	return nil
 }
 
-// AddRef increments the reference count
-func (bg *bindGroup) AddRef() error {
-	bg.mu.Lock()
-	defer bg.mu.Unlock()
-
-	if bg.destroyed {
-		return fmt.Errorf("bind group has been destroyed")
-	}
-
-	bg.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (bg *bindGroup) Release() error {
-	bg.mu.Lock()
-	defer bg.mu.Unlock()
-
-	if bg.destroyed {
-		return fmt.Errorf("bind group has been destroyed")
-	}
-
-	bg.refCount--
-	if bg.refCount <= 0 {
-		bg.destroyed = true
-	}
-
-	return nil
-}
-
 // NewBindGroup creates a new WebGPU bind group (public factory function)
 func NewBindGroup(descriptor BindGroupDescriptor) BindGroup {
 	return &bindGroup{
-		refCount: 1,
-		label:    descriptor.Label,
-		layout:   descriptor.Layout,
-		entries:  descriptor.Entries,
+		label:   descriptor.Label,
+		layout:  descriptor.Layout,
+		entries: descriptor.Entries,
 	}
 }
 
 // bindGroupLayout implements the BindGroupLayout interface
 type bindGroupLayout struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	entries   []BindGroupLayoutEntry
 	destroyed bool
@@ -95,41 +62,10 @@ func (bgl *bindGroupLayout) SetLabel(label string) error {
 	return nil
 }
 
-// AddRef increments the reference count
-func (bgl *bindGroupLayout) AddRef() error {
-	bgl.mu.Lock()
-	defer bgl.mu.Unlock()
-
-	if bgl.destroyed {
-		return fmt.Errorf("bind group layout has been destroyed")
-	}
-
-	bgl.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (bgl *bindGroupLayout) Release() error {
-	bgl.mu.Lock()
-	defer bgl.mu.Unlock()
-
-	if bgl.destroyed {
-		return fmt.Errorf("bind group layout has been destroyed")
-	}
-
-	bgl.refCount--
-	if bgl.refCount <= 0 {
-		bgl.destroyed = true
-	}
-
-	return nil
-}
-
 // NewBindGroupLayout creates a new WebGPU bind group layout (public factory function)
 func NewBindGroupLayout(descriptor BindGroupLayoutDescriptor) BindGroupLayout {
 	return &bindGroupLayout{
-		refCount: 1,
-		label:    descriptor.Label,
-		entries:  descriptor.Entries,
+		label:   descriptor.Label,
+		entries: descriptor.Entries,
 	}
 }

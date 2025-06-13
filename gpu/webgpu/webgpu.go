@@ -1589,22 +1589,16 @@ type Adapter interface {
 	GetLimits(limits Limits) (Status, error)
 	HasFeature(feature FeatureName) (bool, error)
 	RequestDevice(descriptor DeviceDescriptor, callback RequestDeviceCallbackInfo) Future
-	AddRef() error
-	Release() error
 }
 
 // BindGroup interface
 type BindGroup interface {
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // BindGroupLayout interface
 type BindGroupLayout interface {
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // Buffer interface
@@ -1620,15 +1614,11 @@ type Buffer interface {
 	SetLabel(label string) error
 	Unmap() error
 	WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) (Status, error)
-	AddRef() error
-	Release() error
 }
 
 // CommandBuffer interface
 type CommandBuffer interface {
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // CommandEncoder interface
@@ -1647,8 +1637,6 @@ type CommandEncoder interface {
 	ResolveQuerySet(querySet QuerySet, firstQuery uint32, queryCount uint32, destination Buffer, destinationOffset uint64) error
 	SetLabel(label string) error
 	WriteTimestamp(querySet QuerySet, queryIndex uint32) error
-	AddRef() error
-	Release() error
 }
 
 // ComputePassEncoder interface
@@ -1662,16 +1650,12 @@ type ComputePassEncoder interface {
 	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
 	SetLabel(label string) error
 	SetPipeline(pipeline ComputePipeline) error
-	AddRef() error
-	Release() error
 }
 
 // ComputePipeline interface
 type ComputePipeline interface {
 	GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // TODO
@@ -1704,8 +1688,6 @@ type Device interface {
 	PopErrorScope(callback PopErrorScopeCallbackInfo) Future
 	PushErrorScope(filter ErrorFilter) error
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // Instance interface
@@ -1716,15 +1698,11 @@ type Instance interface {
 	ProcessEvents() error
 	RequestAdapter(options RequestAdapterOptions, callback RequestAdapterCallbackInfo) Future
 	WaitAny(futureCount uintptr, futures FutureWaitInfo, timeoutNS uint64) (WaitStatus, error)
-	AddRef() error
-	Release() error
 }
 
 // PipelineLayout interface
 type PipelineLayout interface {
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // QuerySet interface
@@ -1733,8 +1711,6 @@ type QuerySet interface {
 	GetCount() (uint32, error)
 	GetType() (QueryType, error)
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // Queue interface
@@ -1744,15 +1720,11 @@ type Queue interface {
 	Submit(commands []CommandBuffer) error
 	WriteBuffer(buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr) error
 	WriteTexture(destination TexelCopyTextureInfo, data unsafe.Pointer, dataSize uintptr, dataLayout TexelCopyBufferLayout, writeSize Extent3D) error
-	AddRef() error
-	Release() error
 }
 
 // RenderBundle interface
 type RenderBundle interface {
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // RenderBundleEncoder interface
@@ -1770,8 +1742,6 @@ type RenderBundleEncoder interface {
 	SetLabel(label string) error
 	SetPipeline(pipeline RenderPipeline) error
 	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error
-	AddRef() error
-	Release() error
 }
 
 // RenderPassEncoder interface
@@ -1796,31 +1766,23 @@ type RenderPassEncoder interface {
 	SetStencilReference(reference uint32) error
 	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error
 	SetViewport(x float32, y float32, width float32, height float32, minDepth float32, maxDepth float32) error
-	AddRef() error
-	Release() error
 }
 
 // RenderPipeline interface
 type RenderPipeline interface {
 	GetBindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // Sampler interface
 type Sampler interface {
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // ShaderModule interface
 type ShaderModule interface {
 	GetCompilationInfo(callback CompilationInfoCallbackInfo) Future
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // An object used to continuously present image data to the user, see @ref Surfaces for more details.
@@ -1832,8 +1794,6 @@ type Surface interface {
 	Present() (Status, error)
 	SetLabel(label string) error
 	Unconfigure() error
-	AddRef() error
-	Release() error
 }
 
 // Texture interface
@@ -1849,13 +1809,9 @@ type Texture interface {
 	GetUsage() (TextureUsage, error)
 	GetWidth() (uint32, error)
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }
 
 // TextureView interface
 type TextureView interface {
 	SetLabel(label string) error
-	AddRef() error
-	Release() error
 }

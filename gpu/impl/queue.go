@@ -13,7 +13,6 @@ var _ Queue = (*queueImp)(nil)
 // queueImp implements the Queue interface
 type queueImp struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	destroyed bool
 }
@@ -21,8 +20,7 @@ type queueImp struct {
 // newQueue creates a new WebGPU queue
 func newQueue(descriptor QueueDescriptor) Queue {
 	return &queueImp{
-		refCount: 1,
-		label:    descriptor.Label,
+		label: descriptor.Label,
 	}
 }
 
@@ -120,36 +118,6 @@ func (q *queueImp) WriteTexture(destination TexelCopyTextureInfo, data unsafe.Po
 	_ = dataSize
 	_ = dataLayout
 	_ = writeSize
-
-	return nil
-}
-
-// AddRef increments the reference count
-func (q *queueImp) AddRef() error {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if q.destroyed {
-		return fmt.Errorf("queue has been destroyed")
-	}
-
-	q.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (q *queueImp) Release() error {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if q.destroyed {
-		return fmt.Errorf("queue has been destroyed")
-	}
-
-	q.refCount--
-	if q.refCount <= 0 {
-		q.destroyed = true
-	}
 
 	return nil
 }

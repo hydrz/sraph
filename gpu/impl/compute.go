@@ -12,7 +12,6 @@ var _ ComputePassEncoder = (*computePassEncoder)(nil)
 // computePassEncoder implements the ComputePassEncoder interface
 type computePassEncoder struct {
 	mu              sync.RWMutex
-	refCount        int32
 	label           string
 	timestampWrites PassTimestampWrites
 	ended           bool
@@ -185,40 +184,9 @@ func (cpe *computePassEncoder) SetPipeline(pipeline ComputePipeline) error {
 	return nil
 }
 
-// AddRef increments the reference count
-func (cpe *computePassEncoder) AddRef() error {
-	cpe.mu.Lock()
-	defer cpe.mu.Unlock()
-
-	if cpe.destroyed {
-		return fmt.Errorf("compute pass encoder has been destroyed")
-	}
-
-	cpe.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (cpe *computePassEncoder) Release() error {
-	cpe.mu.Lock()
-	defer cpe.mu.Unlock()
-
-	if cpe.destroyed {
-		return fmt.Errorf("compute pass encoder has been destroyed")
-	}
-
-	cpe.refCount--
-	if cpe.refCount <= 0 {
-		cpe.destroyed = true
-	}
-
-	return nil
-}
-
 // ComputePipelineImpl implements the ComputePipeline interface
 type ComputePipelineImpl struct {
 	mu        sync.RWMutex
-	refCount  int32
 	label     string
 	layout    PipelineLayout
 	compute   ComputeState
@@ -237,9 +205,8 @@ func (cp *ComputePipelineImpl) GetBindGroupLayout(groupIndex uint32) (BindGroupL
 	// In a real implementation, this would return the actual bind group layout
 	// For now, create a default one
 	layout := &bindGroupLayout{
-		refCount: 1,
-		label:    fmt.Sprintf("Bind Group Layout %d", groupIndex),
-		entries:  []BindGroupLayoutEntry{},
+		label:   fmt.Sprintf("Bind Group Layout %d", groupIndex),
+		entries: []BindGroupLayoutEntry{},
 	}
 
 	return layout, nil
@@ -258,40 +225,9 @@ func (cp *ComputePipelineImpl) SetLabel(label string) error {
 	return nil
 }
 
-// AddRef increments the reference count
-func (cp *ComputePipelineImpl) AddRef() error {
-	cp.mu.Lock()
-	defer cp.mu.Unlock()
-
-	if cp.destroyed {
-		return fmt.Errorf("compute pipeline has been destroyed")
-	}
-
-	cp.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (cp *ComputePipelineImpl) Release() error {
-	cp.mu.Lock()
-	defer cp.mu.Unlock()
-
-	if cp.destroyed {
-		return fmt.Errorf("compute pipeline has been destroyed")
-	}
-
-	cp.refCount--
-	if cp.refCount <= 0 {
-		cp.destroyed = true
-	}
-
-	return nil
-}
-
 // NewComputePassEncoder creates a new compute pass encoder (public factory function)
 func NewComputePassEncoder(descriptor ComputePassDescriptor) ComputePassEncoder {
 	return &computePassEncoder{
-		refCount:        1,
 		label:           descriptor.Label,
 		timestampWrites: descriptor.TimestampWrites,
 	}
@@ -300,9 +236,8 @@ func NewComputePassEncoder(descriptor ComputePassDescriptor) ComputePassEncoder 
 // NewComputePipeline creates a new compute pipeline (public factory function)
 func NewComputePipeline(descriptor ComputePipelineDescriptor) ComputePipeline {
 	return &ComputePipelineImpl{
-		refCount: 1,
-		label:    descriptor.Label,
-		layout:   descriptor.Layout,
-		compute:  descriptor.Compute,
+		label:   descriptor.Label,
+		layout:  descriptor.Layout,
+		compute: descriptor.Compute,
 	}
 }

@@ -13,7 +13,6 @@ var _ Adapter = (*adapter)(nil)
 // adapter implements the Adapter interface
 type adapter struct {
 	mu          sync.RWMutex
-	refCount    int32
 	backendType BackendType
 	adapterType AdapterType
 	features    []FeatureName
@@ -25,7 +24,6 @@ type adapter struct {
 // NewAdapter creates a new WebGPU adapter
 func NewAdapter(backendType BackendType, adapterType AdapterType) Adapter {
 	adapter := &adapter{
-		refCount:    1,
 		backendType: backendType,
 		adapterType: adapterType,
 		features: []FeatureName{
@@ -141,34 +139,4 @@ func (a *adapter) RequestDevice(descriptor DeviceDescriptor, callback RequestDev
 	}()
 
 	return future
-}
-
-// AddRef increments the reference count
-func (a *adapter) AddRef() error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if a.destroyed {
-		return fmt.Errorf("adapter has been destroyed")
-	}
-
-	a.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (a *adapter) Release() error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if a.destroyed {
-		return fmt.Errorf("adapter has been destroyed")
-	}
-
-	a.refCount--
-	if a.refCount <= 0 {
-		a.destroyed = true
-	}
-
-	return nil
 }

@@ -13,7 +13,6 @@ var _ Buffer = (*buffer)(nil)
 // buffer implements the Buffer interface
 type buffer struct {
 	mu               sync.RWMutex
-	refCount         int32
 	label            string
 	usage            BufferUsage
 	size             uint64
@@ -26,7 +25,6 @@ type buffer struct {
 // NewBuffer creates a new WebGPU buffer
 func NewBuffer(descriptor BufferDescriptor) Buffer {
 	buffer := &buffer{
-		refCount:         1,
 		label:            descriptor.Label,
 		usage:            descriptor.Usage,
 		size:             descriptor.Size,
@@ -262,35 +260,4 @@ func (b *buffer) WriteMappedRange(offset uintptr, data unsafe.Pointer, size uint
 	copy(dst, src)
 
 	return StatusSuccess, nil
-}
-
-// AddRef increments the reference count
-func (b *buffer) AddRef() error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	if b.destroyed {
-		return fmt.Errorf("buffer has been destroyed")
-	}
-
-	b.refCount++
-	return nil
-}
-
-// Release decrements the reference count and destroys if zero
-func (b *buffer) Release() error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	if b.destroyed {
-		return fmt.Errorf("buffer has been destroyed")
-	}
-
-	b.refCount--
-	if b.refCount <= 0 {
-		b.destroyed = true
-		b.data = nil
-	}
-
-	return nil
 }
