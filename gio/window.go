@@ -123,6 +123,8 @@ type NewWindowOptions struct {
 	Transparent  bool
 	CenterCursor bool
 	FocusOnShow  bool
+
+	// Event handling
 }
 
 // DefaultNewWindowOptions returns default window creation hints

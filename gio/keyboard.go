@@ -2,7 +2,7 @@ package gio
 
 // KeyCode definitions
 //
-//go:generate go run golang.org/x/tools/cmd/stringer  -type=KeyCode,KeyAction,MouseButton,ModifierKey,JoystickAction --trimprefix=Key,KeyAction,MouseButton,Mod,Joystick --output=keyboard_string.go
+//go:generate go tool stringer  -type=KeyCode,KeyAction,MouseButton,ModifierKey,JoystickAction --trimprefix=Key,KeyAction,MouseButton,Mod,Joystick --output=keyboard_string.go
 type KeyCode int32
 
 const (

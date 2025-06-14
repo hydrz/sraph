@@ -29,9 +29,6 @@ const (
 	EventTypeMouseEnter
 	EventTypeScroll
 
-	// Monitor events
-	EventTypeMonitor
-
 	// Joystick events
 	EventTypeJoystick
 
