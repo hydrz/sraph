@@ -4,7 +4,7 @@
 
 // Package gpu provides WebGPU implementation interfaces.
 {{ SCommentN .Doc 0 -}}
-package wgpu
+package gpu
 
 import (
     "math"
@@ -83,14 +83,16 @@ type {{GoTypeName .Base}} struct {
 
 {{ end }}
 
-// GPU is the main interface for WebGPU operations
-type GPU interface {
-{{ range .Functions}}
+// ===== Objects =====
+
+// Backend is the interface for the WebGPU backend.
+type Backend interface {
+Type() BackendType
+{{- range .Functions}}
     {{GoFunctionName .Base}}({{GoFunctionArgs . }}) {{GoFunctionReturns .}}
-{{ end }}
+{{- end -}}
 }
 
-// ===== Objects =====
 
 // Instance interface
 type Instance interface {

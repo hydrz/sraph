@@ -12,7 +12,6 @@ import (
 var _ gio.Window = (*X11Window)(nil)
 
 type X11Window struct {
-	eb            gio.EventBus
 	width, height int
 
 	xw xproto.Window
@@ -23,7 +22,17 @@ type X11Window struct {
 	mu sync.Mutex
 }
 
+// Receive implements gio.Window.
+func (x *X11Window) Receive() <-chan gio.Event {
+	panic("unimplemented")
+}
+
 // Release implements gio.Window.
 func (x *X11Window) Release() {
+	panic("unimplemented")
+}
+
+// Send implements gio.Window.
+func (x *X11Window) Send(ch chan<- gio.Event) {
 	panic("unimplemented")
 }

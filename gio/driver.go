@@ -3,7 +3,7 @@ package gio
 import (
 	"fmt"
 
-	"github.com/opensraph/sraph/gpu/wgpu"
+	"github.com/opensraph/sraph/gpu"
 )
 
 type DriverType uint8
@@ -20,7 +20,7 @@ const (
 type Driver interface {
 	Type() DriverType
 	CreateWindow(options NewWindowOptions) (Window, error)
-	CreateSurface() (wgpu.Surface, error)
+	CreateSurface() (gpu.Surface, error)
 }
 
 type DirverFactory func() Driver

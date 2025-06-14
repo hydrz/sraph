@@ -18,7 +18,7 @@
 //
 // The standard include directive for this header is `#include <webgpu/webgpu.h>`
 // (if it is provided in a system-wide or toolchain-wide include directory).
-package wgpu
+package gpu
 
 import (
 	"math"
@@ -1358,18 +1358,16 @@ type RenderPipelineDescriptor struct {
 	Fragment     FragmentState
 }
 
-// GPU is the main interface for WebGPU operations
-type GPU interface {
-	CreateInstance(descriptor InstanceDescriptor) (Instance, error)
-
-	InstanceFeatures() (*SupportedInstanceFeatures, error)
-
-	InstanceLimits() (*InstanceLimits, error)
-
-	HasInstanceFeature(feature InstanceFeatureName) (bool, error)
-}
-
 // ===== Objects =====
+
+// Backend is the interface for the WebGPU backend.
+type Backend interface {
+	Type() BackendType
+	CreateInstance(descriptor InstanceDescriptor) Instance
+	InstanceFeatures() *SupportedInstanceFeatures
+	InstanceLimits() (*InstanceLimits, error)
+	HasInstanceFeature(feature InstanceFeatureName) bool
+}
 
 // Instance interface
 type Instance interface {
@@ -1381,77 +1379,77 @@ type Instance interface {
 
 // Adapter interface
 type Adapter interface {
-	Features() (*SupportedFeatures, error)
+	Features() *SupportedFeatures
 	Info() (*AdapterInfo, error)
 	Limits() (*Limits, error)
-	HasFeature(feature FeatureName) (bool, error)
+	HasFeature(feature FeatureName) bool
 	RequestDevice(descriptor DeviceDescriptor) (Device, error)
 }
 
 // BindGroup interface
 type BindGroup interface {
-	SetLabel(label string) error
+	SetLabel(label string)
 }
 
 // BindGroupLayout interface
 type BindGroupLayout interface {
-	SetLabel(label string) error
+	SetLabel(label string)
 }
 
 // Buffer interface
 type Buffer interface {
-	Destroy() error
-	ConstMappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
-	MappedRange(offset uintptr, size uintptr) (unsafe.Pointer, error)
-	MapState() (BufferMapState, error)
-	Size() (uint64, error)
-	Usage() (BufferUsage, error)
+	Destroy()
+	ConstMappedRange(offset uintptr, size uintptr) unsafe.Pointer
+	MappedRange(offset uintptr, size uintptr) unsafe.Pointer
+	MapState() BufferMapState
+	Size() uint64
+	Usage() BufferUsage
 	ReadMappedRange(offset uintptr, data *unsafe.Pointer, size uintptr) error
-	SetLabel(label string) error
-	Unmap() error
+	SetLabel(label string)
+	Unmap()
 	WriteMappedRange(offset uintptr, data unsafe.Pointer, size uintptr) error
 }
 
 // CommandBuffer interface
 type CommandBuffer interface {
-	SetLabel(label string) error
+	SetLabel(label string)
 }
 
 // CommandEncoder interface
 type CommandEncoder interface {
-	BeginComputePass(descriptor ComputePassDescriptor) (ComputePassEncoder, error)
-	BeginRenderPass(descriptor RenderPassDescriptor) (RenderPassEncoder, error)
-	ClearBuffer(buffer Buffer, offset uint64, size uint64) error
-	CopyBufferToBuffer(source Buffer, sourceOffset uint64, destination Buffer, destinationOffset uint64, size uint64) error
-	CopyBufferToTexture(source TexelCopyBufferInfo, destination TexelCopyTextureInfo, copySize Extent3D) error
-	CopyTextureToBuffer(source TexelCopyTextureInfo, destination TexelCopyBufferInfo, copySize Extent3D) error
-	CopyTextureToTexture(source TexelCopyTextureInfo, destination TexelCopyTextureInfo, copySize Extent3D) error
-	Finish(descriptor CommandBufferDescriptor) (CommandBuffer, error)
-	InsertDebugMarker(markerLabel string) error
-	PopDebugGroup() error
-	PushDebugGroup(groupLabel string) error
-	ResolveQuerySet(querySet QuerySet, firstQuery uint32, queryCount uint32, destination Buffer, destinationOffset uint64) error
-	SetLabel(label string) error
-	WriteTimestamp(querySet QuerySet, queryIndex uint32) error
+	BeginComputePass(descriptor ComputePassDescriptor) ComputePassEncoder
+	BeginRenderPass(descriptor RenderPassDescriptor) RenderPassEncoder
+	ClearBuffer(buffer Buffer, offset uint64, size uint64)
+	CopyBufferToBuffer(source Buffer, sourceOffset uint64, destination Buffer, destinationOffset uint64, size uint64)
+	CopyBufferToTexture(source TexelCopyBufferInfo, destination TexelCopyTextureInfo, copySize Extent3D)
+	CopyTextureToBuffer(source TexelCopyTextureInfo, destination TexelCopyBufferInfo, copySize Extent3D)
+	CopyTextureToTexture(source TexelCopyTextureInfo, destination TexelCopyTextureInfo, copySize Extent3D)
+	Finish(descriptor CommandBufferDescriptor) CommandBuffer
+	InsertDebugMarker(markerLabel string)
+	PopDebugGroup()
+	PushDebugGroup(groupLabel string)
+	ResolveQuerySet(querySet QuerySet, firstQuery uint32, queryCount uint32, destination Buffer, destinationOffset uint64)
+	SetLabel(label string)
+	WriteTimestamp(querySet QuerySet, queryIndex uint32)
 }
 
 // ComputePassEncoder interface
 type ComputePassEncoder interface {
-	DispatchWorkgroups(workgroupCountX uint32, workgroupCountY uint32, workgroupCountZ uint32) error
-	DispatchWorkgroupsIndirect(indirectBuffer Buffer, indirectOffset uint64) error
-	End() error
-	InsertDebugMarker(markerLabel string) error
-	PopDebugGroup() error
-	PushDebugGroup(groupLabel string) error
-	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
-	SetLabel(label string) error
-	SetPipeline(pipeline ComputePipeline) error
+	DispatchWorkgroups(workgroupCountX uint32, workgroupCountY uint32, workgroupCountZ uint32)
+	DispatchWorkgroupsIndirect(indirectBuffer Buffer, indirectOffset uint64)
+	End()
+	InsertDebugMarker(markerLabel string)
+	PopDebugGroup()
+	PushDebugGroup(groupLabel string)
+	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32)
+	SetLabel(label string)
+	SetPipeline(pipeline ComputePipeline)
 }
 
 // ComputePipeline interface
 type ComputePipeline interface {
-	BindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
-	SetLabel(label string) error
+	BindGroupLayout(groupIndex uint32) BindGroupLayout
+	SetLabel(label string)
 }
 
 // TODO
@@ -1460,142 +1458,142 @@ type ComputePipeline interface {
 // For more info, see @ref DeviceRelease.
 // Device interface
 type Device interface {
-	CreateBindGroup(descriptor BindGroupDescriptor) (BindGroup, error)
-	CreateBindGroupLayout(descriptor BindGroupLayoutDescriptor) (BindGroupLayout, error)
-	CreateBuffer(descriptor BufferDescriptor) (Buffer, error)
-	CreateCommandEncoder(descriptor CommandEncoderDescriptor) (CommandEncoder, error)
-	CreateComputePipeline(descriptor ComputePipelineDescriptor) (ComputePipeline, error)
-	CreatePipelineLayout(descriptor PipelineLayoutDescriptor) (PipelineLayout, error)
-	CreateQuerySet(descriptor QuerySetDescriptor) (QuerySet, error)
-	CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) (RenderBundleEncoder, error)
-	CreateRenderPipeline(descriptor RenderPipelineDescriptor) (RenderPipeline, error)
-	CreateSampler(descriptor SamplerDescriptor) (Sampler, error)
-	CreateShaderModule(descriptor ShaderModuleDescriptor) (ShaderModule, error)
-	CreateTexture(descriptor TextureDescriptor) (Texture, error)
-	Destroy() error
+	CreateBindGroup(descriptor BindGroupDescriptor) BindGroup
+	CreateBindGroupLayout(descriptor BindGroupLayoutDescriptor) BindGroupLayout
+	CreateBuffer(descriptor BufferDescriptor) Buffer
+	CreateCommandEncoder(descriptor CommandEncoderDescriptor) CommandEncoder
+	CreateComputePipeline(descriptor ComputePipelineDescriptor) ComputePipeline
+	CreatePipelineLayout(descriptor PipelineLayoutDescriptor) PipelineLayout
+	CreateQuerySet(descriptor QuerySetDescriptor) QuerySet
+	CreateRenderBundleEncoder(descriptor RenderBundleEncoderDescriptor) RenderBundleEncoder
+	CreateRenderPipeline(descriptor RenderPipelineDescriptor) RenderPipeline
+	CreateSampler(descriptor SamplerDescriptor) Sampler
+	CreateShaderModule(descriptor ShaderModuleDescriptor) ShaderModule
+	CreateTexture(descriptor TextureDescriptor) Texture
+	Destroy()
 	AdapterInfo() (*AdapterInfo, error)
-	Features() (*SupportedFeatures, error)
+	Features() *SupportedFeatures
 	Limits() (*Limits, error)
-	LostFuture() (Future, error)
-	Queue() (Queue, error)
-	HasFeature(feature FeatureName) (bool, error)
-	PopErrorScope() error
-	PushErrorScope(filter ErrorFilter) error
-	SetLabel(label string) error
+	LostFuture() Future
+	Queue() Queue
+	HasFeature(feature FeatureName) bool
+	PopErrorScope()
+	PushErrorScope(filter ErrorFilter)
+	SetLabel(label string)
 }
 
 // PipelineLayout interface
 type PipelineLayout interface {
-	SetLabel(label string) error
+	SetLabel(label string)
 }
 
 // QuerySet interface
 type QuerySet interface {
-	Destroy() error
-	Count() (uint32, error)
-	Type() (QueryType, error)
-	SetLabel(label string) error
+	Destroy()
+	Count() uint32
+	Type() QueryType
+	SetLabel(label string)
 }
 
 // Queue interface
 type Queue interface {
-	OnSubmittedWorkDone() error
-	SetLabel(label string) error
-	Submit(commands []CommandBuffer) error
-	WriteBuffer(buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr) error
-	WriteTexture(destination TexelCopyTextureInfo, data unsafe.Pointer, dataSize uintptr, dataLayout TexelCopyBufferLayout, writeSize Extent3D) error
+	OnSubmittedWorkDone()
+	SetLabel(label string)
+	Submit(commands []CommandBuffer)
+	WriteBuffer(buffer Buffer, bufferOffset uint64, data unsafe.Pointer, size uintptr)
+	WriteTexture(destination TexelCopyTextureInfo, data unsafe.Pointer, dataSize uintptr, dataLayout TexelCopyBufferLayout, writeSize Extent3D)
 }
 
 // RenderBundle interface
 type RenderBundle interface {
-	SetLabel(label string) error
+	SetLabel(label string)
 }
 
 // RenderBundleEncoder interface
 type RenderBundleEncoder interface {
-	Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error
-	DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error
-	DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64) error
-	DrawIndirect(indirectBuffer Buffer, indirectOffset uint64) error
-	Finish(descriptor RenderBundleDescriptor) (RenderBundle, error)
-	InsertDebugMarker(markerLabel string) error
-	PopDebugGroup() error
-	PushDebugGroup(groupLabel string) error
-	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
-	SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64) error
-	SetLabel(label string) error
-	SetPipeline(pipeline RenderPipeline) error
-	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error
+	Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32)
+	DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32)
+	DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64)
+	DrawIndirect(indirectBuffer Buffer, indirectOffset uint64)
+	Finish(descriptor RenderBundleDescriptor) RenderBundle
+	InsertDebugMarker(markerLabel string)
+	PopDebugGroup()
+	PushDebugGroup(groupLabel string)
+	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32)
+	SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64)
+	SetLabel(label string)
+	SetPipeline(pipeline RenderPipeline)
+	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64)
 }
 
 // RenderPassEncoder interface
 type RenderPassEncoder interface {
-	BeginOcclusionQuery(queryIndex uint32) error
-	Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32) error
-	DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32) error
-	DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64) error
-	DrawIndirect(indirectBuffer Buffer, indirectOffset uint64) error
-	End() error
-	EndOcclusionQuery() error
-	ExecuteBundles(bundles []RenderBundle) error
-	InsertDebugMarker(markerLabel string) error
-	PopDebugGroup() error
-	PushDebugGroup(groupLabel string) error
-	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32) error
-	SetBlendConstant(color Color) error
-	SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64) error
-	SetLabel(label string) error
-	SetPipeline(pipeline RenderPipeline) error
-	SetScissorRect(x uint32, y uint32, width uint32, height uint32) error
-	SetStencilReference(reference uint32) error
-	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64) error
-	SetViewport(x float32, y float32, width float32, height float32, minDepth float32, maxDepth float32) error
+	BeginOcclusionQuery(queryIndex uint32)
+	Draw(vertexCount uint32, instanceCount uint32, firstVertex uint32, firstInstance uint32)
+	DrawIndexed(indexCount uint32, instanceCount uint32, firstIndex uint32, baseVertex int32, firstInstance uint32)
+	DrawIndexedIndirect(indirectBuffer Buffer, indirectOffset uint64)
+	DrawIndirect(indirectBuffer Buffer, indirectOffset uint64)
+	End()
+	EndOcclusionQuery()
+	ExecuteBundles(bundles []RenderBundle)
+	InsertDebugMarker(markerLabel string)
+	PopDebugGroup()
+	PushDebugGroup(groupLabel string)
+	SetBindGroup(groupIndex uint32, group BindGroup, dynamicOffsets []uint32)
+	SetBlendConstant(color Color)
+	SetIndexBuffer(buffer Buffer, format IndexFormat, offset uint64, size uint64)
+	SetLabel(label string)
+	SetPipeline(pipeline RenderPipeline)
+	SetScissorRect(x uint32, y uint32, width uint32, height uint32)
+	SetStencilReference(reference uint32)
+	SetVertexBuffer(slot uint32, buffer Buffer, offset uint64, size uint64)
+	SetViewport(x float32, y float32, width float32, height float32, minDepth float32, maxDepth float32)
 }
 
 // RenderPipeline interface
 type RenderPipeline interface {
-	BindGroupLayout(groupIndex uint32) (BindGroupLayout, error)
-	SetLabel(label string) error
+	BindGroupLayout(groupIndex uint32) BindGroupLayout
+	SetLabel(label string)
 }
 
 // Sampler interface
 type Sampler interface {
-	SetLabel(label string) error
+	SetLabel(label string)
 }
 
 // ShaderModule interface
 type ShaderModule interface {
-	CompilationInfo() error
-	SetLabel(label string) error
+	CompilationInfo()
+	SetLabel(label string)
 }
 
 // An object used to continuously present image data to the user, see @ref Surfaces for more details.
 // Surface interface
 type Surface interface {
-	Configure(config SurfaceConfiguration) error
+	Configure(config SurfaceConfiguration)
 	Capabilities(adapter Adapter) (*SurfaceCapabilities, error)
-	CurrentTexture() (*SurfaceTexture, error)
+	CurrentTexture() *SurfaceTexture
 	Present() error
-	SetLabel(label string) error
-	Unconfigure() error
+	SetLabel(label string)
+	Unconfigure()
 }
 
 // Texture interface
 type Texture interface {
-	CreateView(descriptor TextureViewDescriptor) (TextureView, error)
-	Destroy() error
-	DepthOrArrayLayers() (uint32, error)
-	Dimension() (TextureDimension, error)
-	Format() (TextureFormat, error)
-	Height() (uint32, error)
-	MipLevelCount() (uint32, error)
-	SampleCount() (uint32, error)
-	Usage() (TextureUsage, error)
-	Width() (uint32, error)
-	SetLabel(label string) error
+	CreateView(descriptor TextureViewDescriptor) TextureView
+	Destroy()
+	DepthOrArrayLayers() uint32
+	Dimension() TextureDimension
+	Format() TextureFormat
+	Height() uint32
+	MipLevelCount() uint32
+	SampleCount() uint32
+	Usage() TextureUsage
+	Width() uint32
+	SetLabel(label string)
 }
 
 // TextureView interface
 type TextureView interface {
-	SetLabel(label string) error
+	SetLabel(label string)
 }

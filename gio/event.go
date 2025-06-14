@@ -1,7 +1,6 @@
 package gio
 
 import (
-	"sync"
 	"time"
 
 	"github.com/opensraph/sraph/geom"
@@ -85,15 +84,13 @@ type Event interface {
 	Type() EventType
 	Time() time.Time
 	WindowID() uint64
-	Sender() *Subscriber
 }
 
 // BaseEvent provides common event functionality
 type BaseEvent struct {
-	EventType   EventType
-	Time        time.Time
-	WinID       uint64
-	EventSender *Subscriber
+	EventType EventType
+	Time      time.Time
+	WinID     uint64
 }
 
 func (e BaseEvent) Type() EventType {
@@ -106,10 +103,6 @@ func (e BaseEvent) Timestamp() time.Time {
 
 func (e BaseEvent) WindowID() uint64 {
 	return e.WinID
-}
-
-func (e BaseEvent) Sender() *Subscriber {
-	return e.EventSender
 }
 
 // Window Events
@@ -203,68 +196,4 @@ type JoystickEvent struct {
 type DropEvent struct {
 	BaseEvent
 	Paths []string
-}
-
-type Subscriber struct {
-	ch      chan Event
-	types   map[EventType]struct{}
-	closeCh chan struct{}
-}
-
-// Receive returns the event channel for the subscriber.
-func (sub *Subscriber) Receive() <-chan Event {
-	return sub.ch
-}
-
-// Close returns a channel that is closed when the subscriber is unsubscribed.
-func (sub *Subscriber) Close() <-chan struct{} {
-	return sub.closeCh
-}
-
-type PubSub struct {
-	mu          sync.RWMutex
-	subscribers map[*Subscriber]struct{}
-}
-
-func NewPubSub() *PubSub {
-	return &PubSub{
-		subscribers: make(map[*Subscriber]struct{}),
-	}
-}
-
-func (bus *PubSub) Pub(event Event) {
-	bus.mu.RLock()
-	defer bus.mu.RUnlock()
-	for sub := range bus.subscribers {
-		if _, ok := sub.types[event.Type()]; ok || len(sub.types) == 0 {
-			select {
-			case sub.ch <- event:
-			default:
-				// Drop event if subscriber is slow
-			}
-		}
-	}
-}
-
-func (bus *PubSub) Sub(types ...EventType) *Subscriber {
-	sub := &Subscriber{
-		ch:      make(chan Event, 16),
-		types:   make(map[EventType]struct{}),
-		closeCh: make(chan struct{}),
-	}
-	for _, t := range types {
-		sub.types[t] = struct{}{}
-	}
-	bus.mu.Lock()
-	bus.subscribers[sub] = struct{}{}
-	bus.mu.Unlock()
-	return sub
-}
-
-func (bus *PubSub) UnSub(sub *Subscriber) {
-	bus.mu.Lock()
-	delete(bus.subscribers, sub)
-	close(sub.closeCh)
-	close(sub.ch)
-	bus.mu.Unlock()
 }

@@ -4,7 +4,7 @@ import (
 	"runtime"
 
 	"github.com/opensraph/sraph/gio"
-	"github.com/opensraph/sraph/gpu/wgpu"
+	"github.com/opensraph/sraph/gpu"
 )
 
 var _ gio.Driver = (*X11Driver)(nil)
@@ -19,7 +19,7 @@ func init() {
 type X11Driver struct{}
 
 // CreateSurface implements gio.Driver.
-func (x *X11Driver) CreateSurface() (wgpu.Surface, error) {
+func (x *X11Driver) CreateSurface() (gpu.Surface, error) {
 	panic("unimplemented")
 }
 

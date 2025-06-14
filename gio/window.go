@@ -99,10 +99,10 @@ type Window interface {
 	Release()
 
 	// Send a window event to the window.
-	Send(event Event)
+	Send(ch chan<- Event)
 
 	// Receive a window event.
-	Receive() Event
+	Receive() <-chan Event
 }
 
 // NewWindowOptions contains window creation hints
@@ -123,9 +123,6 @@ type NewWindowOptions struct {
 	Transparent  bool
 	CenterCursor bool
 	FocusOnShow  bool
-
-	// EventBus
-	event EventBus // Optional event bus for window events
 }
 
 // DefaultNewWindowOptions returns default window creation hints

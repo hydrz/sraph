@@ -1,37 +1,37 @@
 package x11
 
-import "github.com/opensraph/sraph/gpu/wgpu"
+import "github.com/opensraph/sraph/gpu"
 
-var _ wgpu.Surface = &X11Surface{}
+var _ gpu.Surface = (*X11Surface)(nil)
 
 type X11Surface struct{}
 
-// Capabilities implements wgpu.Surface.
-func (x *X11Surface) Capabilities(adapter wgpu.Adapter) (*wgpu.SurfaceCapabilities, error) {
+// Capabilities implements gpu.Surface.
+func (x *X11Surface) Capabilities(adapter gpu.Adapter) (*gpu.SurfaceCapabilities, error) {
 	panic("unimplemented")
 }
 
-// Configure implements wgpu.Surface.
-func (x *X11Surface) Configure(config wgpu.SurfaceConfiguration) error {
+// Configure implements gpu.Surface.
+func (x *X11Surface) Configure(config gpu.SurfaceConfiguration) {
 	panic("unimplemented")
 }
 
-// CurrentTexture implements wgpu.Surface.
-func (x *X11Surface) CurrentTexture() (*wgpu.SurfaceTexture, error) {
+// CurrentTexture implements gpu.Surface.
+func (x *X11Surface) CurrentTexture() *gpu.SurfaceTexture {
 	panic("unimplemented")
 }
 
-// Present implements wgpu.Surface.
+// Present implements gpu.Surface.
 func (x *X11Surface) Present() error {
 	panic("unimplemented")
 }
 
-// SetLabel implements wgpu.Surface.
-func (x *X11Surface) SetLabel(label string) error {
+// SetLabel implements gpu.Surface.
+func (x *X11Surface) SetLabel(label string) {
 	panic("unimplemented")
 }
 
-// Unconfigure implements wgpu.Surface.
-func (x *X11Surface) Unconfigure() error {
+// Unconfigure implements gpu.Surface.
+func (x *X11Surface) Unconfigure() {
 	panic("unimplemented")
 }
