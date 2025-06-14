@@ -4,3 +4,5 @@ github.com/goccy/go-yaml v1.18.0 h1:8W7wMFS12Pcas7KU+VVkaiCng+kG8QiFeFwzFb+rwuw=
 github.com/goccy/go-yaml v1.18.0/go.mod h1:XBurs7gK8ATbW4ZPGKgcbrY1Br56PdM69F7LkFRi1kA=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 h1:lZUw3E0/J3roVtGQ+SCrUrg3ON6NgVqpn3+iol9aGu4=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1/go.mod h1:uToXkOrWAZ6/Oc07xWQrPOhJotwFIyu2bBVN41fcDUY=
+github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8 h1:qPHDyQTLtn40kezY6y4UL7bH7Z0Im9wSu1tQtM2wbUU=
+github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8/go.mod h1:Y5Ti1uUBdKDsb0W8aPtIo9krs+29Y7p6Bc9yyy4AM6g=

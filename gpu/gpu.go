@@ -1,10 +1,8 @@
 package gpu
 
-import "github.com/opensraph/sraph/gpu/impl"
-
 //go:generate go run gen.go
 
-var instance = impl.NewInstance(InstanceDescriptor{})
+var instance = NewInstance(InstanceDescriptor{})
 
 func RequestAdapter(descriptor RequestAdapterOptions) (Adapter, error) {
 	return instance.RequestAdapter(descriptor)
