@@ -2,8 +2,6 @@ package gio
 
 import (
 	"fmt"
-
-	"github.com/opensraph/sraph/gpu"
 )
 
 type DriverType uint8
@@ -19,11 +17,10 @@ const (
 
 type Driver interface {
 	Type() DriverType
-	CreateWindow(options NewWindowOptions) (Window, error)
-	CreateSurface() (gpu.Surface, error)
+	CreateWindow(o ...NewWindowOptions) (Window, error)
 }
 
-type DirverFactory func() Driver
+type DirverFactory func() (Driver, error)
 
 var registersDriver = make(map[DriverType]DirverFactory)
 
@@ -36,7 +33,7 @@ func GetDriver(driverType DriverType) (Driver, error) {
 	if !ok {
 		return nil, fmt.Errorf("driver type %d not registered", driverType)
 	}
-	return factory(), nil
+	return factory()
 }
 
 func GetAllDrivers() []DriverType {

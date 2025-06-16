@@ -7,32 +7,46 @@ import (
 	"github.com/jezek/xgb/render"
 	"github.com/jezek/xgb/xproto"
 	"github.com/opensraph/sraph/gio"
+	"github.com/opensraph/sraph/gpu"
 )
 
-var _ gio.Window = (*X11Window)(nil)
+var _ gio.PlatformWindow = (*x11Window)(nil)
 
-type X11Window struct {
+type x11Window struct {
+	attr     gio.WindowAttr
+	eventBus *gio.EventBus
+
+	driver        *x11Driver
+	xw            xproto.Window
+	xg            xproto.Gcontext
+	xp            render.Picture
+	xevents       chan xgb.Event
 	width, height int
 
-	xw xproto.Window
-	xg xproto.Gcontext
-	xp render.Picture
-	xe chan xgb.Event
-
-	mu sync.Mutex
+	mu       sync.Mutex
+	released bool
 }
 
-// Receive implements gio.Window.
-func (x *X11Window) Receive() <-chan gio.Event {
+// Close implements gio.PlatformWindow.
+func (x *x11Window) Close() error {
 	panic("unimplemented")
 }
 
-// Release implements gio.Window.
-func (x *X11Window) Release() {
+// Event implements gio.PlatformWindow.
+func (x *x11Window) Event() *gio.EventBus {
 	panic("unimplemented")
 }
 
-// Send implements gio.Window.
-func (x *X11Window) Send(ch chan<- gio.Event) {
+// SetAttr implements gio.PlatformWindow.
+func (x *x11Window) SetAttr(attr gio.WindowAttr) error {
 	panic("unimplemented")
+}
+
+// Surface implements gio.PlatformWindow.
+func (x *x11Window) Surface() (gpu.Surface, error) {
+	panic("unimplemented")
+}
+
+func newX11Window(d *x11Driver, o gio.WindowAttr) (*x11Window, error) {
+
 }

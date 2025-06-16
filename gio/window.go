@@ -1,143 +1,234 @@
 package gio
 
 import (
-	"github.com/opensraph/sraph/geom"
+	"fmt"
+	"image"
+	"sync"
+
+	"github.com/opensraph/sraph/gpu"
 )
 
-// WindowID represents a unique window identifier
-type WindowID uint64
-
-// WindowState represents the state of a window
-type WindowState int
+// WindowState represents window attributes
+type WindowState uint16
 
 const (
-	WindowStateNormal WindowState = iota
-	WindowStateMinimized
-	WindowStateMaximized
-	WindowStateFullscreen
+	WindowStateUnknown                WindowState = iota      // Unknown attribute
+	WindowStateFocused                WindowState = 1 << iota // Window is focused
+	WindowStateIconified                                      // Window is minimized
+	WindowStateMaximized                                      // Window is maximized
+	WindowStateVisible                                        // Window is visible
+	WindowStateHovered                                        // Cursor is over the window
+	WindowStateResizable                                      // Window is resizable
+	WindowStateDecorated                                      // Window has decorations (title bar, borders, etc.)
+	WindowStateFloating                                       // Window is always on top
+	WindowStateAutoIconify                                    // Fullscreen windows auto-iconify on focus loss
+	WindowStateCenterCursor                                   // Cursor is centered over fullscreen windows
+	WindowStateTransparentFramebuffer                         // Framebuffer is transparent
+	WindowStateFocusOnShow                                    // Window gets focus when shown
+	WindowStateScaleToMonitor                                 // Window content area scales with monitor content scale
 )
 
-func (s WindowState) String() string {
-	switch s {
-	case WindowStateNormal:
-		return "normal"
-	case WindowStateMinimized:
-		return "minimized"
-	case WindowStateMaximized:
-		return "maximized"
-	case WindowStateFullscreen:
-		return "fullscreen"
-	default:
-		return "unknown"
-	}
+func (ws WindowState) Contains(state WindowState) bool {
+	return ws&state != 0
 }
 
-// WindowAttribute represents window attributes
-type WindowAttribute int
-
-const (
-	WindowAttributeResizable WindowAttribute = iota
-	WindowAttributeVisible
-	WindowAttributeDecorated
-	WindowAttributeFocused
-	WindowAttributeAutoIconify
-	WindowAttributeFloating
-	WindowAttributeTransparent
-)
-
-func (a WindowAttribute) String() string {
-	switch a {
-	case WindowAttributeResizable:
-		return "resizable"
-	case WindowAttributeVisible:
-		return "visible"
-	case WindowAttributeDecorated:
-		return "decorated"
-	case WindowAttributeFocused:
-		return "focused"
-	case WindowAttributeAutoIconify:
-		return "auto_iconify"
-	case WindowAttributeFloating:
-		return "floating"
-	case WindowAttributeTransparent:
-		return "transparent"
-	default:
-		return "unknown"
-	}
+func (ws WindowState) Diff(state WindowState) WindowState {
+	return ws &^ state
 }
 
-// InputMode represents input modes
-type InputMode int
+// WindowAttr represents window creation attributes
+type WindowAttr struct {
+	Title         string
+	Width, Height int
+	Position      image.Point // Position of the window on the screen
+	State         WindowState // Initial state of the window
+}
 
-const (
-	InputModeCursor InputMode = iota
-	InputModeStickyKeys
-	InputModeStickyMouseButtons
-	InputModeRawMouseMotion
-)
+func (wa WindowAttr) Equal(other WindowAttr) bool {
+	return wa.Title == other.Title &&
+		wa.Width == other.Width &&
+		wa.Height == other.Height &&
+		wa.Position.Eq(other.Position) &&
+		wa.State.Diff(other.State) == 0
+}
 
-func (m InputMode) String() string {
-	switch m {
-	case InputModeCursor:
-		return "cursor"
-	case InputModeStickyKeys:
-		return "sticky_keys"
-	case InputModeStickyMouseButtons:
-		return "sticky_mouse_buttons"
-	case InputModeRawMouseMotion:
-		return "raw_mouse_motion"
-	default:
-		return "unknown"
+func (wa WindowAttr) Apply(o ...WindowAttr) WindowAttr {
+	if len(o) == 0 {
+		return wa
 	}
+
+	for _, attr := range o {
+		if attr.Title != "" {
+			wa.Title = attr.Title
+		}
+		if attr.Width > 0 {
+			wa.Width = attr.Width
+		}
+		if attr.Height > 0 {
+			wa.Height = attr.Height
+		}
+		if !attr.Position.Eq(image.Point{}) {
+			wa.Position = attr.Position
+		}
+		if attr.State != WindowStateUnknown {
+			wa.State = wa.State | attr.State
+		}
+	}
+
+	return wa
+}
+
+type PlatformWindow interface {
+	// SetAttr sets the window attributes.
+	SetAttr(attr WindowAttr) error
+	// Event returns the event bus for the window.
+	Event() *EventBus
+	// Surface returns the GPU surface associated with the window.
+	Surface() (gpu.Surface, error)
+
+	Close() error
 }
 
 type Window interface {
-	// Release closes the window.
-	//
-	// The behavior of the Window after Release, whether calling its methods or
-	// passing it as an argument, is undefined.
-	Release()
+	Width() int
+	Height() int
+	Title() string
+	Position() image.Point
+	State() WindowState
 
-	// Send a window event to the window.
-	Send(ch chan<- Event)
+	Show() error
+	Hide() error
+	Close() error
 
-	// Receive a window event.
-	Receive() <-chan Event
+	// Surface returns the GPU surface associated with the window.
+	Surface() (gpu.Surface, error)
+
+	// Event returns the event bus for the window.
+	Event() *EventBus
 }
 
-// NewWindowOptions contains window creation hints
-type NewWindowOptions struct {
-	// Basic window properties
-	Title    string
-	Size     geom.Size[geom.F32]   // Default size
-	Position *geom.Point[geom.F32] // nil means let the system decide
+type NewWindowOptions = WindowAttr
 
-	// Window behavior
-	Resizable    bool
-	Decorated    bool
-	Visible      bool
-	Focused      bool
-	AutoIconify  bool
-	Floating     bool
-	Maximized    bool
-	Transparent  bool
-	CenterCursor bool
-	FocusOnShow  bool
-
-	// Event handling
-}
-
-// DefaultNewWindowOptions returns default window creation hints
+// DefaultNewWindowOptions returns the default window attributes.
 func DefaultNewWindowOptions() NewWindowOptions {
 	return NewWindowOptions{
-		Title:        "Sraph Window",
-		Size:         geom.NewSize[geom.F32](800, 600),
-		Resizable:    true,
-		Decorated:    true,
-		Visible:      true,
-		Focused:      true,
-		AutoIconify:  true,
-		CenterCursor: true,
-		FocusOnShow:  true,
+		Title:    "Window",
+		Width:    800,
+		Height:   600,
+		Position: image.Point{X: 100, Y: 100},
+		State:    WindowStateFocused | WindowStateVisible | WindowStateResizable | WindowStateDecorated,
 	}
+}
+
+// NewWindow creates a new window with the given attributes.
+func NewWindow(pw PlatformWindow, options ...NewWindowOptions) (Window, error) {
+	o := DefaultNewWindowOptions()
+	o = o.Apply(options...)
+
+	if err := pw.SetAttr(o); err != nil {
+		if closeErr := pw.Close(); closeErr != nil {
+			return nil, closeErr
+		}
+		return nil, err
+	}
+
+	surface, err := pw.Surface()
+	if err != nil {
+		if closeErr := pw.Close(); closeErr != nil {
+			return nil, closeErr
+		}
+		return nil, err
+	}
+
+	return &window{
+		attr:    o,
+		pw:      pw,
+		event:   pw.Event(),
+		surface: surface,
+	}, nil
+}
+
+type window struct {
+	attr    WindowAttr
+	pw      PlatformWindow
+	event   *EventBus
+	surface gpu.Surface
+	mu      sync.Mutex // Mutex to protect against concurrent access
+	closed  bool       // Flag to indicate if the window is closed
+}
+
+// Close implements Window.
+func (w *window) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return nil // Already closed
+	}
+	w.closed = true
+
+	if err := w.pw.Close(); err != nil {
+		return fmt.Errorf("failed to close window: %w", err)
+	}
+
+	return nil
+}
+
+// Event implements Window.
+func (w *window) Event() *EventBus {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return nil // Return nil if the window is closed
+	}
+
+	return w.event
+}
+
+// Height implements Window.
+func (w *window) Height() int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.closed {
+		return 0 // Return 0 if the window is closed
+	}
+
+	return w.attr.Height
+}
+
+// Hide implements Window.
+func (w *window) Hide() error {
+	panic("unimplemented")
+}
+
+// Position implements Window.
+func (w *window) Position() image.Point {
+	panic("unimplemented")
+}
+
+// Show implements Window.
+func (w *window) Show() error {
+	panic("unimplemented")
+}
+
+// State implements Window.
+func (w *window) State() WindowState {
+	panic("unimplemented")
+}
+
+// Surface implements Window.
+func (w *window) Surface() (gpu.Surface, error) {
+	panic("unimplemented")
+}
+
+// Title implements Window.
+func (w *window) Title() string {
+	panic("unimplemented")
+}
+
+// Width implements Window.
+func (w *window) Width() int {
+	panic("unimplemented")
 }
