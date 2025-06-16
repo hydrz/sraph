@@ -1,7 +1,6 @@
 package gio
 
 import (
-	"context"
 	"image"
 	"sync"
 	"unsafe"
@@ -109,9 +108,9 @@ type BaseWindow interface {
 	Position() image.Point
 	State() WindowState
 
-	Show(ctx Context) error
-	Hide(ctx Context) error
-	Close(ctx Context) error
+	Show() error
+	Hide() error
+	Close() error
 
 	Publish(event Event) error
 	Subscribe(eventType EventType, handler EventHandler) error
@@ -134,12 +133,9 @@ type BaseWindow interface {
 
 func NewBaseWindow(o NewWindowOptions) BaseWindow {
 	attr := DefaultNewWindowOptions().Apply(o)
-	ctx := NewContext(context.Background())
-
 	return &baseWindow{
 		attr:     attr,
 		eventBus: NewEventBus(),
-		ctx:      ctx,
 	}
 }
 
@@ -148,7 +144,6 @@ var _ BaseWindow = (*baseWindow)(nil)
 type baseWindow struct {
 	attr      WindowAttr
 	eventBus  *EventBus
-	ctx       Context
 	destroyed bool
 	mu        sync.RWMutex
 }
@@ -165,10 +160,6 @@ func (w *baseWindow) Width() int {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.attr.Width
-}
-
-func (w *baseWindow) Context() Context {
-	return w.ctx
 }
 
 func (w *baseWindow) Attr() WindowAttr {
@@ -232,7 +223,7 @@ func (w *baseWindow) SetAttr(attr WindowAttr) {
 }
 
 // Show shows the window if supported by the platform.
-func (w *baseWindow) Show(ctx Context) error {
+func (w *baseWindow) Show() error {
 	if w.IsClosed() {
 		return ErrWindowNotInitialized
 	}
@@ -250,7 +241,7 @@ func (w *baseWindow) Show(ctx Context) error {
 }
 
 // Hide hides the window if supported by the platform.
-func (w *baseWindow) Hide(ctx Context) error {
+func (w *baseWindow) Hide() error {
 	if w.IsClosed() {
 		return ErrWindowNotInitialized
 	}
@@ -268,7 +259,7 @@ func (w *baseWindow) Hide(ctx Context) error {
 }
 
 // Close implements Window.
-func (w *baseWindow) Close(ctx Context) error {
+func (w *baseWindow) Close() error {
 	if w.IsClosed() {
 		return ErrWindowNotInitialized
 	}

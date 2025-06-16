@@ -1,8 +1,8 @@
 package gio
 
-type KeyCode uint16
-
 //go:generate go tool stringer -type=KeyCode -trimprefix=KeyCode -output=keyboard_string.go
+
+type KeyCode uint16
 
 // KeyCode constants represent the physical key on the keyboard
 const (
@@ -182,23 +182,12 @@ const (
 	KeyCodeMediaSelect KeyCode = 0xE06D // MediaSelect
 )
 
-// KeyLocation represents the location of the key on the keyboard
-type KeyLocation uint8
-
-// Key location constants following W3C standard
-const (
-	KeyLocationStandard KeyLocation = 0x00
-	KeyLocationLeft     KeyLocation = 0x01 // Left key (e.g., left Shift, left Control)
-	KeyLocationRight    KeyLocation = 0x02 // Right key (e.g., right Shift, right Control)
-	KeyLocationNumpad   KeyLocation = 0x03 // Numpad key (e.g., numpad Enter)
-)
-
 type ModifierKey uint16
 
 // ModifierKey constants represent the modifier keys
 const (
 	ModifierKeyNone       ModifierKey = iota      // No modifier key
-	ModifierKeyAlt                    = 1 << iota // Alt key
+	ModifierKeyAlt        ModifierKey = 1 << iota // Alt key
 	ModifierKeyAltGraph                           // AltGraph key (right Alt on some keyboards)
 	ModifierKeyCapsLock                           // CapsLock key
 	ModifierKeyControl                            // Control key
@@ -219,8 +208,77 @@ func (m *ModifierKey) Contains(key ModifierKey) bool {
 	return (*m & key) != 0
 }
 
-// KeyToString converts a KeyCode to its string representation considering modifiers
-func KeyToString(code KeyCode, modifiers ModifierKey) string {
+// String returns the string representation of the ModifierKey
+func (m ModifierKey) String() string {
+	switch m {
+	case ModifierKeyNone:
+		return "None"
+	case ModifierKeyAlt:
+		return "Alt"
+	case ModifierKeyAltGraph:
+		return "AltGraph"
+	case ModifierKeyCapsLock:
+		return "CapsLock"
+	case ModifierKeyControl:
+		return "Control"
+	case ModifierKeyFn:
+		return "Fn"
+	case ModifierKeyFnLock:
+		return "FnLock"
+	case ModifierKeyHyper:
+		return "Hyper"
+	case ModifierKeyMeta:
+		return "Meta"
+	case ModifierKeyNumLock:
+		return "NumLock"
+	case ModifierKeyScrollLock:
+		return "ScrollLock"
+	case ModifierKeyShift:
+		return "Shift"
+	case ModifierKeySuper:
+		return "Super"
+	case ModifierKeySymbol:
+		return "Symbol"
+	case ModifierKeySymbolLock:
+		return "SymbolLock"
+	default:
+		return "Unknown"
+	}
+}
+
+// KeyLocation represents the location of the key on the keyboard
+type KeyLocation uint8
+
+// Key location constants following W3C standard
+const (
+	KeyLocationStandard KeyLocation = 0x00
+	KeyLocationLeft     KeyLocation = 0x01 // Left key (e.g., left Shift, left Control)
+	KeyLocationRight    KeyLocation = 0x02 // Right key (e.g., right Shift, right Control)
+	KeyLocationNumpad   KeyLocation = 0x03 // Numpad key (e.g., numpad Enter)
+)
+
+func (kl KeyLocation) String() string {
+	switch kl {
+	case KeyLocationStandard:
+		return "Standard"
+	case KeyLocationLeft:
+		return "Left"
+	case KeyLocationRight:
+		return "Right"
+	case KeyLocationNumpad:
+		return "Numpad"
+	default:
+		return "Unknown"
+	}
+}
+
+// Key returns the value of the key pressed by the user
+func (e *KeyboardEvent) Key() string {
+	return keyToString(e.Code, e.ModifierKey)
+}
+
+// keyToString converts a KeyCode to its string representation considering modifiers
+func keyToString(code KeyCode, modifiers ModifierKey) string {
 	// Check if Shift modifier is active
 	isShiftPressed := modifiers.Contains(ModifierKeyShift)
 	isCapsLockActive := modifiers.Contains(ModifierKeyCapsLock)
@@ -589,9 +647,4 @@ func KeyToString(code KeyCode, modifiers ModifierKey) string {
 		// For unknown keys, return the string representation of the KeyCode
 		return code.String()
 	}
-}
-
-// Key returns the value of the key pressed by the user
-func (e *KeyboardEvent) Key() string {
-	return KeyToString(e.Code, e.ModifierKey)
 }

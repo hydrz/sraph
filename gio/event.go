@@ -162,7 +162,7 @@ func NewWheelEvent() *WheelEvent {
 	}
 }
 
-type EventHandler func(ctx Context, e Event) error
+type EventHandler func(e Event) error
 
 // EventBus provides improved event handling with context support
 type EventBus struct {
@@ -273,13 +273,11 @@ func (eb *EventBus) handleEvent(event Event) {
 	copy(handlersCopy, handlers)
 	eb.mu.RUnlock()
 
-	ctx := NewContext(eb.ctx)
-
 	if eb.config.AsyncEventHandler {
 		// Execute handlers asynchronously
 		for _, handler := range handlersCopy {
 			go func(h EventHandler) {
-				if err := h(ctx, event); err != nil {
+				if err := h(event); err != nil {
 					// Log error or handle it appropriately
 					_ = err
 				}
@@ -288,7 +286,7 @@ func (eb *EventBus) handleEvent(event Event) {
 	} else {
 		// Execute handlers synchronously
 		for _, handler := range handlersCopy {
-			if err := handler(ctx, event); err != nil {
+			if err := handler(event); err != nil {
 				// Log error or handle it appropriately
 				_ = err
 			}

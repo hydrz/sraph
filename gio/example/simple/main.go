@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
@@ -52,20 +51,17 @@ func main() {
 		window.Width(), window.Height(), window.Position())
 	fmt.Println()
 
-	// Set up event handling
-	ctx := gio.NewContext(context.Background())
-
 	// Subscribe to keyboard events
-	window.Subscribe(gio.EventTypeKeyboard, func(ctx gio.Context, e gio.Event) error {
+	window.Subscribe(gio.EventTypeKeyboard, func(e gio.Event) error {
 		if keyEvent, ok := e.(*gio.KeyboardEvent); ok {
-			fmt.Printf("[KEYBOARD] Code: %v, Modifiers: %v\n",
-				keyEvent.Code, keyEvent.ModifierKey)
+			fmt.Printf("[KEYBOARD] Code: %v, Modifiers: %v Key: %v\n",
+				keyEvent.Code, keyEvent.ModifierKey, keyEvent.Key())
 		}
 		return nil
 	})
 
 	// Subscribe to mouse events
-	window.Subscribe(gio.EventTypeMouse, func(ctx gio.Context, e gio.Event) error {
+	window.Subscribe(gio.EventTypeMouse, func(e gio.Event) error {
 		if mouseEvent, ok := e.(*gio.MouseEvent); ok {
 			fmt.Printf("[MOUSE] Button: %v, Position: %v\n",
 				mouseEvent.Button, mouseEvent.Position)
@@ -74,7 +70,7 @@ func main() {
 	})
 
 	// Subscribe to wheel events
-	window.Subscribe(gio.EventTypeWheel, func(ctx gio.Context, e gio.Event) error {
+	window.Subscribe(gio.EventTypeWheel, func(e gio.Event) error {
 		if wheelEvent, ok := e.(*gio.WheelEvent); ok {
 			fmt.Printf("[WHEEL] Delta: (%.1f, %.1f) at %v\n",
 				wheelEvent.DeltaX, wheelEvent.DeltaY, wheelEvent.Position)
@@ -83,7 +79,7 @@ func main() {
 	})
 
 	// Subscribe to window events
-	window.Subscribe(gio.EventTypeWindow, func(ctx gio.Context, e gio.Event) error {
+	window.Subscribe(gio.EventTypeWindow, func(e gio.Event) error {
 		if _, ok := e.(*gio.WindowEvent); ok {
 			fmt.Printf("[WINDOW] Event received\n")
 
@@ -97,7 +93,7 @@ func main() {
 	})
 
 	// Show the window
-	if err := window.Show(ctx); err != nil {
+	if err := window.Show(); err != nil {
 		log.Printf("Warning: Failed to show window: %v", err)
 	}
 
@@ -137,7 +133,7 @@ func main() {
 cleanup:
 	// Close the window if it's still open
 	if !window.IsClosed() {
-		if err := window.Close(ctx); err != nil {
+		if err := window.Close(); err != nil {
 			log.Printf("Failed to close window: %v", err)
 		}
 	}
