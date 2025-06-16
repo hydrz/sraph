@@ -99,7 +99,6 @@ type WindowHandler unsafe.Pointer
 type Window interface {
 	BaseWindow
 	WindowID() WindowID
-	Context() Context
 }
 
 // BaseWindow interface with improved lifecycle management
@@ -119,7 +118,7 @@ type BaseWindow interface {
 	Unsubscribe(eventType EventType, handler EventHandler)
 
 	Attr() WindowAttr
-	SetAttr(ctx Context, attr WindowAttr) error
+	SetAttr(attr WindowAttr)
 
 	// Status check methods
 	IsClosed() bool
@@ -131,10 +130,6 @@ type BaseWindow interface {
 	IsDecorated() bool
 	IsFloating() bool
 	IsAutoIconify() bool
-
-	// Lifecycle management
-	Destroy(ctx Context) error
-	IsDestroyed() bool
 }
 
 func NewBaseWindow(o NewWindowOptions) BaseWindow {
@@ -204,9 +199,9 @@ func (w *baseWindow) State() WindowState {
 }
 
 // SetAttr sets the window attributes with better validation
-func (w *baseWindow) SetAttr(ctx Context, attr WindowAttr) error {
-	if w.IsDestroyed() {
-		return ErrWindowNotInitialized
+func (w *baseWindow) SetAttr(attr WindowAttr) {
+	if w.IsClosed() {
+		return
 	}
 
 	w.mu.Lock()
@@ -222,7 +217,7 @@ func (w *baseWindow) SetAttr(ctx Context, attr WindowAttr) error {
 	}
 
 	if oldAttr.Equal(newAttr) {
-		return nil
+		return
 	}
 
 	w.attr = newAttr
@@ -234,13 +229,11 @@ func (w *baseWindow) SetAttr(ctx Context, attr WindowAttr) error {
 			_ = err
 		}
 	}()
-
-	return nil
 }
 
 // Show shows the window if supported by the platform.
 func (w *baseWindow) Show(ctx Context) error {
-	if w.IsDestroyed() {
+	if w.IsClosed() {
 		return ErrWindowNotInitialized
 	}
 
@@ -258,7 +251,7 @@ func (w *baseWindow) Show(ctx Context) error {
 
 // Hide hides the window if supported by the platform.
 func (w *baseWindow) Hide(ctx Context) error {
-	if w.IsDestroyed() {
+	if w.IsClosed() {
 		return ErrWindowNotInitialized
 	}
 
@@ -276,7 +269,7 @@ func (w *baseWindow) Hide(ctx Context) error {
 
 // Close implements Window.
 func (w *baseWindow) Close(ctx Context) error {
-	if w.IsDestroyed() {
+	if w.IsClosed() {
 		return ErrWindowNotInitialized
 	}
 
@@ -294,48 +287,24 @@ func (w *baseWindow) Close(ctx Context) error {
 
 // Publish publishes an event to the window's event bus.
 func (w *baseWindow) Publish(event Event) error {
-	if w.IsDestroyed() || w.eventBus == nil {
+	if w.IsClosed() || w.eventBus == nil {
 		return ErrWindowNotInitialized
 	}
 	return w.eventBus.Publish(event)
 }
 
 func (w *baseWindow) Subscribe(eventType EventType, handler EventHandler) error {
-	if w.IsDestroyed() || w.eventBus == nil {
+	if w.IsClosed() || w.eventBus == nil {
 		return ErrWindowNotInitialized
 	}
 	return w.eventBus.Subscribe(eventType, handler)
 }
 
 func (w *baseWindow) Unsubscribe(eventType EventType, handler EventHandler) {
-	if w.IsDestroyed() || w.eventBus == nil {
+	if w.IsClosed() || w.eventBus == nil {
 		return
 	}
 	w.eventBus.Unsubscribe(eventType, handler)
-}
-
-func (w *baseWindow) Destroy(ctx Context) error {
-	w.mu.Lock()
-	if w.destroyed {
-		w.mu.Unlock()
-		return nil
-	}
-
-	w.destroyed = true
-	w.mu.Unlock()
-
-	if w.eventBus != nil {
-		w.eventBus.Close()
-		w.eventBus = nil
-	}
-
-	return nil
-}
-
-func (w *baseWindow) IsDestroyed() bool {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	return w.destroyed
 }
 
 // publishAttrChangeEvent publishes a window attribute change event

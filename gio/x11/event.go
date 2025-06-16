@@ -134,28 +134,12 @@ func (xw *x11Window) handleConfigureNotify(ev xproto.ConfigureNotifyEvent) {
 
 	if changed {
 		xw.BaseWindow.SetAttr(attr)
-
-		// Publish window resize event
-		if xw.EventBus() != nil {
-			windowEvent := &gio.WindowEvent{
-				Event: gio.NewBaseEvent(gio.EventTypeWindow),
-				Type:  gio.WindowEventTypeResize,
-				Size:  image.Point{X: int(ev.Width), Y: int(ev.Height)},
-			}
-			xw.EventBus().Publish(windowEvent)
-		}
 	}
 }
 
 func (xw *x11Window) handleExpose(ev xproto.ExposeEvent) {
 	// Publish paint/redraw event
-	if xw.EventBus() != nil {
-		windowEvent := &gio.WindowEvent{
-			Event: gio.NewBaseEvent(gio.EventTypeWindow),
-			Type:  gio.WindowEventTypePaint,
-		}
-		xw.EventBus().Publish(windowEvent)
-	}
+
 }
 
 func (xw *x11Window) handleFocusIn(ev xproto.FocusInEvent) {
@@ -163,15 +147,6 @@ func (xw *x11Window) handleFocusIn(ev xproto.FocusInEvent) {
 	if !attr.State.Contains(gio.WindowStateFocused) {
 		attr.State |= gio.WindowStateFocused
 		xw.BaseWindow.SetAttr(attr)
-
-		// Publish focus event
-		if xw.EventBus() != nil {
-			windowEvent := &gio.WindowEvent{
-				Event: gio.NewBaseEvent(gio.EventTypeWindow),
-				Type:  gio.WindowEventTypeFocus,
-			}
-			xw.EventBus().Publish(windowEvent)
-		}
 	}
 }
 
@@ -180,42 +155,35 @@ func (xw *x11Window) handleFocusOut(ev xproto.FocusOutEvent) {
 	if attr.State.Contains(gio.WindowStateFocused) {
 		attr.State &^= gio.WindowStateFocused
 		xw.BaseWindow.SetAttr(attr)
-
-		// Publish blur event
-		if xw.EventBus() != nil {
-			windowEvent := &gio.WindowEvent{
-				Event: gio.NewBaseEvent(gio.EventTypeWindow),
-				Type:  gio.WindowEventTypeBlur,
-			}
-			xw.EventBus().Publish(windowEvent)
-		}
 	}
 }
 
 func (xw *x11Window) handleKeyPress(ev xproto.KeyPressEvent) {
-	keyCode := xw.xDriver.translateKeyCode(ev.Detail)
+	_, keyCode := xw.xDriver.translateKeyCode(uint8(ev.Detail), ev.State)
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 
-	keyEvent := gio.NewKeyboardEvent(keyCode, modifierKey, false)
+	keyEvent := gio.NewKeyboardEvent()
+	keyEvent.Code = keyCode
+	keyEvent.ModifierKey = modifierKey
+	keyEvent.Repeat = false // TODO: detect key repeat
 
-	if xw.EventBus() != nil {
-		xw.EventBus().Publish(keyEvent)
-	}
+	xw.Publish(keyEvent)
 }
 
 func (xw *x11Window) handleKeyRelease(ev xproto.KeyReleaseEvent) {
-	keyCode := xw.xDriver.translateKeyCode(ev.Detail)
+	_, keyCode := xw.xDriver.translateKeyCode(uint8(ev.Detail), ev.State)
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 
-	keyEvent := gio.NewKeyboardEvent(keyCode, modifierKey, false)
+	keyEvent := gio.NewKeyboardEvent()
+	keyEvent.Code = keyCode
+	keyEvent.ModifierKey = modifierKey
+	keyEvent.Repeat = false
 
-	if xw.EventBus() != nil {
-		xw.EventBus().Publish(keyEvent)
-	}
+	xw.Publish(keyEvent)
 }
 
 func (xw *x11Window) handleButtonPress(ev xproto.ButtonPressEvent) {
-	button := xw.xDriver.translateMouseButton(ev.Detail)
+	button := xw.xDriver.translateMouseButton(uint8(ev.Detail))
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
@@ -225,11 +193,12 @@ func (xw *x11Window) handleButtonPress(ev xproto.ButtonPressEvent) {
 		return
 	}
 
-	mouseEvent := gio.NewMouseEvent(button, modifierKey, position)
+	mouseEvent := gio.NewMouseEvent()
+	mouseEvent.Button = button
+	mouseEvent.ModifierKey = modifierKey
+	mouseEvent.Position = position
 
-	if xw.EventBus() != nil {
-		xw.EventBus().Publish(mouseEvent)
-	}
+	xw.Publish(mouseEvent)
 }
 
 func (xw *x11Window) handleButtonRelease(ev xproto.ButtonReleaseEvent) {
@@ -238,15 +207,16 @@ func (xw *x11Window) handleButtonRelease(ev xproto.ButtonReleaseEvent) {
 		return
 	}
 
-	button := xw.xDriver.translateMouseButton(ev.Detail)
+	button := xw.xDriver.translateMouseButton(uint8(ev.Detail))
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
-	mouseEvent := gio.NewMouseEvent(button, modifierKey, position)
+	mouseEvent := gio.NewMouseEvent()
+	mouseEvent.Button = button
+	mouseEvent.ModifierKey = modifierKey
+	mouseEvent.Position = position
 
-	if xw.EventBus() != nil {
-		xw.EventBus().Publish(mouseEvent)
-	}
+	xw.Publish(mouseEvent)
 }
 
 func (xw *x11Window) handleWheelEvent(ev xproto.ButtonPressEvent) {
@@ -266,11 +236,13 @@ func (xw *x11Window) handleWheelEvent(ev xproto.ButtonPressEvent) {
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
-	wheelEvent := gio.NewWheelEvent(deltaX, deltaY, modifierKey, position)
+	wheelEvent := gio.NewWheelEvent()
+	wheelEvent.DeltaX = deltaX
+	wheelEvent.DeltaY = deltaY
+	wheelEvent.ModifierKey = modifierKey
+	wheelEvent.Position = position
 
-	if xw.EventBus() != nil {
-		xw.EventBus().Publish(wheelEvent)
-	}
+	xw.Publish(wheelEvent)
 }
 
 func (xw *x11Window) handleMotionNotify(ev xproto.MotionNotifyEvent) {
@@ -278,11 +250,12 @@ func (xw *x11Window) handleMotionNotify(ev xproto.MotionNotifyEvent) {
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
 	// Create mouse move event (no button pressed)
-	mouseEvent := gio.NewMouseEvent(gio.MouseButtonNone, modifierKey, position)
+	mouseEvent := gio.NewMouseEvent()
+	mouseEvent.Button = gio.MouseButtonUnknown
+	mouseEvent.ModifierKey = modifierKey
+	mouseEvent.Position = position
 
-	if xw.EventBus() != nil {
-		xw.EventBus().Publish(mouseEvent)
-	}
+	xw.Publish(mouseEvent)
 }
 
 func (xw *x11Window) handleMappingNotify(ev xproto.MappingNotifyEvent) {
@@ -296,15 +269,6 @@ func (xw *x11Window) handleMapNotify(ev xproto.MapNotifyEvent) {
 	if !attr.State.Contains(gio.WindowStateVisible) {
 		attr.State |= gio.WindowStateVisible
 		xw.BaseWindow.SetAttr(attr)
-
-		// Publish window show event
-		if xw.EventBus() != nil {
-			windowEvent := &gio.WindowEvent{
-				Event: gio.NewBaseEvent(gio.EventTypeWindow),
-				Type:  gio.WindowEventTypeShow,
-			}
-			xw.EventBus().Publish(windowEvent)
-		}
 	}
 }
 
@@ -313,14 +277,5 @@ func (xw *x11Window) handleUnmapNotify(ev xproto.UnmapNotifyEvent) {
 	if attr.State.Contains(gio.WindowStateVisible) {
 		attr.State &^= gio.WindowStateVisible
 		xw.BaseWindow.SetAttr(attr)
-
-		// Publish window hide event
-		if xw.EventBus() != nil {
-			windowEvent := &gio.WindowEvent{
-				Event: gio.NewBaseEvent(gio.EventTypeWindow),
-				Type:  gio.WindowEventTypeHide,
-			}
-			xw.EventBus().Publish(windowEvent)
-		}
 	}
 }

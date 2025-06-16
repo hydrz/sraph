@@ -171,14 +171,41 @@ func (xw *x11Window) updateTitle(attr, currentAttr gio.WindowAttr) {
 		return
 	}
 
-	title := []byte(attr
-		} else {
-			// Restore from minimized state
-			xproto.MapWindow(conn, xw.xWindow)
+	titleBytes := []byte(attr.Title)
+	xproto.ChangeProperty(xw.xDriver.xc, xproto.PropModeReplace, xw.xWindow,
+		xw.xDriver.atomNETWMName, xw.xDriver.atomUTF8String, 8,
+		uint32(len(titleBytes)), titleBytes)
+}
+
+// updateGeometry updates window size and position
+func (xw *x11Window) updateGeometry(attr, currentAttr gio.WindowAttr) {
+	sizeChanged := attr.Width != currentAttr.Width || attr.Height != currentAttr.Height
+	posChanged := attr.Position.X != currentAttr.Position.X || attr.Position.Y != currentAttr.Position.Y
+
+	if sizeChanged && attr.Width > 0 && attr.Height > 0 {
+		err := xproto.ConfigureWindowChecked(xw.xDriver.xc, xw.xWindow,
+			xproto.ConfigWindowWidth|xproto.ConfigWindowHeight,
+			[]uint32{uint32(attr.Width), uint32(attr.Height)}).Check()
+		if err != nil {
+			fmt.Printf("x11driver: failed to resize window: %v\n", err)
 		}
 	}
 
-	// Handle maximized state using _NET_WM_STATE
+	if posChanged {
+		err := xproto.ConfigureWindowChecked(xw.xDriver.xc, xw.xWindow,
+			xproto.ConfigWindowX|xproto.ConfigWindowY,
+			[]uint32{uint32(attr.Position.X), uint32(attr.Position.Y)}).Check()
+		if err != nil {
+			fmt.Printf("x11driver: failed to move window: %v\n", err)
+		}
+	}
+}
+
+// updateWindowStates handles window state changes
+func (xw *x11Window) updateWindowStates(attr, currentAttr gio.WindowAttr) {
+	conn := xw.xDriver.xc
+
+	// Handle maximized state
 	maximizedChanged := attr.State.Contains(gio.WindowStateMaximized) != currentAttr.State.Contains(gio.WindowStateMaximized)
 	if maximizedChanged {
 		action := uint32(0) // _NET_WM_STATE_REMOVE
@@ -186,15 +213,7 @@ func (xw *x11Window) updateTitle(attr, currentAttr gio.WindowAttr) {
 			action = 1 // _NET_WM_STATE_ADD
 		}
 
-		xproto.SendEvent(conn, false, xw.xDriver.xsi.Root,
-			xproto.EventMaskSubstructureNotify|xproto.EventMaskSubstructureRedirect,
-			string(xproto.ClientMessageEvent{
-				ResponseType: xproto.ClientMessage,
-				Format:       32,
-				Window:       xw.xWindow,
-				Type:         xw.xDriver.atomNETWMState,
-				Data:         xproto.ClientMessageDataUnion32{Data32: [5]uint32{action, uint32(xw.xDriver.atomNETWMStateMaximizedHorz), uint32(xw.xDriver.atomNETWMStateMaximizedVert), 0, 0}},
-			}.Bytes()))
+		xw.sendNetWMStateMessage(action, xw.xDriver.atomNETWMStateMaximizedHorz, xw.xDriver.atomNETWMStateMaximizedVert)
 	}
 
 	// Handle floating (always on top) state
@@ -205,63 +224,85 @@ func (xw *x11Window) updateTitle(attr, currentAttr gio.WindowAttr) {
 			action = 1 // _NET_WM_STATE_ADD
 		}
 
-		xproto.SendEvent(conn, false, xw.xDriver.xsi.Root,
-			xproto.EventMaskSubstructureNotify|xproto.EventMaskSubstructureRedirect,
-			string(xproto.ClientMessageEvent{
-				ResponseType: xproto.ClientMessage,
-				Format:       32,
-				Window:       xw.xWindow,
-				Type:         xw.xDriver.atomNETWMState,
-				Data:         xproto.ClientMessageDataUnion32{Data32: [5]uint32{action, uint32(xw.xDriver.atomNETWMStateAbove), 0, 0, 0}},
-			}.Bytes()))
+		xw.sendNetWMStateMessage(action, xw.xDriver.atomNETWMStateAbove, 0)
 	}
 
 	// Handle focus state
 	focusChanged := attr.State.Contains(gio.WindowStateFocused) != currentAttr.State.Contains(gio.WindowStateFocused)
-	if focusChanged {
-		if attr.State.Contains(gio.WindowStateFocused) {
-			xproto.SetInputFocus(conn, xproto.InputFocusPointerRoot, xw.xWindow, xproto.TimeCurrentTime)
-		}
-		// Note: We don't explicitly unfocus as it may interfere with window manager behavior
+	if focusChanged && attr.State.Contains(gio.WindowStateFocused) {
+		xproto.SetInputFocus(conn, xproto.InputFocusPointerRoot, xw.xWindow, xproto.TimeCurrentTime)
 	}
 
-	// Handle resizable state by setting size hints
-	resizableChanged := attr.State.Contains(gio.WindowStateResizable) != currentAttr.State.Contains(gio.WindowStateResizable)
-	if resizableChanged || (attr.Width > 0 || attr.Height > 0) {
-		width := attr.Width
-		height := attr.Height
-		if width == 0 {
-			width = 1024
-		}
-		if height == 0 {
-			height = 768
-		}
-
-		var minWidth, minHeight, maxWidth, maxHeight uint32
-		if attr.State.Contains(gio.WindowStateResizable) {
-			minWidth, minHeight = 100, 100     // Reasonable minimum
-			maxWidth, maxHeight = 65535, 65535 // Maximum possible
+	// Handle visible state
+	visibleChanged := attr.State.Contains(gio.WindowStateVisible) != currentAttr.State.Contains(gio.WindowStateVisible)
+	if visibleChanged {
+		if attr.State.Contains(gio.WindowStateVisible) {
+			xproto.MapWindow(conn, xw.xWindow)
 		} else {
-			// Fixed size window
-			minWidth, minHeight = uint32(width), uint32(height)
-			maxWidth, maxHeight = uint32(width), uint32(height)
+			xproto.UnmapWindow(conn, xw.xWindow)
 		}
+	}
+}
 
-		// Set WM_NORMAL_HINTS to control resizability
-		hints := make([]uint32, 18)
-		hints[0] = 1<<4 | 1<<5 | 1<<6 // PMinSize | PMaxSize | PResizeInc
-		hints[5] = minWidth
-		hints[6] = minHeight
-		hints[7] = maxWidth
-		hints[8] = maxHeight
-		hints[9] = 1  // width_inc
-		hints[10] = 1 // height_inc
-
-		xproto.ChangeProperty(conn, xproto.PropModeReplace, xw.xWindow,
-			xw.xDriver.atomWMNormalHints, xw.xDriver.atomWMSizeHints, 32,
-			uint32(len(hints)), xproto.PropValueList(hints))
+// updateResizability handles window resizability changes
+func (xw *x11Window) updateResizability(attr, currentAttr gio.WindowAttr) {
+	resizableChanged := attr.State.Contains(gio.WindowStateResizable) != currentAttr.State.Contains(gio.WindowStateResizable)
+	if !resizableChanged && attr.Width == currentAttr.Width && attr.Height == currentAttr.Height {
+		return
 	}
 
-	// Update the base window attributes
-	xw.BaseWindow.SetAttr(attr)
+	width := attr.Width
+	height := attr.Height
+	if width <= 0 {
+		width = 1024
+	}
+	if height <= 0 {
+		height = 768
+	}
+
+	var minWidth, minHeight, maxWidth, maxHeight uint32
+	if attr.State.Contains(gio.WindowStateResizable) {
+		minWidth, minHeight = 100, 100     // Reasonable minimum
+		maxWidth, maxHeight = 65535, 65535 // Maximum possible	} else {
+		// Fixed size window
+		minWidth, minHeight = uint32(width), uint32(height)
+		maxWidth, maxHeight = uint32(width), uint32(height)
+	}
+
+	// Set WM_NORMAL_HINTS to control resizability
+	hints := make([]uint32, 18)
+	hints[0] = 1<<4 | 1<<5 | 1<<6 // PMinSize | PMaxSize | PResizeInc
+	hints[5] = minWidth
+	hints[6] = minHeight
+	hints[7] = maxWidth
+	hints[8] = maxHeight
+	hints[9] = 1  // width_inc
+	hints[10] = 1 // height_inc
+
+	hintsBytes := make([]byte, len(hints)*4)
+	for i, h := range hints {
+		hintsBytes[4*i+0] = uint8(h >> 0)
+		hintsBytes[4*i+1] = uint8(h >> 8)
+		hintsBytes[4*i+2] = uint8(h >> 16)
+		hintsBytes[4*i+3] = uint8(h >> 24)
+	}
+
+	xproto.ChangeProperty(xw.xDriver.xc, xproto.PropModeReplace, xw.xWindow,
+		xw.xDriver.atomWMNormalHints, xw.xDriver.atomWMSizeHints, 32,
+		uint32(len(hints)), hintsBytes)
+}
+
+// sendNetWMStateMessage sends a _NET_WM_STATE client message
+func (xw *x11Window) sendNetWMStateMessage(action uint32, prop1, prop2 xproto.Atom) {
+	data := []uint32{action, uint32(prop1), uint32(prop2), 0, 0}
+	ev := xproto.ClientMessageEvent{
+		Format: 32,
+		Window: xw.xWindow,
+		Type:   xw.xDriver.atomNETWMState,
+		Data:   xproto.ClientMessageDataUnionData32New(data),
+	}
+
+	xproto.SendEvent(xw.xDriver.xc, false, xw.xDriver.xsi.Root,
+		xproto.EventMaskSubstructureNotify|xproto.EventMaskSubstructureRedirect,
+		string(ev.Bytes()))
 }

@@ -190,3 +190,47 @@ func (xd *x11Driver) setProperty(xw xproto.Window, prop xproto.Atom, values ...x
 	}
 	xproto.ChangeProperty(xd.xc, xproto.PropModeReplace, xw, prop, xproto.AtomAtom, 32, uint32(len(values)), b)
 }
+
+// translateKeyCode converts X11 keycode to gio KeyCode using the keysym table
+func (xd *x11Driver) translateKeyCode(keycode uint8, state uint16) (rune, gio.KeyCode) {
+	return xd.keysyms.Lookup(keycode, state)
+}
+
+// translateModifiers converts X11 modifier state to gio ModifierKey
+func (xd *x11Driver) translateModifiers(state uint16) gio.ModifierKey {
+	return x11key.KeyModifiers(state)
+}
+
+// translateMouseButton converts X11 button to gio MouseButton
+func (xd *x11Driver) translateMouseButton(button uint8) gio.MouseButton {
+	switch button {
+	case 1:
+		return gio.MouseButtonLeft
+	case 2:
+		return gio.MouseButtonMiddle
+	case 3:
+		return gio.MouseButtonRight
+	case 8:
+		return gio.MouseButtonBack
+	case 9:
+		return gio.MouseButtonForward
+	default:
+		return gio.MouseButtonUnknown
+	}
+}
+
+// translateWheelDelta converts X11 wheel button to scroll delta
+func (xd *x11Driver) translateWheelDelta(button uint8) (float64, float64) {
+	switch button {
+	case 4: // Scroll up
+		return 0, -1
+	case 5: // Scroll down
+		return 0, 1
+	case 6: // Scroll left
+		return -1, 0
+	case 7: // Scroll right
+		return 1, 0
+	default:
+		return 0, 0
+	}
+}
