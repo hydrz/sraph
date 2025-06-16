@@ -1,11 +1,5 @@
 package gio
 
-import (
-	"time"
-
-	"golang.org/x/text/language"
-)
-
 type KeyCode uint16
 
 //go:generate go tool stringer -type=KeyCode -trimprefix=KeyCode -output=keyboard_string.go
@@ -225,38 +219,13 @@ func (m *ModifierKey) Contains(key ModifierKey) bool {
 	return (*m & key) != 0
 }
 
-// KeyboardEvent represents a keyboard event following W3C standard
-type KeyboardEvent struct {
-	BaseEvent
-	Location    KeyLocation  // The location of the key on the keyboard
-	ModifierKey ModifierKey  // Bitmask of modifier keys pressed
-	Repeat      bool         // Whether the key is being held down
-	Locale      language.Tag // The locale identifier
-	Code        KeyCode      // The code value of the key pressed
-}
-
-// NewKeyboardEvent creates a new keyboard event
-func NewKeyboardEvent(code KeyCode, modifierKey ModifierKey, repeat bool) *KeyboardEvent {
-	return &KeyboardEvent{
-		BaseEvent: BaseEvent{
-			eventType: EventTypeKeyboard,
-			time:      time.Now(),
-		},
-		Code:        code,
-		ModifierKey: modifierKey,
-		Repeat:      repeat,
-		Location:    KeyLocationStandard, // Default location
-		Locale:      language.Und,        // Default locale (undefined)
-	}
-}
-
-// The KeyboardEvent interface's key read-only property returns the value of the key pressed by the user, taking into consideration the state of modifier keys such as Shift as well as the keyboard locale and layout.
-func (e *KeyboardEvent) Key() string {
+// KeyToString converts a KeyCode to its string representation considering modifiers
+func KeyToString(code KeyCode, modifiers ModifierKey) string {
 	// Check if Shift modifier is active
-	isShiftPressed := e.ModifierKey.Contains(ModifierKeyShift)
-	isCapsLockActive := e.ModifierKey.Contains(ModifierKeyCapsLock)
+	isShiftPressed := modifiers.Contains(ModifierKeyShift)
+	isCapsLockActive := modifiers.Contains(ModifierKeyCapsLock)
 
-	switch e.Code {
+	switch code {
 	// Number row keys
 	case KeyCodeDigit1:
 		if isShiftPressed {
@@ -618,6 +587,11 @@ func (e *KeyboardEvent) Key() string {
 
 	default:
 		// For unknown keys, return the string representation of the KeyCode
-		return e.Code.String()
+		return code.String()
 	}
+}
+
+// Key returns the value of the key pressed by the user
+func (e *KeyboardEvent) Key() string {
+	return KeyToString(e.Code, e.ModifierKey)
 }

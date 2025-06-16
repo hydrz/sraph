@@ -1,31 +1,30 @@
 package gio
 
 import (
-	"fmt"
+	"context"
 	"image"
 	"sync"
-
-	"github.com/opensraph/sraph/gpu"
+	"unsafe"
 )
+
+// WindowID represents a unique identifier for a window
+type WindowID uint64
 
 // WindowState represents window attributes
 type WindowState uint16
 
 const (
-	WindowStateUnknown                WindowState = iota      // Unknown attribute
-	WindowStateFocused                WindowState = 1 << iota // Window is focused
-	WindowStateIconified                                      // Window is minimized
-	WindowStateMaximized                                      // Window is maximized
-	WindowStateVisible                                        // Window is visible
-	WindowStateHovered                                        // Cursor is over the window
-	WindowStateResizable                                      // Window is resizable
-	WindowStateDecorated                                      // Window has decorations (title bar, borders, etc.)
-	WindowStateFloating                                       // Window is always on top
-	WindowStateAutoIconify                                    // Fullscreen windows auto-iconify on focus loss
-	WindowStateCenterCursor                                   // Cursor is centered over fullscreen windows
-	WindowStateTransparentFramebuffer                         // Framebuffer is transparent
-	WindowStateFocusOnShow                                    // Window gets focus when shown
-	WindowStateScaleToMonitor                                 // Window content area scales with monitor content scale
+	WindowStateUnknown WindowState = iota
+	WindowStateClosed  WindowState = 1 << iota
+	WindowStateFocused
+	WindowStateIconified
+	WindowStateMaximized
+	WindowStateVisible
+	WindowStateHovered
+	WindowStateResizable
+	WindowStateDecorated
+	WindowStateFloating
+	WindowStateAutoIconify
 )
 
 func (ws WindowState) Contains(state WindowState) bool {
@@ -40,16 +39,16 @@ func (ws WindowState) Diff(state WindowState) WindowState {
 type WindowAttr struct {
 	Title         string
 	Width, Height int
-	Position      image.Point // Position of the window on the screen
-	State         WindowState // Initial state of the window
+	Position      image.Point
+	State         WindowState
 }
 
 func (wa WindowAttr) Equal(other WindowAttr) bool {
 	return wa.Title == other.Title &&
 		wa.Width == other.Width &&
 		wa.Height == other.Height &&
-		wa.Position.Eq(other.Position) &&
-		wa.State.Diff(other.State) == 0
+		wa.Position == other.Position &&
+		wa.State == other.State
 }
 
 func (wa WindowAttr) Apply(o ...WindowAttr) WindowAttr {
@@ -57,178 +56,358 @@ func (wa WindowAttr) Apply(o ...WindowAttr) WindowAttr {
 		return wa
 	}
 
+	result := wa
 	for _, attr := range o {
 		if attr.Title != "" {
-			wa.Title = attr.Title
+			result.Title = attr.Title
 		}
 		if attr.Width > 0 {
-			wa.Width = attr.Width
+			result.Width = attr.Width
 		}
 		if attr.Height > 0 {
-			wa.Height = attr.Height
+			result.Height = attr.Height
 		}
 		if !attr.Position.Eq(image.Point{}) {
-			wa.Position = attr.Position
+			result.Position = attr.Position
 		}
+		// Only merge state if it's not the default unknown state
 		if attr.State != WindowStateUnknown {
-			wa.State = wa.State | attr.State
+			// Replace state instead of ORing to avoid conflicting states
+			result.State = attr.State
 		}
 	}
 
-	return wa
+	return result
 }
 
-type PlatformWindow interface {
-	// SetAttr sets the window attributes.
-	SetAttr(attr WindowAttr) error
-	// Event returns the event bus for the window.
-	Event() *EventBus
-	// Surface returns the GPU surface associated with the window.
-	Surface() (gpu.Surface, error)
+type NewWindowOptions = WindowAttr
 
-	Close() error
+func DefaultNewWindowOptions() NewWindowOptions {
+	config := GetConfig()
+	return NewWindowOptions{
+		Title:    "Window",
+		Width:    config.DefaultWindowWidth,
+		Height:   config.DefaultWindowHeight,
+		Position: image.Point{X: 100, Y: 100},
+		State:    WindowStateFocused | WindowStateVisible | WindowStateResizable | WindowStateDecorated,
+	}
 }
 
+type WindowHandler unsafe.Pointer
+
+// Window interface with context support
 type Window interface {
+	BaseWindow
+	WindowID() WindowID
+	Context() Context
+}
+
+// BaseWindow interface with improved lifecycle management
+type BaseWindow interface {
 	Width() int
 	Height() int
 	Title() string
 	Position() image.Point
 	State() WindowState
 
-	Show() error
-	Hide() error
-	Close() error
+	Show(ctx Context) error
+	Hide(ctx Context) error
+	Close(ctx Context) error
 
-	// Surface returns the GPU surface associated with the window.
-	Surface() (gpu.Surface, error)
+	Publish(event Event) error
+	Subscribe(eventType EventType, handler EventHandler) error
+	Unsubscribe(eventType EventType, handler EventHandler)
 
-	// Event returns the event bus for the window.
-	Event() *EventBus
+	Attr() WindowAttr
+	SetAttr(ctx Context, attr WindowAttr) error
+
+	// Status check methods
+	IsClosed() bool
+	IsFocused() bool
+	IsIconified() bool
+	IsMaximized() bool
+	IsVisible() bool
+	IsResizable() bool
+	IsDecorated() bool
+	IsFloating() bool
+	IsAutoIconify() bool
+
+	// Lifecycle management
+	Destroy(ctx Context) error
+	IsDestroyed() bool
 }
 
-type NewWindowOptions = WindowAttr
+func NewBaseWindow(o NewWindowOptions) BaseWindow {
+	attr := DefaultNewWindowOptions().Apply(o)
+	ctx := NewContext(context.Background())
 
-// DefaultNewWindowOptions returns the default window attributes.
-func DefaultNewWindowOptions() NewWindowOptions {
-	return NewWindowOptions{
-		Title:    "Window",
-		Width:    800,
-		Height:   600,
-		Position: image.Point{X: 100, Y: 100},
-		State:    WindowStateFocused | WindowStateVisible | WindowStateResizable | WindowStateDecorated,
+	return &baseWindow{
+		attr:     attr,
+		eventBus: NewEventBus(),
+		ctx:      ctx,
 	}
 }
 
-// NewWindow creates a new window with the given attributes.
-func NewWindow(pw PlatformWindow, options ...NewWindowOptions) (Window, error) {
-	o := DefaultNewWindowOptions()
-	o = o.Apply(options...)
+var _ BaseWindow = (*baseWindow)(nil)
 
-	if err := pw.SetAttr(o); err != nil {
-		if closeErr := pw.Close(); closeErr != nil {
-			return nil, closeErr
-		}
-		return nil, err
-	}
-
-	surface, err := pw.Surface()
-	if err != nil {
-		if closeErr := pw.Close(); closeErr != nil {
-			return nil, closeErr
-		}
-		return nil, err
-	}
-
-	return &window{
-		attr:    o,
-		pw:      pw,
-		event:   pw.Event(),
-		surface: surface,
-	}, nil
+type baseWindow struct {
+	attr      WindowAttr
+	eventBus  *EventBus
+	ctx       Context
+	destroyed bool
+	mu        sync.RWMutex
 }
 
-type window struct {
-	attr    WindowAttr
-	pw      PlatformWindow
-	event   *EventBus
-	surface gpu.Surface
-	mu      sync.Mutex // Mutex to protect against concurrent access
-	closed  bool       // Flag to indicate if the window is closed
+// Title implements BaseWindow.
+func (w *baseWindow) Title() string {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.Title
 }
 
-// Close implements Window.
-func (w *window) Close() error {
+// Width implements BaseWindow.
+func (w *baseWindow) Width() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.Width
+}
+
+func (w *baseWindow) Context() Context {
+	return w.ctx
+}
+
+func (w *baseWindow) Attr() WindowAttr {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr
+}
+
+// Height implements Window.
+func (w *baseWindow) Height() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.Height
+}
+
+// Position returns the window position.
+func (w *baseWindow) Position() image.Point {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.Position
+}
+
+// State returns the window state.
+func (w *baseWindow) State() WindowState {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State
+}
+
+// SetAttr sets the window attributes with better validation
+func (w *baseWindow) SetAttr(ctx Context, attr WindowAttr) error {
+	if w.IsDestroyed() {
+		return ErrWindowNotInitialized
+	}
+
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	if w.closed {
-		return nil // Already closed
-	}
-	w.closed = true
+	oldAttr := w.attr
+	newAttr := w.attr.Apply(attr)
 
-	if err := w.pw.Close(); err != nil {
-		return fmt.Errorf("failed to close window: %w", err)
+	// Validate state consistency
+	if newAttr.State.Contains(WindowStateClosed) && newAttr.State.Contains(WindowStateVisible) {
+		// Remove visible state if window is closed
+		newAttr.State = newAttr.State.Diff(WindowStateVisible)
+	}
+
+	if oldAttr.Equal(newAttr) {
+		return nil
+	}
+
+	w.attr = newAttr
+
+	// Publish event without holding lock
+	go func() {
+		if err := w.publishAttrChangeEvent(); err != nil {
+			// Log error appropriately
+			_ = err
+		}
+	}()
+
+	return nil
+}
+
+// Show shows the window if supported by the platform.
+func (w *baseWindow) Show(ctx Context) error {
+	if w.IsDestroyed() {
+		return ErrWindowNotInitialized
+	}
+
+	w.mu.Lock()
+	if w.attr.State.Contains(WindowStateVisible) {
+		w.mu.Unlock()
+		return nil
+	}
+
+	w.attr.State |= WindowStateVisible
+	w.mu.Unlock()
+
+	return w.publishAttrChangeEvent()
+}
+
+// Hide hides the window if supported by the platform.
+func (w *baseWindow) Hide(ctx Context) error {
+	if w.IsDestroyed() {
+		return ErrWindowNotInitialized
+	}
+
+	w.mu.Lock()
+	if !w.attr.State.Contains(WindowStateVisible) {
+		w.mu.Unlock()
+		return nil
+	}
+
+	w.attr.State &= ^WindowStateVisible
+	w.mu.Unlock()
+
+	return w.publishAttrChangeEvent()
+}
+
+// Close implements Window.
+func (w *baseWindow) Close(ctx Context) error {
+	if w.IsDestroyed() {
+		return ErrWindowNotInitialized
+	}
+
+	w.mu.Lock()
+	if w.attr.State.Contains(WindowStateClosed) {
+		w.mu.Unlock()
+		return nil
+	}
+
+	w.attr.State |= WindowStateClosed
+	w.mu.Unlock()
+
+	return w.publishAttrChangeEvent()
+}
+
+// Publish publishes an event to the window's event bus.
+func (w *baseWindow) Publish(event Event) error {
+	if w.IsDestroyed() || w.eventBus == nil {
+		return ErrWindowNotInitialized
+	}
+	return w.eventBus.Publish(event)
+}
+
+func (w *baseWindow) Subscribe(eventType EventType, handler EventHandler) error {
+	if w.IsDestroyed() || w.eventBus == nil {
+		return ErrWindowNotInitialized
+	}
+	return w.eventBus.Subscribe(eventType, handler)
+}
+
+func (w *baseWindow) Unsubscribe(eventType EventType, handler EventHandler) {
+	if w.IsDestroyed() || w.eventBus == nil {
+		return
+	}
+	w.eventBus.Unsubscribe(eventType, handler)
+}
+
+func (w *baseWindow) Destroy(ctx Context) error {
+	w.mu.Lock()
+	if w.destroyed {
+		w.mu.Unlock()
+		return nil
+	}
+
+	w.destroyed = true
+	w.mu.Unlock()
+
+	if w.eventBus != nil {
+		w.eventBus.Close()
+		w.eventBus = nil
 	}
 
 	return nil
 }
 
-// Event implements Window.
-func (w *window) Event() *EventBus {
-	w.mu.Lock()
-	defer w.mu.Unlock()
+func (w *baseWindow) IsDestroyed() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.destroyed
+}
 
-	if w.closed {
-		return nil // Return nil if the window is closed
+// publishAttrChangeEvent publishes a window attribute change event
+func (w *baseWindow) publishAttrChangeEvent() error {
+	if w.eventBus == nil {
+		return ErrWindowNotInitialized
 	}
 
-	return w.event
+	event := NewWindowEvent()
+	event.Window = w
+	return w.eventBus.Publish(event)
 }
 
-// Height implements Window.
-func (w *window) Height() int {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	if w.closed {
-		return 0 // Return 0 if the window is closed
-	}
-
-	return w.attr.Height
+// IsAutoIconify implements BaseWindow.
+func (w *baseWindow) IsAutoIconify() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateAutoIconify)
 }
 
-// Hide implements Window.
-func (w *window) Hide() error {
-	panic("unimplemented")
+// IsClosed implements BaseWindow.
+func (w *baseWindow) IsClosed() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateClosed)
 }
 
-// Position implements Window.
-func (w *window) Position() image.Point {
-	panic("unimplemented")
+// IsDecorated implements BaseWindow.
+func (w *baseWindow) IsDecorated() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateDecorated)
 }
 
-// Show implements Window.
-func (w *window) Show() error {
-	panic("unimplemented")
+// IsFloating implements BaseWindow.
+func (w *baseWindow) IsFloating() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateFloating)
 }
 
-// State implements Window.
-func (w *window) State() WindowState {
-	panic("unimplemented")
+// IsFocused implements BaseWindow.
+func (w *baseWindow) IsFocused() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateFocused)
 }
 
-// Surface implements Window.
-func (w *window) Surface() (gpu.Surface, error) {
-	panic("unimplemented")
+// IsIconified implements BaseWindow.
+func (w *baseWindow) IsIconified() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateIconified)
 }
 
-// Title implements Window.
-func (w *window) Title() string {
-	panic("unimplemented")
+// IsMaximized implements BaseWindow.
+func (w *baseWindow) IsMaximized() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateMaximized)
 }
 
-// Width implements Window.
-func (w *window) Width() int {
-	panic("unimplemented")
+// IsResizable implements BaseWindow.
+func (w *baseWindow) IsResizable() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateResizable)
+}
+
+// IsVisible implements BaseWindow.
+func (w *baseWindow) IsVisible() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.attr.State.Contains(WindowStateVisible)
 }

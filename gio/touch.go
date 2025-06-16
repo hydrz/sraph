@@ -12,11 +12,3 @@ type Touch struct {
 }
 
 type TouchList []Touch
-
-type TouchEvent struct {
-	BaseEvent
-	ChangedTouches TouchList   // List of touches that changed since the last event
-	ModifierKey    ModifierKey // Modifier keys pressed during the event
-	TargetTouches  TouchList   // List of touches currently on the target
-	Touches        TouchList   // List of all touches on the screen
-}

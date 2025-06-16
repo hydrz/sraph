@@ -25,20 +25,6 @@ func (mb MouseButton) Contains(button MouseButton) bool {
 	return mb&button != 0
 }
 
-type MouseEvent struct {
-	BaseEvent
-	Button      MouseButton // The mouse button that was pressed
-	ModifierKey ModifierKey // Modifier keys pressed during the event
-	ClientX     int         // X coordinate relative to the viewport
-	ClientY     int         // Y coordinate relative to the viewport
-	MovementX   int         // Change in X since the last event
-	MovementY   int         // Change in Y since the last event
-	PageX       int         // X coordinate relative to the document
-	PageY       int         // Y coordinate relative to the document
-	ScreenX     int         // X coordinate relative to the screen
-	ScreenY     int         // Y coordinate relative to the screen
-}
-
 type DeltaMode uint8
 
 // DeltaMode constants represent the unit of measurement for deltas
@@ -48,11 +34,3 @@ const (
 	DeltaModeLines                    // Lines
 	DeltaModePages                    // Pages
 )
-
-type WheelEvent struct {
-	BaseEvent
-	DeltaX    float64   // Horizontal scroll amount
-	DeltaY    float64   // Vertical scroll amount
-	DeltaZ    float64   // Depth scroll amount (if applicable)
-	DeltaMode DeltaMode // Unit of measurement for deltas
-}
