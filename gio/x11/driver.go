@@ -2,7 +2,6 @@ package x11
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/jezek/xgb"
 	"github.com/jezek/xgb/render"
@@ -14,7 +13,6 @@ import (
 var _ gio.Driver = (*x11Driver)(nil)
 
 func init() {
-	runtime.LockOSThread()
 	gio.RegisterDriver(gio.DriverTypeX11, newX11Driver)
 }
 
@@ -192,7 +190,7 @@ func (xd *x11Driver) setProperty(xw xproto.Window, prop xproto.Atom, values ...x
 }
 
 // translateKeyCode converts X11 keycode to gio KeyCode using the keysym table
-func (xd *x11Driver) translateKeyCode(keycode uint8, state uint16) (rune, gio.KeyCode) {
+func (xd *x11Driver) translateKeyCode(keycode xproto.Keycode, state uint16) (rune, gio.KeyCode) {
 	return xd.keysyms.Lookup(keycode, state)
 }
 
@@ -202,7 +200,7 @@ func (xd *x11Driver) translateModifiers(state uint16) gio.ModifierKey {
 }
 
 // translateMouseButton converts X11 button to gio MouseButton
-func (xd *x11Driver) translateMouseButton(button uint8) gio.MouseButton {
+func (xd *x11Driver) translateMouseButton(button xproto.Button) gio.MouseButton {
 	switch button {
 	case 1:
 		return gio.MouseButtonLeft
@@ -220,7 +218,7 @@ func (xd *x11Driver) translateMouseButton(button uint8) gio.MouseButton {
 }
 
 // translateWheelDelta converts X11 wheel button to scroll delta
-func (xd *x11Driver) translateWheelDelta(button uint8) (float64, float64) {
+func (xd *x11Driver) translateWheelDelta(button xproto.Button) (float64, float64) {
 	switch button {
 	case 4: // Scroll up
 		return 0, -1

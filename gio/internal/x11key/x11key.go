@@ -6,6 +6,7 @@ package x11key
 import (
 	"unicode"
 
+	"github.com/jezek/xgb/xproto"
 	"github.com/opensraph/sraph/gio"
 )
 
@@ -32,7 +33,7 @@ type KeysymTable struct {
 	NumLockMod, ModeSwitchMod, ISOLevel3ShiftMod uint16
 }
 
-func (t *KeysymTable) Lookup(detail uint8, state uint16) (rune, gio.KeyCode) {
+func (t *KeysymTable) Lookup(detail xproto.Keycode, state uint16) (rune, gio.KeyCode) {
 	te := t.Table[detail][0:2]
 	if state&t.ModeSwitchMod != 0 {
 		te = t.Table[detail][2:4]
@@ -87,7 +88,7 @@ func KeyModifiers(state uint16) (m gio.ModifierKey) {
 		m |= gio.ModifierKeyShift
 	}
 	if state&ControlMask != 0 {
-		m |= gio.ModifierKeyControl
+		m |= gio.ModifierKeyCtrl
 	}
 	if state&Mod1Mask != 0 {
 		m |= gio.ModifierKeyAlt

@@ -159,7 +159,7 @@ func (xw *x11Window) handleFocusOut(ev xproto.FocusOutEvent) {
 }
 
 func (xw *x11Window) handleKeyPress(ev xproto.KeyPressEvent) {
-	_, keyCode := xw.xDriver.translateKeyCode(uint8(ev.Detail), ev.State)
+	_, keyCode := xw.xDriver.translateKeyCode(ev.Detail, ev.State)
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 
 	keyEvent := gio.NewKeyboardEvent()
@@ -171,7 +171,7 @@ func (xw *x11Window) handleKeyPress(ev xproto.KeyPressEvent) {
 }
 
 func (xw *x11Window) handleKeyRelease(ev xproto.KeyReleaseEvent) {
-	_, keyCode := xw.xDriver.translateKeyCode(uint8(ev.Detail), ev.State)
+	_, keyCode := xw.xDriver.translateKeyCode(ev.Detail, ev.State)
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 
 	keyEvent := gio.NewKeyboardEvent()
@@ -183,7 +183,7 @@ func (xw *x11Window) handleKeyRelease(ev xproto.KeyReleaseEvent) {
 }
 
 func (xw *x11Window) handleButtonPress(ev xproto.ButtonPressEvent) {
-	button := xw.xDriver.translateMouseButton(uint8(ev.Detail))
+	button := xw.xDriver.translateMouseButton(ev.Detail)
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
@@ -207,7 +207,7 @@ func (xw *x11Window) handleButtonRelease(ev xproto.ButtonReleaseEvent) {
 		return
 	}
 
-	button := xw.xDriver.translateMouseButton(uint8(ev.Detail))
+	button := xw.xDriver.translateMouseButton(ev.Detail)
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
@@ -220,18 +220,7 @@ func (xw *x11Window) handleButtonRelease(ev xproto.ButtonReleaseEvent) {
 }
 
 func (xw *x11Window) handleWheelEvent(ev xproto.ButtonPressEvent) {
-	var deltaX, deltaY float64
-
-	switch ev.Detail {
-	case 4: // Scroll up
-		deltaY = -1.0
-	case 5: // Scroll down
-		deltaY = 1.0
-	case 6: // Scroll left
-		deltaX = -1.0
-	case 7: // Scroll right
-		deltaX = 1.0
-	}
+	deltaX, deltaY := xw.xDriver.translateWheelDelta(ev.Detail)
 
 	modifierKey := xw.xDriver.translateModifiers(ev.State)
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}

@@ -190,7 +190,7 @@ const (
 	ModifierKeyAlt        ModifierKey = 1 << iota // Alt key
 	ModifierKeyAltGraph                           // AltGraph key (right Alt on some keyboards)
 	ModifierKeyCapsLock                           // CapsLock key
-	ModifierKeyControl                            // Control key
+	ModifierKeyCtrl                               // Control key
 	ModifierKeyFn                                 // Fn key (function key, not standard)
 	ModifierKeyFnLock                             // FnLock key (function lock, not standard)
 	ModifierKeyHyper                              // Hyper key (not standard, often used in custom keyboards)
@@ -219,8 +219,8 @@ func (m ModifierKey) String() string {
 		return "AltGraph"
 	case ModifierKeyCapsLock:
 		return "CapsLock"
-	case ModifierKeyControl:
-		return "Control"
+	case ModifierKeyCtrl:
+		return "Ctrl"
 	case ModifierKeyFn:
 		return "Fn"
 	case ModifierKeyFnLock:

@@ -1,7 +1,9 @@
 package gio
 
 import (
+	"fmt"
 	"image"
+	"strconv"
 	"sync"
 	"unsafe"
 )
@@ -77,6 +79,16 @@ func (wa WindowAttr) Apply(o ...WindowAttr) WindowAttr {
 	}
 
 	return result
+}
+
+// String returns a string representation of the WindowAttr
+func (wa WindowAttr) String() string {
+	return "(" +
+		"Title: '" + wa.Title + "', " +
+		"Width: " + strconv.Itoa(wa.Width) + ", " +
+		"Height: " + strconv.Itoa(wa.Height) + ", " +
+		"Position: " + wa.Position.String() + ", " +
+		"State: " + fmt.Sprintf("%016b", wa.State) + ")"
 }
 
 type NewWindowOptions = WindowAttr
@@ -370,4 +382,9 @@ func (w *baseWindow) IsVisible() bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.attr.State.Contains(WindowStateVisible)
+}
+
+// String returns a string representation of the base window
+func (w *baseWindow) String() string {
+	return w.Attr().String()
 }
