@@ -14,28 +14,20 @@ type Config struct {
 	AsyncEventHandler bool          // Whether to handle events asynchronously
 
 	// Window configuration
-	DefaultWindowWidth  int  // Default window width
-	DefaultWindowHeight int  // Default window height
-	EnableWindowCaching bool // Whether to cache window instances
-
-	// Performance configuration
-	MaxConcurrentWindows int           // Maximum number of concurrent windows
-	GCInterval           time.Duration // Garbage collection interval for resources
+	DefaultWindowWidth  int // Default window width
+	DefaultWindowHeight int // Default window height
 
 	mu sync.RWMutex
 }
 
 var (
 	globalConfig = &Config{
-		EventQueueSize:       1000,
-		EventTimeout:         time.Second * 5,
-		MaxEventHandlers:     100,
-		AsyncEventHandler:    true,
-		DefaultWindowWidth:   800,
-		DefaultWindowHeight:  600,
-		EnableWindowCaching:  true,
-		MaxConcurrentWindows: 50,
-		GCInterval:           time.Minute * 5,
+		EventQueueSize:      1000,
+		EventTimeout:        time.Second * 5,
+		MaxEventHandlers:    100,
+		AsyncEventHandler:   true,
+		DefaultWindowWidth:  1024,
+		DefaultWindowHeight: 768,
 	}
 )
 
@@ -57,14 +49,11 @@ func (c *Config) Clone() *Config {
 	defer c.mu.RUnlock()
 
 	return &Config{
-		EventQueueSize:       c.EventQueueSize,
-		EventTimeout:         c.EventTimeout,
-		MaxEventHandlers:     c.MaxEventHandlers,
-		AsyncEventHandler:    c.AsyncEventHandler,
-		DefaultWindowWidth:   c.DefaultWindowWidth,
-		DefaultWindowHeight:  c.DefaultWindowHeight,
-		EnableWindowCaching:  c.EnableWindowCaching,
-		MaxConcurrentWindows: c.MaxConcurrentWindows,
-		GCInterval:           c.GCInterval,
+		EventQueueSize:      c.EventQueueSize,
+		EventTimeout:        c.EventTimeout,
+		MaxEventHandlers:    c.MaxEventHandlers,
+		AsyncEventHandler:   c.AsyncEventHandler,
+		DefaultWindowWidth:  c.DefaultWindowWidth,
+		DefaultWindowHeight: c.DefaultWindowHeight,
 	}
 }
