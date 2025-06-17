@@ -4,13 +4,44 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"os"
 	"sync"
+	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/opensraph/sraph/gio"
 	"github.com/rajveermalviya/go-wayland/wayland/client"
 	xdg_shell "github.com/rajveermalviya/go-wayland/wayland/stable/xdg-shell"
 )
+
+func init() {
+	// Register the Wayland driver
+	gio.RegisterDriver(gio.DriverTypeWayland, newWaylandDriver)
+}
+
+var _ gio.Driver = (*WaylandDriver)(nil)
+
+// newWaylandDriver creates a new Wayland driver instance (matching X11 pattern)
+func newWaylandDriver() (gio.Driver, error) {
+	display, err := client.Connect("")
+	if err != nil {
+		return nil, fmt.Errorf("wayland: failed to connect to display: %w", err)
+	}
+
+	driver := &WaylandDriver{
+		display: display,
+		running: true,
+	}
+
+	// Initialize Wayland connection
+	if err := driver.init(); err != nil {
+		display.Destroy()
+		return nil, fmt.Errorf("wayland: failed to initialize driver: %w", err)
+	}
+
+	return driver, nil
+}
 
 // WaylandDriver implements the Wayland graphics driver
 type WaylandDriver struct {
@@ -27,29 +58,8 @@ type WaylandDriver struct {
 	mu         sync.RWMutex
 }
 
-// NewWaylandDriver creates a new Wayland driver instance
-func NewWaylandDriver() (gio.Driver, error) {
-	display, err := client.Connect("")
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Wayland display: %w", err)
-	}
-
-	driver := &WaylandDriver{
-		display: display,
-		running: true,
-	}
-
-	// Initialize Wayland connection
-	if err := driver.initialize(); err != nil {
-		display.Destroy()
-		return nil, fmt.Errorf("failed to initialize Wayland driver: %w", err)
-	}
-
-	return driver, nil
-}
-
-// initialize sets up the Wayland connection and global objects
-func (d *WaylandDriver) initialize() error {
+// init sets up the Wayland connection and global objects
+func (d *WaylandDriver) init() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -106,7 +116,7 @@ func (d *WaylandDriver) initialize() error {
 			d.seat = seat
 			d.setupSeat()
 			log.Printf("Bound seat successfully")
-			
+
 		case "wl_shm":
 			// Create and bind shared memory
 			shm := client.NewShm(d.ctx)
@@ -163,6 +173,9 @@ syncComplete:
 	}
 	if d.wmBase == nil {
 		return fmt.Errorf("xdg_wm_base not available")
+	}
+	if d.shm == nil {
+		return fmt.Errorf("wl_shm not available")
 	}
 
 	log.Printf("Wayland driver initialized successfully")
@@ -269,51 +282,8 @@ func (d *WaylandDriver) Type() gio.DriverType {
 
 // CreateWindow creates a new Wayland window
 func (d *WaylandDriver) CreateWindow(opts gio.NewWindowOptions) (gio.Window, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	if !d.running {
-		return nil, gio.NewError(gio.ErrorCodeDriverNotFound, "Wayland driver not running", nil)
-	}
-
-	if d.compositor == nil || d.wmBase == nil {
-		return nil, gio.NewError(gio.ErrorCodeDriverInitFailed, "Wayland compositor or window manager not available", nil)
-	}
-
-	// Create surface
-	surface, err := d.compositor.CreateSurface()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create surface: %w", err)
-	}
-
-	// Create XDG surface
-	xdgSurface, err := d.wmBase.GetXdgSurface(surface)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create XDG surface: %w", err)
-	}
-
-	// Create toplevel
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create toplevel: %w", err)
-	}
-
-	// Create window wrapper
-	window := &WaylandWindow{
-		BaseWindow: gio.NewBaseWindow(opts),
-		driver:     d,
-		surface:    surface,
-		xdgSurface: xdgSurface,
-		toplevel:   toplevel,
-		id:         gio.WindowID(time.Now().UnixNano()),
-	}
-
-	// Configure window properties
-	if err := window.configure(); err != nil {
-		return nil, fmt.Errorf("failed to configure window: %w", err)
-	}
-
-	return window, nil
+	bw := gio.NewBaseWindow(opts)
+	return newWaylandWindow(d, bw)
 }
 
 // Run starts the Wayland event loop
@@ -381,25 +351,35 @@ func (d *WaylandDriver) Shutdown() error {
 	return nil
 }
 
-// WaylandWindow represents a Wayland window
+var _ gio.Window = (*WaylandWindow)(nil)
+
+// WaylandWindow represents a Wayland window implementation
 type WaylandWindow struct {
 	gio.BaseWindow
-	driver     *WaylandDriver
-	surface    *client.Surface
+
+	wlDriver   *WaylandDriver
+	wlSurface  *client.Surface
 	xdgSurface *xdg_shell.Surface
 	toplevel   *xdg_shell.Toplevel
-	id         gio.WindowID
-	configured bool
-	mu         sync.RWMutex
+	buffer     *client.Buffer
+	shmPool    *client.ShmPool
+
+	// Window state tracking
+	configured  bool
+	needsRedraw bool
+
+	mu sync.RWMutex
 }
 
-// WindowID returns the unique window identifier
+// WindowID returns the Wayland window ID (surface pointer as uint64)
 func (w *WaylandWindow) WindowID() gio.WindowID {
-	return w.id
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return gio.WindowID(uintptr(unsafe.Pointer(w.wlSurface)))
 }
 
-// configure sets up the window with initial properties
-func (w *WaylandWindow) configure() error {
+// init sets up the window with initial properties
+func (w *WaylandWindow) init() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -426,7 +406,7 @@ func (w *WaylandWindow) configure() error {
 	w.setupEventHandlers()
 
 	// Commit the surface to make it visible
-	if err := w.surface.Commit(); err != nil {
+	if err := w.wlSurface.Commit(); err != nil {
 		return fmt.Errorf("failed to commit surface: %w", err)
 	}
 
@@ -477,6 +457,14 @@ func (w *WaylandWindow) setupEventHandlers() {
 		}
 
 		w.configured = true
+		w.needsRedraw = true
+
+		// Trigger initial render after configuration
+		go func() {
+			if err := w.Render(); err != nil {
+				log.Printf("Failed to render window: %v", err)
+			}
+		}()
 	})
 
 	// Handle XDG surface configuration
@@ -492,8 +480,19 @@ func (w *WaylandWindow) Show() error {
 		return err
 	}
 
+	w.needsRedraw = true
+
+	// Trigger render
+	if w.configured {
+		go func() {
+			if err := w.Render(); err != nil {
+				log.Printf("Failed to render window: %v", err)
+			}
+		}()
+	}
+
 	// Commit surface to make changes visible
-	return w.surface.Commit()
+	return w.wlSurface.Commit()
 }
 
 // Hide hides the window
@@ -503,7 +502,7 @@ func (w *WaylandWindow) Hide() error {
 	}
 
 	// Commit surface to apply changes
-	return w.surface.Commit()
+	return w.wlSurface.Commit()
 }
 
 // Close closes the window and cleans up resources
@@ -516,6 +515,14 @@ func (w *WaylandWindow) Close() error {
 	}
 
 	// Clean up Wayland resources
+	if w.buffer != nil {
+		w.buffer.Destroy()
+		w.buffer = nil
+	}
+	if w.shmPool != nil {
+		w.shmPool.Destroy()
+		w.shmPool = nil
+	}
 	if w.toplevel != nil {
 		w.toplevel.Destroy()
 		w.toplevel = nil
@@ -524,9 +531,9 @@ func (w *WaylandWindow) Close() error {
 		w.xdgSurface.Destroy()
 		w.xdgSurface = nil
 	}
-	if w.surface != nil {
-		w.surface.Destroy()
-		w.surface = nil
+	if w.wlSurface != nil {
+		w.wlSurface.Destroy()
+		w.wlSurface = nil
 	}
 
 	return nil
@@ -556,14 +563,195 @@ func (w *WaylandWindow) SetAttr(attr gio.WindowAttr) {
 	}
 
 	// Commit changes
-	if w.surface != nil {
-		w.surface.Commit()
+	if w.wlSurface != nil {
+		w.wlSurface.Commit()
 	}
 }
 
-// init registers the Wayland driver
-func init() {
-	gio.RegisterDriver(gio.DriverTypeWayland, func() (gio.Driver, error) {
-		return NewWaylandDriver()
-	})
+// newWaylandWindow creates a new Wayland window
+func newWaylandWindow(driver *WaylandDriver, bw gio.BaseWindow) (*WaylandWindow, error) {
+	driver.mu.RLock()
+	defer driver.mu.RUnlock()
+
+	if !driver.running {
+		return nil, gio.NewError(gio.ErrorCodeDriverNotFound, "Wayland driver not running", nil)
+	}
+
+	if driver.compositor == nil || driver.wmBase == nil {
+		return nil, gio.NewError(gio.ErrorCodeDriverInitFailed, "Wayland compositor or window manager not available", nil)
+	}
+
+	// Create surface
+	surface, err := driver.compositor.CreateSurface()
+	if err != nil {
+		return nil, fmt.Errorf("wayland: failed to create surface: %w", err)
+	}
+
+	// Create XDG surface
+	xdgSurface, err := driver.wmBase.GetXdgSurface(surface)
+	if err != nil {
+		return nil, fmt.Errorf("wayland: failed to create XDG surface: %w", err)
+	}
+
+	// Create toplevel
+	toplevel, err := xdgSurface.GetToplevel()
+	if err != nil {
+		return nil, fmt.Errorf("wayland: failed to create toplevel: %w", err)
+	}
+
+	// Create window wrapper
+	ww := &WaylandWindow{
+		BaseWindow:  bw,
+		wlDriver:    driver,
+		wlSurface:   surface,
+		xdgSurface:  xdgSurface,
+		toplevel:    toplevel,
+		needsRedraw: true,
+	}
+
+	// Configure window properties
+	if err := ww.init(); err != nil {
+		return nil, fmt.Errorf("wayland: failed to initialize window: %w", err)
+	}
+
+	return ww, nil
+}
+
+// createBuffer creates a simple colored buffer for the window
+func (w *WaylandWindow) createBuffer(width, height int32) error {
+	if w.wlDriver.shm == nil {
+		return fmt.Errorf("wl_shm not available")
+	}
+
+	// Calculate buffer size (ARGB8888 format)
+	stride := width * 4
+	size := stride * height
+
+	// Create anonymous file for shared memory
+	fd, err := w.createAnonymousFile(int(size))
+	if err != nil {
+		return fmt.Errorf("failed to create anonymous file: %w", err)
+	}
+	defer syscall.Close(fd)
+
+	// Map the memory
+	data, err := syscall.Mmap(fd, 0, int(size), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
+	if err != nil {
+		return fmt.Errorf("failed to mmap: %w", err)
+	}
+
+	// Fill with a simple gradient pattern
+	w.fillBuffer(data, int(width), int(height), int(stride))
+
+	// Unmap the memory
+	if err := syscall.Munmap(data); err != nil {
+		return fmt.Errorf("failed to munmap: %w", err)
+	}
+
+	// Create shared memory pool
+	pool, err := w.wlDriver.shm.CreatePool(fd, size)
+	if err != nil {
+		return fmt.Errorf("failed to create shm pool: %w", err)
+	}
+	w.shmPool = pool
+
+	// Create buffer from pool
+	buffer, err := pool.CreateBuffer(0, width, height, stride, uint32(client.ShmFormatArgb8888))
+	if err != nil {
+		return fmt.Errorf("failed to create buffer: %w", err)
+	}
+	w.buffer = buffer
+
+	return nil
+}
+
+// createAnonymousFile creates an anonymous file for shared memory
+func (w *WaylandWindow) createAnonymousFile(size int) (int, error) {
+	// Try to use memfd_create (Linux-specific)
+	name := "wayland-buffer"
+	fd, _, err := syscall.RawSyscall(319, uintptr(unsafe.Pointer(&[]byte(name)[0])), 0, 0) // SYS_memfd_create
+	if err == 0 {
+		if err := syscall.Ftruncate(int(fd), int64(size)); err != nil {
+			syscall.Close(int(fd))
+			return 0, err
+		}
+		return int(fd), nil
+	}
+	// Fallback to creating a temporary file
+	tmpFile, fileErr := os.CreateTemp("", "wayland-buffer-")
+	if fileErr != nil {
+		return 0, fileErr
+	}
+
+	if err := tmpFile.Truncate(int64(size)); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpFile.Name())
+		return 0, err
+	}
+
+	fileFd := int(tmpFile.Fd())
+
+	// Unlink the file so it gets deleted when closed
+	os.Remove(tmpFile.Name())
+
+	return fileFd, nil
+}
+
+// fillBuffer fills the buffer with a simple gradient pattern
+func (w *WaylandWindow) fillBuffer(data []byte, width, height, stride int) {
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			offset := y*stride + x*4
+
+			// Create a simple gradient from blue to red
+			r := uint8((x * 255) / width)
+			g := uint8((y * 255) / height)
+			b := uint8(128)
+			a := uint8(255)
+
+			// ARGB8888 format
+			data[offset+0] = b // Blue
+			data[offset+1] = g // Green
+			data[offset+2] = r // Red
+			data[offset+3] = a // Alpha
+		}
+	}
+}
+
+// Render performs a frame render (placeholder for actual rendering)
+func (w *WaylandWindow) Render() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if !w.configured || !w.needsRedraw {
+		return nil
+	}
+
+	attr := w.BaseWindow.Attr()
+
+	// Create buffer if needed
+	if w.buffer == nil {
+		if err := w.createBuffer(int32(attr.Width), int32(attr.Height)); err != nil {
+			return fmt.Errorf("failed to create buffer: %w", err)
+		}
+	}
+
+	// Attach buffer to surface
+	if err := w.wlSurface.Attach(w.buffer, 0, 0); err != nil {
+		return fmt.Errorf("failed to attach buffer: %w", err)
+	}
+
+	// Mark the entire surface as damaged
+	if err := w.wlSurface.Damage(0, 0, int32(attr.Width), int32(attr.Height)); err != nil {
+		return fmt.Errorf("failed to damage surface: %w", err)
+	}
+
+	// Commit the surface
+	if err := w.wlSurface.Commit(); err != nil {
+		return fmt.Errorf("failed to commit surface: %w", err)
+	}
+
+	w.needsRedraw = false
+	log.Printf("Rendered frame for window: %s", w.BaseWindow.Title())
+	return nil
 }
