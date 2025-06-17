@@ -17,6 +17,10 @@ type Config struct {
 	DefaultWindowWidth  int // Default window width
 	DefaultWindowHeight int // Default window height
 
+	// Key repeat settings
+	KeyRepeatDelay time.Duration // Initial delay before repeat starts
+	KeyRepeatRate  time.Duration // Interval between repeats
+
 	mu sync.RWMutex
 }
 
@@ -28,6 +32,9 @@ var (
 		AsyncEventHandler:   true,
 		DefaultWindowWidth:  1024,
 		DefaultWindowHeight: 768,
+		// Default key repeat settings (similar to desktop environments)
+		KeyRepeatDelay: 500 * time.Millisecond, // 500ms initial delay
+		KeyRepeatRate:  33 * time.Millisecond,  // ~30 Hz repeat rate
 	}
 )
 
@@ -55,5 +62,7 @@ func (c *Config) Clone() *Config {
 		AsyncEventHandler:   c.AsyncEventHandler,
 		DefaultWindowWidth:  c.DefaultWindowWidth,
 		DefaultWindowHeight: c.DefaultWindowHeight,
+		KeyRepeatDelay:      c.KeyRepeatDelay,
+		KeyRepeatRate:       c.KeyRepeatRate,
 	}
 }

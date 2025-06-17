@@ -2,6 +2,7 @@ package x11
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/jezek/xgb"
 	"github.com/jezek/xgb/render"
@@ -33,6 +34,35 @@ type x11Driver struct {
 	atomNETWMStateAbove         xproto.Atom
 	atomWMNormalHints           xproto.Atom
 	atomWMSizeHints             xproto.Atom
+
+	// Clipboard atoms
+	atomClipboard xproto.Atom
+	atomPrimary   xproto.Atom
+	atomTargets   xproto.Atom
+	atomMultiple  xproto.Atom
+	atomText      xproto.Atom
+	atomTextPlain xproto.Atom
+	atomIncr      xproto.Atom
+
+	// XDND atoms for drag-and-drop
+	atomXdndEnter      xproto.Atom
+	atomXdndPosition   xproto.Atom
+	atomXdndStatus     xproto.Atom
+	atomXdndLeave      xproto.Atom
+	atomXdndDrop       xproto.Atom
+	atomXdndFinished   xproto.Atom
+	atomXdndSelection  xproto.Atom
+	atomXdndTypeList   xproto.Atom
+	atomXdndActionCopy xproto.Atom
+	atomXdndActionMove xproto.Atom
+	atomXdndActionLink xproto.Atom
+	atomTextUriList    xproto.Atom
+
+	// XI2 extension support (simplified)
+	xiExtensionPresent bool
+	xiOpcode           uint8
+	xiFirstEvent       uint8
+	xiFirstError       uint8
 }
 
 func newX11Driver() (driver gio.Driver, retError error) {
@@ -82,6 +112,9 @@ func (xd *x11Driver) init() error {
 		return err
 	}
 
+	// Try to initialize XI2 extension
+	xd.initXI2Extension()
+
 	return nil
 }
 
@@ -99,6 +132,29 @@ func (xd *x11Driver) initAtoms() (err error) {
 		"_NET_WM_STATE_ABOVE":          &xd.atomNETWMStateAbove,
 		"WM_NORMAL_HINTS":              &xd.atomWMNormalHints,
 		"WM_SIZE_HINTS":                &xd.atomWMSizeHints,
+
+		// Clipboard atoms
+		"CLIPBOARD":  &xd.atomClipboard,
+		"PRIMARY":    &xd.atomPrimary,
+		"TARGETS":    &xd.atomTargets,
+		"MULTIPLE":   &xd.atomMultiple,
+		"TEXT":       &xd.atomText,
+		"text/plain": &xd.atomTextPlain,
+		"INCR":       &xd.atomIncr,
+
+		// XDND atoms
+		"XdndEnter":      &xd.atomXdndEnter,
+		"XdndPosition":   &xd.atomXdndPosition,
+		"XdndStatus":     &xd.atomXdndStatus,
+		"XdndLeave":      &xd.atomXdndLeave,
+		"XdndDrop":       &xd.atomXdndDrop,
+		"XdndFinished":   &xd.atomXdndFinished,
+		"XdndSelection":  &xd.atomXdndSelection,
+		"XdndTypeList":   &xd.atomXdndTypeList,
+		"XdndActionCopy": &xd.atomXdndActionCopy,
+		"XdndActionMove": &xd.atomXdndActionMove,
+		"XdndActionLink": &xd.atomXdndActionLink,
+		"text/uri-list":  &xd.atomTextUriList,
 	}
 
 	for name, atom := range atoms {
@@ -231,4 +287,22 @@ func (xd *x11Driver) translateWheelDelta(button xproto.Button) (float64, float64
 	default:
 		return 0, 0
 	}
+}
+
+// initXI2Extension initializes XI2 extension for touch and pointer support
+func (xd *x11Driver) initXI2Extension() {
+	// Query XI2 extension
+	extReply, err := xproto.QueryExtension(xd.xc, uint16(len("XInputExtension")), "XInputExtension").Reply()
+	if err != nil || !extReply.Present {
+		log.Printf("x11driver: XI2 extension not available")
+		return
+	}
+
+	xd.xiOpcode = extReply.MajorOpcode
+	xd.xiFirstEvent = extReply.FirstEvent
+	xd.xiFirstError = extReply.FirstError
+	xd.xiExtensionPresent = true
+
+	log.Printf("x11driver: XI2 extension available (opcode=%d, first_event=%d)",
+		xd.xiOpcode, xd.xiFirstEvent)
 }

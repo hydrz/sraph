@@ -2,6 +2,9 @@ package x11
 
 import (
 	"fmt"
+	"image"
+	"log"
+	"strings"
 	"sync"
 
 	"github.com/jezek/xgb"
@@ -20,20 +23,39 @@ type x11Window struct {
 	XContext xproto.Gcontext
 	xEvent   chan xgb.Event
 
+	// Clipboard support
+	clipboardOwner    bool
+	clipboardData     *gio.DataTransfer
+	selectionProperty xproto.Atom
+
+	// XDND drag-and-drop support
+	xdndVersion      uint32
+	xdndSourceWindow xproto.Window
+	xdndDragContext  *gio.DataTransfer
+
+	// Touch and pointer tracking (simplified without XI2)
+	activeTouches  map[int]*gio.Touch // Maps touch ID to Touch
+	lastPointerPos image.Point        // Last pointer position for motion detection
+
 	mu sync.RWMutex
 }
 
 func newX11Window(driver *x11Driver, bw gio.BaseWindow) (*x11Window, error) {
 	xw := &x11Window{
-		xDriver:    driver,
-		BaseWindow: bw,
+		xDriver:           driver,
+		BaseWindow:        bw,
+		clipboardData:     gio.NewDataTransfer(),
+		selectionProperty: 0,
+		xdndVersion:       5,
+		activeTouches:     make(map[int]*gio.Touch),
+		lastPointerPos:    image.Point{},
 	}
 
 	if err := xw.init(); err != nil {
 		return nil, fmt.Errorf("x11driver: x11Window.init failed: %v", err)
 	}
 
-	// event handling
+	// Start event handling
 	go xw.loop()
 
 	return xw, nil
@@ -89,6 +111,32 @@ func (xw *x11Window) init() error {
 
 	xproto.CreateGC(xw.xDriver.xc, xg, xproto.Drawable(xWindow), 0, nil)
 	xproto.MapWindow(xw.xDriver.xc, xWindow)
+
+	// Create a property atom for clipboard operations
+	selectionProperty, err := xw.xDriver.internAtom("SRAPH_SELECTION")
+	if err != nil {
+		return fmt.Errorf("x11driver: failed to create selection property atom: %v", err)
+	}
+	xw.selectionProperty = selectionProperty
+
+	// Enable XDND for drag-and-drop
+	xdndAware := []uint32{xw.xdndVersion}
+	xdndAwareBytes := make([]byte, 4)
+	xdndAwareBytes[0] = uint8(xdndAware[0] >> 0)
+	xdndAwareBytes[1] = uint8(xdndAware[0] >> 8)
+	xdndAwareBytes[2] = uint8(xdndAware[0] >> 16)
+	xdndAwareBytes[3] = uint8(xdndAware[0] >> 24)
+
+	xdndAwareAtom, err := xw.xDriver.internAtom("XdndAware")
+	if err != nil {
+		return fmt.Errorf("x11driver: failed to intern XdndAware atom: %v", err)
+	}
+
+	xproto.ChangeProperty(xw.xDriver.xc, xproto.PropModeReplace, xWindow,
+		xdndAwareAtom, xproto.AtomAtom, 32, 1, xdndAwareBytes)
+
+	// Note: XI2 setup removed as it's not available
+	log.Printf("x11driver: using basic X11 events for touch/pointer simulation")
 
 	return nil
 }
@@ -305,4 +353,111 @@ func (xw *x11Window) sendNetWMStateMessage(action uint32, prop1, prop2 xproto.At
 	xproto.SendEvent(xw.xDriver.xc, false, xw.xDriver.xsi.Root,
 		xproto.EventMaskSubstructureNotify|xproto.EventMaskSubstructureRedirect,
 		string(ev.Bytes()))
+}
+
+// SetClipboardData sets data to the system clipboard
+func (xw *x11Window) SetClipboardData(data *gio.DataTransfer) error {
+	xw.mu.Lock()
+	defer xw.mu.Unlock()
+
+	// Store clipboard data
+	xw.clipboardData = data
+
+	// Take ownership of the clipboard selection
+	xproto.SetSelectionOwner(xw.xDriver.xc, xw.xWindow, xw.xDriver.atomClipboard, xproto.TimeCurrentTime)
+
+	// Verify we got ownership
+	reply, err := xproto.GetSelectionOwner(xw.xDriver.xc, xw.xDriver.atomClipboard).Reply()
+	if err != nil {
+		return fmt.Errorf("x11driver: failed to verify clipboard ownership: %v", err)
+	}
+
+	xw.clipboardOwner = (reply.Owner == xw.xWindow)
+	return nil
+}
+
+// GetClipboardData requests data from the system clipboard
+func (xw *x11Window) GetClipboardData() error {
+	// Request clipboard content by converting the selection
+	xproto.ConvertSelection(xw.xDriver.xc, xw.xWindow, xw.xDriver.atomClipboard,
+		xw.xDriver.atomUTF8String, xw.selectionProperty, xproto.TimeCurrentTime)
+	return nil
+}
+
+// sendXdndStatus sends XDND status message
+func (xw *x11Window) sendXdndStatus(sourceWindow xproto.Window, accept bool, action xproto.Atom) {
+	flags := uint32(0)
+	if accept {
+		flags |= 1 // Accept drop
+	}
+
+	data := []uint32{uint32(xw.xWindow), flags, 0, 0, uint32(action)}
+	ev := xproto.ClientMessageEvent{
+		Format: 32,
+		Window: sourceWindow,
+		Type:   xw.xDriver.atomXdndStatus,
+		Data:   xproto.ClientMessageDataUnionData32New(data),
+	}
+
+	xproto.SendEvent(xw.xDriver.xc, false, sourceWindow, 0, string(ev.Bytes()))
+}
+
+// sendXdndFinished sends XDND finished message
+func (xw *x11Window) sendXdndFinished(sourceWindow xproto.Window, action xproto.Atom) {
+	data := []uint32{uint32(xw.xWindow), 1, uint32(action), 0, 0} // 1 = accept
+	ev := xproto.ClientMessageEvent{
+		Format: 32,
+		Window: sourceWindow,
+		Type:   xw.xDriver.atomXdndFinished,
+		Data:   xproto.ClientMessageDataUnionData32New(data),
+	}
+
+	xproto.SendEvent(xw.xDriver.xc, false, sourceWindow, 0, string(ev.Bytes()))
+}
+
+// parseXdndTypeList parses XDND type list from a property
+func (xw *x11Window) parseXdndTypeList(property xproto.Atom) []string {
+	reply, err := xproto.GetProperty(xw.xDriver.xc, false, xw.xdndSourceWindow,
+		property, xproto.AtomAtom, 0, 1024).Reply()
+	if err != nil || reply == nil {
+		return nil
+	}
+
+	var types []string
+	for i := 0; i < len(reply.Value); i += 4 {
+		if i+3 < len(reply.Value) {
+			atom := xproto.Atom(uint32(reply.Value[i]) |
+				uint32(reply.Value[i+1])<<8 |
+				uint32(reply.Value[i+2])<<16 |
+				uint32(reply.Value[i+3])<<24)
+
+			nameReply, err := xproto.GetAtomName(xw.xDriver.xc, atom).Reply()
+			if err == nil && nameReply != nil {
+				types = append(types, nameReply.Name)
+			}
+		}
+	}
+
+	return types
+}
+
+// convertXdndUriListToFiles converts text/uri-list to file paths
+func (xw *x11Window) convertXdndUriListToFiles(uriList string) []string {
+	var files []string
+	lines := strings.Split(uriList, "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "file://") {
+			// Remove file:// prefix and decode URI
+			filePath := strings.TrimPrefix(line, "file://")
+			files = append(files, filePath)
+		}
+	}
+
+	return files
 }

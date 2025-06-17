@@ -246,6 +246,28 @@ func (m ModifierKey) String() string {
 	}
 }
 
+type KeyState uint8
+
+// KeyboardState constants represent the state of the keyboard
+const (
+	KeyStateUnknown  KeyState = iota // Unknown state
+	KeyStatePressed                  // Key is pressed
+	KeyStateReleased                 // Key is released
+)
+
+func (ks KeyState) String() string {
+	switch ks {
+	case KeyStateUnknown:
+		return "Unknown"
+	case KeyStatePressed:
+		return "Pressed"
+	case KeyStateReleased:
+		return "Released"
+	default:
+		return "UnknownState"
+	}
+}
+
 // KeyLocation represents the location of the key on the keyboard
 type KeyLocation uint8
 

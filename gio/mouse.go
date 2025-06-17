@@ -21,6 +21,25 @@ const (
 	MouseButton8 = 1 << 7             // Additional button (if available)
 )
 
+func (mb MouseButton) String() string {
+	switch mb {
+	case MouseButtonUnknown:
+		return "Unknown"
+	case MouseButtonLeft:
+		return "Left"
+	case MouseButtonRight:
+		return "Right"
+	case MouseButtonMiddle:
+		return "Middle"
+	case MouseButtonBack:
+		return "Back"
+	case MouseButtonForward:
+		return "Forward"
+	default:
+		return "MouseButton" + string(mb)
+	}
+}
+
 func (mb MouseButton) Contains(button MouseButton) bool {
 	return mb&button != 0
 }

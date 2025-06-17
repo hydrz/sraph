@@ -54,8 +54,7 @@ func main() {
 	// Subscribe to keyboard events
 	window.Subscribe(gio.EventTypeKeyboard, func(e gio.Event) error {
 		if keyEvent, ok := e.(*gio.KeyboardEvent); ok {
-			fmt.Printf("[KEYBOARD] Code: %v, Modifiers: %v Key: %v\n",
-				keyEvent.Code, keyEvent.ModifierKey, keyEvent.Key())
+			fmt.Printf("[KEYBOARD] %v\n", keyEvent)
 		}
 		return nil
 	})
@@ -74,6 +73,24 @@ func main() {
 		if wheelEvent, ok := e.(*gio.WheelEvent); ok {
 			fmt.Printf("[WHEEL] Delta: (%.1f, %.1f) at %v\n",
 				wheelEvent.DeltaX, wheelEvent.DeltaY, wheelEvent.Position)
+		}
+		return nil
+	})
+
+	// Subscribe to clipboard events
+	window.Subscribe(gio.EventTypeClipboard, func(e gio.Event) error {
+		if clipboardEvent, ok := e.(*gio.ClipboardEvent); ok {
+			fmt.Printf("[CLIPBOARD] Type: %s, Data: %v\n",
+				clipboardEvent.Type(), clipboardEvent.Data)
+		}
+		return nil
+	})
+
+	// Subscribe to drag and drop events
+	window.Subscribe(gio.EventTypeDrag, func(e gio.Event) error {
+		if dragEvent, ok := e.(*gio.DragEvent); ok {
+			fmt.Printf("[DragEvent] Type: %s, Data: %v\n",
+				dragEvent.Type(), dragEvent.Data)
 		}
 		return nil
 	})

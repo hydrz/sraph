@@ -20,7 +20,34 @@ const (
 	EventTypeWheel               // Mouse wheel events
 	EventTypeClipboard           // Clipboard events
 	EventTypeDrag                // Drag and drop events
+	EventTypeTouch               // Touch events
+	EventTypePointer             // Pointer events (e.g., stylus, touch)
 )
+
+func (e EventType) String() string {
+	switch e {
+	case EventTypeUnknown:
+		return "Unknown"
+	case EventTypeWindow:
+		return "Window"
+	case EventTypeKeyboard:
+		return "Keyboard"
+	case EventTypeMouse:
+		return "Mouse"
+	case EventTypeWheel:
+		return "Wheel"
+	case EventTypeClipboard:
+		return "Clipboard"
+	case EventTypeDrag:
+		return "Drag"
+	case EventTypeTouch:
+		return "Touch"
+	case EventTypePointer:
+		return "Pointer"
+	default:
+		return "UnknownEventType"
+	}
+}
 
 type Event interface {
 	Type() EventType
@@ -91,6 +118,7 @@ type KeyboardEvent struct {
 	Repeat      bool         // Whether the key is being held down
 	Locale      language.Tag // The locale identifier
 	Code        KeyCode      // The code value of the key pressed
+	State       KeyState     // The state of the key (pressed, released, etc.)
 }
 
 // NewKeyboardEvent creates a new keyboard event
@@ -111,7 +139,7 @@ type TouchEvent struct {
 // NewTouchEvent creates a new touch event
 func NewTouchEvent() *TouchEvent {
 	return &TouchEvent{
-		Event: NewBaseEvent(EventTypeUnknown), // Use a more specific type if needed
+		Event: NewBaseEvent(EventTypeTouch),
 	}
 }
 
@@ -144,7 +172,9 @@ type PointerEvent struct {
 
 func NewPointerEvent() *PointerEvent {
 	return &PointerEvent{
-		MouseEvent: NewMouseEvent(),
+		MouseEvent: &MouseEvent{
+			Event: NewBaseEvent(EventTypePointer),
+		},
 	}
 }
 
