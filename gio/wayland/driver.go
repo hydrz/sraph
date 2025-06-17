@@ -402,6 +402,54 @@ func (d *WaylandDriver) attachKeyboard() {
 	slog.Info("keyboard interface registered")
 }
 
+// attachPointer sets up the pointer interface
+func (d *WaylandDriver) attachPointer() {
+	pointer, err := d.seat.GetPointer()
+	if err != nil {
+		slog.Error("failed to get pointer", "error", err)
+		return
+	}
+	d.pointer = pointer
+
+	// Set up pointer event handlers
+	d.pointer.SetEnterHandler(d.handlePointerEnter)
+	d.pointer.SetLeaveHandler(d.handlePointerLeave)
+	d.pointer.SetMotionHandler(d.handlePointerMotion)
+	d.pointer.SetButtonHandler(d.handlePointerButton)
+	d.pointer.SetAxisHandler(d.handlePointerAxis)
+
+	// Add missing frame handler - this is crucial for event processing
+	d.pointer.SetFrameHandler(d.handlePointerFrame)
+
+	// Add optional axis handlers if available
+	if d.seatVersion >= 5 {
+		d.pointer.SetAxisSourceHandler(d.handlePointerAxisSource)
+		d.pointer.SetAxisStopHandler(d.handlePointerAxisStop)
+		d.pointer.SetAxisDiscreteHandler(d.handlePointerAxisDiscrete)
+	}
+
+	slog.Info("pointer interface registered")
+}
+
+// releasePointer releases the pointer interface
+func (d *WaylandDriver) releasePointer() {
+	if d.pointer != nil && d.seatVersion >= 3 {
+		if err := d.pointer.Release(); err != nil {
+			slog.Error("failed to release pointer", "error", err)
+		}
+	}
+	d.pointer = nil
+	slog.Info("pointer interface released")
+}
+
+// resetPointerEvent resets event state
+func (d *WaylandDriver) resetPointerEvent(pe *pointerEvent) {
+	d.eventState.pointerEvent = pointerEvent{
+		surfaceX: pe.surfaceX,
+		surfaceY: pe.surfaceY,
+	}
+}
+
 // updateSerial updates the latest serial number for clipboard operations
 func (d *WaylandDriver) updateSerial(serial uint32) {
 	if serial > d.latestSerial {
@@ -507,4 +555,50 @@ func (d *WaylandDriver) findWindowBySurface(surface *client.Surface) *WaylandWin
 		}
 	}
 	return nil
+}
+
+// setCursor sets the cursor for the pointer
+func (d *WaylandDriver) setCursor(serial uint32, name string) {
+	if d.cursorTheme == nil || d.pointer == nil {
+		return
+	}
+
+	cursor := d.cursorTheme.GetCursor(name)
+	if cursor == nil {
+		return
+	}
+
+	image := cursor.Images[0]
+
+	surface, err := d.compositor.CreateSurface()
+	if err != nil {
+		slog.Error("failed to create cursor surface", "error", err)
+		return
+	}
+
+	buffer, err := image.GetBuffer()
+	if err != nil {
+		slog.Error("failed to get cursor buffer", "error", err)
+		return
+	}
+
+	if buffer != nil {
+		if err := surface.Attach(buffer, 0, 0); err != nil {
+			slog.Error("failed to attach cursor buffer", "error", err)
+			return
+		}
+		if err := surface.Damage(0, 0, int32(image.Width), int32(image.Height)); err != nil {
+			slog.Error("failed to damage cursor surface", "error", err)
+		}
+		if err := surface.Commit(); err != nil {
+			slog.Error("failed to commit cursor surface", "error", err)
+			return
+		}
+
+		hotspotX := int32(image.HotspotX)
+		hotspotY := int32(image.HotspotY)
+		if err := d.pointer.SetCursor(serial, surface, hotspotX, hotspotY); err != nil {
+			slog.Error("failed to set cursor", "error", err)
+		}
+	}
 }

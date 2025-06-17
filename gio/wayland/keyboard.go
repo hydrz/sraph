@@ -45,6 +45,12 @@ func (w *WaylandWindow) handleKeyboardKey(key uint32, pressed bool, modifiers, s
 		keyboardEvent.State = gio.KeyStateReleased
 	}
 
+	slog.Debug("publishing keyboard event",
+		"key", key,
+		"code", keyboardEvent.Code,
+		"modifiers", keyboardEvent.ModifierKey,
+		"state", keyboardEvent.State)
+
 	w.publishKeyboardEvent(keyboardEvent)
 }
 
@@ -102,18 +108,24 @@ func (d *WaylandDriver) handleKeyboardKey(e client.KeyboardKeyEvent) {
 	d.eventState.keyboardEvent.key = e.Key
 	d.eventState.keyboardEvent.state = e.State
 
+	slog.Debug("keyboard key event",
+		"key", e.Key,
+		"state", e.State,
+		"modifiers", d.eventState.keyboardEvent.modifiers,
+		"focused_window", d.focusedWindow != nil)
+
 	if d.focusedWindow != nil {
 		pressed := e.State == uint32(client.KeyboardKeyStatePressed)
 
-		// Calculate current modifiers based on the key being pressed/released
+		// For combination keys, use the current modifier state as-is
+		// Don't modify it based on the current key being pressed/released
 		currentModifiers := d.eventState.keyboardEvent.modifiers
 
-		// If this is a modifier key being pressed, update the current state
-		if pressed {
-			if modifierBit := getModifierBitForKey(e.Key); modifierBit != 0 {
-				currentModifiers |= modifierBit
-			}
-		}
+		slog.Debug("dispatching keyboard event",
+			"key", e.Key,
+			"pressed", pressed,
+			"modifiers", currentModifiers,
+			"window_id", d.focusedWindow.WindowID())
 
 		d.focusedWindow.handleKeyboardKey(e.Key, pressed, currentModifiers, e.Serial, e.Time)
 	}
@@ -124,6 +136,12 @@ func (d *WaylandDriver) handleKeyboardModifiers(e client.KeyboardModifiersEvent)
 
 	// Update modifiers state - this will be used for subsequent key events
 	d.eventState.keyboardEvent.modifiers = e.ModsDepressed
+
+	slog.Debug("keyboard modifiers changed",
+		"depressed", e.ModsDepressed,
+		"latched", e.ModsLatched,
+		"locked", e.ModsLocked,
+		"group", e.Group)
 
 	if d.focusedWindow != nil {
 		d.focusedWindow.handleKeyboardModifiers(e.ModsDepressed, e.ModsLatched, e.ModsLocked, e.Group, e.Serial)

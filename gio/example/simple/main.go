@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/opensraph/sraph/gio"
-	// _ "github.com/opensraph/sraph/gio/wayland" // Import Wayland driver to register it
-	_ "github.com/opensraph/sraph/gio/x11" // Import X11 driver to register it
+	_ "github.com/opensraph/sraph/gio/wayland" // Import Wayland driver to register it
+	_ "github.com/opensraph/sraph/gio/x11"     // Import X11 driver to register it
 )
 
 func main() {

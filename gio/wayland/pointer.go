@@ -171,6 +171,7 @@ func (d *WaylandDriver) handlePointerAxisDiscrete(e client.PointerAxisDiscreteEv
 	d.eventState.pointerEvent.axes[e.Axis].discrete = e.Discrete
 }
 
+// handlePointerFrame processes batched pointer events
 func (d *WaylandDriver) handlePointerFrame(e client.PointerFrameEvent) {
 	d.processPointerEvents()
 }
@@ -243,48 +244,6 @@ func (d *WaylandDriver) processAxisEvents(pe *pointerEvent) {
 	}
 }
 
-// resetPointerEvent resets event state
-func (d *WaylandDriver) resetPointerEvent(pe *pointerEvent) {
-	d.eventState.pointerEvent = pointerEvent{
-		surfaceX: pe.surfaceX,
-		surfaceY: pe.surfaceY,
-	}
-}
-
-// attachPointer sets up the pointer interface with better error handling
-func (d *WaylandDriver) attachPointer() {
-	pointer, err := d.seat.GetPointer()
-	if err != nil {
-		slog.Error("failed to get pointer", "error", err)
-		return
-	}
-	d.pointer = pointer
-
-	// Set up pointer event handlers
-	d.pointer.SetEnterHandler(d.handlePointerEnter)
-	d.pointer.SetLeaveHandler(d.handlePointerLeave)
-	d.pointer.SetMotionHandler(d.handlePointerMotion)
-	d.pointer.SetButtonHandler(d.handlePointerButton)
-	d.pointer.SetAxisHandler(d.handlePointerAxis)
-	d.pointer.SetAxisSourceHandler(d.handlePointerAxisSource)
-	d.pointer.SetAxisStopHandler(d.handlePointerAxisStop)
-	d.pointer.SetAxisDiscreteHandler(d.handlePointerAxisDiscrete)
-	d.pointer.SetFrameHandler(d.handlePointerFrame)
-
-	slog.Info("pointer interface registered")
-}
-
-// releasePointer releases the pointer interface
-func (d *WaylandDriver) releasePointer() {
-	if d.pointer != nil && d.seatVersion >= 3 {
-		if err := d.pointer.Release(); err != nil {
-			slog.Error("failed to release pointer", "error", err)
-		}
-	}
-	d.pointer = nil
-	slog.Info("pointer interface released")
-}
-
 // waylandButtonToGio converts Wayland button to gio MouseButton
 func waylandButtonToGio(button uint32) gio.MouseButton {
 	switch button {
@@ -300,51 +259,5 @@ func waylandButtonToGio(button uint32) gio.MouseButton {
 		return gio.MouseButtonForward
 	default:
 		return gio.MouseButtonUnknown
-	}
-}
-
-// setCursor sets the cursor for the pointer
-func (d *WaylandDriver) setCursor(serial uint32, name string) {
-	if d.cursorTheme == nil || d.pointer == nil {
-		return
-	}
-
-	cursor := d.cursorTheme.GetCursor(name)
-	if cursor == nil {
-		return
-	}
-
-	image := cursor.Images[0]
-
-	surface, err := d.compositor.CreateSurface()
-	if err != nil {
-		slog.Error("failed to create cursor surface", "error", err)
-		return
-	}
-
-	buffer, err := image.GetBuffer()
-	if err != nil {
-		slog.Error("failed to get cursor buffer", "error", err)
-		return
-	}
-
-	if buffer != nil {
-		if err := surface.Attach(buffer, 0, 0); err != nil {
-			slog.Error("failed to attach cursor buffer", "error", err)
-			return
-		}
-		if err := surface.Damage(0, 0, int32(image.Width), int32(image.Height)); err != nil {
-			slog.Error("failed to damage cursor surface", "error", err)
-		}
-		if err := surface.Commit(); err != nil {
-			slog.Error("failed to commit cursor surface", "error", err)
-			return
-		}
-
-		hotspotX := int32(image.HotspotX)
-		hotspotY := int32(image.HotspotY)
-		if err := d.pointer.SetCursor(serial, surface, hotspotX, hotspotY); err != nil {
-			slog.Error("failed to set cursor", "error", err)
-		}
 	}
 }
