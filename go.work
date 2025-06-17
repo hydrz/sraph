@@ -6,4 +6,5 @@ use (
 	./gio
 	./gpu
 	./gpu/gen
+	./x11
 )
