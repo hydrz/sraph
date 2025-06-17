@@ -5,6 +5,7 @@ go 1.24.3
 tool golang.org/x/tools/cmd/stringer
 
 require (
+	github.com/ebitengine/purego v0.8.1
 	github.com/jezek/xgb v1.1.1
 	golang.org/x/text v0.26.0
 )

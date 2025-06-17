@@ -82,7 +82,7 @@ func main() {
 	window.Subscribe(gio.EventTypeWindow, func(e gio.Event) error {
 		if windowEvent, ok := e.(*gio.WindowEvent); ok {
 			fmt.Printf("[WINDOW] ID: %v, Window: %v\n",
-				windowEvent.ID, windowEvent.Window.Attr())
+				windowEvent.ID(), windowEvent.Window.Attr())
 
 			// Check if window is closed
 			if window.IsClosed() {

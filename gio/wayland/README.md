@@ -29,7 +29,7 @@ This directory contains the Wayland backend implementation for the Gio graphics 
 ```
 wayland/
 ├── driver.go          # Main Wayland driver implementation
-├── window.go          # Wayland window implementation  
+├── window.go          # Wayland window implementation
 ├── example/           # Example applications
 │   └── main.go       # Basic Wayland backend test
 └── README.md         # This file
@@ -43,7 +43,7 @@ wayland/
 - Provides window creation and event translation
 - Manages keyboard mapping and input method context
 
-#### WaylandWindow (`window.go`) 
+#### WaylandWindow (`window.go`)
 - Implements the `gio.Window` interface for Wayland
 - Manages individual window state and properties
 - Handles window-specific events and operations
