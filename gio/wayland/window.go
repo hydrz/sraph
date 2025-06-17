@@ -2,7 +2,7 @@ package wayland
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"syscall"
@@ -14,6 +14,13 @@ import (
 )
 
 var _ gio.Window = (*WaylandWindow)(nil)
+
+const (
+	// Buffer management constants
+	maxBuffers     = 2
+	bytesPerPixel  = 4
+	shmFormatARGB8 = uint32(client.ShmFormatArgb8888)
+)
 
 // WaylandWindow represents a Wayland window implementation
 type WaylandWindow struct {
@@ -28,6 +35,7 @@ type WaylandWindow struct {
 	currentBuffer *windowBuffer
 	buffers       []*windowBuffer
 	shmPool       *client.ShmPool
+	bufferMutex   sync.RWMutex // Separate mutex for buffer operations
 
 	// Window state tracking
 	configured  bool
@@ -47,7 +55,6 @@ type windowBuffer struct {
 	height int32
 	stride int32
 	busy   bool
-	fd     int // Store file descriptor for cleanup
 }
 
 // WindowID returns the Wayland window ID
@@ -222,13 +229,16 @@ func (w *WaylandWindow) handleToplevelConfigure(event xdg_shell.ToplevelConfigur
 // handleSurfaceConfigure handles XDG surface configuration
 func (w *WaylandWindow) handleSurfaceConfigure(event xdg_shell.SurfaceConfigureEvent) {
 	// Acknowledge the configure event
-	w.xdgSurface.AckConfigure(event.Serial)
+	if err := w.xdgSurface.AckConfigure(event.Serial); err != nil {
+		slog.Error("failed to acknowledge configure", "error", err)
+		return
+	}
 
 	// Trigger render if needed
 	if w.configured && w.needsRedraw {
 		go func() {
 			if err := w.render(); err != nil {
-				log.Printf("wayland: render error: %v", err)
+				slog.Error("render error", "error", err)
 			}
 		}()
 	}
@@ -267,6 +277,7 @@ func (w *WaylandWindow) render() error {
 
 	// Mark entire surface as damaged
 	if err := w.surface.Damage(0, 0, width, height); err != nil {
+		slog.Error("failed to damage surface", "error", err)
 	}
 
 	// Set buffer as busy
@@ -512,7 +523,7 @@ func (w *WaylandWindow) Show() error {
 	if w.configured {
 		go func() {
 			if err := w.render(); err != nil {
-				log.Printf("wayland: render error: %v", err)
+				slog.Error("render error", "error", err)
 			}
 		}()
 	}

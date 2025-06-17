@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"syscall"
 	"time"
@@ -109,7 +109,7 @@ func (cm *ClipboardManager) SetClipboardData(data *gio.DataTransfer) error {
 	types := data.GetTypes()
 	for _, mimeType := range types {
 		if err := dataSource.Offer(mimeType); err != nil {
-			log.Printf("wayland: failed to offer MIME type %s: %v", mimeType, err)
+			slog.Error("failed to offer MIME type", "mimeType", mimeType, "error", err)
 		}
 	}
 
@@ -182,7 +182,7 @@ func (cm *ClipboardManager) requestDataForType(dataOffer *client.DataOffer, mime
 	// Create pipe for data transfer
 	r, w, err := os.Pipe()
 	if err != nil {
-		log.Printf("wayland: failed to create pipe: %v", err)
+		slog.Error("failed to create pipe", "error", err)
 		return
 	}
 	defer r.Close()
@@ -190,7 +190,7 @@ func (cm *ClipboardManager) requestDataForType(dataOffer *client.DataOffer, mime
 
 	// Receive data
 	if err := dataOffer.Receive(mimeType, int(w.Fd())); err != nil {
-		log.Printf("wayland: failed to receive data: %v", err)
+		slog.Error("failed to receive data", "error", err)
 		return
 	}
 
@@ -200,13 +200,13 @@ func (cm *ClipboardManager) requestDataForType(dataOffer *client.DataOffer, mime
 	// Read all data
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
-		log.Printf("wayland: failed to read clipboard data: %v", err)
+		slog.Error("failed to read clipboard data", "error", err)
 		return
 	}
 
 	// Store data in transfer object
 	if err := dataTransfer.SetData(mimeType, buf.String()); err != nil {
-		log.Printf("wayland: failed to set clipboard data: %v", err)
+		slog.Error("failed to set clipboard data", "error", err)
 		return
 	}
 
@@ -234,7 +234,7 @@ func (cm *ClipboardManager) handleSendData(mimeType string, fd int) {
 	// Get data for the requested MIME type
 	data, exists := cm.selection.GetData(mimeType)
 	if !exists {
-		log.Printf("wayland: requested MIME type %s not available", mimeType)
+		slog.Warn("requested MIME type not available", "mimeType", mimeType)
 		return
 	}
 
@@ -254,7 +254,7 @@ func (cm *ClipboardManager) handleSendData(mimeType string, fd int) {
 	defer file.Close()
 
 	if _, err := file.Write(dataBytes); err != nil {
-		log.Printf("wayland: failed to write clipboard data: %v", err)
+		slog.Error("failed to write clipboard data", "error", err)
 	}
 }
 
@@ -266,22 +266,22 @@ func (cm *ClipboardManager) getLatestSerial() uint32 {
 // Drag and drop handlers
 func (cm *ClipboardManager) handleDragEnter(event client.DataDeviceEnterEvent) {
 	// Handle drag enter - would create drag event
-	log.Printf("wayland: drag enter at surface %v", event.Surface)
+	slog.Debug("drag enter", "surface", event.Surface)
 }
 
 func (cm *ClipboardManager) handleDragLeave() {
 	// Handle drag leave
-	log.Printf("wayland: drag leave")
+	slog.Debug("drag leave")
 }
 
 func (cm *ClipboardManager) handleDragMotion(event client.DataDeviceMotionEvent) {
 	// Handle drag motion
-	log.Printf("wayland: drag motion at (%f, %f)", event.X, event.Y)
+	slog.Debug("drag motion", "x", event.X, "y", event.Y)
 }
 
 func (cm *ClipboardManager) handleDrop() {
 	// Handle drop event
-	log.Printf("wayland: drop occurred")
+	slog.Debug("drop occurred")
 }
 
 // Cleanup releases clipboard resources
@@ -318,7 +318,7 @@ func (w *WaylandWindow) SetClipboardData(data *gio.DataTransfer) error {
 
 	// Fallback to local storage
 	w.clipboardData = data
-	log.Printf("wayland: clipboard data set (local storage fallback)")
+	slog.Debug("clipboard data set (local storage fallback)")
 	return nil
 }
 
@@ -338,7 +338,7 @@ func (w *WaylandWindow) GetClipboardData() error {
 			clipboardEvent.Data = data
 
 			if err := w.Publish(clipboardEvent); err != nil {
-				log.Printf("wayland: failed to publish clipboard event: %v", err)
+				slog.Error("failed to publish clipboard event", "error", err)
 			}
 		})
 	}
@@ -350,7 +350,7 @@ func (w *WaylandWindow) GetClipboardData() error {
 
 		go func() {
 			if err := w.Publish(clipboardEvent); err != nil {
-				log.Printf("wayland: failed to publish clipboard event: %v", err)
+				slog.Error("failed to publish clipboard event", "error", err)
 			}
 		}()
 	}
@@ -372,6 +372,6 @@ func (w *WaylandWindow) handleDataOffer(mimeTypes []string) {
 	}
 
 	if err := w.Publish(dragEvent); err != nil {
-		log.Printf("wayland: failed to publish drag event: %v", err)
+		slog.Error("failed to publish drag event", "error", err)
 	}
 }

@@ -1,7 +1,7 @@
 package wayland
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/opensraph/sraph/gio"
 	"github.com/rajveermalviya/go-wayland/wayland/client"
@@ -29,55 +29,33 @@ const (
 
 // Pointer event handlers for WaylandWindow
 func (w *WaylandWindow) handlePointerEnter(x, y float64, serial uint32) {
-	if w.IsClosed() {
-		return
-	}
-
 	pointerEvent := gio.NewPointerEvent()
 	pointerEvent.PointerType = gio.PointerTypeMouse
 	pointerEvent.Position.X = int(x)
 	pointerEvent.Position.Y = int(y)
 	pointerEvent.KeyState = gio.KeyStatePressed
 
-	if err := w.Publish(pointerEvent); err != nil {
-		log.Printf("wayland: failed to publish pointer enter event: %v", err)
-	}
+	w.publishPointerEvent(pointerEvent)
 }
 
 func (w *WaylandWindow) handlePointerLeave(serial uint32) {
-	if w.IsClosed() {
-		return
-	}
-
 	pointerEvent := gio.NewPointerEvent()
 	pointerEvent.PointerType = gio.PointerTypeMouse
 	pointerEvent.KeyState = gio.KeyStateReleased
 
-	if err := w.Publish(pointerEvent); err != nil {
-		log.Printf("wayland: failed to publish pointer leave event: %v", err)
-	}
+	w.publishPointerEvent(pointerEvent)
 }
 
 func (w *WaylandWindow) handlePointerMotion(x, y float64, time uint32) {
-	if w.IsClosed() {
-		return
-	}
-
 	pointerEvent := gio.NewPointerEvent()
 	pointerEvent.PointerType = gio.PointerTypeMouse
 	pointerEvent.Position.X = int(x)
 	pointerEvent.Position.Y = int(y)
 
-	if err := w.Publish(pointerEvent); err != nil {
-		log.Printf("wayland: failed to publish pointer motion event: %v", err)
-	}
+	w.publishPointerEvent(pointerEvent)
 }
 
 func (w *WaylandWindow) handlePointerButton(x, y float64, button uint32, pressed bool, serial, time uint32) {
-	if w.IsClosed() {
-		return
-	}
-
 	pointerEvent := gio.NewPointerEvent()
 	pointerEvent.PointerType = gio.PointerTypeMouse
 	pointerEvent.Position.X = int(x)
@@ -90,24 +68,33 @@ func (w *WaylandWindow) handlePointerButton(x, y float64, button uint32, pressed
 		pointerEvent.KeyState = gio.KeyStateReleased
 	}
 
-	if err := w.Publish(pointerEvent); err != nil {
-		log.Printf("wayland: failed to publish pointer button event: %v", err)
-	}
+	w.publishPointerEvent(pointerEvent)
 }
 
 func (w *WaylandWindow) handlePointerAxis(x, y, deltaX, deltaY float64, discreteX, discreteY int32, time uint32) {
-	if w.IsClosed() {
-		return
-	}
-
 	wheelEvent := gio.NewWheelEvent()
 	wheelEvent.Position.X = int(x)
 	wheelEvent.Position.Y = int(y)
 	wheelEvent.DeltaX = deltaX
 	wheelEvent.DeltaY = deltaY
 
+	if w.IsClosed() {
+		return
+	}
+
 	if err := w.Publish(wheelEvent); err != nil {
-		log.Printf("wayland: failed to publish wheel event: %v", err)
+		slog.Error("failed to publish wheel event", "error", err)
+	}
+}
+
+// publishPointerEvent publishes pointer event with error handling
+func (w *WaylandWindow) publishPointerEvent(event *gio.PointerEvent) {
+	if w.IsClosed() {
+		return
+	}
+
+	if err := w.Publish(event); err != nil {
+		slog.Error("failed to publish pointer event", "error", err)
 	}
 }
 
@@ -137,7 +124,9 @@ func (d *WaylandDriver) handlePointerLeave(e client.PointerLeaveEvent) {
 
 	// Clear cursor
 	if d.pointer != nil {
-		d.pointer.SetCursor(e.Serial, nil, 0, 0)
+		if err := d.pointer.SetCursor(e.Serial, nil, 0, 0); err != nil {
+			slog.Error("failed to clear cursor", "error", err)
+		}
 	}
 }
 
@@ -183,78 +172,95 @@ func (d *WaylandDriver) handlePointerAxisDiscrete(e client.PointerAxisDiscreteEv
 }
 
 func (d *WaylandDriver) handlePointerFrame(e client.PointerFrameEvent) {
+	d.processPointerEvents()
+}
+
+// processPointerEvents processes batched pointer events
+func (d *WaylandDriver) processPointerEvents() {
 	pe := d.eventState.pointerEvent
 
 	if d.focusedWindow == nil {
-		// Reset event state
-		d.eventState.pointerEvent = pointerEvent{
-			surfaceX: pe.surfaceX,
-			surfaceY: pe.surfaceY,
-		}
+		d.resetPointerEvent(&pe)
 		return
 	}
 
-	// Handle enter event
-	if (pe.eventMask & pointerEventEnter) != 0 {
-		d.focusedWindow.handlePointerEnter(pe.surfaceX, pe.surfaceY, pe.serial)
+	// Process events in order
+	eventHandlers := []struct {
+		mask    int
+		handler func()
+	}{
+		{pointerEventEnter, func() {
+			d.focusedWindow.handlePointerEnter(pe.surfaceX, pe.surfaceY, pe.serial)
+		}},
+		{pointerEventLeave, func() {
+			d.focusedWindow.handlePointerLeave(pe.serial)
+		}},
+		{pointerEventMotion, func() {
+			d.focusedWindow.handlePointerMotion(pe.surfaceX, pe.surfaceY, pe.time)
+		}},
+		{pointerEventButton, func() {
+			pressed := pe.state == uint32(client.PointerButtonStatePressed)
+			d.focusedWindow.handlePointerButton(pe.surfaceX, pe.surfaceY, pe.button, pressed, pe.serial, pe.time)
+		}},
 	}
 
-	// Handle leave event
-	if (pe.eventMask & pointerEventLeave) != 0 {
-		d.focusedWindow.handlePointerLeave(pe.serial)
-	}
-
-	// Handle motion event
-	if (pe.eventMask & pointerEventMotion) != 0 {
-		d.focusedWindow.handlePointerMotion(pe.surfaceX, pe.surfaceY, pe.time)
-	}
-
-	// Handle button event
-	if (pe.eventMask & pointerEventButton) != 0 {
-		pressed := pe.state == uint32(client.PointerButtonStatePressed)
-		d.focusedWindow.handlePointerButton(pe.surfaceX, pe.surfaceY, pe.button, pressed, pe.serial, pe.time)
-	}
-
-	// Handle axis events (scrolling)
-	const axisEvents = pointerEventAxis | pointerEventAxisSource | pointerEventAxisStop | pointerEventAxisDiscrete
-	if (pe.eventMask & axisEvents) != 0 {
-		for axis := 0; axis < 2; axis++ {
-			if !pe.axes[axis].valid {
-				continue
-			}
-
-			deltaX, deltaY := 0.0, 0.0
-			discreteX, discreteY := int32(0), int32(0)
-
-			if axis == int(client.PointerAxisHorizontalScroll) {
-				deltaX = pe.axes[axis].value
-				discreteX = pe.axes[axis].discrete
-			} else if axis == int(client.PointerAxisVerticalScroll) {
-				deltaY = pe.axes[axis].value
-				discreteY = pe.axes[axis].discrete
-			}
-
-			d.focusedWindow.handlePointerAxis(pe.surfaceX, pe.surfaceY, deltaX, deltaY, discreteX, discreteY, pe.time)
+	for _, handler := range eventHandlers {
+		if (pe.eventMask & handler.mask) != 0 {
+			handler.handler()
 		}
 	}
 
-	// Reset event state, keeping surface location
+	// Handle axis events
+	d.processAxisEvents(&pe)
+
+	d.resetPointerEvent(&pe)
+}
+
+// processAxisEvents processes scroll wheel events
+func (d *WaylandDriver) processAxisEvents(pe *pointerEvent) {
+	const axisEvents = pointerEventAxis | pointerEventAxisSource | pointerEventAxisStop | pointerEventAxisDiscrete
+	if (pe.eventMask & axisEvents) == 0 {
+		return
+	}
+
+	for axis := 0; axis < 2; axis++ {
+		if !pe.axes[axis].valid {
+			continue
+		}
+
+		deltaX, deltaY := 0.0, 0.0
+		discreteX, discreteY := int32(0), int32(0)
+
+		if axis == int(client.PointerAxisHorizontalScroll) {
+			deltaX = pe.axes[axis].value
+			discreteX = pe.axes[axis].discrete
+		} else if axis == int(client.PointerAxisVerticalScroll) {
+			deltaY = pe.axes[axis].value
+			discreteY = pe.axes[axis].discrete
+		}
+
+		d.focusedWindow.handlePointerAxis(pe.surfaceX, pe.surfaceY, deltaX, deltaY, discreteX, discreteY, pe.time)
+	}
+}
+
+// resetPointerEvent resets event state
+func (d *WaylandDriver) resetPointerEvent(pe *pointerEvent) {
 	d.eventState.pointerEvent = pointerEvent{
 		surfaceX: pe.surfaceX,
 		surfaceY: pe.surfaceY,
 	}
 }
 
-// attachPointer sets up the pointer interface
+// attachPointer sets up the pointer interface with better error handling
 func (d *WaylandDriver) attachPointer() {
 	pointer, err := d.seat.GetPointer()
 	if err != nil {
-		log.Printf("wayland: failed to get pointer: %v", err)
+		slog.Error("failed to get pointer", "error", err)
 		return
 	}
 	d.pointer = pointer
 
-	// Set up pointer event handlers - following examples pattern
+	// Set up pointer event handlers
 	d.pointer.SetEnterHandler(d.handlePointerEnter)
 	d.pointer.SetLeaveHandler(d.handlePointerLeave)
 	d.pointer.SetMotionHandler(d.handlePointerMotion)
@@ -265,18 +271,18 @@ func (d *WaylandDriver) attachPointer() {
 	d.pointer.SetAxisDiscreteHandler(d.handlePointerAxisDiscrete)
 	d.pointer.SetFrameHandler(d.handlePointerFrame)
 
-	log.Printf("wayland: pointer interface registered")
+	slog.Info("pointer interface registered")
 }
 
 // releasePointer releases the pointer interface
 func (d *WaylandDriver) releasePointer() {
 	if d.pointer != nil && d.seatVersion >= 3 {
 		if err := d.pointer.Release(); err != nil {
-			log.Printf("wayland: failed to release pointer: %v", err)
+			slog.Error("failed to release pointer", "error", err)
 		}
 	}
 	d.pointer = nil
-	log.Printf("wayland: pointer interface released")
+	slog.Info("pointer interface released")
 }
 
 // waylandButtonToGio converts Wayland button to gio MouseButton
@@ -294,5 +300,51 @@ func waylandButtonToGio(button uint32) gio.MouseButton {
 		return gio.MouseButtonForward
 	default:
 		return gio.MouseButtonUnknown
+	}
+}
+
+// setCursor sets the cursor for the pointer
+func (d *WaylandDriver) setCursor(serial uint32, name string) {
+	if d.cursorTheme == nil || d.pointer == nil {
+		return
+	}
+
+	cursor := d.cursorTheme.GetCursor(name)
+	if cursor == nil {
+		return
+	}
+
+	image := cursor.Images[0]
+
+	surface, err := d.compositor.CreateSurface()
+	if err != nil {
+		slog.Error("failed to create cursor surface", "error", err)
+		return
+	}
+
+	buffer, err := image.GetBuffer()
+	if err != nil {
+		slog.Error("failed to get cursor buffer", "error", err)
+		return
+	}
+
+	if buffer != nil {
+		if err := surface.Attach(buffer, 0, 0); err != nil {
+			slog.Error("failed to attach cursor buffer", "error", err)
+			return
+		}
+		if err := surface.Damage(0, 0, int32(image.Width), int32(image.Height)); err != nil {
+			slog.Error("failed to damage cursor surface", "error", err)
+		}
+		if err := surface.Commit(); err != nil {
+			slog.Error("failed to commit cursor surface", "error", err)
+			return
+		}
+
+		hotspotX := int32(image.HotspotX)
+		hotspotY := int32(image.HotspotY)
+		if err := d.pointer.SetCursor(serial, surface, hotspotX, hotspotY); err != nil {
+			slog.Error("failed to set cursor", "error", err)
+		}
 	}
 }

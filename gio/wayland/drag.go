@@ -2,7 +2,7 @@ package wayland
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/opensraph/sraph/gio"
@@ -38,7 +38,7 @@ func (w *WaylandWindow) StartDrag(data *gio.DataTransfer, serial uint32) (*DragO
 	types := data.GetTypes()
 	for _, mimeType := range types {
 		if err := dataSource.Offer(mimeType); err != nil {
-			log.Printf("wayland: failed to offer MIME type %s: %v", mimeType, err)
+			slog.Error("failed to offer MIME type", "mimeType", mimeType, "error", err)
 		}
 	}
 
@@ -61,7 +61,7 @@ func (w *WaylandWindow) StartDrag(data *gio.DataTransfer, serial uint32) (*DragO
 	})
 
 	dataSource.SetDndDropPerformedHandler(func(event client.DataSourceDndDropPerformedEvent) {
-		log.Printf("wayland: drag drop performed")
+		slog.Debug("drag drop performed")
 	})
 
 	dataSource.SetDndFinishedHandler(func(event client.DataSourceDndFinishedEvent) {
@@ -82,7 +82,7 @@ func (w *WaylandWindow) StartDrag(data *gio.DataTransfer, serial uint32) (*DragO
 func (do *DragOperation) handleSendData(mimeType string, fd int) {
 	defer func() {
 		if err := os.NewFile(uintptr(fd), "drag-data").Close(); err != nil {
-			log.Printf("wayland: failed to close drag data fd: %v", err)
+			slog.Error("failed to close drag data fd", "error", err)
 		}
 	}()
 
@@ -93,7 +93,7 @@ func (do *DragOperation) handleSendData(mimeType string, fd int) {
 	// Get data for the requested MIME type
 	data, exists := do.data.GetData(mimeType)
 	if !exists {
-		log.Printf("wayland: requested MIME type %s not available for drag", mimeType)
+		slog.Warn("requested MIME type not available for drag", "mimeType", mimeType)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (do *DragOperation) handleSendData(mimeType string, fd int) {
 	// Write data to file descriptor
 	file := os.NewFile(uintptr(fd), "drag-data")
 	if _, err := file.Write(dataBytes); err != nil {
-		log.Printf("wayland: failed to write drag data: %v", err)
+		slog.Error("failed to write drag data", "error", err)
 	}
 }
 
@@ -142,7 +142,7 @@ func (w *WaylandWindow) HandleDragEnter(dataOffer *client.DataOffer, x, y float6
 
 	// Publish drag event
 	if err := w.Publish(dragEvent); err != nil {
-		log.Printf("wayland: failed to publish drag enter event: %v", err)
+		slog.Error("failed to publish drag enter event", "error", err)
 	}
 }
 
@@ -159,7 +159,7 @@ func (w *WaylandWindow) HandleDragMotion(x, y float64, time uint32) {
 	pointerEvent.Position.Y = int(y)
 
 	if err := w.Publish(pointerEvent); err != nil {
-		log.Printf("wayland: failed to publish drag motion event: %v", err)
+		slog.Error("failed to publish drag motion event", "error", err)
 	}
 }
 
@@ -174,7 +174,7 @@ func (w *WaylandWindow) HandleDragLeave() {
 	dragEvent.Data = gio.NewDataTransfer()
 
 	if err := w.Publish(dragEvent); err != nil {
-		log.Printf("wayland: failed to publish drag leave event: %v", err)
+		slog.Error("failed to publish drag leave event", "error", err)
 	}
 }
 
@@ -197,7 +197,7 @@ func (w *WaylandWindow) HandleDrop(dataOffer *client.DataOffer) {
 
 	// Publish drop event
 	if err := w.Publish(dragEvent); err != nil {
-		log.Printf("wayland: failed to publish drop event: %v", err)
+		slog.Error("failed to publish drop event", "error", err)
 	}
 }
 
@@ -206,7 +206,7 @@ func (w *WaylandWindow) retrieveDropData(dataOffer *client.DataOffer, mimeType s
 	// Create pipe for data transfer
 	r, writer, err := os.Pipe()
 	if err != nil {
-		log.Printf("wayland: failed to create pipe for drop data: %v", err)
+		slog.Error("failed to create pipe for drop data", "error", err)
 		return
 	}
 	defer r.Close()
@@ -214,7 +214,7 @@ func (w *WaylandWindow) retrieveDropData(dataOffer *client.DataOffer, mimeType s
 
 	// Receive data
 	if err := dataOffer.Receive(mimeType, int(writer.Fd())); err != nil {
-		log.Printf("wayland: failed to receive drop data: %v", err)
+		slog.Error("failed to receive drop data", "error", err)
 		return
 	}
 
@@ -225,7 +225,7 @@ func (w *WaylandWindow) retrieveDropData(dataOffer *client.DataOffer, mimeType s
 	buf := make([]byte, 4096)
 	n, err := r.Read(buf)
 	if err != nil && err.Error() != "EOF" {
-		log.Printf("wayland: failed to read drop data: %v", err)
+		slog.Error("failed to read drop data", "error", err)
 		return
 	}
 

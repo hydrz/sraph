@@ -3,7 +3,7 @@ package wayland
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -124,7 +124,7 @@ func (d *WaylandDriver) init() error {
 
 	// Set up display error handler
 	d.display.SetErrorHandler(func(event client.DisplayErrorEvent) {
-		log.Printf("wayland: display error: %v", event)
+		slog.Error("wayland display error", "objectId", event.ObjectId, "code", event.Code, "message", event.Message)
 	})
 
 	// Get registry to enumerate global objects
@@ -162,19 +162,19 @@ func (d *WaylandDriver) init() error {
 	if d.shm != nil {
 		theme, err := cursor.LoadTheme("default", 24, d.shm)
 		if err != nil {
-			log.Printf("wayland: failed to load cursor theme: %v", err)
+			slog.Error("failed to load cursor theme", "error", err)
 		} else {
 			d.cursorTheme = theme
 		}
 	}
 
-	log.Printf("wayland: driver initialized successfully")
+	slog.Info("wayland driver initialized successfully")
 	return nil
 }
 
 // handleRegistryGlobal handles global interface announcements
 func (d *WaylandDriver) handleRegistryGlobal(event client.RegistryGlobalEvent) {
-	log.Printf("wayland: found global interface: %s v%d", event.Interface, event.Version)
+	slog.Info("found global interface", "interface", event.Interface, "version", event.Version)
 
 	switch event.Interface {
 	case "wl_compositor":
@@ -195,7 +195,7 @@ func (d *WaylandDriver) bindCompositor(event client.RegistryGlobalEvent) {
 	compositor := client.NewCompositor(d.display.Context())
 	err := d.registry.Bind(event.Name, event.Interface, event.Version, compositor)
 	if err != nil {
-		log.Printf("wayland: failed to bind compositor: %v", err)
+		slog.Error("failed to bind compositor", "error", err)
 		return
 	}
 	d.compositor = compositor
@@ -206,14 +206,16 @@ func (d *WaylandDriver) bindWmBase(event client.RegistryGlobalEvent) {
 	wmBase := xdg_shell.NewWmBase(d.display.Context())
 	err := d.registry.Bind(event.Name, event.Interface, event.Version, wmBase)
 	if err != nil {
-		log.Printf("wayland: failed to bind xdg_wm_base: %v", err)
+		slog.Error("failed to bind xdg_wm_base", "error", err)
 		return
 	}
 	d.wmBase = wmBase
 
 	// Set ping handler
 	d.wmBase.SetPingHandler(func(pingEvent xdg_shell.WmBasePingEvent) {
-		d.wmBase.Pong(pingEvent.Serial)
+		if err := d.wmBase.Pong(pingEvent.Serial); err != nil {
+			slog.Error("failed to respond to ping", "error", err)
+		}
 	})
 }
 
@@ -222,7 +224,7 @@ func (d *WaylandDriver) bindSeat(event client.RegistryGlobalEvent) {
 	seat := client.NewSeat(d.display.Context())
 	err := d.registry.Bind(event.Name, event.Interface, event.Version, seat)
 	if err != nil {
-		log.Printf("wayland: failed to bind seat: %v", err)
+		slog.Error("failed to bind seat", "error", err)
 		return
 	}
 	d.seat = seat
@@ -231,7 +233,7 @@ func (d *WaylandDriver) bindSeat(event client.RegistryGlobalEvent) {
 	// Set up seat event handlers
 	d.seat.SetCapabilitiesHandler(d.handleSeatCapabilities)
 	d.seat.SetNameHandler(func(event client.SeatNameEvent) {
-		log.Printf("wayland: seat name: %s", event.Name)
+		slog.Info("seat name", "name", event.Name)
 	})
 }
 
@@ -240,13 +242,13 @@ func (d *WaylandDriver) bindShm(event client.RegistryGlobalEvent) {
 	shm := client.NewShm(d.display.Context())
 	err := d.registry.Bind(event.Name, event.Interface, event.Version, shm)
 	if err != nil {
-		log.Printf("wayland: failed to bind wl_shm: %v", err)
+		slog.Error("failed to bind wl_shm", "error", err)
 		return
 	}
 	d.shm = shm
 
 	d.shm.SetFormatHandler(func(formatEvent client.ShmFormatEvent) {
-		log.Printf("wayland: supported pixel format: %v", client.ShmFormat(formatEvent.Format))
+		slog.Debug("supported pixel format", "format", client.ShmFormat(formatEvent.Format))
 	})
 }
 
@@ -255,7 +257,7 @@ func (d *WaylandDriver) bindDataDeviceManager(event client.RegistryGlobalEvent) 
 	dataDeviceManager := client.NewDataDeviceManager(d.display.Context())
 	err := d.registry.Bind(event.Name, event.Interface, event.Version, dataDeviceManager)
 	if err != nil {
-		log.Printf("wayland: failed to bind data device manager: %v", err)
+		slog.Error("failed to bind data device manager", "error", err)
 		return
 	}
 	d.dataDeviceManager = dataDeviceManager
@@ -264,7 +266,7 @@ func (d *WaylandDriver) bindDataDeviceManager(event client.RegistryGlobalEvent) 
 	if d.seat != nil {
 		dataDevice, err := dataDeviceManager.GetDataDevice(d.seat)
 		if err != nil {
-			log.Printf("wayland: failed to create data device: %v", err)
+			slog.Error("failed to create data device", "error", err)
 		} else {
 			d.dataDevice = dataDevice
 		}
@@ -273,7 +275,7 @@ func (d *WaylandDriver) bindDataDeviceManager(event client.RegistryGlobalEvent) 
 	// Initialize clipboard manager
 	d.clipboardManager = NewClipboardManager(d)
 	if err := d.clipboardManager.Initialize(); err != nil {
-		log.Printf("wayland: failed to initialize clipboard manager: %v", err)
+		slog.Error("failed to initialize clipboard manager", "error", err)
 	}
 }
 
@@ -295,7 +297,7 @@ func (d *WaylandDriver) eventLoop() {
 
 			// Dispatch pending events
 			if err := d.display.Context().Dispatch(); err != nil {
-				log.Printf("wayland: dispatch error: %v", err)
+				slog.Error("dispatch error", "error", err)
 				continue
 			}
 		}
@@ -375,6 +377,29 @@ func (d *WaylandDriver) handleSeatCapabilities(event client.SeatCapabilitiesEven
 	} else if !haveKeyboard && d.keyboard != nil {
 		d.releaseKeyboard()
 	}
+}
+
+// attachKeyboard sets up the keyboard interface with better error handling
+func (d *WaylandDriver) attachKeyboard() {
+	keyboard, err := d.seat.GetKeyboard()
+	if err != nil {
+		slog.Error("failed to get keyboard", "error", err)
+		return
+	}
+	d.keyboard = keyboard
+
+	// Set up keyboard event handlers - order matters for proper modifier tracking
+	d.keyboard.SetModifiersHandler(d.handleKeyboardModifiers)
+	d.keyboard.SetKeyHandler(d.handleKeyboardKey)
+	d.keyboard.SetKeymapHandler(d.handleKeyboardKeymap)
+	d.keyboard.SetEnterHandler(d.handleKeyboardEnter)
+	d.keyboard.SetLeaveHandler(d.handleKeyboardLeave)
+	d.keyboard.SetRepeatInfoHandler(d.handleKeyboardRepeatInfo)
+
+	// Initialize modifier state
+	d.eventState.keyboardEvent.modifiers = 0
+
+	slog.Info("keyboard interface registered")
 }
 
 // updateSerial updates the latest serial number for clipboard operations
@@ -482,39 +507,4 @@ func (d *WaylandDriver) findWindowBySurface(surface *client.Surface) *WaylandWin
 		}
 	}
 	return nil
-}
-
-// setCursor sets the cursor for the pointer
-func (d *WaylandDriver) setCursor(serial uint32, name string) {
-	if d.cursorTheme == nil || d.pointer == nil {
-		return
-	}
-
-	cursor := d.cursorTheme.GetCursor(name)
-	if cursor == nil {
-		return
-	}
-
-	image := cursor.Images[0]
-
-	surface, err := d.compositor.CreateSurface()
-	if err != nil {
-		log.Printf("wayland: failed to create cursor surface: %v", err)
-		return
-	}
-
-	buffer, err := image.GetBuffer()
-	if err != nil {
-		log.Printf("wayland: failed to get cursor buffer: %v", err)
-	}
-
-	if buffer != nil {
-		surface.Attach(buffer, 0, 0)
-		surface.Damage(0, 0, int32(image.Width), int32(image.Height))
-		surface.Commit()
-
-		hotspotX := int32(image.HotspotX)
-		hotspotY := int32(image.HotspotY)
-		d.pointer.SetCursor(serial, surface, hotspotX, hotspotY)
-	}
 }
