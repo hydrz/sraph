@@ -115,10 +115,6 @@ func (xw *x11Window) handleEvent(ev interface{}) {
 		}
 
 	case xproto.GeGenericEvent:
-		// Handle XI2 generic events
-		if ev.SequenceId() == uint16(xw.xDriver.xiOpcode) {
-			xw.handleXI2GenericEvent(ev)
-		}
 
 	default:
 		log.Printf("x11driver: unhandled event type %T", ev)

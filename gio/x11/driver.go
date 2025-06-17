@@ -2,7 +2,6 @@ package x11
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/jezek/xgb"
 	"github.com/jezek/xgb/render"
@@ -57,12 +56,6 @@ type x11Driver struct {
 	atomXdndActionMove xproto.Atom
 	atomXdndActionLink xproto.Atom
 	atomTextUriList    xproto.Atom
-
-	// XI2 extension support (simplified)
-	xiExtensionPresent bool
-	xiOpcode           uint8
-	xiFirstEvent       uint8
-	xiFirstError       uint8
 }
 
 func newX11Driver() (driver gio.Driver, retError error) {
@@ -111,9 +104,6 @@ func (xd *x11Driver) init() error {
 	if err := xd.initKeyboardMapping(); err != nil {
 		return err
 	}
-
-	// Try to initialize XI2 extension
-	xd.initXI2Extension()
 
 	return nil
 }
@@ -287,22 +277,4 @@ func (xd *x11Driver) translateWheelDelta(button xproto.Button) (float64, float64
 	default:
 		return 0, 0
 	}
-}
-
-// initXI2Extension initializes XI2 extension for touch and pointer support
-func (xd *x11Driver) initXI2Extension() {
-	// Query XI2 extension
-	extReply, err := xproto.QueryExtension(xd.xc, uint16(len("XInputExtension")), "XInputExtension").Reply()
-	if err != nil || !extReply.Present {
-		log.Printf("x11driver: XI2 extension not available")
-		return
-	}
-
-	xd.xiOpcode = extReply.MajorOpcode
-	xd.xiFirstEvent = extReply.FirstEvent
-	xd.xiFirstError = extReply.FirstError
-	xd.xiExtensionPresent = true
-
-	log.Printf("x11driver: XI2 extension available (opcode=%d, first_event=%d)",
-		xd.xiOpcode, xd.xiFirstEvent)
 }
