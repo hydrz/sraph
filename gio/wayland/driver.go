@@ -1,61 +1,120 @@
 package wayland
 
 import (
+	"context"
 	"fmt"
-	"image"
 	"log"
-	"os"
 	"sync"
-	"syscall"
 	"time"
-	"unsafe"
 
 	"github.com/opensraph/sraph/gio"
 	"github.com/rajveermalviya/go-wayland/wayland/client"
+	"github.com/rajveermalviya/go-wayland/wayland/cursor"
 	xdg_shell "github.com/rajveermalviya/go-wayland/wayland/stable/xdg-shell"
 )
 
 func init() {
-	// Register the Wayland driver
 	gio.RegisterDriver(gio.DriverTypeWayland, newWaylandDriver)
 }
 
 var _ gio.Driver = (*WaylandDriver)(nil)
 
-// newWaylandDriver creates a new Wayland driver instance (matching X11 pattern)
+// WaylandDriver implements the Wayland graphics driver
+type WaylandDriver struct {
+	// Core Wayland objects
+	display     *client.Display
+	registry    *client.Registry
+	shm         *client.Shm
+	compositor  *client.Compositor
+	wmBase      *xdg_shell.WmBase
+	seat        *client.Seat
+	seatVersion uint32
+
+	// Input devices
+	keyboard *client.Keyboard
+	pointer  *client.Pointer
+
+	// Cursor support
+	cursorTheme *cursor.Theme
+
+	// Context and lifecycle
+	ctx     context.Context
+	cancel  context.CancelFunc
+	running bool
+	wg      sync.WaitGroup
+
+	// Window management
+	windows       map[gio.WindowID]*WaylandWindow
+	focusedWindow *WaylandWindow
+
+	// Event handling
+	eventState struct {
+		pointerEvent  pointerEvent
+		keyboardEvent keyboardEvent
+	}
+
+	// Data transfer support
+	dataDeviceManager *client.DataDeviceManager
+	dataDevice        *client.DataDevice // Add missing field
+	clipboardManager  *ClipboardManager
+
+	// Serial tracking for clipboard operations
+	latestSerial uint32
+
+	mu sync.RWMutex
+}
+
+type pointerEvent struct {
+	eventMask          int
+	surfaceX, surfaceY float64
+	button, state      uint32
+	time               uint32
+	serial             uint32
+	axes               [2]struct {
+		valid    bool
+		value    float64
+		discrete int32
+	}
+	axisSource uint32
+}
+
+type keyboardEvent struct {
+	serial    uint32
+	time      uint32
+	key       uint32
+	state     uint32
+	modifiers uint32
+}
+
+// newWaylandDriver creates a new Wayland driver instance
 func newWaylandDriver() (gio.Driver, error) {
 	display, err := client.Connect("")
 	if err != nil {
 		return nil, fmt.Errorf("wayland: failed to connect to display: %w", err)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	driver := &WaylandDriver{
 		display: display,
+		ctx:     ctx,
+		cancel:  cancel,
 		running: true,
+		windows: make(map[gio.WindowID]*WaylandWindow),
 	}
 
 	// Initialize Wayland connection
 	if err := driver.init(); err != nil {
+		cancel()
 		display.Destroy()
 		return nil, fmt.Errorf("wayland: failed to initialize driver: %w", err)
 	}
 
-	return driver, nil
-}
+	// Start event loop
+	driver.wg.Add(1)
+	go driver.eventLoop()
 
-// WaylandDriver implements the Wayland graphics driver
-type WaylandDriver struct {
-	display    *client.Display
-	registry   *client.Registry
-	compositor *client.Compositor
-	wmBase     *xdg_shell.WmBase
-	shm        *client.Shm
-	seat       *client.Seat
-	keyboard   *client.Keyboard
-	pointer    *client.Pointer
-	ctx        *client.Context
-	running    bool
-	mu         sync.RWMutex
+	return driver, nil
 }
 
 // init sets up the Wayland connection and global objects
@@ -63,8 +122,10 @@ func (d *WaylandDriver) init() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	// Get the context from display
-	d.ctx = d.display.Context()
+	// Set up display error handler
+	d.display.SetErrorHandler(func(event client.DisplayErrorEvent) {
+		log.Printf("wayland: display error: %v", event)
+	})
 
 	// Get registry to enumerate global objects
 	registry, err := d.display.GetRegistry()
@@ -74,98 +135,17 @@ func (d *WaylandDriver) init() error {
 	d.registry = registry
 
 	// Set up registry event handler
-	d.registry.SetGlobalHandler(func(event client.RegistryGlobalEvent) {
-		log.Printf("Found global: %s (version %d, id %d)", event.Interface, event.Version, event.Name)
+	d.registry.SetGlobalHandler(d.handleRegistryGlobal)
 
-		switch event.Interface {
-		case "wl_compositor":
-			// Create and bind compositor
-			compositor := client.NewCompositor(d.ctx)
-			err := d.registry.Bind(event.Name, event.Interface, event.Version, compositor)
-			if err != nil {
-				log.Printf("Failed to bind compositor: %v", err)
-				return
-			}
-			d.compositor = compositor
-			log.Printf("Bound compositor successfully")
-
-		case "xdg_wm_base":
-			// Create and bind XDG window manager
-			wmBase := xdg_shell.NewWmBase(d.ctx)
-			err := d.registry.Bind(event.Name, event.Interface, event.Version, wmBase)
-			if err != nil {
-				log.Printf("Failed to bind xdg_wm_base: %v", err)
-				return
-			}
-			d.wmBase = wmBase
-
-			// Set ping handler
-			d.wmBase.SetPingHandler(func(pingEvent xdg_shell.WmBasePingEvent) {
-				d.wmBase.Pong(pingEvent.Serial)
-			})
-			log.Printf("Bound xdg_wm_base successfully")
-
-		case "wl_seat":
-			// Create and bind seat for input events
-			seat := client.NewSeat(d.ctx)
-			err := d.registry.Bind(event.Name, event.Interface, event.Version, seat)
-			if err != nil {
-				log.Printf("Failed to bind seat: %v", err)
-				return
-			}
-			d.seat = seat
-			d.setupSeat()
-			log.Printf("Bound seat successfully")
-
-		case "wl_shm":
-			// Create and bind shared memory
-			shm := client.NewShm(d.ctx)
-			err := d.registry.Bind(event.Name, event.Interface, event.Version, shm)
-			if err != nil {
-				log.Printf("Failed to bind wl_shm: %v", err)
-				return
-			}
-			d.shm = shm
-			log.Printf("Bound wl_shm successfully")
-		}
-	})
-
-	// Roundtrip to ensure we get all globals
-	callback, err := d.display.Sync()
-	if err != nil {
-		return fmt.Errorf("failed to sync display: %w", err)
+	// Wait for global interfaces to be announced
+	if err := d.displayRoundTrip(); err != nil {
+		return fmt.Errorf("failed to complete display roundtrip: %w", err)
 	}
 
-	// Set up callback to know when sync is done
-	syncDone := make(chan bool, 1)
-	callback.SetDoneHandler(func(event client.CallbackDoneEvent) {
-		log.Printf("Display sync completed")
-		syncDone <- true
-	})
-
-	// Flush and wait for events with timeout
-	log.Printf("Waiting for registry sync...")
-	timeout := time.After(5 * time.Second)
-	ticker := time.NewTicker(10 * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-syncDone:
-			log.Printf("Registry sync completed")
-			goto syncComplete
-		case <-timeout:
-			return fmt.Errorf("timeout waiting for registry sync")
-		case <-ticker.C:
-			// Continue processing events while waiting
-			if err := d.ctx.Dispatch(); err != nil {
-				log.Printf("Dispatch error during sync: %v", err)
-				// Continue anyway
-			}
-		}
+	// Wait for handler events
+	if err := d.displayRoundTrip(); err != nil {
+		return fmt.Errorf("failed to complete second display roundtrip: %w", err)
 	}
-
-syncComplete:
 
 	// Verify we have the required globals
 	if d.compositor == nil {
@@ -178,101 +158,179 @@ syncComplete:
 		return fmt.Errorf("wl_shm not available")
 	}
 
-	log.Printf("Wayland driver initialized successfully")
+	// Load cursor theme if available
+	if d.shm != nil {
+		theme, err := cursor.LoadTheme("default", 24, d.shm)
+		if err != nil {
+			log.Printf("wayland: failed to load cursor theme: %v", err)
+		} else {
+			d.cursorTheme = theme
+		}
+	}
+
+	log.Printf("wayland: driver initialized successfully")
 	return nil
 }
 
-// setupSeat configures input devices from the seat
-func (d *WaylandDriver) setupSeat() {
-	if d.seat == nil {
+// handleRegistryGlobal handles global interface announcements
+func (d *WaylandDriver) handleRegistryGlobal(event client.RegistryGlobalEvent) {
+	log.Printf("wayland: found global interface: %s v%d", event.Interface, event.Version)
+
+	switch event.Interface {
+	case "wl_compositor":
+		d.bindCompositor(event)
+	case "xdg_wm_base":
+		d.bindWmBase(event)
+	case "wl_seat":
+		d.bindSeat(event)
+	case "wl_shm":
+		d.bindShm(event)
+	case "wl_data_device_manager":
+		d.bindDataDeviceManager(event)
+	}
+}
+
+// bindCompositor binds the compositor interface
+func (d *WaylandDriver) bindCompositor(event client.RegistryGlobalEvent) {
+	compositor := client.NewCompositor(d.display.Context())
+	err := d.registry.Bind(event.Name, event.Interface, event.Version, compositor)
+	if err != nil {
+		log.Printf("wayland: failed to bind compositor: %v", err)
 		return
 	}
+	d.compositor = compositor
+}
 
-	d.seat.SetCapabilitiesHandler(func(event client.SeatCapabilitiesEvent) {
-		// Setup keyboard if available
-		if event.Capabilities&uint32(client.SeatCapabilityKeyboard) != 0 {
-			keyboard, err := d.seat.GetKeyboard()
-			if err == nil {
-				d.keyboard = keyboard
-				d.setupKeyboard()
-			}
-		}
+// bindWmBase binds the XDG window manager interface
+func (d *WaylandDriver) bindWmBase(event client.RegistryGlobalEvent) {
+	wmBase := xdg_shell.NewWmBase(d.display.Context())
+	err := d.registry.Bind(event.Name, event.Interface, event.Version, wmBase)
+	if err != nil {
+		log.Printf("wayland: failed to bind xdg_wm_base: %v", err)
+		return
+	}
+	d.wmBase = wmBase
 
-		// Setup pointer if available
-		if event.Capabilities&uint32(client.SeatCapabilityPointer) != 0 {
-			pointer, err := d.seat.GetPointer()
-			if err == nil {
-				d.pointer = pointer
-				d.setupPointer()
-			}
-		}
+	// Set ping handler
+	d.wmBase.SetPingHandler(func(pingEvent xdg_shell.WmBasePingEvent) {
+		d.wmBase.Pong(pingEvent.Serial)
 	})
 }
 
-// setupKeyboard configures keyboard event handlers
-func (d *WaylandDriver) setupKeyboard() {
-	if d.keyboard == nil {
+// bindSeat binds the seat interface for input
+func (d *WaylandDriver) bindSeat(event client.RegistryGlobalEvent) {
+	seat := client.NewSeat(d.display.Context())
+	err := d.registry.Bind(event.Name, event.Interface, event.Version, seat)
+	if err != nil {
+		log.Printf("wayland: failed to bind seat: %v", err)
 		return
 	}
+	d.seat = seat
+	d.seatVersion = event.Version
 
-	d.keyboard.SetKeyHandler(func(event client.KeyboardKeyEvent) {
-		// Convert Wayland key event to gio keyboard event
-		keyEvent := gio.NewKeyboardEvent()
-		keyEvent.Code = gio.KeyCode(event.Key)
-		if event.State == uint32(client.KeyboardKeyStatePressed) {
-			keyEvent.State = gio.KeyStatePressed
-		} else {
-			keyEvent.State = gio.KeyStateReleased
-		}
-		// Publish event to active window
-		// TODO: Route to appropriate window
-	})
-
-	d.keyboard.SetModifiersHandler(func(event client.KeyboardModifiersEvent) {
-		// Handle modifier key changes
-		// TODO: Update modifier state
+	// Set up seat event handlers
+	d.seat.SetCapabilitiesHandler(d.handleSeatCapabilities)
+	d.seat.SetNameHandler(func(event client.SeatNameEvent) {
+		log.Printf("wayland: seat name: %s", event.Name)
 	})
 }
 
-// setupPointer configures pointer event handlers
-func (d *WaylandDriver) setupPointer() {
-	if d.pointer == nil {
+// bindShm binds the shared memory interface
+func (d *WaylandDriver) bindShm(event client.RegistryGlobalEvent) {
+	shm := client.NewShm(d.display.Context())
+	err := d.registry.Bind(event.Name, event.Interface, event.Version, shm)
+	if err != nil {
+		log.Printf("wayland: failed to bind wl_shm: %v", err)
 		return
 	}
+	d.shm = shm
 
-	d.pointer.SetButtonHandler(func(event client.PointerButtonEvent) {
-		// Convert Wayland pointer button event to gio pointer event
-		pointerEvent := gio.NewPointerEvent()
-		pointerEvent.PointerType = gio.PointerTypeMouse
-		pointerEvent.MouseButton = gio.MouseButton(event.Button)
-		if event.State == uint32(client.PointerButtonStatePressed) {
-			pointerEvent.KeyState = gio.KeyStatePressed
+	d.shm.SetFormatHandler(func(formatEvent client.ShmFormatEvent) {
+		log.Printf("wayland: supported pixel format: %v", client.ShmFormat(formatEvent.Format))
+	})
+}
+
+// bindDataDeviceManager binds the data device manager interface
+func (d *WaylandDriver) bindDataDeviceManager(event client.RegistryGlobalEvent) {
+	dataDeviceManager := client.NewDataDeviceManager(d.display.Context())
+	err := d.registry.Bind(event.Name, event.Interface, event.Version, dataDeviceManager)
+	if err != nil {
+		log.Printf("wayland: failed to bind data device manager: %v", err)
+		return
+	}
+	d.dataDeviceManager = dataDeviceManager
+
+	// Create data device if we have a seat
+	if d.seat != nil {
+		dataDevice, err := dataDeviceManager.GetDataDevice(d.seat)
+		if err != nil {
+			log.Printf("wayland: failed to create data device: %v", err)
 		} else {
-			pointerEvent.KeyState = gio.KeyStateReleased
+			d.dataDevice = dataDevice
 		}
-		// TODO: Route to appropriate window
-	})
+	}
 
-	d.pointer.SetMotionHandler(func(event client.PointerMotionEvent) {
-		// Handle pointer motion
-		pointerEvent := gio.NewPointerEvent()
-		pointerEvent.PointerType = gio.PointerTypeMouse
-		pointerEvent.Position = image.Point{
-			X: int(event.SurfaceX),
-			Y: int(event.SurfaceY),
+	// Initialize clipboard manager
+	d.clipboardManager = NewClipboardManager(d)
+	if err := d.clipboardManager.Initialize(); err != nil {
+		log.Printf("wayland: failed to initialize clipboard manager: %v", err)
+	}
+}
+
+// eventLoop runs the main Wayland event loop
+func (d *WaylandDriver) eventLoop() {
+	defer d.wg.Done()
+
+	ticker := time.NewTicker(1 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-d.ctx.Done():
+			return
+		case <-ticker.C:
+			if !d.running {
+				return
+			}
+
+			// Dispatch pending events
+			if err := d.display.Context().Dispatch(); err != nil {
+				log.Printf("wayland: dispatch error: %v", err)
+				continue
+			}
 		}
-		// TODO: Route to appropriate window
+	}
+}
+
+// displayRoundTrip performs a display roundtrip
+func (d *WaylandDriver) displayRoundTrip() error {
+	callback, err := d.display.Sync()
+	if err != nil {
+		return fmt.Errorf("failed to sync display: %w", err)
+	}
+	defer callback.Destroy()
+
+	done := make(chan bool, 1)
+	callback.SetDoneHandler(func(event client.CallbackDoneEvent) {
+		done <- true
 	})
 
-	d.pointer.SetEnterHandler(func(event client.PointerEnterEvent) {
-		// Handle pointer enter surface
-		// TODO: Set focus to window
-	})
+	timeout := time.After(5 * time.Second)
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
 
-	d.pointer.SetLeaveHandler(func(event client.PointerLeaveEvent) {
-		// Handle pointer leave surface
-		// TODO: Remove focus from window
-	})
+	for {
+		select {
+		case <-done:
+			return nil
+		case <-timeout:
+			return fmt.Errorf("timeout waiting for display roundtrip")
+		case <-ticker.C:
+			if err := d.display.Context().Dispatch(); err != nil {
+				return fmt.Errorf("dispatch error during roundtrip: %w", err)
+			}
+		}
+	}
 }
 
 // Type returns the driver type
@@ -282,476 +340,181 @@ func (d *WaylandDriver) Type() gio.DriverType {
 
 // CreateWindow creates a new Wayland window
 func (d *WaylandDriver) CreateWindow(opts gio.NewWindowOptions) (gio.Window, error) {
+	if !d.running {
+		return nil, gio.NewError(gio.ErrorCodeDriverNotFound, "driver not running", nil)
+	}
+
 	bw := gio.NewBaseWindow(opts)
-	return newWaylandWindow(d, bw)
+	window, err := newWaylandWindow(d, bw)
+	if err != nil {
+		return nil, err
+	}
+
+	// Register window
+	d.mu.Lock()
+	d.windows[window.WindowID()] = window
+	d.mu.Unlock()
+
+	return window, nil
 }
 
-// Run starts the Wayland event loop
-func (d *WaylandDriver) Run() error {
-	if !d.running {
-		return gio.NewError(gio.ErrorCodeInvalidWindowState, "driver not running", nil)
+// handleSeatCapabilities handles seat capability changes
+func (d *WaylandDriver) handleSeatCapabilities(event client.SeatCapabilitiesEvent) {
+	// Handle pointer capability
+	havePointer := (event.Capabilities & uint32(client.SeatCapabilityPointer)) != 0
+	if havePointer && d.pointer == nil {
+		d.attachPointer()
+	} else if !havePointer && d.pointer != nil {
+		d.releasePointer()
 	}
 
-	log.Printf("Starting Wayland event loop")
-
-	// Main event loop
-	for d.running {
-		// Dispatch pending events
-		if err := d.ctx.Dispatch(); err != nil {
-			log.Printf("Wayland dispatch error: %v", err)
-			// Don't return error immediately, try to continue
-			time.Sleep(10 * time.Millisecond)
-			continue
-		}
-
-		// Small sleep to prevent busy loop
-		time.Sleep(1 * time.Millisecond)
+	// Handle keyboard capability
+	haveKeyboard := (event.Capabilities & uint32(client.SeatCapabilityKeyboard)) != 0
+	if haveKeyboard && d.keyboard == nil {
+		d.attachKeyboard()
+	} else if !haveKeyboard && d.keyboard != nil {
+		d.releaseKeyboard()
 	}
+}
 
-	log.Printf("Wayland event loop stopped")
-	return nil
+// updateSerial updates the latest serial number for clipboard operations
+func (d *WaylandDriver) updateSerial(serial uint32) {
+	if serial > d.latestSerial {
+		d.latestSerial = serial
+	}
+}
+
+// getLatestSerial returns the latest serial number
+func (d *WaylandDriver) getLatestSerial() uint32 {
+	return d.latestSerial
 }
 
 // Shutdown stops the Wayland driver
 func (d *WaylandDriver) Shutdown() error {
 	d.mu.Lock()
-	defer d.mu.Unlock()
-
 	d.running = false
+	d.mu.Unlock()
+
+	// Cancel context to stop event loop
+	d.cancel()
+	d.wg.Wait()
 
 	// Clean up resources
-	if d.keyboard != nil {
-		// Keyboard doesn't have Destroy method, just set to nil
-		d.keyboard = nil
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	// Close all windows
+	for _, window := range d.windows {
+		if window != nil {
+			window.Close()
+		}
 	}
-	if d.pointer != nil {
-		// Pointer doesn't have Destroy method, just set to nil
-		d.pointer = nil
+	d.windows = make(map[gio.WindowID]*WaylandWindow)
+
+	// Release input devices
+	d.releasePointer()
+	d.releaseKeyboard()
+
+	// Clean up cursor theme
+	if d.cursorTheme != nil {
+		d.cursorTheme.Destroy()
+		d.cursorTheme = nil
 	}
-	if d.seat != nil {
-		// Seat doesn't have Destroy method, just set to nil
-		d.seat = nil
-	}
+
+	// Clean up Wayland objects
 	if d.wmBase != nil {
 		d.wmBase.Destroy()
+		d.wmBase = nil
 	}
 	if d.compositor != nil {
 		d.compositor.Destroy()
+		d.compositor = nil
+	}
+	if d.shm != nil {
+		d.shm.Destroy()
+		d.shm = nil
 	}
 	if d.registry != nil {
 		d.registry.Destroy()
+		d.registry = nil
 	}
 	if d.display != nil {
 		d.display.Destroy()
-	}
-	if d.ctx != nil {
-		d.ctx.Close()
+		d.display = nil
 	}
 
-	return nil
-}
-
-var _ gio.Window = (*WaylandWindow)(nil)
-
-// WaylandWindow represents a Wayland window implementation
-type WaylandWindow struct {
-	gio.BaseWindow
-
-	wlDriver   *WaylandDriver
-	wlSurface  *client.Surface
-	xdgSurface *xdg_shell.Surface
-	toplevel   *xdg_shell.Toplevel
-	buffer     *client.Buffer
-	shmPool    *client.ShmPool
-
-	// Window state tracking
-	configured  bool
-	needsRedraw bool
-
-	mu sync.RWMutex
-}
-
-// WindowID returns the Wayland window ID (surface pointer as uint64)
-func (w *WaylandWindow) WindowID() gio.WindowID {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	return gio.WindowID(uintptr(unsafe.Pointer(w.wlSurface)))
-}
-
-// init sets up the window with initial properties
-func (w *WaylandWindow) init() error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	attr := w.BaseWindow.Attr()
-
-	// Set window title
-	if err := w.toplevel.SetTitle(attr.Title); err != nil {
-		return fmt.Errorf("failed to set title: %w", err)
+	// Clean up clipboard manager
+	if d.clipboardManager != nil {
+		d.clipboardManager.Cleanup()
+		d.clipboardManager = nil
 	}
 
-	// Set window app ID (use title as default)
-	if err := w.toplevel.SetAppId(attr.Title); err != nil {
-		return fmt.Errorf("failed to set app ID: %w", err)
-	}
-
-	// Set window size constraints
-	if attr.Width > 0 && attr.Height > 0 {
-		if err := w.toplevel.SetMinSize(int32(attr.Width), int32(attr.Height)); err != nil {
-			return fmt.Errorf("failed to set min size: %w", err)
-		}
-	}
-
-	// Set up event handlers
-	w.setupEventHandlers()
-
-	// Commit the surface to make it visible
-	if err := w.wlSurface.Commit(); err != nil {
-		return fmt.Errorf("failed to commit surface: %w", err)
+	// Clean up data device manager
+	if d.dataDeviceManager != nil {
+		d.dataDeviceManager.Destroy()
+		d.dataDeviceManager = nil
 	}
 
 	return nil
 }
 
-// setupEventHandlers configures window event handlers
-func (w *WaylandWindow) setupEventHandlers() {
-	// Handle window close requests
-	w.toplevel.SetCloseHandler(func(event xdg_shell.ToplevelCloseEvent) {
-		w.Close()
-	})
+// removeWindow removes a window from tracking
+func (d *WaylandDriver) removeWindow(windowID gio.WindowID) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 
-	// Handle window configuration changes
-	w.toplevel.SetConfigureHandler(func(event xdg_shell.ToplevelConfigureEvent) {
-		w.mu.Lock()
-		defer w.mu.Unlock()
-
-		// Update window attributes based on configuration
-		if event.Width > 0 && event.Height > 0 {
-			attr := w.BaseWindow.Attr()
-			attr.Width = int(event.Width)
-			attr.Height = int(event.Height)
-			w.BaseWindow.SetAttr(attr)
+	if window, exists := d.windows[windowID]; exists {
+		if d.focusedWindow == window {
+			d.focusedWindow = nil
 		}
-
-		// Update window state
-		attr := w.BaseWindow.Attr()
-		newState := attr.State
-
-		// Check states array for current state
-		for _, stateData := range event.States {
-			// States is a byte array, convert to uint32 to compare with constants
-			state := uint32(stateData)
-			switch state {
-			case uint32(xdg_shell.ToplevelStateMaximized):
-				newState |= gio.WindowStateMaximized
-			case uint32(xdg_shell.ToplevelStateFullscreen):
-				// Handle fullscreen state
-			case uint32(xdg_shell.ToplevelStateActivated):
-				newState |= gio.WindowStateFocused
-			}
-		}
-
-		if newState != attr.State {
-			attr.State = newState
-			w.BaseWindow.SetAttr(attr)
-		}
-
-		w.configured = true
-		w.needsRedraw = true
-
-		// Trigger initial render after configuration
-		go func() {
-			if err := w.Render(); err != nil {
-				log.Printf("Failed to render window: %v", err)
-			}
-		}()
-	})
-
-	// Handle XDG surface configuration
-	w.xdgSurface.SetConfigureHandler(func(event xdg_shell.SurfaceConfigureEvent) {
-		// Acknowledge the configure event
-		w.xdgSurface.AckConfigure(event.Serial)
-	})
+		delete(d.windows, windowID)
+	}
 }
 
-// Show makes the window visible
-func (w *WaylandWindow) Show() error {
-	if err := w.BaseWindow.Show(); err != nil {
-		return err
-	}
+// findWindowBySurface finds a window by its surface
+func (d *WaylandDriver) findWindowBySurface(surface *client.Surface) *WaylandWindow {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 
-	w.needsRedraw = true
-
-	// Trigger render
-	if w.configured {
-		go func() {
-			if err := w.Render(); err != nil {
-				log.Printf("Failed to render window: %v", err)
-			}
-		}()
+	for _, window := range d.windows {
+		if window.surface == surface {
+			return window
+		}
 	}
-
-	// Commit surface to make changes visible
-	return w.wlSurface.Commit()
-}
-
-// Hide hides the window
-func (w *WaylandWindow) Hide() error {
-	if err := w.BaseWindow.Hide(); err != nil {
-		return err
-	}
-
-	// Commit surface to apply changes
-	return w.wlSurface.Commit()
-}
-
-// Close closes the window and cleans up resources
-func (w *WaylandWindow) Close() error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	if err := w.BaseWindow.Close(); err != nil {
-		return err
-	}
-
-	// Clean up Wayland resources
-	if w.buffer != nil {
-		w.buffer.Destroy()
-		w.buffer = nil
-	}
-	if w.shmPool != nil {
-		w.shmPool.Destroy()
-		w.shmPool = nil
-	}
-	if w.toplevel != nil {
-		w.toplevel.Destroy()
-		w.toplevel = nil
-	}
-	if w.xdgSurface != nil {
-		w.xdgSurface.Destroy()
-		w.xdgSurface = nil
-	}
-	if w.wlSurface != nil {
-		w.wlSurface.Destroy()
-		w.wlSurface = nil
-	}
-
 	return nil
 }
 
-// SetAttr updates window attributes
-func (w *WaylandWindow) SetAttr(attr gio.WindowAttr) {
-	w.BaseWindow.SetAttr(attr)
-
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	if w.toplevel == nil {
+// setCursor sets the cursor for the pointer
+func (d *WaylandDriver) setCursor(serial uint32, name string) {
+	if d.cursorTheme == nil || d.pointer == nil {
 		return
 	}
 
-	// Update title if changed
-	if w.BaseWindow.Title() != attr.Title {
-		w.toplevel.SetTitle(attr.Title)
+	cursor := d.cursorTheme.GetCursor(name)
+	if cursor == nil {
+		return
 	}
 
-	// Handle maximize/minimize state changes
-	if attr.State.Contains(gio.WindowStateMaximized) && !w.BaseWindow.State().Contains(gio.WindowStateMaximized) {
-		w.toplevel.SetMaximized()
-	} else if !attr.State.Contains(gio.WindowStateMaximized) && w.BaseWindow.State().Contains(gio.WindowStateMaximized) {
-		w.toplevel.UnsetMaximized()
-	}
+	image := cursor.Images[0]
 
-	// Commit changes
-	if w.wlSurface != nil {
-		w.wlSurface.Commit()
-	}
-}
-
-// newWaylandWindow creates a new Wayland window
-func newWaylandWindow(driver *WaylandDriver, bw gio.BaseWindow) (*WaylandWindow, error) {
-	driver.mu.RLock()
-	defer driver.mu.RUnlock()
-
-	if !driver.running {
-		return nil, gio.NewError(gio.ErrorCodeDriverNotFound, "Wayland driver not running", nil)
-	}
-
-	if driver.compositor == nil || driver.wmBase == nil {
-		return nil, gio.NewError(gio.ErrorCodeDriverInitFailed, "Wayland compositor or window manager not available", nil)
-	}
-
-	// Create surface
-	surface, err := driver.compositor.CreateSurface()
+	surface, err := d.compositor.CreateSurface()
 	if err != nil {
-		return nil, fmt.Errorf("wayland: failed to create surface: %w", err)
+		log.Printf("wayland: failed to create cursor surface: %v", err)
+		return
 	}
 
-	// Create XDG surface
-	xdgSurface, err := driver.wmBase.GetXdgSurface(surface)
+	buffer, err := image.GetBuffer()
 	if err != nil {
-		return nil, fmt.Errorf("wayland: failed to create XDG surface: %w", err)
+		log.Printf("wayland: failed to get cursor buffer: %v", err)
 	}
 
-	// Create toplevel
-	toplevel, err := xdgSurface.GetToplevel()
-	if err != nil {
-		return nil, fmt.Errorf("wayland: failed to create toplevel: %w", err)
+	if buffer != nil {
+		surface.Attach(buffer, 0, 0)
+		surface.Damage(0, 0, int32(image.Width), int32(image.Height))
+		surface.Commit()
+
+		hotspotX := int32(image.HotspotX)
+		hotspotY := int32(image.HotspotY)
+		d.pointer.SetCursor(serial, surface, hotspotX, hotspotY)
 	}
-
-	// Create window wrapper
-	ww := &WaylandWindow{
-		BaseWindow:  bw,
-		wlDriver:    driver,
-		wlSurface:   surface,
-		xdgSurface:  xdgSurface,
-		toplevel:    toplevel,
-		needsRedraw: true,
-	}
-
-	// Configure window properties
-	if err := ww.init(); err != nil {
-		return nil, fmt.Errorf("wayland: failed to initialize window: %w", err)
-	}
-
-	return ww, nil
-}
-
-// createBuffer creates a simple colored buffer for the window
-func (w *WaylandWindow) createBuffer(width, height int32) error {
-	if w.wlDriver.shm == nil {
-		return fmt.Errorf("wl_shm not available")
-	}
-
-	// Calculate buffer size (ARGB8888 format)
-	stride := width * 4
-	size := stride * height
-
-	// Create anonymous file for shared memory
-	fd, err := w.createAnonymousFile(int(size))
-	if err != nil {
-		return fmt.Errorf("failed to create anonymous file: %w", err)
-	}
-	defer syscall.Close(fd)
-
-	// Map the memory
-	data, err := syscall.Mmap(fd, 0, int(size), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
-	if err != nil {
-		return fmt.Errorf("failed to mmap: %w", err)
-	}
-
-	// Fill with a simple gradient pattern
-	w.fillBuffer(data, int(width), int(height), int(stride))
-
-	// Unmap the memory
-	if err := syscall.Munmap(data); err != nil {
-		return fmt.Errorf("failed to munmap: %w", err)
-	}
-
-	// Create shared memory pool
-	pool, err := w.wlDriver.shm.CreatePool(fd, size)
-	if err != nil {
-		return fmt.Errorf("failed to create shm pool: %w", err)
-	}
-	w.shmPool = pool
-
-	// Create buffer from pool
-	buffer, err := pool.CreateBuffer(0, width, height, stride, uint32(client.ShmFormatArgb8888))
-	if err != nil {
-		return fmt.Errorf("failed to create buffer: %w", err)
-	}
-	w.buffer = buffer
-
-	return nil
-}
-
-// createAnonymousFile creates an anonymous file for shared memory
-func (w *WaylandWindow) createAnonymousFile(size int) (int, error) {
-	// Try to use memfd_create (Linux-specific)
-	name := "wayland-buffer"
-	fd, _, err := syscall.RawSyscall(319, uintptr(unsafe.Pointer(&[]byte(name)[0])), 0, 0) // SYS_memfd_create
-	if err == 0 {
-		if err := syscall.Ftruncate(int(fd), int64(size)); err != nil {
-			syscall.Close(int(fd))
-			return 0, err
-		}
-		return int(fd), nil
-	}
-	// Fallback to creating a temporary file
-	tmpFile, fileErr := os.CreateTemp("", "wayland-buffer-")
-	if fileErr != nil {
-		return 0, fileErr
-	}
-
-	if err := tmpFile.Truncate(int64(size)); err != nil {
-		tmpFile.Close()
-		os.Remove(tmpFile.Name())
-		return 0, err
-	}
-
-	fileFd := int(tmpFile.Fd())
-
-	// Unlink the file so it gets deleted when closed
-	os.Remove(tmpFile.Name())
-
-	return fileFd, nil
-}
-
-// fillBuffer fills the buffer with a simple gradient pattern
-func (w *WaylandWindow) fillBuffer(data []byte, width, height, stride int) {
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			offset := y*stride + x*4
-
-			// Create a simple gradient from blue to red
-			r := uint8((x * 255) / width)
-			g := uint8((y * 255) / height)
-			b := uint8(128)
-			a := uint8(255)
-
-			// ARGB8888 format
-			data[offset+0] = b // Blue
-			data[offset+1] = g // Green
-			data[offset+2] = r // Red
-			data[offset+3] = a // Alpha
-		}
-	}
-}
-
-// Render performs a frame render (placeholder for actual rendering)
-func (w *WaylandWindow) Render() error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	if !w.configured || !w.needsRedraw {
-		return nil
-	}
-
-	attr := w.BaseWindow.Attr()
-
-	// Create buffer if needed
-	if w.buffer == nil {
-		if err := w.createBuffer(int32(attr.Width), int32(attr.Height)); err != nil {
-			return fmt.Errorf("failed to create buffer: %w", err)
-		}
-	}
-
-	// Attach buffer to surface
-	if err := w.wlSurface.Attach(w.buffer, 0, 0); err != nil {
-		return fmt.Errorf("failed to attach buffer: %w", err)
-	}
-
-	// Mark the entire surface as damaged
-	if err := w.wlSurface.Damage(0, 0, int32(attr.Width), int32(attr.Height)); err != nil {
-		return fmt.Errorf("failed to damage surface: %w", err)
-	}
-
-	// Commit the surface
-	if err := w.wlSurface.Commit(); err != nil {
-		return fmt.Errorf("failed to commit surface: %w", err)
-	}
-
-	w.needsRedraw = false
-	log.Printf("Rendered frame for window: %s", w.BaseWindow.Title())
-	return nil
 }
