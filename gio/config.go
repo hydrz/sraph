@@ -45,8 +45,8 @@ func GetConfig() *Config {
 
 // SetConfig updates the global configuration
 func SetConfig(config *Config) {
-	config.mu.Lock()
-	defer config.mu.Unlock()
+	globalConfig.mu.Lock()
+	defer globalConfig.mu.Unlock()
 	globalConfig = config
 }
 

@@ -115,7 +115,6 @@ type KeyboardEvent struct {
 	Event
 	Location    KeyLocation  // The location of the key on the keyboard
 	ModifierKey ModifierKey  // Bitmask of modifier keys pressed
-	Repeat      bool         // Whether the key is being held down
 	Locale      language.Tag // The locale identifier
 	Code        KeyCode      // The code value of the key pressed
 	State       KeyState     // The state of the key (pressed, released, etc.)
