@@ -220,22 +220,21 @@ func (xw *x11Window) handleButtonPress(ev xproto.ButtonPressEvent) {
 	}
 
 	// Create standard mouse event
-	mouseEvent := gio.NewMouseEvent()
-	mouseEvent.Button = button
-	mouseEvent.ModifierKey = modifierKey
-	mouseEvent.Position = position
-	xw.Publish(mouseEvent)
-}
+	pointerEvent := gio.NewPointerEvent()
+	pointerEvent.PointerType = gio.PointerTypeMouse
+	pointerEvent.MouseButton = button
+	pointerEvent.ModifierKey = modifierKey
+	pointerEvent.Position = position
+	pointerEvent.PointerID = int(ev.Time) // Use time as a unique pointer ID
+	pointerEvent.KeyState = gio.KeyStatePressed
 
-// handleWheelEvent handles mouse wheel events (buttons 4-7)
-func (xw *x11Window) handleWheelEvent(ev xproto.ButtonPressEvent) {
-	deltaX, deltaY := xw.xDriver.translateWheelDelta(ev.Detail)
-	wheelEvent := gio.NewWheelEvent()
-	wheelEvent.DeltaX = deltaX
-	wheelEvent.DeltaY = deltaY
-	wheelEvent.Position = image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
-	wheelEvent.ModifierKey = xw.xDriver.translateModifiers(ev.State)
-	xw.Publish(wheelEvent)
+	// TODO: Determine if this is the primary pointer and support for touch or pen
+	pointerEvent.Pressure = 1.0   // Default pressure for mouse buttons
+	pointerEvent.Width = 1.0      // Default width for mouse buttons
+	pointerEvent.Height = 1.0     // Default height for mouse buttons
+	pointerEvent.IsPrimary = true // Primary pointer for mouse move
+
+	xw.Publish(pointerEvent)
 }
 
 func (xw *x11Window) handleButtonRelease(ev xproto.ButtonReleaseEvent) {
@@ -249,11 +248,20 @@ func (xw *x11Window) handleButtonRelease(ev xproto.ButtonReleaseEvent) {
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
 	// Create standard mouse event
-	mouseEvent := gio.NewMouseEvent()
-	mouseEvent.Button = button
-	mouseEvent.ModifierKey = modifierKey
-	mouseEvent.Position = position
-	xw.Publish(mouseEvent)
+	pointerEvent := gio.NewPointerEvent()
+	pointerEvent.PointerType = gio.PointerTypeMouse
+	pointerEvent.MouseButton = button
+	pointerEvent.ModifierKey = modifierKey
+	pointerEvent.Position = position
+	pointerEvent.PointerID = int(ev.Time) // Use time as a unique pointer ID
+	pointerEvent.KeyState = gio.KeyStateReleased
+
+	pointerEvent.Pressure = 0.0 // Pressure is 0 on release
+	pointerEvent.Width = 1.0    // Default width for mouse buttons
+	pointerEvent.Height = 1.0   // Default height for mouse buttons
+	pointerEvent.IsPrimary = true
+
+	xw.Publish(pointerEvent)
 }
 
 func (xw *x11Window) handleMotionNotify(ev xproto.MotionNotifyEvent) {
@@ -261,13 +269,30 @@ func (xw *x11Window) handleMotionNotify(ev xproto.MotionNotifyEvent) {
 	position := image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
 
 	// Create standard mouse move event
-	mouseEvent := gio.NewMouseEvent()
-	mouseEvent.Button = gio.MouseButtonUnknown
-	mouseEvent.ModifierKey = modifierKey
-	mouseEvent.Position = position
-	xw.Publish(mouseEvent)
+	pointerEvent := gio.NewPointerEvent()
+	pointerEvent.PointerType = gio.PointerTypeAll
+	pointerEvent.ModifierKey = modifierKey
+	pointerEvent.Position = position
+	pointerEvent.PointerID = int(ev.Time) // Use time as a unique pointer ID
+	pointerEvent.KeyState = gio.KeyStateUnknown
 
-	xw.lastPointerPos = position
+	pointerEvent.Pressure = 1.0 // Default pressure for mouse move
+	pointerEvent.Width = 1.0
+	pointerEvent.Height = 1.0
+	pointerEvent.IsPrimary = true
+
+	xw.Publish(pointerEvent)
+}
+
+// handleWheelEvent handles mouse wheel events (buttons 4-7)
+func (xw *x11Window) handleWheelEvent(ev xproto.ButtonPressEvent) {
+	deltaX, deltaY := xw.xDriver.translateWheelDelta(ev.Detail)
+	wheelEvent := gio.NewWheelEvent()
+	wheelEvent.DeltaX = deltaX
+	wheelEvent.DeltaY = deltaY
+	wheelEvent.Position = image.Point{X: int(ev.EventX), Y: int(ev.EventY)}
+	wheelEvent.ModifierKey = xw.xDriver.translateModifiers(ev.State)
+	xw.Publish(wheelEvent)
 }
 
 func (xw *x11Window) handleMapNotify(ev xproto.MapNotifyEvent) {

@@ -54,16 +54,15 @@ func main() {
 	// Subscribe to keyboard events
 	window.Subscribe(gio.EventTypeKeyboard, func(e gio.Event) error {
 		if keyEvent, ok := e.(*gio.KeyboardEvent); ok {
-			fmt.Printf("[KEYBOARD] %v\n", keyEvent)
+			fmt.Printf("[KEYBOARD] %s\n", keyEvent)
 		}
 		return nil
 	})
 
-	// Subscribe to mouse events
-	window.Subscribe(gio.EventTypeMouse, func(e gio.Event) error {
-		if mouseEvent, ok := e.(*gio.MouseEvent); ok {
-			fmt.Printf("[MOUSE] Button: %v, Position: %v\n",
-				mouseEvent.Button, mouseEvent.Position)
+	// Subscribe to pointer events
+	window.Subscribe(gio.EventTypePointer, func(e gio.Event) error {
+		if pointerEvent, ok := e.(*gio.PointerEvent); ok {
+			fmt.Printf("[POINTER]  %s\n", pointerEvent)
 		}
 		return nil
 	})
@@ -71,8 +70,7 @@ func main() {
 	// Subscribe to wheel events
 	window.Subscribe(gio.EventTypeWheel, func(e gio.Event) error {
 		if wheelEvent, ok := e.(*gio.WheelEvent); ok {
-			fmt.Printf("[WHEEL] Delta: (%.1f, %.1f) at %v\n",
-				wheelEvent.DeltaX, wheelEvent.DeltaY, wheelEvent.Position)
+			fmt.Printf("[WHEEL] %s\n", wheelEvent)
 		}
 		return nil
 	})
@@ -80,8 +78,7 @@ func main() {
 	// Subscribe to clipboard events
 	window.Subscribe(gio.EventTypeClipboard, func(e gio.Event) error {
 		if clipboardEvent, ok := e.(*gio.ClipboardEvent); ok {
-			fmt.Printf("[CLIPBOARD] Type: %s, Data: %v\n",
-				clipboardEvent.Type(), clipboardEvent.Data)
+			fmt.Printf("[CLIPBOARD] %s\n", clipboardEvent)
 		}
 		return nil
 	})
@@ -89,8 +86,7 @@ func main() {
 	// Subscribe to drag and drop events
 	window.Subscribe(gio.EventTypeDrag, func(e gio.Event) error {
 		if dragEvent, ok := e.(*gio.DragEvent); ok {
-			fmt.Printf("[DragEvent] Type: %s, Data: %v\n",
-				dragEvent.Type(), dragEvent.Data)
+			fmt.Printf("[DRAG] %s\n", dragEvent)
 		}
 		return nil
 	})
@@ -98,8 +94,7 @@ func main() {
 	// Subscribe to window events
 	window.Subscribe(gio.EventTypeWindow, func(e gio.Event) error {
 		if windowEvent, ok := e.(*gio.WindowEvent); ok {
-			fmt.Printf("[WINDOW] ID: %v, Window: %v\n",
-				windowEvent.ID(), windowEvent.Window.Attr())
+			fmt.Printf("[WINDOW] %s\n", windowEvent)
 
 			// Check if window is closed
 			if window.IsClosed() {

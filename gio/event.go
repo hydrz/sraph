@@ -2,6 +2,7 @@ package gio
 
 import (
 	"context"
+	"fmt"
 	"image"
 	"sync"
 	"sync/atomic"
@@ -16,12 +17,10 @@ const (
 	EventTypeUnknown   EventType = iota
 	EventTypeWindow              // Window events (e.g., resize, move, close)
 	EventTypeKeyboard            // Keyboard events
-	EventTypeMouse               // Mouse events
+	EventTypePointer             // Pointer events (e.g., stylus, touch)
 	EventTypeWheel               // Mouse wheel events
 	EventTypeClipboard           // Clipboard events
 	EventTypeDrag                // Drag and drop events
-	EventTypeTouch               // Touch events
-	EventTypePointer             // Pointer events (e.g., stylus, touch)
 )
 
 func (e EventType) String() string {
@@ -32,16 +31,12 @@ func (e EventType) String() string {
 		return "Window"
 	case EventTypeKeyboard:
 		return "Keyboard"
-	case EventTypeMouse:
-		return "Mouse"
 	case EventTypeWheel:
 		return "Wheel"
 	case EventTypeClipboard:
 		return "Clipboard"
 	case EventTypeDrag:
 		return "Drag"
-	case EventTypeTouch:
-		return "Touch"
 	case EventTypePointer:
 		return "Pointer"
 	default:
@@ -49,12 +44,15 @@ func (e EventType) String() string {
 	}
 }
 
+// Event interface defines the common methods for all events
 type Event interface {
 	Type() EventType
 	Time() time.Time
 	ID() uint64 // Unique event ID
+	fmt.Stringer
 }
 
+// baseEvent is a simple implementation of the Event interface
 type baseEvent struct {
 	eventType EventType
 	time      time.Time
@@ -74,7 +72,11 @@ func NewBaseEvent(eventType EventType) Event {
 func (e *baseEvent) Type() EventType { return e.eventType }
 func (e *baseEvent) Time() time.Time { return e.time }
 func (e *baseEvent) ID() uint64      { return e.id }
+func (e *baseEvent) String() string {
+	return fmt.Sprintf("Type: %s, Time: %s, ID: %d", e.eventType, e.time.Format(time.RFC3339), e.id)
+}
 
+// WindowEvent represents a window event, such as creation, resizing, or closing
 type WindowEvent struct {
 	Event
 	Window BaseWindow
@@ -86,28 +88,8 @@ func NewWindowEvent() *WindowEvent {
 	}
 }
 
-type ClipboardEvent struct {
-	Event
-	Data *DataTransfer // Data associated with the clipboard event
-}
-
-func NewClipboardEvent() *ClipboardEvent {
-	return &ClipboardEvent{
-		Event: NewBaseEvent(EventTypeClipboard),
-		Data:  NewDataTransfer(),
-	}
-}
-
-type DragEvent struct {
-	Event
-	Data *DataTransfer // Data associated with the drag event
-}
-
-func NewDragEvent() *DragEvent {
-	return &DragEvent{
-		Event: NewBaseEvent(EventTypeDrag),
-		Data:  NewDataTransfer(),
-	}
+func (we *WindowEvent) String() string {
+	return we.Event.String() + " " + we.Window.String()
 }
 
 // KeyboardEvent represents a keyboard event following W3C standard
@@ -127,36 +109,18 @@ func NewKeyboardEvent() *KeyboardEvent {
 	}
 }
 
-type TouchEvent struct {
-	Event
-	ChangedTouches TouchList   // List of touches that changed since the last event
-	ModifierKey    ModifierKey // Modifier keys pressed during the event
-	TargetTouches  TouchList   // List of touches currently on the target
-	Touches        TouchList   // List of all touches on the screen
+func (ke *KeyboardEvent) String() string {
+	return fmt.Sprintf("%s Code: %s, State: %s, ModifierKey: %s, Locale: %s",
+		ke.Event.String(), ke.Code, ke.State, ke.ModifierKey, ke.Locale)
 }
 
-// NewTouchEvent creates a new touch event
-func NewTouchEvent() *TouchEvent {
-	return &TouchEvent{
-		Event: NewBaseEvent(EventTypeTouch),
-	}
-}
-
-type MouseEvent struct {
-	Event
-	Button      MouseButton // The mouse button that was pressed
-	ModifierKey ModifierKey // Modifier keys pressed during the event
-	Position    image.Point // Position of the mouse event relative to the viewport
-}
-
-func NewMouseEvent() *MouseEvent {
-	return &MouseEvent{
-		Event: NewBaseEvent(EventTypeMouse),
-	}
-}
-
+// PointerEvent represents a pointer event, such as mouse, pen, or touch events
 type PointerEvent struct {
-	*MouseEvent
+	Event
+	PointerType        PointerType // Type of pointer (mouse, pen, touch)
+	MouseButton        MouseButton // The mouse button that was pressed
+	ModifierKey        ModifierKey // Modifier keys pressed during the event
+	Position           image.Point // Position of the mouse event relative to the viewport
 	PointerID          int         // Unique identifier for the pointer
 	Pressure           float64     // Pressure applied by the pointer (0.0 to 1.0)
 	TangentialPressure float64     // Pressure applied tangentially (0.0 to 1.0)
@@ -165,18 +129,25 @@ type PointerEvent struct {
 	Twist              float64     // Twist angle (degrees)
 	Width              float64     // Width of the pointer contact area (CSS pixels)
 	Height             float64     // Height of the pointer contact area (CSS pixels)
-	PointerType        PointerType // Type of pointer (mouse, pen, touch)
 	IsPrimary          bool        // Whether this is the primary pointer for the device
+	KeyState           KeyState    // State of the key (pressed, released, etc.)
+
 }
 
 func NewPointerEvent() *PointerEvent {
 	return &PointerEvent{
-		MouseEvent: &MouseEvent{
-			Event: NewBaseEvent(EventTypePointer),
-		},
+		Event: NewBaseEvent(EventTypePointer),
 	}
 }
 
+func (pe *PointerEvent) String() string {
+	return fmt.Sprintf("%s PointerType: %s, Button: %s, Position: %v, Pressure: %.2f, Width: %.2f, Height: %.2f"+
+		", ModifierKey: %s, PointerID: %d, TangentialPressure: %.2f, TiltX: %.2f, TiltY: %.2f, Twist: %.2f, IsPrimary: %t",
+		pe.Event.String(), pe.PointerType, pe.MouseButton, pe.Position, pe.Pressure, pe.Width, pe.Height,
+		pe.ModifierKey, pe.PointerID, pe.TangentialPressure, pe.TiltX, pe.TiltY, pe.Twist, pe.IsPrimary)
+}
+
+// WheelEvent represents a mouse wheel event, including scroll deltas and position
 type WheelEvent struct {
 	Event
 	DeltaX      float64     // Horizontal scroll delta
@@ -189,6 +160,45 @@ func NewWheelEvent() *WheelEvent {
 	return &WheelEvent{
 		Event: NewBaseEvent(EventTypeWheel),
 	}
+}
+
+func (we *WheelEvent) String() string {
+	return fmt.Sprintf("%s Delta: (%.1f, %.1f), Position: %v, ModifierKey: %s",
+		we.Event.String(), we.DeltaX, we.DeltaY, we.Position, we.ModifierKey)
+}
+
+// ClipboardEvent represents a clipboard event, such as copy or paste
+type ClipboardEvent struct {
+	Event
+	Data *DataTransfer // Data associated with the clipboard event
+}
+
+func NewClipboardEvent() *ClipboardEvent {
+	return &ClipboardEvent{
+		Event: NewBaseEvent(EventTypeClipboard),
+		Data:  NewDataTransfer(),
+	}
+}
+
+func (ce *ClipboardEvent) String() string {
+	return fmt.Sprintf("%s Data: %v", ce.Event.String(), ce.Data)
+}
+
+// DragEvent represents a drag and drop event, including data transfer
+type DragEvent struct {
+	Event
+	Data *DataTransfer // Data associated with the drag event
+}
+
+func NewDragEvent() *DragEvent {
+	return &DragEvent{
+		Event: NewBaseEvent(EventTypeDrag),
+		Data:  NewDataTransfer(),
+	}
+}
+
+func (de *DragEvent) String() string {
+	return fmt.Sprintf("%s Data: %v", de.Event.String(), de.Data)
 }
 
 type EventHandler func(e Event) error

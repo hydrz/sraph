@@ -2,7 +2,6 @@ package x11
 
 import (
 	"fmt"
-	"image"
 	"log"
 	"strings"
 	"sync"
@@ -33,10 +32,6 @@ type x11Window struct {
 	xdndSourceWindow xproto.Window
 	xdndDragContext  *gio.DataTransfer
 
-	// Touch and pointer tracking (simplified without XI2)
-	activeTouches  map[int]*gio.Touch // Maps touch ID to Touch
-	lastPointerPos image.Point        // Last pointer position for motion detection
-
 	mu sync.RWMutex
 }
 
@@ -47,8 +42,6 @@ func newX11Window(driver *x11Driver, bw gio.BaseWindow) (*x11Window, error) {
 		clipboardData:     gio.NewDataTransfer(),
 		selectionProperty: 0,
 		xdndVersion:       5,
-		activeTouches:     make(map[int]*gio.Touch),
-		lastPointerPos:    image.Point{},
 	}
 
 	if err := xw.init(); err != nil {

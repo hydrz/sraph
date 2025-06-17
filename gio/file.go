@@ -282,3 +282,24 @@ func (dt *DataTransfer) containsType(mimeType string) bool {
 	}
 	return false
 }
+
+// String returns a string representation of the DataTransfer
+func (dt *DataTransfer) String() string {
+	var sb strings.Builder
+	sb.WriteString("DataTransfer:\n")
+	sb.WriteString(fmt.Sprintf("DropEffect: %d\n", dt.dropEffect))
+	sb.WriteString(fmt.Sprintf("EffectAllowed: %d\n", dt.effectAllowed))
+	sb.WriteString("Items:\n")
+	for _, item := range dt.items {
+		sb.WriteString(fmt.Sprintf("- Kind: %d, MIME Type: %s\n", item.Kind, item.MimeType))
+	}
+	sb.WriteString("Files:\n")
+	for i, file := range dt.files.files {
+		if file != nil {
+			sb.WriteString(fmt.Sprintf("- File %d: %s\n", i+1, file.Name()))
+		} else {
+			sb.WriteString(fmt.Sprintf("- File %d: <nil>\n", i+1))
+		}
+	}
+	return sb.String()
+}

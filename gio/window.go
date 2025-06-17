@@ -16,8 +16,8 @@ type WindowID uint64
 type WindowState uint16
 
 const (
-	WindowStateUnknown WindowState = iota
-	WindowStateClosed  WindowState = 1 << iota
+	WindowStateUnknown WindowState = 1 << iota
+	WindowStateClosed
 	WindowStateFocused
 	WindowStateIconified
 	WindowStateMaximized
@@ -84,12 +84,11 @@ func (wa WindowAttr) Apply(o ...WindowAttr) WindowAttr {
 
 // String returns a string representation of the WindowAttr
 func (wa WindowAttr) String() string {
-	return "(" +
-		"Title: '" + wa.Title + "', " +
+	return "Title: '" + wa.Title + "', " +
 		"Width: " + strconv.Itoa(wa.Width) + ", " +
 		"Height: " + strconv.Itoa(wa.Height) + ", " +
 		"Position: " + wa.Position.String() + ", " +
-		"State: " + fmt.Sprintf("%016b", wa.State) + ")"
+		"State: " + fmt.Sprintf("%016b", wa.State)
 }
 
 type NewWindowOptions = WindowAttr
@@ -142,6 +141,8 @@ type BaseWindow interface {
 	IsDecorated() bool
 	IsFloating() bool
 	IsAutoIconify() bool
+
+	fmt.Stringer
 }
 
 func NewBaseWindow(o NewWindowOptions) BaseWindow {

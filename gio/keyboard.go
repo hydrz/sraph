@@ -1,5 +1,7 @@
 package gio
 
+import "strings"
+
 //go:generate go tool stringer -type=KeyCode -trimprefix=KeyCode -output=keyboard_string.go
 
 type KeyCode uint16
@@ -186,15 +188,15 @@ type ModifierKey uint16
 
 // ModifierKey constants represent the modifier keys
 const (
-	ModifierKeyNone       ModifierKey = iota      // No modifier key
-	ModifierKeyAlt        ModifierKey = 1 << iota // Alt key
+	ModifierKeyNone       ModifierKey = 1 << iota // No modifier key
+	ModifierKeyAlt                                // Alt key (Alt key on Windows/Linux, Option key on macOS)
 	ModifierKeyAltGraph                           // AltGraph key (right Alt on some keyboards)
 	ModifierKeyCapsLock                           // CapsLock key
-	ModifierKeyCtrl                               // Control key
+	ModifierKeyCtrl                               // Control key (Control key on Windows/Linux/macOS)
 	ModifierKeyFn                                 // Fn key (function key, not standard)
 	ModifierKeyFnLock                             // FnLock key (function lock, not standard)
 	ModifierKeyHyper                              // Hyper key (not standard, often used in custom keyboards)
-	ModifierKeyMeta                               // Meta key (often the Windows key)
+	ModifierKeyMeta                               // Meta key (Windows key on Windows/Linux, Command key on macOS)
 	ModifierKeyNumLock                            // NumLock key
 	ModifierKeyScrollLock                         // ScrollLock key
 	ModifierKeyShift                              // Shift key
@@ -210,40 +212,38 @@ func (m *ModifierKey) Contains(key ModifierKey) bool {
 
 // String returns the string representation of the ModifierKey
 func (m ModifierKey) String() string {
-	switch m {
-	case ModifierKeyNone:
+	if m == 0 {
 		return "None"
-	case ModifierKeyAlt:
-		return "Alt"
-	case ModifierKeyAltGraph:
-		return "AltGraph"
-	case ModifierKeyCapsLock:
-		return "CapsLock"
-	case ModifierKeyCtrl:
-		return "Ctrl"
-	case ModifierKeyFn:
-		return "Fn"
-	case ModifierKeyFnLock:
-		return "FnLock"
-	case ModifierKeyHyper:
-		return "Hyper"
-	case ModifierKeyMeta:
-		return "Meta"
-	case ModifierKeyNumLock:
-		return "NumLock"
-	case ModifierKeyScrollLock:
-		return "ScrollLock"
-	case ModifierKeyShift:
-		return "Shift"
-	case ModifierKeySuper:
-		return "Super"
-	case ModifierKeySymbol:
-		return "Symbol"
-	case ModifierKeySymbolLock:
-		return "SymbolLock"
-	default:
+	}
+	keys := []struct {
+		flag ModifierKey
+		name string
+	}{
+		{ModifierKeyAlt, "Alt"},
+		{ModifierKeyAltGraph, "AltGraph"},
+		{ModifierKeyCapsLock, "CapsLock"},
+		{ModifierKeyCtrl, "Ctrl"},
+		{ModifierKeyFn, "Fn"},
+		{ModifierKeyFnLock, "FnLock"},
+		{ModifierKeyHyper, "Hyper"},
+		{ModifierKeyMeta, "Meta"},
+		{ModifierKeyNumLock, "NumLock"},
+		{ModifierKeyScrollLock, "ScrollLock"},
+		{ModifierKeyShift, "Shift"},
+		{ModifierKeySuper, "Super"},
+		{ModifierKeySymbol, "Symbol"},
+		{ModifierKeySymbolLock, "SymbolLock"},
+	}
+	var names []string
+	for _, k := range keys {
+		if m&k.flag != 0 {
+			names = append(names, k.name)
+		}
+	}
+	if len(names) == 0 {
 		return "Unknown"
 	}
+	return strings.Join(names, "+")
 }
 
 type KeyState uint8
@@ -301,349 +301,41 @@ func (e *KeyboardEvent) Key() string {
 
 // keyToString converts a KeyCode to its string representation considering modifiers
 func keyToString(code KeyCode, modifiers ModifierKey) string {
-	// Check if Shift modifier is active
-	isShiftPressed := modifiers.Contains(ModifierKeyShift)
-	isCapsLockActive := modifiers.Contains(ModifierKeyCapsLock)
+	isShift := modifiers.Contains(ModifierKeyShift)
+	isCaps := modifiers.Contains(ModifierKeyCapsLock)
 
+	// Symbol and number row
+	symbols := map[KeyCode][2]string{
+		KeyCodeDigit1: {"1", "!"}, KeyCodeDigit2: {"2", "@"}, KeyCodeDigit3: {"3", "#"},
+		KeyCodeDigit4: {"4", "$"}, KeyCodeDigit5: {"5", "%"}, KeyCodeDigit6: {"6", "^"},
+		KeyCodeDigit7: {"7", "&"}, KeyCodeDigit8: {"8", "*"}, KeyCodeDigit9: {"9", "("},
+		KeyCodeDigit0: {"0", ")"}, KeyCodeMinus: {"-", "_"}, KeyCodeEqual: {"=", "+"},
+		KeyCodeBracketLeft: {"[", "{"}, KeyCodeBracketRight: {"]", "}"},
+		KeyCodeBackslash: {"\\", "|"}, KeyCodeSemicolon: {";", ":"}, KeyCodeQuote: {"'", "\""},
+		KeyCodeBackquote: {"`", "~"}, KeyCodeComma: {",", "<"}, KeyCodePeriod: {".", ">"},
+		KeyCodeSlash: {"/", "?"},
+	}
+	if pair, ok := symbols[code]; ok {
+		if isShift {
+			return pair[1]
+		}
+		return pair[0]
+	}
+
+	// Alphabet
+	if code >= KeyCodeKeyA && code <= KeyCodeKeyZ {
+		ch := 'a' + rune(code-KeyCodeKeyA)
+		if (isShift && !isCaps) || (!isShift && isCaps) {
+			return string(ch - 32) // Uppercase
+		}
+		return string(ch)
+	}
+
+	// Numpad
+	if code >= KeyCodeNumpad0 && code <= KeyCodeNumpad9 {
+		return string('0' + rune(code-KeyCodeNumpad0))
+	}
 	switch code {
-	// Number row keys
-	case KeyCodeDigit1:
-		if isShiftPressed {
-			return "!"
-		}
-		return "1"
-	case KeyCodeDigit2:
-		if isShiftPressed {
-			return "@"
-		}
-		return "2"
-	case KeyCodeDigit3:
-		if isShiftPressed {
-			return "#"
-		}
-		return "3"
-	case KeyCodeDigit4:
-		if isShiftPressed {
-			return "$"
-		}
-		return "4"
-	case KeyCodeDigit5:
-		if isShiftPressed {
-			return "%"
-		}
-		return "5"
-	case KeyCodeDigit6:
-		if isShiftPressed {
-			return "^"
-		}
-		return "6"
-	case KeyCodeDigit7:
-		if isShiftPressed {
-			return "&"
-		}
-		return "7"
-	case KeyCodeDigit8:
-		if isShiftPressed {
-			return "*"
-		}
-		return "8"
-	case KeyCodeDigit9:
-		if isShiftPressed {
-			return "("
-		}
-		return "9"
-	case KeyCodeDigit0:
-		if isShiftPressed {
-			return ")"
-		}
-		return "0"
-
-	// Alphabet keys - consider both Shift and CapsLock
-	case KeyCodeKeyA:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "A"
-		}
-		return "a"
-	case KeyCodeKeyB:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "B"
-		}
-		return "b"
-	case KeyCodeKeyC:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "C"
-		}
-		return "c"
-	case KeyCodeKeyD:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "D"
-		}
-		return "d"
-	case KeyCodeKeyE:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "E"
-		}
-		return "e"
-	case KeyCodeKeyF:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "F"
-		}
-		return "f"
-	case KeyCodeKeyG:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "G"
-		}
-		return "g"
-	case KeyCodeKeyH:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "H"
-		}
-		return "h"
-	case KeyCodeKeyI:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "I"
-		}
-		return "i"
-	case KeyCodeKeyJ:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "J"
-		}
-		return "j"
-	case KeyCodeKeyK:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "K"
-		}
-		return "k"
-	case KeyCodeKeyL:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "L"
-		}
-		return "l"
-	case KeyCodeKeyM:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "M"
-		}
-		return "m"
-	case KeyCodeKeyN:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "N"
-		}
-		return "n"
-	case KeyCodeKeyO:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "O"
-		}
-		return "o"
-	case KeyCodeKeyP:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "P"
-		}
-		return "p"
-	case KeyCodeKeyQ:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "Q"
-		}
-		return "q"
-	case KeyCodeKeyR:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "R"
-		}
-		return "r"
-	case KeyCodeKeyS:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "S"
-		}
-		return "s"
-	case KeyCodeKeyT:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "T"
-		}
-		return "t"
-	case KeyCodeKeyU:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "U"
-		}
-		return "u"
-	case KeyCodeKeyV:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "V"
-		}
-		return "v"
-	case KeyCodeKeyW:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "W"
-		}
-		return "w"
-	case KeyCodeKeyX:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "X"
-		}
-		return "x"
-	case KeyCodeKeyY:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "Y"
-		}
-		return "y"
-	case KeyCodeKeyZ:
-		if (isShiftPressed && !isCapsLockActive) || (!isShiftPressed && isCapsLockActive) {
-			return "Z"
-		}
-		return "z"
-
-	// Symbol keys
-	case KeyCodeMinus:
-		if isShiftPressed {
-			return "_"
-		}
-		return "-"
-	case KeyCodeEqual:
-		if isShiftPressed {
-			return "+"
-		}
-		return "="
-	case KeyCodeBracketLeft:
-		if isShiftPressed {
-			return "{"
-		}
-		return "["
-	case KeyCodeBracketRight:
-		if isShiftPressed {
-			return "}"
-		}
-		return "]"
-	case KeyCodeBackslash:
-		if isShiftPressed {
-			return "|"
-		}
-		return "\\"
-	case KeyCodeSemicolon:
-		if isShiftPressed {
-			return ":"
-		}
-		return ";"
-	case KeyCodeQuote:
-		if isShiftPressed {
-			return "\""
-		}
-		return "'"
-	case KeyCodeBackquote:
-		if isShiftPressed {
-			return "~"
-		}
-		return "`"
-	case KeyCodeComma:
-		if isShiftPressed {
-			return "<"
-		}
-		return ","
-	case KeyCodePeriod:
-		if isShiftPressed {
-			return ">"
-		}
-		return "."
-	case KeyCodeSlash:
-		if isShiftPressed {
-			return "?"
-		}
-		return "/"
-
-	// Special keys - return their standard names
-	case KeyCodeSpace:
-		return " "
-	case KeyCodeTab:
-		return "Tab"
-	case KeyCodeEnter, KeyCodeNumpadEnter:
-		return "Enter"
-	case KeyCodeBackspace:
-		return "Backspace"
-	case KeyCodeDelete:
-		return "Delete"
-	case KeyCodeEscape:
-		return "Escape"
-	case KeyCodeArrowLeft:
-		return "ArrowLeft"
-	case KeyCodeArrowRight:
-		return "ArrowRight"
-	case KeyCodeArrowUp:
-		return "ArrowUp"
-	case KeyCodeArrowDown:
-		return "ArrowDown"
-	case KeyCodeHome:
-		return "Home"
-	case KeyCodeEnd:
-		return "End"
-	case KeyCodePageUp:
-		return "PageUp"
-	case KeyCodePageDown:
-		return "PageDown"
-	case KeyCodeInsert:
-		return "Insert"
-
-	// Function keys
-	case KeyCodeF1:
-		return "F1"
-	case KeyCodeF2:
-		return "F2"
-	case KeyCodeF3:
-		return "F3"
-	case KeyCodeF4:
-		return "F4"
-	case KeyCodeF5:
-		return "F5"
-	case KeyCodeF6:
-		return "F6"
-	case KeyCodeF7:
-		return "F7"
-	case KeyCodeF8:
-		return "F8"
-	case KeyCodeF9:
-		return "F9"
-	case KeyCodeF10:
-		return "F10"
-	case KeyCodeF11:
-		return "F11"
-	case KeyCodeF12:
-		return "F12"
-
-	// Modifier keys
-	case KeyCodeShiftLeft, KeyCodeShiftRight:
-		return "Shift"
-	case KeyCodeControlLeft, KeyCodeControlRight:
-		return "Control"
-	case KeyCodeAltLeft, KeyCodeAltRight:
-		return "Alt"
-	case KeyCodeMetaLeft, KeyCodeMetaRight:
-		return "Meta"
-
-	// Lock keys
-	case KeyCodeCapsLock:
-		return "CapsLock"
-	case KeyCodeNumLock:
-		return "NumLock"
-	case KeyCodeScrollLock:
-		return "ScrollLock"
-
-	// Numpad keys
-	case KeyCodeNumpad0:
-		return "0"
-	case KeyCodeNumpad1:
-		return "1"
-	case KeyCodeNumpad2:
-		return "2"
-	case KeyCodeNumpad3:
-		return "3"
-	case KeyCodeNumpad4:
-		return "4"
-	case KeyCodeNumpad5:
-		return "5"
-	case KeyCodeNumpad6:
-		return "6"
-	case KeyCodeNumpad7:
-		return "7"
-	case KeyCodeNumpad8:
-		return "8"
-	case KeyCodeNumpad9:
-		return "9"
 	case KeyCodeNumpadDecimal:
 		return "."
 	case KeyCodeNumpadDivide:
@@ -656,17 +348,37 @@ func keyToString(code KeyCode, modifiers ModifierKey) string {
 		return "+"
 	case KeyCodeNumpadEqual:
 		return "="
-
-	// Media and other special keys
-	case KeyCodePause:
-		return "Pause"
-	case KeyCodePrintScreen:
-		return "PrintScreen"
-	case KeyCodeContextMenu:
-		return "ContextMenu"
-
-	default:
-		// For unknown keys, return the string representation of the KeyCode
-		return code.String()
+	case KeyCodeNumpadComma:
+		return ","
 	}
+
+	// Special keys
+	special := map[KeyCode]string{
+		KeyCodeSpace: " ",
+		KeyCodeTab:   "Tab",
+		KeyCodeEnter: "Enter", KeyCodeNumpadEnter: "Enter",
+		KeyCodeBackspace: "Backspace",
+		KeyCodeDelete:    "Delete",
+		KeyCodeEscape:    "Escape",
+		KeyCodeArrowLeft: "ArrowLeft", KeyCodeArrowRight: "ArrowRight",
+		KeyCodeArrowUp: "ArrowUp", KeyCodeArrowDown: "ArrowDown",
+		KeyCodeHome: "Home", KeyCodeEnd: "End",
+		KeyCodePageUp: "PageUp", KeyCodePageDown: "PageDown",
+		KeyCodeInsert: "Insert",
+		KeyCodeF1:     "F1", KeyCodeF2: "F2", KeyCodeF3: "F3", KeyCodeF4: "F4",
+		KeyCodeF5: "F5", KeyCodeF6: "F6", KeyCodeF7: "F7", KeyCodeF8: "F8",
+		KeyCodeF9: "F9", KeyCodeF10: "F10", KeyCodeF11: "F11", KeyCodeF12: "F12",
+		KeyCodeShiftLeft: "Shift", KeyCodeShiftRight: "Shift",
+		KeyCodeControlLeft: "Control", KeyCodeControlRight: "Control",
+		KeyCodeAltLeft: "Alt", KeyCodeAltRight: "Alt",
+		KeyCodeMetaLeft: "Meta", KeyCodeMetaRight: "Meta",
+		KeyCodeCapsLock: "CapsLock", KeyCodeNumLock: "NumLock", KeyCodeScrollLock: "ScrollLock",
+		KeyCodePause: "Pause", KeyCodePrintScreen: "PrintScreen", KeyCodeContextMenu: "ContextMenu",
+	}
+	if name, ok := special[code]; ok {
+		return name
+	}
+
+	// Fallback to generated string
+	return code.String()
 }
