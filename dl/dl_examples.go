@@ -340,6 +340,26 @@ func (r *MockRenderer) SupportsAntiAliasing() bool {
 	return true
 }
 
+// RenderImage implements Renderer.RenderImage.
+func (r *MockRenderer) RenderImage(image Image, point geom.Point[Scalar], paint Paint) {
+	fmt.Printf("Mock: Render image at (%.2f, %.2f)\n", point.X, point.Y)
+}
+
+// RenderImageWithSampling implements Renderer.RenderImageWithSampling.
+func (r *MockRenderer) RenderImageWithSampling(image Image, point geom.Point[Scalar], sampling SamplingOptions, paint Paint) {
+	fmt.Printf("Mock: Render image with sampling at (%.2f, %.2f)\n", point.X, point.Y)
+}
+
+// RenderParagraph implements Renderer.RenderParagraph.
+func (r *MockRenderer) RenderParagraph(paragraph *Paragraph, point geom.Point[Scalar]) {
+	fmt.Printf("Mock: Render paragraph at (%.2f, %.2f)\n", point.X, point.Y)
+}
+
+// RenderShadow implements Renderer.RenderShadow.
+func (r *MockRenderer) RenderShadow(path geom.PathSource[Scalar], color Color, elevation Scalar, transparent bool, dpr Scalar) {
+	fmt.Printf("Mock: Render shadow with elevation %.2f\n", elevation)
+}
+
 // ExampleRenderingPipeline demonstrates the complete rendering pipeline.
 func ExampleRenderingPipeline() {
 	// Create a mock renderer

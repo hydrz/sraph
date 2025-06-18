@@ -32,11 +32,17 @@ type rtreeEntry struct {
 }
 
 // NewRTree creates a new R-tree with the specified parameters.
+// maxNodes: maximum number of children per node
+// minNodes: minimum number of children per node
+// invalidID: ID value representing an invalid/empty entry
 func NewRTree(maxNodes, minNodes, invalidID int) *RTree {
 	if maxNodes < 2 {
 		maxNodes = 16
 	}
 	if minNodes < 1 {
+		minNodes = maxNodes / 2
+	}
+	if minNodes > maxNodes/2 {
 		minNodes = maxNodes / 2
 	}
 

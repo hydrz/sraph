@@ -33,6 +33,10 @@ type Renderer interface {
 	RenderPath(path *Path, paint Paint)
 	RenderLine(p0, p1 geom.Point[Scalar], paint Paint)
 	RenderVertices(vertices *Vertices, blendMode BlendMode, paint Paint)
+	RenderImage(image Image, point geom.Point[Scalar], paint Paint)
+	RenderImageWithSampling(image Image, point geom.Point[Scalar], sampling SamplingOptions, paint Paint)
+	RenderParagraph(paragraph *Paragraph, point geom.Point[Scalar])
+	RenderShadow(path geom.PathSource[Scalar], color Color, elevation Scalar, transparent bool, dpr Scalar)
 
 	// Resource management
 	CreateTexture(width, height int, data []byte) (TextureID, error)
@@ -323,4 +327,24 @@ func (rc *RenderContext) DrawPoints(mode PointMode, points []geom.Point[Scalar],
 // DrawVertices implements OpReceiver.DrawVertices.
 func (rc *RenderContext) DrawVertices(vertices *Vertices, blendMode BlendMode, paint Paint) {
 	rc.renderer.RenderVertices(vertices, blendMode, paint)
+}
+
+// DrawImage implements OpReceiver.DrawImage.
+func (rc *RenderContext) DrawImage(image Image, point geom.Point[Scalar], paint Paint) {
+	rc.renderer.RenderImage(image, point, paint)
+}
+
+// DrawImageWithSampling implements OpReceiver.DrawImageWithSampling.
+func (rc *RenderContext) DrawImageWithSampling(image Image, point geom.Point[Scalar], sampling SamplingOptions, paint Paint) {
+	rc.renderer.RenderImageWithSampling(image, point, sampling, paint)
+}
+
+// DrawParagraph implements OpReceiver.DrawParagraph.
+func (rc *RenderContext) DrawParagraph(paragraph *Paragraph, point geom.Point[Scalar]) {
+	rc.renderer.RenderParagraph(paragraph, point)
+}
+
+// DrawShadow implements OpReceiver.DrawShadow.
+func (rc *RenderContext) DrawShadow(path geom.PathSource[Scalar], color Color, elevation Scalar, transparent bool, dpr Scalar) {
+	rc.renderer.RenderShadow(path, color, elevation, transparent, dpr)
 }

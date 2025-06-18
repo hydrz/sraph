@@ -40,17 +40,15 @@ type OpReceiver interface {
 	DrawPoints(mode PointMode, points []geom.Point[Scalar], paint Paint)
 	DrawVertices(vertices *Vertices, blendMode BlendMode, paint Paint)
 
-	// Text operations (placeholders for future implementation)
-	// DrawTextBlob(blob *TextBlob, x, y Scalar, paint Paint)
-	// DrawTextFrame(frame *TextFrame, x, y Scalar, paint Paint)
+	// Text operations
+	DrawParagraph(paragraph *Paragraph, point geom.Point[Scalar])
 
-	// Image operations (placeholders for future implementation)
-	// DrawImage(image *Image, x, y Scalar, sampling SamplingOptions, paint *Paint)
-	// DrawImageRect(image *Image, src, dst geom.Rect[Scalar], sampling SamplingOptions, paint *Paint, constraint SrcRectConstraint)
-	// DrawImageNine(image *Image, center geom.Rect[Scalar], dst geom.Rect[Scalar], filter FilterMode, paint *Paint)
+	// Image operations
+	DrawImage(image Image, point geom.Point[Scalar], paint Paint)
+	DrawImageWithSampling(image Image, point geom.Point[Scalar], sampling SamplingOptions, paint Paint)
 
-	// Shadow operations (placeholders for future implementation)
-	// DrawShadow(path geom.PathSource[Scalar], color Color, elevation Scalar, transparent bool, dpr Scalar)
+	// Shadow operations
+	DrawShadow(path geom.PathSource[Scalar], color Color, elevation Scalar, transparent bool, dpr Scalar)
 }
 
 // OpRecorder is an interface for objects that can record display list operations.

@@ -572,3 +572,129 @@ func (op *DrawVerticesOp) Bounds() *geom.Rect[Scalar] {
 func (op *DrawVerticesOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
+
+// DrawImageOp represents a draw image operation.
+type DrawImageOp struct {
+	Image Image
+	Point geom.Point[Scalar]
+	Paint Paint
+}
+
+// Invoke implements Operation.Invoke for DrawImageOp.
+func (op *DrawImageOp) Invoke(receiver OpReceiver) {
+	receiver.DrawImage(op.Image, op.Point, op.Paint)
+}
+
+// Bounds implements Operation.Bounds for DrawImageOp.
+func (op *DrawImageOp) Bounds() *geom.Rect[Scalar] {
+	if op.Image != nil {
+		bounds := geom.NewRect(
+			op.Point.X,
+			op.Point.Y,
+			op.Point.X+Scalar(op.Image.Width()),
+			op.Point.Y+Scalar(op.Image.Height()),
+		)
+		return &bounds
+	}
+	return nil
+}
+
+// Flags implements Operation.Flags for DrawImageOp.
+func (op *DrawImageOp) Flags() AttributeFlags {
+	return GetAttributeFlags(op.Paint) | AttrFlagHasImage
+}
+
+// DrawImageWithSamplingOp represents a draw image with sampling operation.
+type DrawImageWithSamplingOp struct {
+	Image    Image
+	Point    geom.Point[Scalar]
+	Sampling SamplingOptions
+	Paint    Paint
+}
+
+// Invoke implements Operation.Invoke for DrawImageWithSamplingOp.
+func (op *DrawImageWithSamplingOp) Invoke(receiver OpReceiver) {
+	receiver.DrawImageWithSampling(op.Image, op.Point, op.Sampling, op.Paint)
+}
+
+// Bounds implements Operation.Bounds for DrawImageWithSamplingOp.
+func (op *DrawImageWithSamplingOp) Bounds() *geom.Rect[Scalar] {
+	if op.Image != nil {
+		bounds := geom.NewRect(
+			op.Point.X,
+			op.Point.Y,
+			op.Point.X+Scalar(op.Image.Width()),
+			op.Point.Y+Scalar(op.Image.Height()),
+		)
+		return &bounds
+	}
+	return nil
+}
+
+// Flags implements Operation.Flags for DrawImageWithSamplingOp.
+func (op *DrawImageWithSamplingOp) Flags() AttributeFlags {
+	return GetAttributeFlags(op.Paint) | AttrFlagHasImage
+}
+
+// DrawParagraphOp represents a draw paragraph operation.
+type DrawParagraphOp struct {
+	Paragraph *Paragraph
+	Point     geom.Point[Scalar]
+}
+
+// Invoke implements Operation.Invoke for DrawParagraphOp.
+func (op *DrawParagraphOp) Invoke(receiver OpReceiver) {
+	receiver.DrawParagraph(op.Paragraph, op.Point)
+}
+
+// Bounds implements Operation.Bounds for DrawParagraphOp.
+func (op *DrawParagraphOp) Bounds() *geom.Rect[Scalar] {
+	if op.Paragraph != nil {
+		bounds := geom.NewRect(
+			op.Point.X,
+			op.Point.Y,
+			op.Point.X+Scalar(op.Paragraph.Width()),
+			op.Point.Y+Scalar(op.Paragraph.Height()),
+		)
+		return &bounds
+	}
+	return nil
+}
+
+// Flags implements Operation.Flags for DrawParagraphOp.
+func (op *DrawParagraphOp) Flags() AttributeFlags {
+	return AttrFlagHasText
+}
+
+// DrawShadowOp represents a draw shadow operation.
+type DrawShadowOp struct {
+	Path             geom.PathSource[Scalar]
+	Color            Color
+	Elevation        Scalar
+	Transparent      bool
+	DevicePixelRatio Scalar
+}
+
+// Invoke implements Operation.Invoke for DrawShadowOp.
+func (op *DrawShadowOp) Invoke(receiver OpReceiver) {
+	receiver.DrawShadow(op.Path, op.Color, op.Elevation, op.Transparent, op.DevicePixelRatio)
+}
+
+// Bounds implements Operation.Bounds for DrawShadowOp.
+func (op *DrawShadowOp) Bounds() *geom.Rect[Scalar] {
+	bounds := op.Path.Bounds()
+	// Expand bounds for shadow offset and blur
+	shadowOffset := op.Elevation * 0.5 // Simplified shadow calculation
+	expandedBounds := geom.NewRect(
+		bounds.Left-shadowOffset,
+		bounds.Top-shadowOffset,
+		bounds.Right+shadowOffset,
+		bounds.Bottom+shadowOffset,
+	)
+	return &expandedBounds
+}
+
+// Flags implements Operation.Flags for DrawShadowOp.
+func (op *DrawShadowOp) Flags() AttributeFlags {
+	return AttrFlagNone
+}

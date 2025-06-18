@@ -123,9 +123,6 @@ func ComplexRenderingExample() {
 
 // PerformanceExample demonstrates performance optimization techniques.
 func PerformanceExample() {
-	// Create a cache for expensive operations
-	cache := NewRenderCache(100)
-
 	// Create an R-tree for spatial indexing
 	rtree := NewRTree(16, 8, -1)
 
@@ -160,7 +157,7 @@ func PerformanceExample() {
 
 	// Create layers
 	backgroundLayer := NewOffscreenLayer(viewport, true)
-	foregroundLayer := NewOffscreenLayer(
+	_ = NewOffscreenLayer(
 		geom.NewRect[Scalar](100, 100, 300, 300), false)
 
 	layerTree.SetRootLayer(backgroundLayer)

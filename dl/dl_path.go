@@ -1,6 +1,8 @@
 package dl
 
 import (
+	"math"
+
 	"github.com/opensraph/sraph/geom"
 )
 
@@ -525,18 +527,15 @@ func (pb *PathBuilder) AddSpiral(center geom.Point[Scalar], startRadius, endRadi
 
 // Helper functions for mathematical operations
 func cos(x float64) float64 {
-	// TODO: Use proper math library
-	return 1.0 // Placeholder
+	return math.Cos(x)
 }
 
 func sin(x float64) float64 {
-	// TODO: Use proper math library
-	return 0.0 // Placeholder
+	return math.Sin(x)
 }
 
 func sqrt(x float64) float64 {
-	// TODO: Use proper math library
-	return x // Placeholder
+	return math.Sqrt(x)
 }
 
 // Bounds returns the bounding rectangle of the path.
@@ -606,4 +605,34 @@ func (p *Path) GetSegments() []PathSegment {
 // IsEmpty returns true if the path has no segments.
 func (p *Path) IsEmpty() bool {
 	return len(p.segments) == 0
+}
+
+// FillType implements PathSource.FillType.
+func (p *Path) FillType() geom.FillType {
+	// TODO: Store fill type in Path struct
+	return geom.FillTypeNonZero
+}
+
+// IsConvex implements PathSource.IsConvex.
+func (p *Path) IsConvex() bool {
+	// TODO: Implement convexity analysis
+	return false
+}
+
+// Dispatch implements PathSource.Dispatch.
+func (p *Path) Dispatch(receiver geom.PathReceiver[Scalar]) {
+	for _, segment := range p.segments {
+		switch seg := segment.(type) {
+		case *MoveToSegment:
+			receiver.MoveTo(seg.Point, false) // TODO: Determine if path will be closed
+		case *LineToSegment:
+			receiver.LineTo(seg.Point)
+		case *QuadToSegment:
+			receiver.QuadTo(seg.Control, seg.Point)
+		case *CubicToSegment:
+			receiver.CubicTo(seg.Control1, seg.Control2, seg.Point)
+		case *CloseSegment:
+			receiver.Close()
+		}
+	}
 }

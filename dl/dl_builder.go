@@ -351,3 +351,33 @@ func (b *DisplayListBuilder) DrawVertices(vertices *Vertices, blendMode BlendMod
 	op := &DrawVerticesOp{Vertices: vertices, BlendMode: blendMode, Paint: paint}
 	b.recordOperation(op)
 }
+
+// DrawImage implements OpReceiver.DrawImage.
+func (b *DisplayListBuilder) DrawImage(image Image, point geom.Point[Scalar], paint Paint) {
+	op := &DrawImageOp{Image: image, Point: point, Paint: paint}
+	b.recordOperation(op)
+}
+
+// DrawImageWithSampling implements OpReceiver.DrawImageWithSampling.
+func (b *DisplayListBuilder) DrawImageWithSampling(image Image, point geom.Point[Scalar], sampling SamplingOptions, paint Paint) {
+	op := &DrawImageWithSamplingOp{Image: image, Point: point, Sampling: sampling, Paint: paint}
+	b.recordOperation(op)
+}
+
+// DrawParagraph draws a paragraph at the specified point.
+func (b *DisplayListBuilder) DrawParagraph(paragraph *Paragraph, point geom.Point[Scalar]) {
+	op := &DrawParagraphOp{Paragraph: paragraph, Point: point}
+	b.recordOperation(op)
+}
+
+// DrawShadow draws a shadow for the given path.
+func (b *DisplayListBuilder) DrawShadow(path geom.PathSource[Scalar], color Color, elevation Scalar, transparent bool, dpr Scalar) {
+	op := &DrawShadowOp{
+		Path:             path,
+		Color:            color,
+		Elevation:        elevation,
+		Transparent:      transparent,
+		DevicePixelRatio: dpr,
+	}
+	b.recordOperation(op)
+}
