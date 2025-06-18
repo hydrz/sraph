@@ -8,13 +8,13 @@ import (
 func TestScalar_Radians(t *testing.T) {
 	tests := []struct {
 		name     string
-		radians  Radians[F32]
-		expected Degrees[F32]
+		radians  Radians
+		expected Degrees
 	}{
-		{"Zero", NewRadians[F32](0.0), NewDegrees[F32](0.0)},
-		{"Pi", NewRadians[F32](math.Pi), NewDegrees[F32](180.0)},
-		{"Half Pi", NewRadians[F32](math.Pi / 2), NewDegrees[F32](90.0)},
-		{"Two Pi", NewRadians[F32](2 * math.Pi), NewDegrees[F32](360.0)},
+		{"Zero", Radians(0.0), Degrees(0.0)},
+		{"Pi", Radians(math.Pi), Degrees(180.0)},
+		{"Half Pi", Radians(math.Pi / 2), Degrees(90.0)},
+		{"Two Pi", Radians(2 * math.Pi), Degrees(360.0)},
 	}
 
 	for _, tt := range tests {
@@ -30,13 +30,13 @@ func TestScalar_Radians(t *testing.T) {
 func TestScalar_Degrees(t *testing.T) {
 	tests := []struct {
 		name     string
-		degrees  Degrees[F32]
-		expected Radians[F32]
+		degrees  Degrees
+		expected Radians
 	}{
-		{"Zero", NewDegrees[F32](0.0), NewRadians[F32](0.0)},
-		{"180", NewDegrees[F32](180.0), NewRadians[F32](math.Pi)},
-		{"90", NewDegrees[F32](90.0), NewRadians[F32](math.Pi / 2)},
-		{"360", NewDegrees[F32](360.0), NewRadians[F32](2 * math.Pi)},
+		{"Zero", Degrees(0.0), Radians(0.0)},
+		{"180", Degrees(180.0), Radians(math.Pi)},
+		{"90", Degrees(90.0), Radians(math.Pi / 2)},
+		{"360", Degrees(360.0), Radians(2 * math.Pi)},
 	}
 
 	for _, tt := range tests {
@@ -70,11 +70,11 @@ func TestScalar_Eq(t *testing.T) {
 			var result bool
 			switch a := tt.a.(type) {
 			case F32:
-				result = Eq(a, tt.b.(F32))
+				result = NearlyEq(a, tt.b.(F32))
 			case F64:
-				result = Eq(a, tt.b.(F64))
+				result = NearlyEq(a, tt.b.(F64))
 			case I32:
-				result = Eq(a, tt.b.(I32))
+				result = NearlyEq(a, tt.b.(I32))
 			}
 			if result != tt.expected {
 				t.Errorf("Eq(%v, %v) = %v, want %v", tt.a, tt.b, result, tt.expected)
@@ -185,6 +185,6 @@ func BenchmarkScalar_Eq(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Eq(f1, f2)
+		NearlyEq(f1, f2)
 	}
 }

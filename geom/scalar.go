@@ -8,16 +8,15 @@ import (
 
 // Scalar is a generic interface for numeric types used in geometry calculations.
 type Scalar interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~float32 | ~float64
+	~int32 | ~int64 | ~float32 | ~float64
 	Float64() float64
 	String() string
 }
 
-// Eq compares two scalar values of type T with a tolerance.
+// NearlyEq compares two scalar values of type T with a tolerance.
 //
 // 0.001 for Float32 and 0.0000001 for Float64.
-func Eq[T Scalar](a, b T) bool {
+func NearlyEq[T Scalar](a, b T) bool {
 	if a == b {
 		return true
 	}
@@ -136,49 +135,37 @@ func (f I26_6) String() string {
 
 // Radians represents an angle in radians.
 // It is a generic struct for type safety and clarity in geometry calculations.
-type Radians[T Scalar] struct {
-	radians T
-}
-
-func NewRadians[T Scalar](radians T) Radians[T] {
-	return Radians[T]{radians: radians}
-}
+type Radians F32
 
 // Degrees converts radians to degrees.
-func (r Radians[T]) Degrees() Degrees[T] {
-	return Degrees[T]{degrees: T(r.Float64() * 180 / math.Pi)}
+func (r Radians) Degrees() Degrees {
+	return Degrees(r * 180 / math.Pi)
 }
 
 // Float64 returns the float64 value of the radians.
-func (r Radians[T]) Float64() float64 {
-	return r.radians.Float64()
+func (r Radians) Float64() float64 {
+	return F32(r).Float64()
 }
 
 // String returns a string representation of the radians value.
-func (r Radians[T]) String() string {
-	return strconv.FormatFloat(r.radians.Float64(), 'f', -1, 64) + "rad"
+func (r Radians) String() string {
+	return F32(r).String() + " rad"
 }
 
 // Degrees represents an angle in degrees.
-type Degrees[T Scalar] struct {
-	degrees T
-}
-
-func NewDegrees[T Scalar](degrees T) Degrees[T] {
-	return Degrees[T]{degrees: degrees}
-}
+type Degrees F32
 
 // Radians converts degrees to radians.
-func (d Degrees[T]) Radians() Radians[T] {
-	return Radians[T]{radians: T(d.Float64() * math.Pi / 180)}
+func (d Degrees) Radians() Radians {
+	return Radians(d * math.Pi / 180)
 }
 
 // Float64 returns the float64 value of the degrees.
-func (d Degrees[T]) Float64() float64 {
-	return d.degrees.Float64()
+func (d Degrees) Float64() float64 {
+	return F32(d).Float64()
 }
 
 // String returns a string representation of the degrees value.
-func (d Degrees[T]) String() string {
-	return strconv.FormatFloat(d.degrees.Float64(), 'f', -1, 64) + "°"
+func (d Degrees) String() string {
+	return F32(d).String() + "°"
 }

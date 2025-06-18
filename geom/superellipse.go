@@ -181,7 +181,7 @@ func (b *superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse
 // circularArcPoints returns the four control points for the circular arc segment of the octant.
 func (b *superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
 	startVector := octant.CircleStart.Sub(octant.CircleCenter)
-	endVector := startVector.Rotate(NewRadians(T(-octant.CircleMaxAngle.Float64())))
+	endVector := startVector.Rotate(Radians(-octant.CircleMaxAngle))
 	circleEnd := octant.CircleCenter.Add(endVector)
 	startTangent := Point[T]{X: startVector.Y, Y: -startVector.X}.Normalize()
 	endTangent := Point[T]{X: -endVector.Y, Y: endVector.X}.Normalize()
@@ -339,7 +339,7 @@ type SuperellipseOctant[T Scalar] struct {
 	// CircleCenter is the center of the circular arc, relative to Offset.
 	CircleCenter Point[T]
 	// CircleMaxAngle is the angular span of the circular arc, in radians.
-	CircleMaxAngle Radians[T]
+	CircleMaxAngle Radians
 }
 
 // SuperellipseQuadrant holds parameters for a quadrant of a rounded superellipse.
@@ -505,7 +505,7 @@ func newSuperellipseOctant[T Scalar](center Point[T], a T, radius T) Superellips
 			Degree:         0,
 			CircleStart:    Point[T]{a, a},
 			CircleCenter:   Point[T]{0, 0},
-			CircleMaxAngle: NewRadians[T](0),
+			CircleMaxAngle: Radians(0),
 		}
 	}
 
@@ -530,9 +530,9 @@ func newSuperellipseOctant[T Scalar](center Point[T], a T, radius T) Superellips
 	} else {
 		circleCenter = findCircleCenter(pointJ, PointM, R)
 	}
-	var circleMaxAngle Radians[T]
+	var circleMaxAngle Radians
 	if radius == 0 {
-		circleMaxAngle = NewRadians[T](0)
+		circleMaxAngle = Radians(0)
 	} else {
 		circleMaxAngle = (PointM.Sub(circleCenter)).AngleTo(pointJ.Sub(circleCenter))
 	}

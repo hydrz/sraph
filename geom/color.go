@@ -126,10 +126,10 @@ func (c Color) String() string {
 
 // Eq compares two colors for Eqity within tolerance.
 func (c Color) Eq(other Color) bool {
-	return Eq(c.R, other.R) &&
-		Eq(c.G, other.G) &&
-		Eq(c.B, other.B) &&
-		Eq(c.A, other.A)
+	return NearlyEq(c.R, other.R) &&
+		NearlyEq(c.G, other.G) &&
+		NearlyEq(c.B, other.B) &&
+		NearlyEq(c.A, other.A)
 }
 
 // Add performs component-wise addition.

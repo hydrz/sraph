@@ -93,7 +93,7 @@ func TestSuperellipse_InternalHelpers(t *testing.T) {
 		Degree:         F64(4),
 		CircleStart:    Point[F64]{10.0, 10.0},
 		CircleCenter:   Point[F64]{0.0, 0.0},
-		CircleMaxAngle: NewRadians[F64](math.Pi / 2),
+		CircleMaxAngle: Radians(math.Pi / 2),
 	}
 	_ = builder.circularArcPoints(octant)
 	_ = builder.superellipseArcPoints(octant)
@@ -111,7 +111,7 @@ func TestSuperellipse_FindCircleCenterAndReplaceNaN(t *testing.T) {
 	v := Point[F64]{F64(math.NaN()), 2}
 	def := Size[F64]{1, 3}
 	res := replaceNaNWithDefault(v, def)
-	if !Eq(res.X, F64(1)) || !Eq(res.Y, F64(2)) {
+	if !NearlyEq(res.X, F64(1)) || !NearlyEq(res.Y, F64(2)) {
 		t.Error("replaceNaNWithDefault did not replace NaN as expected")
 	}
 }

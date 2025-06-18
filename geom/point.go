@@ -51,6 +51,22 @@ func (p Point[T]) Neg() Point[T] {
 	return Point[T]{X: -p.X, Y: -p.Y}
 }
 
+// Min returns the point with minimum values from this point and another.
+func (p Point[T]) Min(o Point[T]) Point[T] {
+	return Point[T]{
+		X: min(p.X, o.X),
+		Y: min(p.Y, o.Y),
+	}
+}
+
+// Max returns the point with maximum values from this point and another.
+func (p Point[T]) Max(o Point[T]) Point[T] {
+	return Point[T]{
+		X: max(p.X, o.X),
+		Y: max(p.Y, o.Y),
+	}
+}
+
 // Abs returns the point with absolute values.
 func (p Point[T]) Abs() Point[T] {
 	var zero T
@@ -91,7 +107,7 @@ func (p Point[T]) Round() Point[T] {
 
 // Eq reports whether p and o are equal.
 func (p Point[T]) Eq(o Point[T]) bool {
-	return Eq(p.X, o.X) && Eq(p.Y, o.Y)
+	return NearlyEq(p.X, o.X) && NearlyEq(p.Y, o.Y)
 }
 
 // IsFinite returns true if both coordinates are finite.
@@ -116,7 +132,7 @@ func (p Point[T]) Scale(scale T) Point[T] {
 }
 
 // Rotate rotates this point around the origin by the given angle in radians.
-func (p Point[T]) Rotate(angle Radians[T]) Point[T] {
+func (p Point[T]) Rotate(angle Radians) Point[T] {
 	cos := T(math.Cos(angle.Float64()))
 	sin := T(math.Sin(angle.Float64()))
 	return Point[T]{
@@ -147,8 +163,8 @@ func (p Point[T]) Cross(o Point[T]) T {
 }
 
 // AngleTo returns the angle in radians between this point and another.
-func (p Point[T]) AngleTo(o Point[T]) Radians[T] {
-	return NewRadians(T(math.Atan2(p.Cross(o).Float64(), p.Dot(o).Float64())))
+func (p Point[T]) AngleTo(o Point[T]) Radians {
+	return Radians(math.Atan2(p.Cross(o).Float64(), p.Dot(o).Float64()))
 }
 
 // Distance returns the Euclidean distance between this point and another.

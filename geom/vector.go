@@ -50,9 +50,9 @@ func (v Vector3[T]) Div(other Vector3[T]) Vector3[T] {
 
 // Eq checks if this vector is Eq to another vector.
 func (v Vector3[T]) Eq(other Vector3[T]) bool {
-	return Eq(v.X, other.X) &&
-		Eq(v.Y, other.Y) &&
-		Eq(v.Z, other.Z)
+	return NearlyEq(v.X, other.X) &&
+		NearlyEq(v.Y, other.Y) &&
+		NearlyEq(v.Z, other.Z)
 }
 
 // Scale scales this vector by a scalar.
@@ -213,10 +213,10 @@ func (v Vector4[T]) Div(other Vector4[T]) Vector4[T] {
 
 // Eq checks if this vector is Eq to another vector.
 func (v Vector4[T]) Eq(other Vector4[T]) bool {
-	return Eq(v.X, other.X) &&
-		Eq(v.Y, other.Y) &&
-		Eq(v.Z, other.Z) &&
-		Eq(v.W, other.W)
+	return NearlyEq(v.X, other.X) &&
+		NearlyEq(v.Y, other.Y) &&
+		NearlyEq(v.Z, other.Z) &&
+		NearlyEq(v.W, other.W)
 }
 
 // Scale scales this vector by a scalar.

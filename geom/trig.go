@@ -7,7 +7,7 @@ type Trig[T Scalar] struct {
 	Sin T
 }
 
-func NewTrig[T Scalar](r Radians[T]) Trig[T] {
+func NewTrig[T Scalar](r Radians) Trig[T] {
 	return Trig[T]{
 		Cos: T(math.Cos(r.Float64())),
 		Sin: T(math.Sin(r.Float64())),

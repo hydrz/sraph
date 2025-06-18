@@ -3,19 +3,18 @@ package geom
 import (
 	"math"
 	"testing"
-	"time"
 )
 
 func TestQuaternion_NewQuaternionFromAxisAngle(t *testing.T) {
-	axis := Vector3[F32]{0.0, 0.0, 1.0}   // Z-axis
-	angle := NewRadians[F32](math.Pi / 2) // 90 degrees
+	axis := Vector3[F32]{0.0, 0.0, 1.0} // Z-axis
+	angle := Radians(math.Pi / 2)       // 90 degrees
 
 	q := NewQuaternionFromAxisAngle(axis, angle)
 
 	// For 90 degree rotation around Z-axis: q = (0, 0, sin(π/4), cos(π/4)) = (0, 0, √2/2, √2/2)
 	expected := F32(math.Sqrt(2.0) / 2.0)
-	if !Eq(q.X, F32(0.0)) || !Eq(q.Y, F32(0.0)) ||
-		!Eq(q.Z, expected) || !Eq(q.W, expected) {
+	if !NearlyEq(q.X, F32(0.0)) || !NearlyEq(q.Y, F32(0.0)) ||
+		!NearlyEq(q.Z, expected) || !NearlyEq(q.W, expected) {
 		t.Errorf("NewQuaternionFromAxisAngle() = (%v, %v, %v, %v), want (0, 0, %v, %v)",
 			q.X, q.Y, q.Z, q.W, expected, expected)
 	}
@@ -69,7 +68,7 @@ func TestQuaternion_QuaternionLength(t *testing.T) {
 	q := Quaternion[F32]{1.0, 2.0, 3.0, 4.0}
 	length := q.Length()
 	expected := F32(math.Sqrt(30.0)) // sqrt(1+4+9+16) = sqrt(30)
-	if !Eq(length, expected) {
+	if !NearlyEq(length, expected) {
 		t.Errorf("Length() = %v, want %v", length, expected)
 	}
 }
@@ -80,7 +79,7 @@ func TestQuaternion_QuaternionDotProduct(t *testing.T) {
 
 	dot := q1.Dot(q2)
 	expected := F32(70.0) // 1*5 + 2*6 + 3*7 + 4*8 = 70
-	if !Eq(dot, expected) {
+	if !NearlyEq(dot, expected) {
 		t.Errorf("Dot() = %v, want %v", dot, expected)
 	}
 }
@@ -92,7 +91,7 @@ func TestQuaternion_QuaternionNormalize(t *testing.T) {
 
 		// Should have length 1
 		length := normalized.Length()
-		if !Eq(length, F32(1.0)) {
+		if !NearlyEq(length, F32(1.0)) {
 			t.Errorf("Normalized quaternion length = %v, want 1.0", length)
 		}
 	})
@@ -102,8 +101,8 @@ func TestQuaternion_QuaternionNormalize(t *testing.T) {
 		normalized := zero.Normalize()
 
 		// Should return zero quaternion
-		if !Eq(normalized.X, F32(0.0)) || !Eq(normalized.Y, F32(0.0)) ||
-			!Eq(normalized.Z, F32(0.0)) || !Eq(normalized.W, F32(0.0)) {
+		if !NearlyEq(normalized.X, F32(0.0)) || !NearlyEq(normalized.Y, F32(0.0)) ||
+			!NearlyEq(normalized.Z, F32(0.0)) || !NearlyEq(normalized.W, F32(0.0)) {
 			t.Errorf("Normalized zero quaternion should be zero")
 		}
 	})
@@ -118,8 +117,8 @@ func TestQuaternion_QuaternionInvert(t *testing.T) {
 	identityNormalized := identity.Normalize()
 
 	// Check if it's close to identity quaternion (0, 0, 0, 1) or (0, 0, 0, -1)
-	if !Eq(identityNormalized.X, F32(0.0)) || !Eq(identityNormalized.Y, F32(0.0)) ||
-		!Eq(identityNormalized.Z, F32(0.0)) {
+	if !NearlyEq(identityNormalized.X, F32(0.0)) || !NearlyEq(identityNormalized.Y, F32(0.0)) ||
+		!NearlyEq(identityNormalized.Z, F32(0.0)) {
 		t.Errorf("Quaternion inversion failed")
 	}
 }
@@ -138,24 +137,22 @@ func TestQuaternion_QuaternionEq(t *testing.T) {
 }
 
 func TestQuaternion_QuaternionSlerp(t *testing.T) {
-	q1 := Quaternion[F32]{0.0, 0.0, 0.0, 1.0} // Identity
-	q2 := Quaternion[F32]{0.0, 0.0, 1.0, 0.0} // 180° rotation around Z
+	q1 := NewQuaternionFromAxisAngle(Vector3[F32]{0.0, 0.0, 1.0}, Radians(0.0))       // 0° rotation around Z
+	q2 := NewQuaternionFromAxisAngle(Vector3[F32]{0.0, 0.0, 1.0}, Radians(math.Pi/4)) // 45° rotation around Z
 
-	// Test interpolation at t=0 (should be q1)
-	t0 := time.Unix(0, 0)
-	result := q1.Slerp(q2, t0)
+	q3 := q1.Slerp(q2, 0.5) // Slerp at t=0.5
 
-	// The result should be close to q1
-	if !Eq(result.X, q1.X) || !Eq(result.Y, q1.Y) ||
-		!Eq(result.Z, q1.Z) || !Eq(result.W, q1.W) {
-		t.Errorf("Slerp at t=0 should return first quaternion")
+	expected := NewQuaternionFromAxisAngle(Vector3[F32]{0.0, 0.0, 1.0}, Radians(math.Pi/8)) // 22.5° rotation around Z
+
+	if !q3.Eq(expected) {
+		t.Errorf("Slerp() = %v, want %v", q3, expected)
 	}
 }
 
 func TestQuaternion_QuaternionRotateVector3(t *testing.T) {
 	// Test 90 degree rotation around Z axis
 	axis := Vector3[F32]{0.0, 0.0, 1.0}
-	angle := NewRadians[F32](math.Pi / 2)
+	angle := Radians(math.Pi / 2)
 	q := NewQuaternionFromAxisAngle(axis, angle)
 
 	// Rotate vector (1, 0, 0) around Z axis by 90 degrees
@@ -163,7 +160,7 @@ func TestQuaternion_QuaternionRotateVector3(t *testing.T) {
 	rotated := q.RotateVector3(v)
 
 	// Should result in approximately (0, 1, 0)
-	if !Eq(rotated.X, F32(0.0)) || !Eq(rotated.Y, F32(1.0)) || !Eq(rotated.Z, F32(0.0)) {
+	if !NearlyEq(rotated.X, F32(0.0)) || !NearlyEq(rotated.Y, F32(1.0)) || !NearlyEq(rotated.Z, F32(0.0)) {
 		t.Errorf("RotateVector3() = (%v, %v, %v), want (0, 1, 0)", rotated.X, rotated.Y, rotated.Z)
 	}
 }

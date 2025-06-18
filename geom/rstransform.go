@@ -14,7 +14,7 @@ type RSTransform[T Scalar] struct {
 }
 
 // NewRSTransform constructs an RSTransform from the given origin, scale, and radians.
-func NewRSTransform[T Scalar](origin Point[T], scale T, radians Radians[T]) RSTransform[T] {
+func NewRSTransform[T Scalar](origin Point[T], scale T, radians Radians) RSTransform[T] {
 	cos, sin := NewMatrix[T]().CosSin(radians)
 	return RSTransform[T]{
 		ScaledCos:  cos * scale,
@@ -27,7 +27,7 @@ func NewRSTransform[T Scalar](origin Point[T], scale T, radians Radians[T]) RSTr
 // IsAxisAligned returns true if the resulting transformed quad will be axis-aligned.
 func (r RSTransform[T]) IsAxisAligned() bool {
 	var zero T
-	return Eq(r.ScaledCos, zero) || Eq(r.ScaledSin, zero)
+	return NearlyEq(r.ScaledCos, zero) || NearlyEq(r.ScaledSin, zero)
 }
 
 // Matrix returns the 4x4 matrix representing this RSTransform.

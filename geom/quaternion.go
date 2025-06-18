@@ -3,7 +3,6 @@ package geom
 import (
 	"fmt"
 	"math"
-	"time"
 )
 
 // Quaternion represents a quaternion for 3D rotations.
@@ -14,7 +13,7 @@ type Quaternion[T Scalar] struct {
 }
 
 // NewQuaternionFromAxisAngle creates a new quaternion from an axis and angle.
-func NewQuaternionFromAxisAngle[T Scalar](axis Vector3[T], angle Radians[T]) Quaternion[T] {
+func NewQuaternionFromAxisAngle[T Scalar](axis Vector3[T], angle Radians) Quaternion[T] {
 	axis = axis.Normalize()
 	halfAngle := angle.Float64() / 2
 	sinHalfAngle := T(math.Sin(halfAngle))
@@ -68,10 +67,10 @@ func (q Quaternion[T]) Div(other Quaternion[T]) Quaternion[T] {
 
 // Eq checks if this quaternion is Eq to another.
 func (q Quaternion[T]) Eq(other Quaternion[T]) bool {
-	return Eq(q.X, other.X) &&
-		Eq(q.Y, other.Y) &&
-		Eq(q.Z, other.Z) &&
-		Eq(q.W, other.W)
+	return NearlyEq(q.X, other.X) &&
+		NearlyEq(q.Y, other.Y) &&
+		NearlyEq(q.Z, other.Z) &&
+		NearlyEq(q.W, other.W)
 }
 
 // Scale scales the quaternion by a scalar value and returns the result.
@@ -143,19 +142,17 @@ func (q Quaternion[T]) Invert() Quaternion[T] {
 
 // Slerp performs spherical linear interpolation (SLERP) between
 // this quaternion and another quaternion by a factor of time (0.0 to 1.0).
-// SLERP is used for smooth interpolation of rotations, commonly in animation and orientation blending.
-// Formula: slerp = sin((1-t)*θ)/sin(θ) * q1 + sin(t*θ)/sin(θ) * q2
-func (q Quaternion[T]) Slerp(other Quaternion[T], t time.Time) Quaternion[T] {
-	time := T(t.Sub(time.Time{}).Seconds())
-
-	cosine := q.Dot(other)
-	if math.Abs(float64(cosine)) < 1.0-1e-3 { // epsilon
+// Formula: q' = q * sin((1-t) * θ) / sin(θ) + other * sin(t * θ) / sin(θ)
+func (q Quaternion[T]) Slerp(other Quaternion[T], time float64) Quaternion[T] {
+	time = Clamp(time, 0.0, 1.0) // Ensure time is between 0 and 1
+	cosine := q.Dot(other).Float64()
+	if NearlyEq(T(cosine), 1.0) {
 		// Spherical Interpolation
-		sine := T(math.Sqrt(float64(1.0 - cosine*cosine)))
-		angle := T(math.Atan2(float64(sine), float64(cosine)))
-		sineInverse := T(1.0 / float64(sine))
-		c0 := T(math.Sin(float64((1.0-time)*angle))) * sineInverse
-		c1 := T(math.Sin(float64(time*angle))) * sineInverse
+		sine := math.Sqrt(1.0 - cosine*cosine)
+		angle := math.Atan2(sine, cosine)
+		sineInverse := 1.0 / sine
+		c0 := T(math.Sin((1.0-time)*angle) * sineInverse)
+		c1 := T(math.Sin(time*angle) * sineInverse)
 		return q.Scale(c0).Add(other.Scale(c1)).Normalize()
 	} else {
 		// Linear Interpolation

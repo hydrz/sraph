@@ -171,10 +171,10 @@ func (r Rect[T]) Points() [4]Point[T] {
 
 // Eq reports whether two rectangles are Eq.
 func (r Rect[T]) Eq(other Rect[T]) bool {
-	return Eq(r.Left, other.Left) &&
-		Eq(r.Top, other.Top) &&
-		Eq(r.Right, other.Right) &&
-		Eq(r.Bottom, other.Bottom)
+	return NearlyEq(r.Left, other.Left) &&
+		NearlyEq(r.Top, other.Top) &&
+		NearlyEq(r.Right, other.Right) &&
+		NearlyEq(r.Bottom, other.Bottom)
 }
 
 // IsEmpty reports whether the rectangle is empty (width or height <= 0).
@@ -189,7 +189,7 @@ func (r Rect[T]) IsFinite() bool {
 
 // IsSquare reports whether the rectangle is a square (width == height).
 func (r Rect[T]) IsSquare() bool {
-	return Eq(r.Width(), r.Height()) && !r.IsEmpty()
+	return NearlyEq(r.Width(), r.Height()) && !r.IsEmpty()
 }
 
 // ContainsExclusive reports whether the rectangle contains a point (excluding edges).
@@ -228,10 +228,10 @@ func (r Rect[T]) Intersects(other Rect[T]) bool {
 		r.Top < other.Bottom && r.Bottom > other.Top
 }
 
-// Intersection returns the intersection of two rectangles.
-func (r Rect[T]) Intersection(other Rect[T]) (Rect[T], bool) {
+// Intersect returns the intersection of two rectangles.
+func (r Rect[T]) Intersect(other Rect[T]) Rect[T] {
 	if !r.Intersects(other) {
-		return NewRect[T](0, 0, 0, 0), false
+		return Rect[T]{}
 	}
 	left := r.Left
 	if other.Left > left {
@@ -250,15 +250,11 @@ func (r Rect[T]) Intersection(other Rect[T]) (Rect[T], bool) {
 		bottom = other.Bottom
 	}
 	result := NewRect(left, top, right, bottom)
-	return result, !result.IsEmpty()
-}
 
-// IntersectOrEmpty returns the intersection or an empty rectangle.
-func (r Rect[T]) IntersectOrEmpty(other Rect[T]) Rect[T] {
-	result, ok := r.Intersection(other)
-	if !ok {
-		return NewRect[T](0, 0, 0, 0)
+	if result.IsEmpty() {
+		return Rect[T]{}
 	}
+
 	return result
 }
 
@@ -459,7 +455,7 @@ func (r Rect[T]) TransformBounds(transform Matrix[T]) Rect[T] {
 // TransformClipBounds applies a perspective transformation, clips to bounds, and returns the bounding box.
 func (r Rect[T]) TransformClipBounds(transform Matrix[T], bounds Rect[T]) Rect[T] {
 	transformed := r.TransformBounds(transform)
-	return transformed.IntersectOrEmpty(bounds)
+	return transformed.Intersect(bounds)
 }
 
 // NormalizingTransform returns a matrix that normalizes the rectangle to [0,1].

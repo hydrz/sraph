@@ -99,9 +99,9 @@ func TestRect_ContainsAndIntersects(t *testing.T) {
 func TestRect_IntersectionUnion(t *testing.T) {
 	r1 := NewRect[I32](0, 0, 10, 10)
 	r2 := NewRect[I32](5, 5, 15, 15)
-	inter, ok := r1.Intersection(r2)
-	if !ok || inter.Left != 5 || inter.Top != 5 || inter.Right != 10 || inter.Bottom != 10 {
-		t.Errorf("Intersection failed: got %v, ok=%v", inter, ok)
+	inter := r1.Intersect(r2)
+	if inter.Left != 5 || inter.Top != 5 || inter.Right != 10 || inter.Bottom != 10 {
+		t.Errorf("Intersection failed: got %v", inter)
 	}
 	union := r1.Union(r2)
 	if union.Left != 0 || union.Top != 0 || union.Right != 15 || union.Bottom != 15 {

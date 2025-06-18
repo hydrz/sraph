@@ -69,7 +69,7 @@ func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
 			nextStop := stops[previousColorIndex+1]
 
 			// Check if we're nearly Eq to the next stop
-			if Eq(scaledI, nextStop) {
+			if NearlyEq(scaledI, nextStop) {
 				appendColor(nextColor, &data)
 				previousColor = nextColor
 				previousStop = nextStop

@@ -14,16 +14,16 @@ type Sigma[T Scalar] struct {
 // ToRadians converts the Sigma value to a kernel radius in radians for convolution filters.
 // For Gaussian blur kernels, the radius has a linear relationship with Sigma.
 // Returns 0 if Sigma is not greater than 0.5.
-func (s Sigma[T]) ToRadians() Radians[T] {
+func (s Sigma[T]) ToRadians() Radians {
 	if s.sigma.Float64() > 0.5 {
-		return NewRadians(T((s.sigma.Float64() - 0.5) * kernelRadiusPerSigma))
+		return Radians((s.sigma.Float64() - 0.5) * kernelRadiusPerSigma)
 	}
-	return NewRadians[T](0.0)
+	return Radians(0.0)
 }
 
 // NewSigma creates a Sigma value from a given kernel radius in radians.
 // If the radius is negative, returns 0.
-func NewSigma[T Scalar](radius Radians[T]) Sigma[T] {
+func NewSigma[T Scalar](radius Radians) Sigma[T] {
 	if radius.Float64() < 0.0 {
 		return Sigma[T]{sigma: T(0.0)}
 	}
