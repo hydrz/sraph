@@ -144,7 +144,7 @@ func TestDlVertices_BasicOperations(t *testing.T) {
 	}
 
 	// Test bounds
-	bounds := vertices.GetBounds()
+	bounds := vertices.Bounds()
 	if bounds == nil {
 		t.Error("Vertices bounds should not be nil")
 	}
@@ -200,12 +200,12 @@ func TestDlDisplayList_BasicOperations(t *testing.T) {
 		t.Error("Display list should not be empty")
 	}
 
-	if dl.GetOpCount() == 0 {
+	if dl.OpCount() == 0 {
 		t.Error("Display list should have operations")
 	}
 
 	// Test bounds
-	bounds := dl.GetBounds()
+	bounds := dl.Bounds()
 	if bounds.IsEmpty() {
 		t.Error("Display list bounds should not be empty")
 	}
@@ -234,7 +234,7 @@ func TestDlPath_BasicOperations(t *testing.T) {
 	}
 
 	// Test bounds
-	bounds := path.GetBounds()
+	bounds := path.Bounds()
 	if bounds.IsEmpty() {
 		t.Error("Path bounds should not be empty")
 	}
@@ -252,11 +252,11 @@ func TestDlCanvas_BasicOperations(t *testing.T) {
 	canvas := NewCanvas(bounds)
 
 	// Test initial state
-	if canvas.GetBounds() != bounds {
+	if canvas.Bounds() != bounds {
 		t.Error("Canvas bounds mismatch")
 	}
 
-	if canvas.GetDevicePixelRatio() != 1.0 {
+	if canvas.DevicePixelRatio() != 1.0 {
 		t.Error("Default device pixel ratio should be 1.0")
 	}
 
@@ -266,7 +266,7 @@ func TestDlCanvas_BasicOperations(t *testing.T) {
 	canvas.Restore()
 
 	// Transform should be back to identity after restore
-	transform := canvas.GetCurrentTransform()
+	transform := canvas.CurrentTransform()
 	identity := geom.NewMatrix[Scalar]()
 
 	// Simple check - in practice you'd need a proper matrix comparison
@@ -279,7 +279,7 @@ func TestDlBuilder_BasicOperations(t *testing.T) {
 	builder := NewDisplayListBuilder()
 
 	// Test initial state
-	if !builder.GetBounds().IsEmpty() {
+	if !builder.Bounds().IsEmpty() {
 		t.Error("New builder should have empty bounds")
 	}
 
@@ -290,20 +290,20 @@ func TestDlBuilder_BasicOperations(t *testing.T) {
 	builder.DrawRect(rect, paint)
 
 	// Check that bounds are updated
-	bounds := builder.GetBounds()
+	bounds := builder.Bounds()
 	if bounds.IsEmpty() {
 		t.Error("Builder bounds should be updated after operations")
 	}
 
 	// Build display list
 	dl := builder.Build()
-	if dl.GetOpCount() == 0 {
+	if dl.OpCount() == 0 {
 		t.Error("Built display list should have operations")
 	}
 
 	// Test reset
 	builder.Reset()
-	if !builder.GetBounds().IsEmpty() {
+	if !builder.Bounds().IsEmpty() {
 		t.Error("Reset builder should have empty bounds")
 	}
 }

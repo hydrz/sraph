@@ -7,8 +7,8 @@ import (
 // ColorSource represents a source of color information for painting.
 // This can be a solid color, gradient, pattern, or other color generator.
 type ColorSource interface {
-	// GetColor returns the color at the specified position.
-	GetColor(x, y float32) Color
+	// Color returns the color at the specified position.
+	Color(x, y float32) Color
 	// IsOpaque returns true if the color source is fully opaque.
 	IsOpaque() bool
 	// String returns a string representation of the color source.
@@ -25,16 +25,16 @@ type ColorFilter interface {
 
 // ImageFilter represents a filter that can be applied to rendered content.
 type ImageFilter interface {
-	// GetBounds returns the bounds that this filter would expand content to.
-	GetBounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar]
+	// Bounds returns the bounds that this filter would expand content to.
+	Bounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar]
 	// String returns a string representation of the image filter.
 	String() string
 }
 
 // MaskFilter represents a filter that can be applied to the alpha channel.
 type MaskFilter interface {
-	// GetBounds returns the bounds that this mask filter would expand content to.
-	GetBounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar]
+	// Bounds returns the bounds that this mask filter would expand content to.
+	Bounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar]
 	// String returns a string representation of the mask filter.
 	String() string
 }
@@ -63,8 +63,8 @@ func NewLinearGradient(start, end geom.Point[Scalar], colors []Color, positions 
 	}
 }
 
-// GetColor implements ColorSource for Gradient.
-func (g *Gradient) GetColor(x, y float32) Color {
+// Color implements ColorSource for Gradient.
+func (g *Gradient) Color(x, y float32) Color {
 	// TODO: Implement gradient color calculation
 	if len(g.colors) == 0 {
 		return ColorTransparent
@@ -97,8 +97,8 @@ func NewSolidColorSource(color Color) *SolidColorSource {
 	return &SolidColorSource{color: color}
 }
 
-// GetColor implements ColorSource for SolidColorSource.
-func (s *SolidColorSource) GetColor(x, y float32) Color {
+// Color implements ColorSource for SolidColorSource.
+func (s *SolidColorSource) Color(x, y float32) Color {
 	return s.color
 }
 
@@ -148,8 +148,8 @@ func NewBlurImageFilter(sigmaX, sigmaY float32, tileMode TileMode) *BlurImageFil
 	}
 }
 
-// GetBounds implements ImageFilter for BlurImageFilter.
-func (b *BlurImageFilter) GetBounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar] {
+// Bounds implements ImageFilter for BlurImageFilter.
+func (b *BlurImageFilter) Bounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar] {
 	// Blur expands bounds by approximately 3 * sigma
 	expansion := Scalar(3.0 * max(b.sigmaX, b.sigmaY))
 	return geom.NewRect(
@@ -193,8 +193,8 @@ func NewBlurMaskFilter(sigma float32, style BlurStyle) *BlurMaskFilter {
 	}
 }
 
-// GetBounds implements MaskFilter for BlurMaskFilter.
-func (b *BlurMaskFilter) GetBounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar] {
+// Bounds implements MaskFilter for BlurMaskFilter.
+func (b *BlurMaskFilter) Bounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar] {
 	expansion := Scalar(3.0 * b.sigma)
 	return geom.NewRect(
 		inputBounds.Left-expansion,

@@ -58,8 +58,8 @@ func (b *DisplayListBuilder) Build() *DisplayList {
 	return NewDisplayList(ops, bounds)
 }
 
-// GetBounds returns the current bounds of the recorded operations.
-func (b *DisplayListBuilder) GetBounds() geom.Rect[Scalar] {
+// Bounds returns the current bounds of the recorded operations.
+func (b *DisplayListBuilder) Bounds() geom.Rect[Scalar] {
 	return b.bounds
 }
 
@@ -85,8 +85,8 @@ func (b *DisplayListBuilder) updateBounds(newBounds geom.Rect[Scalar]) {
 	}
 }
 
-// getCurrentTransform returns the current transformation matrix.
-func (b *DisplayListBuilder) getCurrentTransform() geom.Matrix[Scalar] {
+// CurrentTransform returns the current transformation matrix.
+func (b *DisplayListBuilder) CurrentTransform() geom.Matrix[Scalar] {
 	if len(b.transformStack) == 0 {
 		return geom.NewMatrix[Scalar]()
 	}
@@ -110,9 +110,9 @@ func (b *DisplayListBuilder) recordOperation(op Operation) {
 	b.operations = append(b.operations, op)
 
 	// Update bounds if the operation provides them
-	if bounds := op.GetBounds(); bounds != nil {
+	if bounds := op.Bounds(); bounds != nil {
 		// Transform bounds by current transformation
-		transform := b.getCurrentTransform()
+		transform := b.CurrentTransform()
 		transformedBounds := bounds.TransformBounds(transform)
 		b.updateBounds(transformedBounds)
 	}
@@ -141,8 +141,8 @@ func (b *DisplayListBuilder) Restore() {
 // SaveLayer implements OpReceiver.SaveLayer.
 func (b *DisplayListBuilder) SaveLayer(bounds *geom.Rect[Scalar], paint *Paint) {
 	op := &SaveLayerOp{
-		Bounds: bounds,
-		Paint:  paint,
+		Rect:  bounds,
+		Paint: paint,
 	}
 	b.recordOperation(op)
 	b.saveCount++
@@ -154,7 +154,7 @@ func (b *DisplayListBuilder) Translate(dx, dy Scalar) {
 	b.recordOperation(op)
 
 	// Update transformation stack
-	current := b.getCurrentTransform()
+	current := b.CurrentTransform()
 	translated := current.Translate2D(geom.Vector2[Scalar]{X: dx, Y: dy})
 	b.transformStack[len(b.transformStack)-1] = translated
 }
@@ -165,7 +165,7 @@ func (b *DisplayListBuilder) Scale(sx, sy Scalar) {
 	b.recordOperation(op)
 
 	// Update transformation stack
-	current := b.getCurrentTransform()
+	current := b.CurrentTransform()
 	scaled := current.Scale2D(geom.Vector2[Scalar]{X: sx, Y: sy})
 	b.transformStack[len(b.transformStack)-1] = scaled
 }
@@ -176,7 +176,7 @@ func (b *DisplayListBuilder) Rotate(radians geom.Radians) {
 	b.recordOperation(op)
 
 	// Update transformation stack
-	current := b.getCurrentTransform()
+	current := b.CurrentTransform()
 	rotated := current.RotateZ(radians)
 	b.transformStack[len(b.transformStack)-1] = rotated
 }
@@ -187,7 +187,7 @@ func (b *DisplayListBuilder) Skew(sx, sy Scalar) {
 	b.recordOperation(op)
 
 	// Update transformation stack
-	current := b.getCurrentTransform()
+	current := b.CurrentTransform()
 	skewed := current.Skew(sx, sy)
 	b.transformStack[len(b.transformStack)-1] = skewed
 }
@@ -202,7 +202,7 @@ func (b *DisplayListBuilder) Transform2DAffine(mxx, mxy, myx, myy, mxt, myt Scal
 	b.recordOperation(op)
 
 	// Update transformation stack
-	current := b.getCurrentTransform()
+	current := b.CurrentTransform()
 	affineMatrix := geom.Matrix[Scalar]{
 		mxx, mxy, mxt,
 		myx, myy, myt,
@@ -218,7 +218,7 @@ func (b *DisplayListBuilder) TransformFullPerspective(matrix geom.Matrix[Scalar]
 	b.recordOperation(op)
 
 	// Update transformation stack
-	current := b.getCurrentTransform()
+	current := b.CurrentTransform()
 	transformed := current.Mul(matrix)
 	b.transformStack[len(b.transformStack)-1] = transformed
 }
@@ -300,7 +300,7 @@ func (b *DisplayListBuilder) DrawRect(rect geom.Rect[Scalar], paint Paint) {
 
 // DrawOval implements OpReceiver.DrawOval.
 func (b *DisplayListBuilder) DrawOval(bounds geom.Rect[Scalar], paint Paint) {
-	op := &DrawOvalOp{Bounds: bounds, Paint: paint}
+	op := &DrawOvalOp{Rect: bounds, Paint: paint}
 	b.recordOperation(op)
 }
 
@@ -331,7 +331,7 @@ func (b *DisplayListBuilder) DrawPath(path geom.PathSource[Scalar], paint Paint)
 // DrawArc implements OpReceiver.DrawArc.
 func (b *DisplayListBuilder) DrawArc(bounds geom.Rect[Scalar], start, sweep Scalar, useCenter bool, paint Paint) {
 	op := &DrawArcOp{
-		Bounds:    bounds,
+		Rect:      bounds,
 		Start:     start,
 		Sweep:     sweep,
 		UseCenter: useCenter,

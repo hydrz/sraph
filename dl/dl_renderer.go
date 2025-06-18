@@ -39,7 +39,7 @@ type Renderer interface {
 	DeleteTexture(id TextureID)
 
 	// State queries
-	GetMaxTextureSize() int
+	MaxTextureSize() int
 	SupportsAntiAliasing() bool
 }
 
@@ -91,7 +91,7 @@ func (rc *RenderContext) RenderDisplayList(dl *DisplayList) error {
 	}
 
 	// Set up initial state
-	rc.renderer.SetTransform(rc.getCurrentTransform())
+	rc.renderer.SetTransform(rc.CurrentTransform())
 
 	// Render all operations
 	dl.Dispatch(rc)
@@ -99,8 +99,8 @@ func (rc *RenderContext) RenderDisplayList(dl *DisplayList) error {
 	return nil
 }
 
-// getCurrentTransform returns the current transformation matrix.
-func (rc *RenderContext) getCurrentTransform() geom.Matrix[Scalar] {
+// CurrentTransform returns the current transformation matrix.
+func (rc *RenderContext) CurrentTransform() geom.Matrix[Scalar] {
 	if len(rc.transformStack) == 0 {
 		return geom.NewMatrix[Scalar]()
 	}
@@ -112,7 +112,7 @@ func (rc *RenderContext) getCurrentTransform() geom.Matrix[Scalar] {
 // Save implements OpReceiver.Save.
 func (rc *RenderContext) Save() {
 	// Duplicate current transform
-	current := rc.getCurrentTransform()
+	current := rc.CurrentTransform()
 	rc.transformStack = append(rc.transformStack, current)
 }
 
@@ -120,7 +120,7 @@ func (rc *RenderContext) Save() {
 func (rc *RenderContext) Restore() {
 	if len(rc.transformStack) > 1 {
 		rc.transformStack = rc.transformStack[:len(rc.transformStack)-1]
-		rc.renderer.SetTransform(rc.getCurrentTransform())
+		rc.renderer.SetTransform(rc.CurrentTransform())
 	}
 }
 
@@ -132,7 +132,7 @@ func (rc *RenderContext) SaveLayer(bounds *geom.Rect[Scalar], paint *Paint) {
 
 // Translate implements OpReceiver.Translate.
 func (rc *RenderContext) Translate(dx, dy Scalar) {
-	current := rc.getCurrentTransform()
+	current := rc.CurrentTransform()
 	translated := current.Translate2D(geom.Vector2[Scalar]{X: dx, Y: dy})
 	rc.transformStack[len(rc.transformStack)-1] = translated
 	rc.renderer.SetTransform(translated)
@@ -140,7 +140,7 @@ func (rc *RenderContext) Translate(dx, dy Scalar) {
 
 // Scale implements OpReceiver.Scale.
 func (rc *RenderContext) Scale(sx, sy Scalar) {
-	current := rc.getCurrentTransform()
+	current := rc.CurrentTransform()
 	scaled := current.Scale2D(geom.Vector2[Scalar]{X: sx, Y: sy})
 	rc.transformStack[len(rc.transformStack)-1] = scaled
 	rc.renderer.SetTransform(scaled)
@@ -148,7 +148,7 @@ func (rc *RenderContext) Scale(sx, sy Scalar) {
 
 // Rotate implements OpReceiver.Rotate.
 func (rc *RenderContext) Rotate(radians geom.Radians) {
-	current := rc.getCurrentTransform()
+	current := rc.CurrentTransform()
 	rotated := current.RotateZ(geom.Radians(radians))
 	rc.transformStack[len(rc.transformStack)-1] = rotated
 	rc.renderer.SetTransform(rotated)
@@ -163,7 +163,7 @@ func (rc *RenderContext) Skew(sx, sy Scalar) {
 		0, 0, 0, 1,
 	}
 
-	current := rc.getCurrentTransform()
+	current := rc.CurrentTransform()
 	skewed := current.Mul(skewMatrix)
 	rc.transformStack[len(rc.transformStack)-1] = skewed
 	rc.renderer.SetTransform(skewed)
@@ -178,7 +178,7 @@ func (rc *RenderContext) Transform2DAffine(mxx, mxy, myx, myy, mxt, myt Scalar) 
 		0, 0, 0, 1,
 	}
 
-	current := rc.getCurrentTransform()
+	current := rc.CurrentTransform()
 	transformed := current.Mul(affineMatrix)
 	rc.transformStack[len(rc.transformStack)-1] = transformed
 	rc.renderer.SetTransform(transformed)
@@ -186,7 +186,7 @@ func (rc *RenderContext) Transform2DAffine(mxx, mxy, myx, myy, mxt, myt Scalar) 
 
 // TransformFullPerspective implements OpReceiver.TransformFullPerspective.
 func (rc *RenderContext) TransformFullPerspective(matrix geom.Matrix[Scalar]) {
-	current := rc.getCurrentTransform()
+	current := rc.CurrentTransform()
 	transformed := current.Mul(matrix)
 	rc.transformStack[len(rc.transformStack)-1] = transformed
 	rc.renderer.SetTransform(transformed)

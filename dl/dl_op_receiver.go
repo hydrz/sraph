@@ -60,8 +60,8 @@ type OpRecorder interface {
 	// Build finalizes the recording and returns a display list.
 	Build() *DisplayList
 
-	// GetBounds returns the current bounds of the recorded operations.
-	GetBounds() geom.Rect[Scalar]
+	// Bounds returns the current bounds of the recorded operations.
+	Bounds() geom.Rect[Scalar]
 
 	// Reset resets the recorder to an empty state.
 	Reset()

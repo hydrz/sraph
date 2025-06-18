@@ -11,8 +11,8 @@ type Layer interface {
 	Bounds() geom.Rect[Scalar]
 	// IsOpaque returns true if the layer is fully opaque.
 	IsOpaque() bool
-	// GetCanvas returns a canvas for drawing into this layer.
-	GetCanvas() Canvas
+	// Canvas returns a canvas for drawing into this layer.
+	Canvas() Canvas
 	// Snapshot creates a snapshot of the current layer content.
 	Snapshot() LayerSnapshot
 	// Clear clears the layer with the specified color.
@@ -167,8 +167,8 @@ func (ol *OffscreenLayer) IsOpaque() bool {
 	return ol.isOpaque
 }
 
-// GetCanvas implements Layer interface.
-func (ol *OffscreenLayer) GetCanvas() Canvas {
+// Canvas implements Layer interface.
+func (ol *OffscreenLayer) Canvas() Canvas {
 	return *ol.canvas
 }
 
@@ -272,8 +272,8 @@ func (rc *RenderCache) Size() int {
 type BackdropFilter interface {
 	// Apply applies the filter to the backdrop.
 	Apply(backdrop LayerSnapshot) LayerSnapshot
-	// GetBounds returns the bounds that this filter would expand content to.
-	GetBounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar]
+	// Bounds returns the bounds that this filter would expand content to.
+	Bounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar]
 	// String returns a string representation of the filter.
 	String() string
 }
@@ -300,8 +300,8 @@ func (bbf *BlurBackdropFilter) Apply(backdrop LayerSnapshot) LayerSnapshot {
 	return backdrop
 }
 
-// GetBounds implements BackdropFilter interface.
-func (bbf *BlurBackdropFilter) GetBounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar] {
+// Bounds implements BackdropFilter interface.
+func (bbf *BlurBackdropFilter) Bounds(inputBounds geom.Rect[Scalar]) geom.Rect[Scalar] {
 	expansion := Scalar(3.0 * max(bbf.sigmaX, bbf.sigmaY))
 	return geom.NewRect(
 		inputBounds.Left-expansion,

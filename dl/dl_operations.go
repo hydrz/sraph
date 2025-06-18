@@ -12,13 +12,13 @@ func (op *SaveOp) Invoke(receiver OpReceiver) {
 	receiver.Save()
 }
 
-// GetBounds implements Operation.GetBounds for SaveOp.
-func (op *SaveOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for SaveOp.
+func (op *SaveOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Save operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for SaveOp.
-func (op *SaveOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for SaveOp.
+func (op *SaveOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
@@ -30,34 +30,34 @@ func (op *RestoreOp) Invoke(receiver OpReceiver) {
 	receiver.Restore()
 }
 
-// GetBounds implements Operation.GetBounds for RestoreOp.
-func (op *RestoreOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for RestoreOp.
+func (op *RestoreOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Restore operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for RestoreOp.
-func (op *RestoreOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for RestoreOp.
+func (op *RestoreOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
 // SaveLayerOp represents a save layer operation.
 type SaveLayerOp struct {
-	Bounds *geom.Rect[Scalar]
-	Paint  *Paint
+	Rect  *geom.Rect[Scalar]
+	Paint *Paint
 }
 
 // Invoke implements Operation.Invoke for SaveLayerOp.
 func (op *SaveLayerOp) Invoke(receiver OpReceiver) {
-	receiver.SaveLayer(op.Bounds, op.Paint)
+	receiver.SaveLayer(op.Rect, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for SaveLayerOp.
-func (op *SaveLayerOp) GetBounds() *geom.Rect[Scalar] {
-	return op.Bounds
+// Bounds implements Operation.Bounds for SaveLayerOp.
+func (op *SaveLayerOp) Bounds() *geom.Rect[Scalar] {
+	return op.Rect
 }
 
-// GetFlags implements Operation.GetFlags for SaveLayerOp.
-func (op *SaveLayerOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for SaveLayerOp.
+func (op *SaveLayerOp) Flags() AttributeFlags {
 	if op.Paint != nil {
 		return GetAttributeFlags(*op.Paint)
 	}
@@ -74,13 +74,13 @@ func (op *TranslateOp) Invoke(receiver OpReceiver) {
 	receiver.Translate(op.DX, op.DY)
 }
 
-// GetBounds implements Operation.GetBounds for TranslateOp.
-func (op *TranslateOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for TranslateOp.
+func (op *TranslateOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Transform operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for TranslateOp.
-func (op *TranslateOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for TranslateOp.
+func (op *TranslateOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
@@ -94,13 +94,13 @@ func (op *ScaleOp) Invoke(receiver OpReceiver) {
 	receiver.Scale(op.SX, op.SY)
 }
 
-// GetBounds implements Operation.GetBounds for ScaleOp.
-func (op *ScaleOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for ScaleOp.
+func (op *ScaleOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Transform operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for ScaleOp.
-func (op *ScaleOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for ScaleOp.
+func (op *ScaleOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
@@ -114,13 +114,13 @@ func (op *RotateOp) Invoke(receiver OpReceiver) {
 	receiver.Rotate(op.Radians)
 }
 
-// GetBounds implements Operation.GetBounds for RotateOp.
-func (op *RotateOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for RotateOp.
+func (op *RotateOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Transform operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for RotateOp.
-func (op *RotateOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for RotateOp.
+func (op *RotateOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
@@ -134,13 +134,13 @@ func (op *SkewOp) Invoke(receiver OpReceiver) {
 	receiver.Skew(op.SX, op.SY)
 }
 
-// GetBounds implements Operation.GetBounds for SkewOp.
-func (op *SkewOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for SkewOp.
+func (op *SkewOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Transform operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for SkewOp.
-func (op *SkewOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for SkewOp.
+func (op *SkewOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
@@ -154,13 +154,13 @@ func (op *Transform2DAffineOp) Invoke(receiver OpReceiver) {
 	receiver.Transform2DAffine(op.MXX, op.MXY, op.MYX, op.MYY, op.MXT, op.MYT)
 }
 
-// GetBounds implements Operation.GetBounds for Transform2DAffineOp.
-func (op *Transform2DAffineOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for Transform2DAffineOp.
+func (op *Transform2DAffineOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Transform operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for Transform2DAffineOp.
-func (op *Transform2DAffineOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for Transform2DAffineOp.
+func (op *Transform2DAffineOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
@@ -174,13 +174,13 @@ func (op *TransformFullPerspectiveOp) Invoke(receiver OpReceiver) {
 	receiver.TransformFullPerspective(op.Matrix)
 }
 
-// GetBounds implements Operation.GetBounds for TransformFullPerspectiveOp.
-func (op *TransformFullPerspectiveOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for TransformFullPerspectiveOp.
+func (op *TransformFullPerspectiveOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Transform operations don't have bounds
 }
 
-// GetFlags implements Operation.GetFlags for TransformFullPerspectiveOp.
-func (op *TransformFullPerspectiveOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for TransformFullPerspectiveOp.
+func (op *TransformFullPerspectiveOp) Flags() AttributeFlags {
 	return AttrFlagNone
 }
 
@@ -196,13 +196,13 @@ func (op *ClipRectOp) Invoke(receiver OpReceiver) {
 	receiver.ClipRect(op.Rect, op.ClipOp, op.IsAntiAliased)
 }
 
-// GetBounds implements Operation.GetBounds for ClipRectOp.
-func (op *ClipRectOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for ClipRectOp.
+func (op *ClipRectOp) Bounds() *geom.Rect[Scalar] {
 	return &op.Rect
 }
 
-// GetFlags implements Operation.GetFlags for ClipRectOp.
-func (op *ClipRectOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for ClipRectOp.
+func (op *ClipRectOp) Flags() AttributeFlags {
 	flags := AttrFlagNone
 	if op.IsAntiAliased {
 		flags = flags.WithAttribute(AttrFlagIsAntiAlias)
@@ -222,14 +222,14 @@ func (op *ClipRRectOp) Invoke(receiver OpReceiver) {
 	receiver.ClipRRect(op.RRect, op.ClipOp, op.IsAntiAliased)
 }
 
-// GetBounds implements Operation.GetBounds for ClipRRectOp.
-func (op *ClipRRectOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for ClipRRectOp.
+func (op *ClipRRectOp) Bounds() *geom.Rect[Scalar] {
 	bounds := op.RRect.Bounds()
 	return &bounds
 }
 
-// GetFlags implements Operation.GetFlags for ClipRRectOp.
-func (op *ClipRRectOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for ClipRRectOp.
+func (op *ClipRRectOp) Flags() AttributeFlags {
 	flags := AttrFlagNone
 	if op.IsAntiAliased {
 		flags = flags.WithAttribute(AttrFlagIsAntiAlias)
@@ -249,14 +249,14 @@ func (op *ClipPathOp) Invoke(receiver OpReceiver) {
 	receiver.ClipPath(op.Path, op.ClipOp, op.IsAntiAliased)
 }
 
-// GetBounds implements Operation.GetBounds for ClipPathOp.
-func (op *ClipPathOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for ClipPathOp.
+func (op *ClipPathOp) Bounds() *geom.Rect[Scalar] {
 	// TODO: Implement path bounds calculation
 	return nil
 }
 
-// GetFlags implements Operation.GetFlags for ClipPathOp.
-func (op *ClipPathOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for ClipPathOp.
+func (op *ClipPathOp) Flags() AttributeFlags {
 	flags := AttrFlagNone
 	if op.IsAntiAliased {
 		flags = flags.WithAttribute(AttrFlagIsAntiAlias)
@@ -274,13 +274,13 @@ func (op *DrawPaintOp) Invoke(receiver OpReceiver) {
 	receiver.DrawPaint(op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawPaintOp.
-func (op *DrawPaintOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawPaintOp.
+func (op *DrawPaintOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Paint operations cover the entire canvas
 }
 
-// GetFlags implements Operation.GetFlags for DrawPaintOp.
-func (op *DrawPaintOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawPaintOp.
+func (op *DrawPaintOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -295,13 +295,13 @@ func (op *DrawColorOp) Invoke(receiver OpReceiver) {
 	receiver.DrawColor(op.Color, op.BlendMode)
 }
 
-// GetBounds implements Operation.GetBounds for DrawColorOp.
-func (op *DrawColorOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawColorOp.
+func (op *DrawColorOp) Bounds() *geom.Rect[Scalar] {
 	return nil // Color operations cover the entire canvas
 }
 
-// GetFlags implements Operation.GetFlags for DrawColorOp.
-func (op *DrawColorOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawColorOp.
+func (op *DrawColorOp) Flags() AttributeFlags {
 	return AttrFlagHasColor
 }
 
@@ -316,8 +316,8 @@ func (op *DrawLineOp) Invoke(receiver OpReceiver) {
 	receiver.DrawLine(op.P0, op.P1, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawLineOp.
-func (op *DrawLineOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawLineOp.
+func (op *DrawLineOp) Bounds() *geom.Rect[Scalar] {
 	minX := op.P0.X
 	if op.P1.X < minX {
 		minX = op.P1.X
@@ -339,8 +339,8 @@ func (op *DrawLineOp) GetBounds() *geom.Rect[Scalar] {
 	return &bounds
 }
 
-// GetFlags implements Operation.GetFlags for DrawLineOp.
-func (op *DrawLineOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawLineOp.
+func (op *DrawLineOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -355,34 +355,34 @@ func (op *DrawRectOp) Invoke(receiver OpReceiver) {
 	receiver.DrawRect(op.Rect, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawRectOp.
-func (op *DrawRectOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawRectOp.
+func (op *DrawRectOp) Bounds() *geom.Rect[Scalar] {
 	return &op.Rect
 }
 
-// GetFlags implements Operation.GetFlags for DrawRectOp.
-func (op *DrawRectOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawRectOp.
+func (op *DrawRectOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
 // DrawOvalOp represents a draw oval operation.
 type DrawOvalOp struct {
-	Bounds geom.Rect[Scalar]
-	Paint  Paint
+	Rect  geom.Rect[Scalar]
+	Paint Paint
 }
 
 // Invoke implements Operation.Invoke for DrawOvalOp.
 func (op *DrawOvalOp) Invoke(receiver OpReceiver) {
-	receiver.DrawOval(op.Bounds, op.Paint)
+	receiver.DrawOval(op.Rect, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawOvalOp.
-func (op *DrawOvalOp) GetBounds() *geom.Rect[Scalar] {
-	return &op.Bounds
+// Bounds implements Operation.Bounds for DrawOvalOp.
+func (op *DrawOvalOp) Bounds() *geom.Rect[Scalar] {
+	return &op.Rect
 }
 
-// GetFlags implements Operation.GetFlags for DrawOvalOp.
-func (op *DrawOvalOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawOvalOp.
+func (op *DrawOvalOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -398,8 +398,8 @@ func (op *DrawCircleOp) Invoke(receiver OpReceiver) {
 	receiver.DrawCircle(op.Center, op.Radius, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawCircleOp.
-func (op *DrawCircleOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawCircleOp.
+func (op *DrawCircleOp) Bounds() *geom.Rect[Scalar] {
 	bounds := geom.NewRect(
 		op.Center.X-op.Radius, op.Center.Y-op.Radius,
 		op.Center.X+op.Radius, op.Center.Y+op.Radius,
@@ -407,8 +407,8 @@ func (op *DrawCircleOp) GetBounds() *geom.Rect[Scalar] {
 	return &bounds
 }
 
-// GetFlags implements Operation.GetFlags for DrawCircleOp.
-func (op *DrawCircleOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawCircleOp.
+func (op *DrawCircleOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -423,14 +423,14 @@ func (op *DrawRRectOp) Invoke(receiver OpReceiver) {
 	receiver.DrawRRect(op.RRect, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawRRectOp.
-func (op *DrawRRectOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawRRectOp.
+func (op *DrawRRectOp) Bounds() *geom.Rect[Scalar] {
 	bounds := op.RRect.Bounds()
 	return &bounds
 }
 
-// GetFlags implements Operation.GetFlags for DrawRRectOp.
-func (op *DrawRRectOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawRRectOp.
+func (op *DrawRRectOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -446,14 +446,14 @@ func (op *DrawDRRectOp) Invoke(receiver OpReceiver) {
 	receiver.DrawDRRect(op.Outer, op.Inner, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawDRRectOp.
-func (op *DrawDRRectOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawDRRectOp.
+func (op *DrawDRRectOp) Bounds() *geom.Rect[Scalar] {
 	bounds := op.Outer.Bounds()
 	return &bounds
 }
 
-// GetFlags implements Operation.GetFlags for DrawDRRectOp.
-func (op *DrawDRRectOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawDRRectOp.
+func (op *DrawDRRectOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -468,20 +468,20 @@ func (op *DrawPathOp) Invoke(receiver OpReceiver) {
 	receiver.DrawPath(op.Path, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawPathOp.
-func (op *DrawPathOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawPathOp.
+func (op *DrawPathOp) Bounds() *geom.Rect[Scalar] {
 	// TODO: Implement path bounds calculation
 	return nil
 }
 
-// GetFlags implements Operation.GetFlags for DrawPathOp.
-func (op *DrawPathOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawPathOp.
+func (op *DrawPathOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
 // DrawArcOp represents a draw arc operation.
 type DrawArcOp struct {
-	Bounds    geom.Rect[Scalar]
+	Rect      geom.Rect[Scalar]
 	Start     Scalar
 	Sweep     Scalar
 	UseCenter bool
@@ -490,16 +490,16 @@ type DrawArcOp struct {
 
 // Invoke implements Operation.Invoke for DrawArcOp.
 func (op *DrawArcOp) Invoke(receiver OpReceiver) {
-	receiver.DrawArc(op.Bounds, op.Start, op.Sweep, op.UseCenter, op.Paint)
+	receiver.DrawArc(op.Rect, op.Start, op.Sweep, op.UseCenter, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawArcOp.
-func (op *DrawArcOp) GetBounds() *geom.Rect[Scalar] {
-	return &op.Bounds
+// Bounds implements Operation.Bounds for DrawArcOp.
+func (op *DrawArcOp) Bounds() *geom.Rect[Scalar] {
+	return &op.Rect
 }
 
-// GetFlags implements Operation.GetFlags for DrawArcOp.
-func (op *DrawArcOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawArcOp.
+func (op *DrawArcOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -515,8 +515,8 @@ func (op *DrawPointsOp) Invoke(receiver OpReceiver) {
 	receiver.DrawPoints(op.Mode, op.Points, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawPointsOp.
-func (op *DrawPointsOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawPointsOp.
+func (op *DrawPointsOp) Bounds() *geom.Rect[Scalar] {
 	if len(op.Points) == 0 {
 		return nil
 	}
@@ -543,8 +543,8 @@ func (op *DrawPointsOp) GetBounds() *geom.Rect[Scalar] {
 	return &bounds
 }
 
-// GetFlags implements Operation.GetFlags for DrawPointsOp.
-func (op *DrawPointsOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawPointsOp.
+func (op *DrawPointsOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }
 
@@ -560,15 +560,15 @@ func (op *DrawVerticesOp) Invoke(receiver OpReceiver) {
 	receiver.DrawVertices(op.Vertices, op.BlendMode, op.Paint)
 }
 
-// GetBounds implements Operation.GetBounds for DrawVerticesOp.
-func (op *DrawVerticesOp) GetBounds() *geom.Rect[Scalar] {
+// Bounds implements Operation.Bounds for DrawVerticesOp.
+func (op *DrawVerticesOp) Bounds() *geom.Rect[Scalar] {
 	if op.Vertices != nil {
-		return op.Vertices.GetBounds()
+		return op.Vertices.Bounds()
 	}
 	return nil
 }
 
-// GetFlags implements Operation.GetFlags for DrawVerticesOp.
-func (op *DrawVerticesOp) GetFlags() AttributeFlags {
+// Flags implements Operation.Flags for DrawVerticesOp.
+func (op *DrawVerticesOp) Flags() AttributeFlags {
 	return GetAttributeFlags(op.Paint)
 }

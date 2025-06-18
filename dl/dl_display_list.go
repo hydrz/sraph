@@ -30,10 +30,10 @@ type DisplayList struct {
 type Operation interface {
 	// Invoke executes this operation on the given receiver
 	Invoke(receiver OpReceiver)
-	// GetBounds returns the bounds affected by this operation, if available
-	GetBounds() *geom.Rect[Scalar]
-	// GetFlags returns the attribute flags for this operation
-	GetFlags() AttributeFlags
+	// Bounds returns the bounds affected by this operation, if available
+	Bounds() *geom.Rect[Scalar]
+	// Flags returns the attribute flags for this operation
+	Flags() AttributeFlags
 }
 
 // NewDisplayList creates a new DisplayList with the given operations and bounds.
@@ -48,7 +48,7 @@ func NewDisplayList(operations []Operation, bounds geom.Rect[Scalar]) *DisplayLi
 
 	// Analyze operations to set flags
 	for _, op := range operations {
-		flags := op.GetFlags()
+		flags := op.Flags()
 		if flags.HasAttribute(AttrFlagIsAntiAlias) {
 			dl.hasAntiAliasing = true
 		}
@@ -66,13 +66,24 @@ func NewDisplayList(operations []Operation, bounds geom.Rect[Scalar]) *DisplayLi
 	return dl
 }
 
-// GetBounds returns the bounding rectangle of all operations in the display list.
-func (dl *DisplayList) GetBounds() geom.Rect[Scalar] {
+// Bounds returns the bounding rectangle of all operations in the display list.
+func (dl *DisplayList) Bounds() geom.Rect[Scalar] {
 	return dl.bounds
 }
 
-// GetOpCount returns the total number of operations in the display list.
-func (dl *DisplayList) GetOpCount() int {
+// Operations returns the operations in the display list.
+func (dl *DisplayList) Operations() []Operation {
+	return dl.operations
+}
+
+// HasNonTrivialBlendMode returns true if any operations use non-trivial blend modes.
+func (dl *DisplayList) HasNonTrivialBlendMode() bool {
+	// TODO: Implement proper blend mode checking
+	return false
+}
+
+// OpCount returns the total number of operations in the display list.
+func (dl *DisplayList) OpCount() int {
 	return dl.totalOpCount
 }
 
@@ -114,7 +125,7 @@ func (dl *DisplayList) Dispatch(receiver OpReceiver) {
 // This can improve performance by skipping operations outside the visible area.
 func (dl *DisplayList) DispatchWithCulling(receiver OpReceiver, cullRect geom.Rect[Scalar]) {
 	for _, op := range dl.operations {
-		if bounds := op.GetBounds(); bounds != nil {
+		if bounds := op.Bounds(); bounds != nil {
 			if !bounds.Intersects(cullRect) {
 				continue
 			}

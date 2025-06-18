@@ -185,7 +185,7 @@ func TestEffects_ImageFilters(t *testing.T) {
 	filter := NewBlurImageFilter(10, 10, TileModeClamp)
 
 	inputBounds := geom.NewRect[Scalar](0, 0, 100, 100)
-	outputBounds := filter.GetBounds(inputBounds)
+	outputBounds := filter.Bounds(inputBounds)
 
 	// Blur should expand bounds
 	if outputBounds.Left >= inputBounds.Left {
@@ -200,7 +200,7 @@ func TestEffects_MaskFilters(t *testing.T) {
 	filter := NewBlurMaskFilter(5, BlurStyleNormal)
 
 	inputBounds := geom.NewRect[Scalar](0, 0, 50, 50)
-	outputBounds := filter.GetBounds(inputBounds)
+	outputBounds := filter.Bounds(inputBounds)
 
 	// Mask blur should expand bounds
 	if outputBounds.Left >= inputBounds.Left {
@@ -305,7 +305,7 @@ func TestLayers_OffscreenLayer(t *testing.T) {
 		t.Error("Layer should be opaque as specified")
 	}
 
-	canvas := layer.GetCanvas()
+	canvas := layer.Canvas()
 	if &canvas == nil {
 		t.Error("Layer should provide a valid canvas")
 	}

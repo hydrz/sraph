@@ -24,12 +24,12 @@ type PathBuilder struct {
 
 // PathSegment represents a single segment in a path.
 type PathSegment interface {
-	// GetType returns the type of this segment
-	GetType() PathSegmentType
-	// GetEndPoint returns the end point of this segment
-	GetEndPoint() geom.Point[Scalar]
-	// GetBounds returns the bounding rectangle of this segment
-	GetBounds() geom.Rect[Scalar]
+	// Type returns the type of this segment
+	Type() PathSegmentType
+	// EndPoint returns the end point of this segment
+	EndPoint() geom.Point[Scalar]
+	// Bounds returns the bounding rectangle of this segment
+	Bounds() geom.Rect[Scalar]
 }
 
 // PathSegmentType defines the different types of path segments.
@@ -53,18 +53,18 @@ type MoveToSegment struct {
 	Point geom.Point[Scalar]
 }
 
-// GetType implements PathSegment.GetType for MoveToSegment.
-func (s *MoveToSegment) GetType() PathSegmentType {
+// Type implements PathSegment.Type for MoveToSegment.
+func (s *MoveToSegment) Type() PathSegmentType {
 	return PathSegmentTypeMoveTo
 }
 
-// GetEndPoint implements PathSegment.GetEndPoint for MoveToSegment.
-func (s *MoveToSegment) GetEndPoint() geom.Point[Scalar] {
+// EndPoint implements PathSegment.EndPoint for MoveToSegment.
+func (s *MoveToSegment) EndPoint() geom.Point[Scalar] {
 	return s.Point
 }
 
-// GetBounds implements PathSegment.GetBounds for MoveToSegment.
-func (s *MoveToSegment) GetBounds() geom.Rect[Scalar] {
+// Bounds implements PathSegment.Bounds for MoveToSegment.
+func (s *MoveToSegment) Bounds() geom.Rect[Scalar] {
 	return geom.NewRect(s.Point.X, s.Point.Y, s.Point.X, s.Point.Y)
 }
 
@@ -73,18 +73,18 @@ type LineToSegment struct {
 	Point geom.Point[Scalar]
 }
 
-// GetType implements PathSegment.GetType for LineToSegment.
-func (s *LineToSegment) GetType() PathSegmentType {
+// Type implements PathSegment.Type for LineToSegment.
+func (s *LineToSegment) Type() PathSegmentType {
 	return PathSegmentTypeLineTo
 }
 
-// GetEndPoint implements PathSegment.GetEndPoint for LineToSegment.
-func (s *LineToSegment) GetEndPoint() geom.Point[Scalar] {
+// EndPoint implements PathSegment.EndPoint for LineToSegment.
+func (s *LineToSegment) EndPoint() geom.Point[Scalar] {
 	return s.Point
 }
 
-// GetBounds implements PathSegment.GetBounds for LineToSegment.
-func (s *LineToSegment) GetBounds() geom.Rect[Scalar] {
+// Bounds implements PathSegment.Bounds for LineToSegment.
+func (s *LineToSegment) Bounds() geom.Rect[Scalar] {
 	return geom.NewRect(s.Point.X, s.Point.Y, s.Point.X, s.Point.Y)
 }
 
@@ -94,18 +94,18 @@ type QuadToSegment struct {
 	Point   geom.Point[Scalar]
 }
 
-// GetType implements PathSegment.GetType for QuadToSegment.
-func (s *QuadToSegment) GetType() PathSegmentType {
+// Type implements PathSegment.Type for QuadToSegment.
+func (s *QuadToSegment) Type() PathSegmentType {
 	return PathSegmentTypeQuadTo
 }
 
-// GetEndPoint implements PathSegment.GetEndPoint for QuadToSegment.
-func (s *QuadToSegment) GetEndPoint() geom.Point[Scalar] {
+// EndPoint implements PathSegment.EndPoint for QuadToSegment.
+func (s *QuadToSegment) EndPoint() geom.Point[Scalar] {
 	return s.Point
 }
 
-// GetBounds implements PathSegment.GetBounds for QuadToSegment.
-func (s *QuadToSegment) GetBounds() geom.Rect[Scalar] {
+// Bounds implements PathSegment.Bounds for QuadToSegment.
+func (s *QuadToSegment) Bounds() geom.Rect[Scalar] {
 	// For simplicity, return bounds of control points
 	// A more accurate implementation would calculate the actual curve bounds
 	minX := s.Control.X
@@ -134,18 +134,18 @@ type CubicToSegment struct {
 	Point    geom.Point[Scalar]
 }
 
-// GetType implements PathSegment.GetType for CubicToSegment.
-func (s *CubicToSegment) GetType() PathSegmentType {
+// Type implements PathSegment.Type for CubicToSegment.
+func (s *CubicToSegment) Type() PathSegmentType {
 	return PathSegmentTypeCubicTo
 }
 
-// GetEndPoint implements PathSegment.GetEndPoint for CubicToSegment.
-func (s *CubicToSegment) GetEndPoint() geom.Point[Scalar] {
+// EndPoint implements PathSegment.EndPoint for CubicToSegment.
+func (s *CubicToSegment) EndPoint() geom.Point[Scalar] {
 	return s.Point
 }
 
-// GetBounds implements PathSegment.GetBounds for CubicToSegment.
-func (s *CubicToSegment) GetBounds() geom.Rect[Scalar] {
+// Bounds implements PathSegment.Bounds for CubicToSegment.
+func (s *CubicToSegment) Bounds() geom.Rect[Scalar] {
 	// For simplicity, return bounds of control points
 	// A more accurate implementation would calculate the actual curve bounds
 	minX := s.Control1.X
@@ -186,19 +186,19 @@ func (s *CubicToSegment) GetBounds() geom.Rect[Scalar] {
 // CloseSegment represents a close path operation.
 type CloseSegment struct{}
 
-// GetType implements PathSegment.GetType for CloseSegment.
-func (s *CloseSegment) GetType() PathSegmentType {
+// Type implements PathSegment.Type for CloseSegment.
+func (s *CloseSegment) Type() PathSegmentType {
 	return PathSegmentTypeClose
 }
 
-// GetEndPoint implements PathSegment.GetEndPoint for CloseSegment.
-func (s *CloseSegment) GetEndPoint() geom.Point[Scalar] {
+// EndPoint implements PathSegment.EndPoint for CloseSegment.
+func (s *CloseSegment) EndPoint() geom.Point[Scalar] {
 	// Close segments don't have a meaningful end point
 	return geom.Point[Scalar]{}
 }
 
-// GetBounds implements PathSegment.GetBounds for CloseSegment.
-func (s *CloseSegment) GetBounds() geom.Rect[Scalar] {
+// Bounds implements PathSegment.Bounds for CloseSegment.
+func (s *CloseSegment) Bounds() geom.Rect[Scalar] {
 	// Close segments don't contribute to bounds
 	return geom.Rect[Scalar]{}
 }
@@ -239,7 +239,7 @@ func (pb *PathBuilder) QuadTo(cx, cy, x, y Scalar) *PathBuilder {
 	pb.segments = append(pb.segments, segment)
 	pb.currentPoint = point
 	pb.hasCurrentPoint = true
-	pb.updateBounds(segment.GetBounds())
+	pb.updateBounds(segment.Bounds())
 	return pb
 }
 
@@ -252,7 +252,7 @@ func (pb *PathBuilder) CubicTo(c1x, c1y, c2x, c2y, x, y Scalar) *PathBuilder {
 	pb.segments = append(pb.segments, segment)
 	pb.currentPoint = point
 	pb.hasCurrentPoint = true
-	pb.updateBounds(segment.GetBounds())
+	pb.updateBounds(segment.Bounds())
 	return pb
 }
 
@@ -539,8 +539,8 @@ func sqrt(x float64) float64 {
 	return x // Placeholder
 }
 
-// GetBounds returns the bounding rectangle of the path.
-func (pb *PathBuilder) GetBounds() geom.Rect[Scalar] {
+// Bounds returns the bounding rectangle of the path.
+func (pb *PathBuilder) Bounds() geom.Rect[Scalar] {
 	return pb.bounds
 }
 
@@ -593,8 +593,8 @@ type Path struct {
 	bounds   geom.Rect[Scalar]
 }
 
-// GetBounds returns the bounding rectangle of the path.
-func (p *Path) GetBounds() geom.Rect[Scalar] {
+// Bounds returns the bounding rectangle of the path.
+func (p *Path) Bounds() geom.Rect[Scalar] {
 	return p.bounds
 }
 

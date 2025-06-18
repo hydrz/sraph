@@ -64,18 +64,18 @@ func (c *Canvas) SetDevicePixelRatio(dpr Scalar) {
 	c.devicePixelRatio = dpr
 }
 
-// GetDevicePixelRatio returns the current device pixel ratio.
-func (c *Canvas) GetDevicePixelRatio() Scalar {
+// DevicePixelRatio returns the current device pixel ratio.
+func (c *Canvas) DevicePixelRatio() Scalar {
 	return c.devicePixelRatio
 }
 
-// GetBounds returns the canvas bounds.
-func (c *Canvas) GetBounds() geom.Rect[Scalar] {
+// Bounds returns the canvas bounds.
+func (c *Canvas) Bounds() geom.Rect[Scalar] {
 	return c.bounds
 }
 
-// GetCurrentTransform returns the current transformation matrix.
-func (c *Canvas) GetCurrentTransform() geom.Matrix[Scalar] {
+// CurrentTransform returns the current transformation matrix.
+func (c *Canvas) CurrentTransform() geom.Matrix[Scalar] {
 	if len(c.transformStack) == 0 {
 		return geom.NewMatrix[Scalar]()
 	}
@@ -93,7 +93,7 @@ func (c *Canvas) Save() {
 	c.saveStack = append(c.saveStack, state)
 
 	// Duplicate current transform for the new save level
-	current := c.GetCurrentTransform()
+	current := c.CurrentTransform()
 	c.transformStack = append(c.transformStack, current)
 }
 
@@ -128,14 +128,6 @@ func (c *Canvas) SaveLayer(bounds *geom.Rect[Scalar], paint *Paint) {
 	// 1. Creating an offscreen render target
 	// 2. Setting up the layer bounds
 	// 3. Applying paint effects to the layer
-}
-
-// getCurrentTransform retrieves the current transformation matrix from the stack.
-func (c *Canvas) getCurrentTransform() geom.Matrix[Scalar] {
-	if len(c.transformStack) == 0 {
-		return geom.NewMatrix[Scalar]()
-	}
-	return c.transformStack[len(c.transformStack)-1]
 }
 
 // Translate implements OpReceiver.Translate.
@@ -401,16 +393,16 @@ func (c *Canvas) IsRecording() bool {
 	return false // Canvas renders immediately, doesn't record
 }
 
-// GetLocalClipBounds returns the current local clip bounds.
-func (c *Canvas) GetLocalClipBounds() geom.Rect[Scalar] {
+// LocalClipBounds returns the current local clip bounds.
+func (c *Canvas) LocalClipBounds() geom.Rect[Scalar] {
 	// TODO: Implement local clip bounds calculation
 	return c.bounds
 }
 
-// GetDeviceClipBounds returns the current device clip bounds.
-func (c *Canvas) GetDeviceClipBounds() geom.Rect[Scalar] {
+// DeviceClipBounds returns the current device clip bounds.
+func (c *Canvas) DeviceClipBounds() geom.Rect[Scalar] {
 	// TODO: Implement device clip bounds calculation
-	transform := c.getCurrentTransform()
+	transform := c.CurrentTransform()
 	return c.bounds.TransformBounds(transform)
 }
 

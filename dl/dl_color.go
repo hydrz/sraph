@@ -112,6 +112,8 @@ var (
 	ColorBlack = NewColor(0, 0, 0, 1)
 	// ColorWhite represents white color.
 	ColorWhite = NewColor(1, 1, 1, 1)
+	// ColorGray represents gray color.
+	ColorGray = NewColor(0.5, 0.5, 0.5, 1)
 	// ColorRed represents red color.
 	ColorRed = NewColor(1, 0, 0, 1)
 	// ColorGreen represents green color.

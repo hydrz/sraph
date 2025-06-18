@@ -36,23 +36,15 @@ func ComplexRenderingExample() {
 	path := pathBuilder.Build()
 
 	// Create paint with gradient
-	gradient := NewLinearGradient(
-		geom.Point[Scalar]{X: 0, Y: 0},
-		geom.Point[Scalar]{X: 100, Y: 100},
-		[]Color{ColorRed, ColorYellow, ColorBlue},
-		[]float32{0.0, 0.5, 1.0},
-		TileModeClamp,
-	)
-
 	paint := NewPaint().
 		SetStyle(PaintStyleFill).
 		SetAntiAlias(true)
 	// TODO: Set gradient as color source
+	// gradient := NewLinearGradient(...)
 	// paint = paint.SetColorSource(gradient)
 
-	// Add blur effect
-	blurFilter := NewBlurImageFilter(5.0, 5.0, TileModeClamp)
-	// TODO: Set image filter on paint
+	// TODO: Add blur effect
+	// blurFilter := NewBlurImageFilter(5.0, 5.0, TileModeClamp)
 	// paint = paint.SetImageFilter(blurFilter)
 
 	// Draw the complex path

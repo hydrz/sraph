@@ -247,8 +247,8 @@ func (v *Vertices) String() string {
 		v.mode, len(v.positions), v.HasTextureCoords(), v.HasColors(), len(v.indices))
 }
 
-// GetBounds returns the bounding rectangle of all vertex positions.
-func (v *Vertices) GetBounds() *geom.Rect[Scalar] {
+// Bounds returns the bounding rectangle of all vertex positions.
+func (v *Vertices) Bounds() *geom.Rect[Scalar] {
 	if len(v.positions) == 0 {
 		return nil
 	}

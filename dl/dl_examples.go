@@ -36,8 +36,8 @@ func ExampleUsage() {
 	// Build the display list
 	displayList := builder.Build()
 
-	fmt.Printf("Created display list with %d operations\n", displayList.GetOpCount())
-	fmt.Printf("Bounds: %v\n", displayList.GetBounds())
+	fmt.Printf("Created display list with %d operations\n", displayList.OpCount())
+	fmt.Printf("Bounds: %v\n", displayList.Bounds())
 	fmt.Printf("Has anti-aliasing: %v\n", displayList.HasAntiAliasing())
 }
 
@@ -61,7 +61,7 @@ func ExamplePathBuilding() {
 	path := pb.Build()
 
 	fmt.Printf("Created path with %d segments\n", len(path.GetSegments()))
-	fmt.Printf("Path bounds: %v\n", path.GetBounds())
+	fmt.Printf("Path bounds: %v\n", path.Bounds())
 
 	// Use the path in a display list
 	builder := NewDisplayListBuilder()
@@ -72,7 +72,7 @@ func ExamplePathBuilding() {
 	// builder.DrawPath(path, paint)
 
 	dl := builder.Build()
-	fmt.Printf("Display list with path has %d operations\n", dl.GetOpCount())
+	fmt.Printf("Display list with path has %d operations\n", dl.OpCount())
 }
 
 // ExampleVertexRendering demonstrates vertex-based rendering.
@@ -104,7 +104,7 @@ func ExampleVertexRendering() {
 	builder.DrawVertices(vertices, BlendModeSrcOver, paint)
 
 	dl := builder.Build()
-	fmt.Printf("Created display list with vertices: %d operations\n", dl.GetOpCount())
+	fmt.Printf("Created display list with vertices: %d operations\n", dl.OpCount())
 }
 
 // ExampleTransformations demonstrates various transformation operations.
@@ -140,8 +140,8 @@ func ExampleTransformations() {
 	builder.Restore()
 
 	dl := builder.Build()
-	fmt.Printf("Created transformation example with %d operations\n", dl.GetOpCount())
-	fmt.Printf("Bounds: %v\n", dl.GetBounds())
+	fmt.Printf("Created transformation example with %d operations\n", dl.OpCount())
+	fmt.Printf("Bounds: %v\n", dl.Bounds())
 }
 
 // ExampleClipping demonstrates clipping operations.
@@ -160,7 +160,7 @@ func ExampleClipping() {
 	builder.DrawRect(largeRect, fillPaint)
 
 	dl := builder.Build()
-	fmt.Printf("Created clipping example with %d operations\n", dl.GetOpCount())
+	fmt.Printf("Created clipping example with %d operations\n", dl.OpCount())
 }
 
 // ExampleComplexScene demonstrates a more complex scene composition.
@@ -219,8 +219,8 @@ func ExampleComplexScene() {
 	builder.DrawRect(doorRect, doorPaint)
 
 	dl := builder.Build()
-	fmt.Printf("Created complex scene with %d operations\n", dl.GetOpCount())
-	fmt.Printf("Scene bounds: %v\n", dl.GetBounds())
+	fmt.Printf("Created complex scene with %d operations\n", dl.OpCount())
+	fmt.Printf("Scene bounds: %v\n", dl.Bounds())
 	fmt.Printf("Has anti-aliasing: %v\n", dl.HasAntiAliasing())
 }
 
@@ -330,8 +330,8 @@ func (r *MockRenderer) DeleteTexture(id TextureID) {
 	fmt.Printf("Mock: Delete texture %d\n", id)
 }
 
-// GetMaxTextureSize implements Renderer.GetMaxTextureSize.
-func (r *MockRenderer) GetMaxTextureSize() int {
+// MaxTextureSize implements Renderer.MaxTextureSize.
+func (r *MockRenderer) MaxTextureSize() int {
 	return 4096
 }
 
