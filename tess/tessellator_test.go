@@ -97,13 +97,13 @@ func TestPathTessellation(t *testing.T) {
 func TestStorageCounting(t *testing.T) {
 	rect := geom.NewRect[geom.F32](0, 0, 100, 100)
 	pathSource := geom.NewRectPathSource(rect)
-	
+
 	pointCount, contourCount := CountFillStorage(pathSource, 1.0)
-	
+
 	if pointCount <= 0 {
 		t.Error("Expected positive point count")
 	}
-	
+
 	if contourCount <= 0 {
 		t.Error("Expected positive contour count")
 	}

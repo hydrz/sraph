@@ -29,14 +29,14 @@ func main() {
 
 func basicCircleExample() {
 	fmt.Println("\n1. Basic Filled Circle:")
-	
+
 	tessellator := tess.NewTessellator[geom.F32]()
 	center := geom.Pt[geom.F32](100, 100)
 	radius := geom.F32(50)
 	pixelRadius := geom.F32(50)
 
 	circleGen := tessellator.FilledCircle(center, radius, pixelRadius)
-	
+
 	fmt.Printf("  Center: %v\n", center)
 	fmt.Printf("  Radius: %v\n", radius)
 	fmt.Printf("  Vertex count: %d\n", circleGen.GetVertexCount())
@@ -58,7 +58,7 @@ func basicCircleExample() {
 
 func strokedCircleExample() {
 	fmt.Println("\n2. Stroked Circle:")
-	
+
 	tessellator := tess.NewTessellator[geom.F32]()
 	center := geom.Pt[geom.F32](100, 100)
 	radius := geom.F32(50)
@@ -66,7 +66,7 @@ func strokedCircleExample() {
 	pixelRadius := geom.F32(50)
 
 	circleGen := tessellator.StrokedCircle(center, radius, halfWidth, pixelRadius)
-	
+
 	fmt.Printf("  Center: %v\n", center)
 	fmt.Printf("  Radius: %v\n", radius)
 	fmt.Printf("  Stroke width: %v\n", halfWidth*2)
@@ -86,16 +86,16 @@ func strokedCircleExample() {
 
 func ellipseExample() {
 	fmt.Println("\n3. Filled Ellipse:")
-	
+
 	tessellator := tess.NewTessellator[geom.F32]()
 	bounds := geom.NewRect[geom.F32](50, 50, 150, 100) // 100x50 ellipse
 	pixelRadius := geom.F32(50)
 
 	ellipseGen := tessellator.FilledEllipse(bounds, pixelRadius)
-	
+
 	fmt.Printf("  Bounds: %v\n", bounds)
 	fmt.Printf("  Center: %v\n", bounds.Center())
-	fmt.Printf("  Radii: %v\n", geom.Size[geom.F32]{Width: bounds.Width()/2, Height: bounds.Height()/2})
+	fmt.Printf("  Radii: %v\n", geom.Size[geom.F32]{Width: bounds.Width() / 2, Height: bounds.Height() / 2})
 	fmt.Printf("  Vertex count: %d\n", ellipseGen.GetVertexCount())
 
 	var vertices []geom.Point[geom.F32]
@@ -108,11 +108,11 @@ func ellipseExample() {
 
 func pathTessellationExample() {
 	fmt.Println("\n4. Path Tessellation:")
-	
+
 	// Create a rectangle path
 	rect := geom.NewRect[geom.F32](0, 0, 100, 50)
 	pathSource := geom.NewRectPathSource(rect)
-	
+
 	fmt.Printf("  Rectangle: %v\n", rect)
 	fmt.Printf("  Fill type: %d\n", pathSource.FillType())
 	fmt.Printf("  Is convex: %t\n", pathSource.IsConvex())
@@ -125,48 +125,48 @@ func pathTessellationExample() {
 	segments := make([]string, 0)
 	receiver := &segmentCollector[geom.F32]{segments: &segments}
 	tess.PathToFilledSegments(pathSource, receiver)
-	
+
 	fmt.Printf("  Generated segments: %v\n", segments)
 
 	// Convert to vertices
 	vertices := make([]geom.Point[geom.F32], 0)
 	writer := &vertexCollector[geom.F32]{vertices: &vertices}
 	tess.PathToFilledVertices(pathSource, writer, 1.0)
-	
+
 	fmt.Printf("  Generated %d vertices\n", len(vertices))
 }
 
 func libtessExample() {
 	fmt.Println("\n5. LibTess Tessellation:")
-	
+
 	tessellator := tess.NewTessellatorLibtess[geom.F32]()
-	
+
 	// Create a simple triangle path (more interesting than rectangle)
 	rect := geom.NewRect[geom.F32](0, 0, 100, 100)
 	pathSource := geom.NewRectPathSource(rect)
-	
+
 	fmt.Printf("  Path bounds: %v\n", pathSource.Bounds())
-	
+
 	// Tessellate
 	result := tessellator.Tessellate(pathSource, 1.0, func(vertices []geom.F32, verticesCount int, indices []uint16, indicesCount int) bool {
 		fmt.Printf("  Tessellation result:\n")
 		fmt.Printf("    Vertex count: %d\n", verticesCount)
 		fmt.Printf("    Index count: %d\n", indicesCount)
-		
+
 		// Print first few vertices
 		if verticesCount >= 4 {
 			fmt.Printf("    First vertex: (%.1f, %.1f)\n", vertices[0], vertices[1])
 			fmt.Printf("    Second vertex: (%.1f, %.1f)\n", vertices[2], vertices[3])
 		}
-		
+
 		// Print first few indices
 		if indicesCount >= 3 {
 			fmt.Printf("    First triangle: [%d, %d, %d]\n", indices[0], indices[1], indices[2])
 		}
-		
+
 		return true
 	})
-	
+
 	fmt.Printf("  Result: %d\n", result)
 }
 
