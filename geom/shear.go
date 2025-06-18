@@ -6,8 +6,8 @@ type Shear[T Scalar] struct {
 	YZ T
 }
 
-func (s Shear[T]) Equal(o Shear[T]) bool {
-	return Equal(s.XY, o.XY) && Equal(s.XZ, o.XZ) && Equal(s.YZ, o.YZ)
+func (s Shear[T]) Eq(o Shear[T]) bool {
+	return Eq(s.XY, o.XY) && Eq(s.XZ, o.XZ) && Eq(s.YZ, o.YZ)
 }
 
 func (s Shear[T]) String() string {

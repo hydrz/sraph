@@ -201,7 +201,7 @@ rotatedVector := combined.TransformVector2(vector)
 
 // Matrix properties
 determinant := combined.Determinant()
-inverse := combined.Inverse()
+inverse := combined.Invert()
 isIdentity := combined.IsIdentity()
 ```
 

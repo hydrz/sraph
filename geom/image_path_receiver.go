@@ -166,10 +166,10 @@ func abs(x int) int {
 
 // drawLine draws a line between two points using Bresenham's algorithm.
 func (r *ImagePathReceiver[T]) drawLine(p1, p2 Point[T]) {
-	x0 := int(p1.X().Float64())
-	y0 := int(p1.Y().Float64())
-	x1 := int(p2.X().Float64())
-	y1 := int(p2.Y().Float64())
+	x0 := int(p1.X.Float64())
+	y0 := int(p1.Y.Float64())
+	x1 := int(p2.X.Float64())
+	y1 := int(p2.Y.Float64())
 
 	dx := abs(x1 - x0)
 	dy := abs(y1 - y0)
@@ -245,10 +245,10 @@ func (r *ImagePathReceiver[T]) evaluateQuadraticBezier(p0, p1, p2 Point[T], t T)
 	oneMinusTSq := oneMinusT * oneMinusT
 	tSq := t * t
 
-	x := oneMinusTSq*p0.X() + T(2)*oneMinusT*t*p1.X() + tSq*p2.X()
-	y := oneMinusTSq*p0.Y() + T(2)*oneMinusT*t*p1.Y() + tSq*p2.Y()
+	x := oneMinusTSq*p0.X + T(2)*oneMinusT*t*p1.X + tSq*p2.X
+	y := oneMinusTSq*p0.Y + T(2)*oneMinusT*t*p1.Y + tSq*p2.Y
 
-	return NewPoint(x, y)
+	return Point[T]{x, y}
 }
 
 // evaluateCubicBezier evaluates a cubic Bézier curve at parameter t.
@@ -259,10 +259,10 @@ func (r *ImagePathReceiver[T]) evaluateCubicBezier(p0, p1, p2, p3 Point[T], t T)
 	tSq := t * t
 	tCub := t * t * t
 
-	x := oneMinusTCub*p0.X() + T(3)*oneMinusTSq*t*p1.X() + T(3)*oneMinusT*tSq*p2.X() + tCub*p3.X()
-	y := oneMinusTCub*p0.Y() + T(3)*oneMinusTSq*t*p1.Y() + T(3)*oneMinusT*tSq*p2.Y() + tCub*p3.Y()
+	x := oneMinusTCub*p0.X + T(3)*oneMinusTSq*t*p1.X + T(3)*oneMinusT*tSq*p2.X + tCub*p3.X
+	y := oneMinusTCub*p0.Y + T(3)*oneMinusTSq*t*p1.Y + T(3)*oneMinusT*tSq*p2.Y + tCub*p3.Y
 
-	return NewPoint(x, y)
+	return Point[T]{x, y}
 }
 
 // fillPolygon fills a polygon using an improved scanline algorithm with even-odd rule.
@@ -272,14 +272,14 @@ func (r *ImagePathReceiver[T]) fillPolygon(vertices []Point[T]) {
 	}
 
 	// Find bounding box
-	minY := int(vertices[0].Y().Float64())
+	minY := int(vertices[0].Y.Float64())
 	maxY := minY
-	minX := int(vertices[0].X().Float64())
+	minX := int(vertices[0].X.Float64())
 	maxX := minX
 
 	for _, v := range vertices {
-		x := int(v.X().Float64())
-		y := int(v.Y().Float64())
+		x := int(v.X.Float64())
+		y := int(v.Y.Float64())
 		if y < minY {
 			minY = y
 		}
@@ -356,8 +356,8 @@ func (r *ImagePathReceiver[T]) findIntersections(vertices []Point[T], y float64)
 	for i := 0; i < n; i++ {
 		j := (i + 1) % n
 
-		y1 := vertices[i].Y().Float64()
-		y2 := vertices[j].Y().Float64()
+		y1 := vertices[i].Y.Float64()
+		y2 := vertices[j].Y.Float64()
 
 		// Skip horizontal edges
 		if abs(int(y1-y2)) < 1 {
@@ -365,10 +365,10 @@ func (r *ImagePathReceiver[T]) findIntersections(vertices []Point[T], y float64)
 		}
 
 		// Check if scanline intersects this edge
-		// Use strict inequality to avoid double-counting vertices
+		// Use strict inEqity to avoid double-counting vertices
 		if (y1 < y && y <= y2) || (y2 < y && y <= y1) {
-			x1 := vertices[i].X().Float64()
-			x2 := vertices[j].X().Float64()
+			x1 := vertices[i].X.Float64()
+			x2 := vertices[j].X.Float64()
 
 			// Calculate intersection x-coordinate using linear interpolation
 			t := (y - y1) / (y2 - y1)

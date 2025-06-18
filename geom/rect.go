@@ -1,148 +1,17 @@
 package geom
 
-// Rect is a generic interface for axis-aligned rectangles.
-// It provides methods for rectangle geometry, queries, and transformations.
-// Rectangles are defined by four axis-aligned edges or by origin and size.
-// An empty rectangle has width or height <= 0.
+// Rect represents an axis-aligned rectangle defined by four edges or by origin and size.
 // All methods are immutable and return new values.
-type Rect[T Scalar] interface {
-	// === Basic Properties ===
-
-	// Left returns the left edge.
-	Left() T
-	// Right returns the right edge.
-	Right() T
-	// Top returns the top edge.
-	Top() T
-	// Bottom returns the bottom edge.
-	Bottom() T
-
-	// X returns the x coordinate of the origin (left edge).
-	X() T
-	// Y returns the y coordinate of the origin (top edge).
-	Y() T
-	// Width returns the width (right - left).
-	Width() T
-	// Height returns the height (bottom - top).
-	Height() T
-
-	// === Geometric Queries ===
-
-	// LeftTop returns the top-left corner.
-	LeftTop() Point[T]
-	// RightTop returns the top-right corner.
-	RightTop() Point[T]
-	// LeftBottom returns the bottom-left corner.
-	LeftBottom() Point[T]
-	// RightBottom returns the bottom-right corner.
-	RightBottom() Point[T]
-
-	// LTRB returns (left, top, right, bottom).
-	LTRB() (T, T, T, T)
-	// XYWH returns (x, y, width, height).
-	XYWH() (T, T, T, T)
-
-	// Origin returns the origin point (left, top).
-	Origin() Point[T]
-	// Size returns the size (width, height).
-	Size() Size[T]
-	// Area returns the area (width * height).
-	Area() T
-	// Center returns the center point.
-	Center() Point[T]
-	// Positive returns a rectangle with positive width and height.
-	Positive() Rect[T]
-
-	// Points returns the four corners: left-top, right-top, left-bottom, right-bottom.
-	Points() [4]Point[T]
-
-	// === State Checks ===
-
-	// Equal reports whether two rectangles are equal.
-	Equal(other Rect[T]) bool
-	// IsEmpty reports whether the rectangle is empty (width or height <= 0).
-	IsEmpty() bool
-	// IsFinite reports whether all edges are finite (float types only).
-	IsFinite() bool
-	// IsSquare reports whether the rectangle is a square (width == height).
-	IsSquare() bool
-	// IsMaximum reports whether the rectangle covers all finite coordinates.
-	IsMaximum() bool
-
-	// === Spatial Relationships ===
-
-	// ContainsExclusive reports whether the rectangle contains a point (excluding edges).
-	ContainsExclusive(p Point[T]) bool
-	// Contains reports whether the rectangle contains a point (including edges).
-	Contains(p Point[T]) bool
-	// ContainsRect reports whether the rectangle contains another rectangle.
-	ContainsRect(r Rect[T]) bool
-	// Intersects reports whether two rectangles intersect.
-	Intersects(r Rect[T]) bool
-
-	// === Set Operations ===
-
-	// Intersection returns the intersection of two rectangles.
-	Intersection(r Rect[T]) (Rect[T], bool)
-	// IntersectOrEmpty returns the intersection or an empty rectangle.
-	IntersectOrEmpty(r Rect[T]) Rect[T]
-	// Union returns the union of two rectangles.
-	Union(r Rect[T]) Rect[T]
-	// Cutout subtracts another rectangle from this rectangle.
-	Cutout(r Rect[T]) (Rect[T], bool)
-
-	// === Transformations ===
-
-	// Scale scales the rectangle by a scalar.
-	Scale(scalar T) Rect[T]
-	// ScaleXY scales the rectangle by sx and sy.
-	ScaleXY(sx, sy T) Rect[T]
-	// ScalePoint scales the rectangle to a given point.
-	ScalePoint(p Point[T]) Rect[T]
-	// ScaleSize scales the rectangle to a given size.
-	ScaleSize(s Size[T]) Rect[T]
-	// Translate moves the rectangle by a vector.
-	Translate(vector Vector2[T]) Rect[T]
-	// TranslateXY moves the rectangle by x and y.
-	TranslateXY(x, y T) Rect[T]
-	// Expand expands the rectangle by the given amount.
-	Expand(amount T) Rect[T]
-	// ExpandLTRB expands the rectangle by left, top, right, and bottom.
-	ExpandLTRB(left, top, right, bottom T) Rect[T]
-	// ExpandHV expands the rectangle by horizontal and vertical amounts.
-	ExpandHV(horizontal, vertical T) Rect[T]
-	// ExpandPoint expands the rectangle to include a point.
-	ExpandPoint(p Point[T]) Rect[T]
-	// ExpandSize expands the rectangle by a size.
-	ExpandSize(s Size[T]) Rect[T]
-	// Project projects the source rectangle into the coordinate space of this rectangle.
-	Project(source Rect[T]) Rect[T]
-
-	// Round rounds the rectangle's edges to the nearest integer.
-	Round() Rect[I32]
-	// RoundOut rounds the edges outward to the nearest integer.
-	RoundOut() Rect[I32]
-	// RoundIn rounds the edges inward (down) to the nearest integer.
-	RoundIn() Rect[I32]
-
-	// === Matrix Transformations ===
-
-	// Transform applies a matrix to the four corners.
-	Transform(transform Matrix[T]) [4]Point[T]
-	// TransformBounds applies an affine transformation and returns the bounding box.
-	TransformBounds(transform Matrix[T]) Rect[T]
-	// TransformClipBounds applies a perspective transformation, clips to bounds, and returns the bounding box.
-	TransformClipBounds(transform Matrix[T], bounds Rect[T]) Rect[T]
-	// NormalizingTransform returns a matrix that normalizes the rectangle to [0,1].
-	NormalizingTransform() Matrix[T]
-
-	// String returns a string representation, e.g. (LeftTop => RightBottom).
-	String() string
+type Rect[T Scalar] struct {
+	Left   T
+	Top    T
+	Right  T
+	Bottom T
 }
 
 // NewRect returns a rectangle from left, top, right, bottom.
 func NewRect[T Scalar](left, top, right, bottom T) Rect[T] {
-	return &rect[T]{left, top, right, bottom}
+	return Rect[T]{Left: left, Top: top, Right: right, Bottom: bottom}
 }
 
 // NewRectXYWH returns a rectangle from x, y, width, height.
@@ -156,30 +25,28 @@ func NewRectXYWH[T Scalar](x, y, width, height T) Rect[T] {
 		y += height
 		height = -height
 	}
-	return &rect[T]{x, y, x + width, y + height}
+	return Rect[T]{Left: x, Top: y, Right: x + width, Bottom: y + height}
 }
 
 // NewRectOriginSize returns a rectangle from an origin point and a size.
 // Negative size will flip the rectangle accordingly.
 func NewRectOriginSize[T Scalar](origin Point[T], size Size[T]) Rect[T] {
-	if size.Width() < 0 {
-		origin = NewPoint(origin.X()+size.Width(), origin.Y())
+	x, y := origin.X, origin.Y
+	w, h := size.Width, size.Height
+	if w < 0 {
+		x += w
+		w = -w
 	}
-	if size.Height() < 0 {
-		origin = NewPoint(origin.X(), origin.Y()+size.Height())
+	if h < 0 {
+		y += h
+		h = -h
 	}
-	return &rect[T]{origin.X(), origin.Y(), origin.X() + size.Width(), origin.Y() + size.Height()}
+	return Rect[T]{Left: x, Top: y, Right: x + w, Bottom: y + h}
 }
 
 // NewRectSize returns a rectangle at (0,0) with the given size.
 func NewRectSize[T Scalar](size Size[T]) Rect[T] {
-	return &rect[T]{0, 0, size.Width(), size.Height()}
-}
-
-// NewRectMax returns a rectangle covering all finite coordinates.
-func NewRectMax[T Scalar]() Rect[T] {
-	maxVal := Max[T]()
-	return NewRect(-maxVal, -maxVal, maxVal, maxVal)
+	return Rect[T]{Left: 0, Top: 0, Right: size.Width, Bottom: size.Height}
 }
 
 // BoundingRect returns the minimal bounding rectangle for a set of points.
@@ -188,145 +55,112 @@ func BoundingRect[T Scalar](points ...Point[T]) Rect[T] {
 	if len(points) == 0 {
 		return NewRect[T](0, 0, 0, 0)
 	}
-
-	left := points[0].X()
-	top := points[0].Y()
+	left := points[0].X
+	top := points[0].Y
 	right := left
 	bottom := top
-
 	for _, p := range points {
-		if p.X() < left {
-			left = p.X()
+		if p.X < left {
+			left = p.X
 		}
-		if p.X() > right {
-			right = p.X()
+		if p.X > right {
+			right = p.X
 		}
-		if p.Y() < top {
-			top = p.Y()
+		if p.Y < top {
+			top = p.Y
 		}
-		if p.Y() > bottom {
-			bottom = p.Y()
+		if p.Y > bottom {
+			bottom = p.Y
 		}
 	}
-
 	return NewRect(left, top, right, bottom)
 }
 
-type rect[T Scalar] struct {
-	left, top, right, bottom T
+// X returns the x coordinate of the origin (left edge).
+func (r Rect[T]) X() T {
+	return r.Left
 }
 
-// === Basic Properties ===
-
-// Left implements Rect.
-func (r *rect[T]) Left() T {
-	return r.left
+// Y returns the y coordinate of the origin (top edge).
+func (r Rect[T]) Y() T {
+	return r.Top
 }
 
-// Right implements Rect.
-func (r *rect[T]) Right() T {
-	return r.right
+// Width returns the width (right - left).
+func (r Rect[T]) Width() T {
+	return r.Right - r.Left
 }
 
-// Top implements Rect.
-func (r *rect[T]) Top() T {
-	return r.top
+// Height returns the height (bottom - top).
+func (r Rect[T]) Height() T {
+	return r.Bottom - r.Top
 }
 
-// Bottom implements Rect.
-func (r *rect[T]) Bottom() T {
-	return r.bottom
+// LeftTop returns the top-left corner.
+func (r Rect[T]) LeftTop() Point[T] {
+	return Point[T]{r.Left, r.Top}
 }
 
-// X implements Rect.
-func (r *rect[T]) X() T {
-	return r.left
+// RightTop returns the top-right corner.
+func (r Rect[T]) RightTop() Point[T] {
+	return Point[T]{r.Right, r.Top}
 }
 
-// Y implements Rect.
-func (r *rect[T]) Y() T {
-	return r.top
+// LeftBottom returns the bottom-left corner.
+func (r Rect[T]) LeftBottom() Point[T] {
+	return Point[T]{r.Left, r.Bottom}
 }
 
-// Width implements Rect.
-func (r *rect[T]) Width() T {
-	return r.right - r.left
+// RightBottom returns the bottom-right corner.
+func (r Rect[T]) RightBottom() Point[T] {
+	return Point[T]{r.Right, r.Bottom}
 }
 
-// Height implements Rect.
-func (r *rect[T]) Height() T {
-	return r.bottom - r.top
+// LTRB returns (left, top, right, bottom).
+func (r Rect[T]) LTRB() (T, T, T, T) {
+	return r.Left, r.Top, r.Right, r.Bottom
 }
 
-// === Geometric Queries ===
-
-// LeftTop implements Rect.
-func (r *rect[T]) LeftTop() Point[T] {
-	return NewPoint(r.left, r.top)
+// XYWH returns (x, y, width, height).
+func (r Rect[T]) XYWH() (T, T, T, T) {
+	return r.Left, r.Top, r.Width(), r.Height()
 }
 
-// RightTop implements Rect.
-func (r *rect[T]) RightTop() Point[T] {
-	return NewPoint(r.right, r.top)
+// Origin returns the origin point (left, top).
+func (r Rect[T]) Origin() Point[T] {
+	return Point[T]{r.Left, r.Top}
 }
 
-// LeftBottom implements Rect.
-func (r *rect[T]) LeftBottom() Point[T] {
-	return NewPoint(r.left, r.bottom)
+// Size returns the size (width, height).
+func (r Rect[T]) Size() Size[T] {
+	return Size[T]{r.Width(), r.Height()}
 }
 
-// RightBottom implements Rect.
-func (r *rect[T]) RightBottom() Point[T] {
-	return NewPoint(r.right, r.bottom)
-}
-
-// LTRB implements Rect.
-func (r *rect[T]) LTRB() (T, T, T, T) {
-	return r.left, r.top, r.right, r.bottom
-}
-
-// XYWH implements Rect.
-func (r *rect[T]) XYWH() (T, T, T, T) {
-	return r.left, r.top, r.Width(), r.Height()
-}
-
-// Origin implements Rect.
-func (r *rect[T]) Origin() Point[T] {
-	return NewPoint(r.left, r.top)
-}
-
-// Size implements Rect.
-func (r *rect[T]) Size() Size[T] {
-	return NewSize(r.Width(), r.Height())
-}
-
-// Area implements Rect.
-func (r *rect[T]) Area() T {
+// Area returns the area (width * height).
+func (r Rect[T]) Area() T {
 	return r.Width() * r.Height()
 }
 
-// Center implements Rect.
-func (r *rect[T]) Center() Point[T] {
-	return NewPoint((r.left+r.right)/T(2), (r.top+r.bottom)/T(2))
+// Center returns the center point.
+func (r Rect[T]) Center() Point[T] {
+	return Point[T]{(r.Left + r.Right) / T(2), (r.Top + r.Bottom) / T(2)}
 }
 
-// Positive implements Rect.
-func (r *rect[T]) Positive() Rect[T] {
-	left, right := r.left, r.right
-	top, bottom := r.top, r.bottom
-
+// Positive returns a rectangle with positive width and height.
+func (r Rect[T]) Positive() Rect[T] {
+	left, right := r.Left, r.Right
+	top, bottom := r.Top, r.Bottom
 	if left > right {
 		left, right = right, left
 	}
 	if top > bottom {
 		top, bottom = bottom, top
 	}
-
 	return NewRect(left, top, right, bottom)
 }
 
-// Points implements Rect.
-func (r *rect[T]) Points() [4]Point[T] {
+// Points returns the four corners: left-top, right-top, left-bottom, right-bottom.
+func (r Rect[T]) Points() [4]Point[T] {
 	return [4]Point[T]{
 		r.LeftTop(),
 		r.RightTop(),
@@ -335,108 +169,92 @@ func (r *rect[T]) Points() [4]Point[T] {
 	}
 }
 
-// === State Checks ===
-
-// Equal implements Rect.
-func (r *rect[T]) Equal(other Rect[T]) bool {
-	return Equal(r.left, other.Left()) &&
-		Equal(r.top, other.Top()) &&
-		Equal(r.right, other.Right()) &&
-		Equal(r.bottom, other.Bottom())
+// Eq reports whether two rectangles are Eq.
+func (r Rect[T]) Eq(other Rect[T]) bool {
+	return Eq(r.Left, other.Left) &&
+		Eq(r.Top, other.Top) &&
+		Eq(r.Right, other.Right) &&
+		Eq(r.Bottom, other.Bottom)
 }
 
-// IsEmpty implements Rect.
-func (r *rect[T]) IsEmpty() bool {
+// IsEmpty reports whether the rectangle is empty (width or height <= 0).
+func (r Rect[T]) IsEmpty() bool {
 	return r.Width() <= 0 || r.Height() <= 0
 }
 
-// IsFinite implements Rect.
-func (r *rect[T]) IsFinite() bool {
-	return IsFinite(r.left) && IsFinite(r.top) && IsFinite(r.right) && IsFinite(r.bottom)
+// IsFinite reports whether all edges are finite (float types only).
+func (r Rect[T]) IsFinite() bool {
+	return IsFinite(r.Left) && IsFinite(r.Top) && IsFinite(r.Right) && IsFinite(r.Bottom)
 }
 
-// IsSquare implements Rect.
-func (r *rect[T]) IsSquare() bool {
-	return Equal(r.Width(), r.Height()) && !r.IsEmpty()
+// IsSquare reports whether the rectangle is a square (width == height).
+func (r Rect[T]) IsSquare() bool {
+	return Eq(r.Width(), r.Height()) && !r.IsEmpty()
 }
 
-// IsMaximum implements Rect.
-func (r *rect[T]) IsMaximum() bool {
-	maxVal := Max[T]()
-	return Equal(r.left, -maxVal) && Equal(r.top, -maxVal) &&
-		Equal(r.right, maxVal) && Equal(r.bottom, maxVal)
-}
-
-// === Spatial Relationships ===
-
-// Contains implements Rect.
-func (r *rect[T]) Contains(p Point[T]) bool {
+// ContainsExclusive reports whether the rectangle contains a point (excluding edges).
+func (r Rect[T]) ContainsExclusive(p Point[T]) bool {
 	if r.IsEmpty() {
 		return false
 	}
-
-	return p.X() >= r.left && p.X() <= r.right &&
-		p.Y() >= r.top && p.Y() <= r.bottom
+	return p.X > r.Left && p.X < r.Right &&
+		p.Y > r.Top && p.Y < r.Bottom
 }
 
-// ContainsExclusive implements Rect.
-func (r *rect[T]) ContainsExclusive(p Point[T]) bool {
+// Contains reports whether the rectangle contains a point (including edges).
+func (r Rect[T]) Contains(p Point[T]) bool {
 	if r.IsEmpty() {
 		return false
 	}
-	return p.X() > r.left && p.X() < r.right &&
-		p.Y() > r.top && p.Y() < r.bottom
+	return p.X >= r.Left && p.X <= r.Right &&
+		p.Y >= r.Top && p.Y <= r.Bottom
 }
 
-// ContainsRect implements Rect.
-func (r *rect[T]) ContainsRect(other Rect[T]) bool {
+// ContainsRect reports whether the rectangle contains another rectangle.
+func (r Rect[T]) ContainsRect(other Rect[T]) bool {
 	if r.IsEmpty() || other.IsEmpty() {
 		return false
 	}
-	return other.Left() >= r.left && other.Right() <= r.right &&
-		other.Top() >= r.top && other.Bottom() <= r.bottom
+	return other.Left >= r.Left && other.Right <= r.Right &&
+		other.Top >= r.Top && other.Bottom <= r.Bottom
 }
 
-// Intersects implements Rect.
-func (r *rect[T]) Intersects(other Rect[T]) bool {
+// Intersects reports whether two rectangles intersect.
+func (r Rect[T]) Intersects(other Rect[T]) bool {
 	if r.IsEmpty() || other.IsEmpty() {
 		return false
 	}
-	return r.left < other.Right() && r.right > other.Left() &&
-		r.top < other.Bottom() && r.bottom > other.Top()
+	return r.Left < other.Right && r.Right > other.Left &&
+		r.Top < other.Bottom && r.Bottom > other.Top
 }
 
-// === Set Operations ===
-
-// Intersection implements Rect.
-func (r *rect[T]) Intersection(other Rect[T]) (Rect[T], bool) {
+// Intersection returns the intersection of two rectangles.
+func (r Rect[T]) Intersection(other Rect[T]) (Rect[T], bool) {
 	if !r.Intersects(other) {
 		return NewRect[T](0, 0, 0, 0), false
 	}
-
-	left := r.left
-	if other.Left() > left {
-		left = other.Left()
+	left := r.Left
+	if other.Left > left {
+		left = other.Left
 	}
-	top := r.top
-	if other.Top() > top {
-		top = other.Top()
+	top := r.Top
+	if other.Top > top {
+		top = other.Top
 	}
-	right := r.right
-	if other.Right() < right {
-		right = other.Right()
+	right := r.Right
+	if other.Right < right {
+		right = other.Right
 	}
-	bottom := r.bottom
-	if other.Bottom() < bottom {
-		bottom = other.Bottom()
+	bottom := r.Bottom
+	if other.Bottom < bottom {
+		bottom = other.Bottom
 	}
-
 	result := NewRect(left, top, right, bottom)
 	return result, !result.IsEmpty()
 }
 
-// IntersectOrEmpty implements Rect.
-func (r *rect[T]) IntersectOrEmpty(other Rect[T]) Rect[T] {
+// IntersectOrEmpty returns the intersection or an empty rectangle.
+func (r Rect[T]) IntersectOrEmpty(other Rect[T]) Rect[T] {
 	result, ok := r.Intersection(other)
 	if !ok {
 		return NewRect[T](0, 0, 0, 0)
@@ -444,176 +262,163 @@ func (r *rect[T]) IntersectOrEmpty(other Rect[T]) Rect[T] {
 	return result
 }
 
-// Union implements Rect.
-func (r *rect[T]) Union(other Rect[T]) Rect[T] {
+// Union returns the union of two rectangles.
+func (r Rect[T]) Union(other Rect[T]) Rect[T] {
 	if r.IsEmpty() {
 		return other
 	}
 	if other.IsEmpty() {
 		return r
 	}
-
-	left := r.left
-	if other.Left() < left {
-		left = other.Left()
+	left := r.Left
+	if other.Left < left {
+		left = other.Left
 	}
-	top := r.top
-	if other.Top() < top {
-		top = other.Top()
+	top := r.Top
+	if other.Top < top {
+		top = other.Top
 	}
-	right := r.right
-	if other.Right() > right {
-		right = other.Right()
+	right := r.Right
+	if other.Right > right {
+		right = other.Right
 	}
-	bottom := r.bottom
-	if other.Bottom() > bottom {
-		bottom = other.Bottom()
+	bottom := r.Bottom
+	if other.Bottom > bottom {
+		bottom = other.Bottom
 	}
-
 	return NewRect(left, top, right, bottom)
 }
 
-// Cutout implements Rect.
-func (r *rect[T]) Cutout(other Rect[T]) (Rect[T], bool) {
+// Cutout subtracts another rectangle from this rectangle.
+// For simplicity, returns the original rect if partial overlap.
+func (r Rect[T]) Cutout(other Rect[T]) (Rect[T], bool) {
 	if !r.Intersects(other) {
 		return r, true
 	}
-
-	// Simple case: if other completely contains this rect, result is empty
 	if other.ContainsRect(r) {
 		return NewRect[T](0, 0, 0, 0), false
 	}
-
-	// For simplicity, return the original rect if partial overlap
-	// A full implementation would return multiple rects
 	return r, true
 }
 
-// === Transformations ===
-
-// Scale implements Rect.
-func (r *rect[T]) Scale(scalar T) Rect[T] {
-	return NewRect(r.left*scalar, r.top*scalar, r.right*scalar, r.bottom*scalar)
+// Scale scales the rectangle by a scalar.
+func (r Rect[T]) Scale(scalar T) Rect[T] {
+	return NewRect(r.Left*scalar, r.Top*scalar, r.Right*scalar, r.Bottom*scalar)
 }
 
-// ScaleXY implements Rect.
-func (r *rect[T]) ScaleXY(sx, sy T) Rect[T] {
-	return NewRect(r.left*sx, r.top*sy, r.right*sx, r.bottom*sy)
+// ScaleXY scales the rectangle by sx and sy.
+func (r Rect[T]) ScaleXY(sx, sy T) Rect[T] {
+	return NewRect(r.Left*sx, r.Top*sy, r.Right*sx, r.Bottom*sy)
 }
 
-// ScalePoint implements Rect.
-func (r *rect[T]) ScalePoint(p Point[T]) Rect[T] {
-	return r.ScaleXY(p.X(), p.Y())
+// ScalePoint scales the rectangle to a given point.
+func (r Rect[T]) ScalePoint(p Point[T]) Rect[T] {
+	return r.ScaleXY(p.X, p.Y)
 }
 
-// ScaleSize implements Rect.
-func (r *rect[T]) ScaleSize(s Size[T]) Rect[T] {
-	return r.ScaleXY(s.Width(), s.Height())
+// ScaleSize scales the rectangle to a given size.
+func (r Rect[T]) ScaleSize(s Size[T]) Rect[T] {
+	return r.ScaleXY(s.Width, s.Height)
 }
 
-// Translate implements Rect.
-func (r *rect[T]) Translate(vector Vector2[T]) Rect[T] {
-	return NewRect(r.left+vector.X(), r.top+vector.Y(), r.right+vector.X(), r.bottom+vector.Y())
+// Translate moves the rectangle by a vector.
+func (r Rect[T]) Translate(vector Vector2[T]) Rect[T] {
+	return NewRect(r.Left+vector.X, r.Top+vector.Y, r.Right+vector.X, r.Bottom+vector.Y)
 }
 
-// TranslateXY implements Rect.
-func (r *rect[T]) TranslateXY(x, y T) Rect[T] {
-	return NewRect(r.left+x, r.top+y, r.right+x, r.bottom+y)
+// TranslateXY moves the rectangle by x and y.
+func (r Rect[T]) TranslateXY(x, y T) Rect[T] {
+	return NewRect(r.Left+x, r.Top+y, r.Right+x, r.Bottom+y)
 }
 
-// Expand implements Rect.
-func (r *rect[T]) Expand(amount T) Rect[T] {
-	return NewRect(r.left-amount, r.top-amount, r.right+amount, r.bottom+amount)
+// Expand expands the rectangle by the given amount.
+func (r Rect[T]) Expand(amount T) Rect[T] {
+	return NewRect(r.Left-amount, r.Top-amount, r.Right+amount, r.Bottom+amount)
 }
 
-// ExpandLTRB implements Rect.
-func (r *rect[T]) ExpandLTRB(left, top, right, bottom T) Rect[T] {
-	return NewRect(r.left-left, r.top-top, r.right+right, r.bottom+bottom)
+// ExpandLTRB expands the rectangle by left, top, right, and bottom.
+func (r Rect[T]) ExpandLTRB(left, top, right, bottom T) Rect[T] {
+	return NewRect(r.Left-left, r.Top-top, r.Right+right, r.Bottom+bottom)
 }
 
-// ExpandHV implements Rect.
-func (r *rect[T]) ExpandHV(horizontal, vertical T) Rect[T] {
-	return NewRect(r.left-horizontal, r.top-vertical, r.right+horizontal, r.bottom+vertical)
+// ExpandHV expands the rectangle by horizontal and vertical amounts.
+func (r Rect[T]) ExpandHV(horizontal, vertical T) Rect[T] {
+	return NewRect(r.Left-horizontal, r.Top-vertical, r.Right+horizontal, r.Bottom+vertical)
 }
 
-// ExpandPoint implements Rect.
-func (r *rect[T]) ExpandPoint(p Point[T]) Rect[T] {
-	left := r.left
-	if p.X() < left {
-		left = p.X()
+// ExpandPoint expands the rectangle to include a point.
+func (r Rect[T]) ExpandPoint(p Point[T]) Rect[T] {
+	left := r.Left
+	if p.X < left {
+		left = p.X
 	}
-	top := r.top
-	if p.Y() < top {
-		top = p.Y()
+	top := r.Top
+	if p.Y < top {
+		top = p.Y
 	}
-	right := r.right
-	if p.X() > right {
-		right = p.X()
+	right := r.Right
+	if p.X > right {
+		right = p.X
 	}
-	bottom := r.bottom
-	if p.Y() > bottom {
-		bottom = p.Y()
+	bottom := r.Bottom
+	if p.Y > bottom {
+		bottom = p.Y
 	}
-
 	return NewRect(left, top, right, bottom)
 }
 
-// ExpandSize implements Rect.
-func (r *rect[T]) ExpandSize(s Size[T]) Rect[T] {
-	return r.ExpandHV(s.Width()/T(2), s.Height()/T(2))
+// ExpandSize expands the rectangle by a size.
+func (r Rect[T]) ExpandSize(s Size[T]) Rect[T] {
+	return r.ExpandHV(s.Width/T(2), s.Height/T(2))
 }
 
-// Project implements Rect.
-func (r *rect[T]) Project(source Rect[T]) Rect[T] {
+// Project projects the source rectangle into the coordinate space of this rectangle.
+func (r Rect[T]) Project(source Rect[T]) Rect[T] {
 	if r.IsEmpty() || source.IsEmpty() {
 		return NewRect[T](0, 0, 0, 0)
 	}
-
 	scaleX := r.Width() / source.Width()
 	scaleY := r.Height() / source.Height()
-
 	return NewRect(
-		r.left+scaleX*(source.Left()-source.Left()),
-		r.top+scaleY*(source.Top()-source.Top()),
-		r.left+scaleX*(source.Right()-source.Left()),
-		r.top+scaleY*(source.Bottom()-source.Top()),
+		r.Left+scaleX*(source.Left-source.Left),
+		r.Top+scaleY*(source.Top-source.Top),
+		r.Left+scaleX*(source.Right-source.Left),
+		r.Top+scaleY*(source.Bottom-source.Top),
 	)
 }
 
-// Round implements Rect.
-func (r *rect[T]) Round() Rect[I32] {
+// Round rounds the rectangle's edges to the nearest integer.
+func (r Rect[T]) Round() Rect[I32] {
 	return NewRect(
-		I32(r.left.Float64()+0.5),
-		I32(r.top.Float64()+0.5),
-		I32(r.right.Float64()+0.5),
-		I32(r.bottom.Float64()+0.5),
+		I32(r.Left.Float64()+0.5),
+		I32(r.Top.Float64()+0.5),
+		I32(r.Right.Float64()+0.5),
+		I32(r.Bottom.Float64()+0.5),
 	)
 }
 
-// RoundOut implements Rect.
-func (r *rect[T]) RoundOut() Rect[I32] {
+// RoundOut rounds the edges outward to the nearest integer.
+func (r Rect[T]) RoundOut() Rect[I32] {
 	return NewRect(
-		I32(r.left.Float64()),
-		I32(r.top.Float64()),
-		I32(r.right.Float64()+0.999),
-		I32(r.bottom.Float64()+0.999),
+		I32(r.Left.Float64()),
+		I32(r.Top.Float64()),
+		I32(r.Right.Float64()+0.999),
+		I32(r.Bottom.Float64()+0.999),
 	)
 }
 
-// RoundIn implements Rect.
-func (r *rect[T]) RoundIn() Rect[I32] {
+// RoundIn rounds the edges inward (down) to the nearest integer.
+func (r Rect[T]) RoundIn() Rect[I32] {
 	return NewRect(
-		I32(r.left.Float64()+0.999),
-		I32(r.top.Float64()+0.999),
-		I32(r.right.Float64()),
-		I32(r.bottom.Float64()),
+		I32(r.Left.Float64()+0.999),
+		I32(r.Top.Float64()+0.999),
+		I32(r.Right.Float64()),
+		I32(r.Bottom.Float64()),
 	)
 }
 
-// === Matrix Transformations ===
-
-// Transform implements Rect.
-func (r *rect[T]) Transform(transform Matrix[T]) [4]Point[T] {
+// Transform applies a matrix to the four corners.
+func (r Rect[T]) Transform(transform Matrix[T]) [4]Point[T] {
 	corners := r.Points()
 	return [4]Point[T]{
 		transform.TransformPoint(corners[0]),
@@ -623,21 +428,18 @@ func (r *rect[T]) Transform(transform Matrix[T]) [4]Point[T] {
 	}
 }
 
-// TransformBounds implements Rect.
-func (r *rect[T]) TransformBounds(transform Matrix[T]) Rect[T] {
+// TransformBounds applies an affine transformation and returns the bounding box.
+func (r Rect[T]) TransformBounds(transform Matrix[T]) Rect[T] {
 	if r.IsEmpty() {
 		return r
 	}
-
 	transformed := r.Transform(transform)
-
-	left := transformed[0].X()
-	top := transformed[0].Y()
+	left := transformed[0].X
+	top := transformed[0].Y
 	right := left
 	bottom := top
-
 	for i := 1; i < 4; i++ {
-		x, y := transformed[i].X(), transformed[i].Y()
+		x, y := transformed[i].X, transformed[i].Y
 		if x < left {
 			left = x
 		}
@@ -651,33 +453,29 @@ func (r *rect[T]) TransformBounds(transform Matrix[T]) Rect[T] {
 			bottom = y
 		}
 	}
-
 	return NewRect(left, top, right, bottom)
 }
 
-// TransformClipBounds implements Rect.
-func (r *rect[T]) TransformClipBounds(transform Matrix[T], bounds Rect[T]) Rect[T] {
+// TransformClipBounds applies a perspective transformation, clips to bounds, and returns the bounding box.
+func (r Rect[T]) TransformClipBounds(transform Matrix[T], bounds Rect[T]) Rect[T] {
 	transformed := r.TransformBounds(transform)
 	return transformed.IntersectOrEmpty(bounds)
 }
 
-// NormalizingTransform implements Rect.
-func (r *rect[T]) NormalizingTransform() Matrix[T] {
+// NormalizingTransform returns a matrix that normalizes the rectangle to [0,1].
+func (r Rect[T]) NormalizingTransform() Matrix[T] {
 	if r.IsEmpty() {
-		return NewMatrix[T]()
+		return Matrix[T]{}
 	}
-
 	scaleX := T(1) / r.Width()
 	scaleY := T(1) / r.Height()
-
-	matrix := NewMatrix[T]()
-	matrix = matrix.Scale2D(NewVector2(scaleX, scaleY))
-	matrix = matrix.Translate2D(NewVector2(-r.left, -r.top))
-
+	matrix := Matrix[T]{}
+	matrix = matrix.Scale2D(Vector2[T]{scaleX, scaleY})
+	matrix = matrix.Translate2D(Vector2[T]{-r.Left, -r.Top})
 	return matrix
 }
 
-// String implements Rect.
-func (r *rect[T]) String() string {
+// String returns a string representation, e.g. (LeftTop => RightBottom).
+func (r Rect[T]) String() string {
 	return "(" + r.LeftTop().String() + " => " + r.RightBottom().String() + ")"
 }

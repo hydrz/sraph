@@ -136,28 +136,28 @@ func (e *ellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
 	halfHeight := e.bounds.Height() / T(2)
 
 	// Start at rightmost point
-	start := NewPoint(center.X()+halfWidth, center.Y())
+	start := Point[T]{center.X + halfWidth, center.Y}
 	receiver.MoveTo(start, true)
 
 	// Approximate ellipse with 4 quadratic curves
 	// This is a simplified implementation
 	// Top-right quadrant
-	cp1 := NewPoint(center.X()+halfWidth, center.Y()-halfHeight)
-	p1 := NewPoint(center.X(), center.Y()-halfHeight)
+	cp1 := Point[T]{center.X + halfWidth, center.Y - halfHeight}
+	p1 := Point[T]{center.X, center.Y - halfHeight}
 	receiver.QuadTo(cp1, p1)
 
 	// Top-left quadrant
-	cp2 := NewPoint(center.X()-halfWidth, center.Y()-halfHeight)
-	p2 := NewPoint(center.X()-halfWidth, center.Y())
+	cp2 := Point[T]{center.X - halfWidth, center.Y - halfHeight}
+	p2 := Point[T]{center.X - halfWidth, center.Y}
 	receiver.QuadTo(cp2, p2)
 
 	// Bottom-left quadrant
-	cp3 := NewPoint(center.X()-halfWidth, center.Y()+halfHeight)
-	p3 := NewPoint(center.X(), center.Y()+halfHeight)
+	cp3 := Point[T]{center.X - halfWidth, center.Y + halfHeight}
+	p3 := Point[T]{center.X, center.Y + halfHeight}
 	receiver.QuadTo(cp3, p3)
 
 	// Bottom-right quadrant
-	cp4 := NewPoint(center.X()+halfWidth, center.Y()+halfHeight)
+	cp4 := Point[T]{center.X + halfWidth, center.Y + halfHeight}
 	receiver.QuadTo(cp4, start)
 
 	receiver.Close()

@@ -5,40 +5,6 @@ import (
 	"testing"
 )
 
-func TestScalar_New(t *testing.T) {
-	tests := []struct {
-		name     string
-		value    interface{}
-		expected interface{}
-	}{
-		{"Int32", I32(42), I32(42)},
-		{"Float32", F32(3.14), F32(3.14)},
-		{"Float64", F64(2.718), F64(2.718)},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			switch v := tt.value.(type) {
-			case I32:
-				result := New(v)
-				if result != tt.expected {
-					t.Errorf("New() = %v, want %v", result, tt.expected)
-				}
-			case F32:
-				result := New(v)
-				if result != tt.expected {
-					t.Errorf("New() = %v, want %v", result, tt.expected)
-				}
-			case F64:
-				result := New(v)
-				if result != tt.expected {
-					t.Errorf("New() = %v, want %v", result, tt.expected)
-				}
-			}
-		})
-	}
-}
-
 func TestScalar_Radians(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -83,48 +49,20 @@ func TestScalar_Degrees(t *testing.T) {
 	}
 }
 
-func TestScalar_Max(t *testing.T) {
-	tests := []struct {
-		name     string
-		testFunc func() bool
-	}{
-		{"Int32", func() bool {
-			result := Max[I32]()
-			return result == I32(math.MaxInt32)
-		}},
-		{"Float32", func() bool {
-			result := Max[F32]()
-			return result == F32(math.MaxFloat32)
-		}},
-		{"Float64", func() bool {
-			result := Max[F64]()
-			return result == F64(math.MaxFloat64)
-		}},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if !tt.testFunc() {
-				t.Errorf("Max() test failed for %s", tt.name)
-			}
-		})
-	}
-}
-
-func TestScalar_Equal(t *testing.T) {
+func TestScalar_Eq(t *testing.T) {
 	tests := []struct {
 		name     string
 		a, b     interface{}
 		expected bool
 	}{
-		{"Float32 Equal", F32(1.0), F32(1.0), true},
+		{"Float32 Eq", F32(1.0), F32(1.0), true},
 		{"Float32 Close", F32(1.0), F32(1.0 + Epsilon32/2), true},
-		{"Float32 Not Equal", F32(1.0), F32(2.0), false},
-		{"Float64 Equal", F64(1.0), F64(1.0), true},
+		{"Float32 Not Eq", F32(1.0), F32(2.0), false},
+		{"Float64 Eq", F64(1.0), F64(1.0), true},
 		{"Float64 Close", F64(1.0), F64(1.0 + Epsilon64/2), true},
-		{"Float64 Not Equal", F64(1.0), F64(2.0), false},
-		{"Int32 Equal", I32(42), I32(42), true},
-		{"Int32 Not Equal", I32(42), I32(43), false},
+		{"Float64 Not Eq", F64(1.0), F64(2.0), false},
+		{"Int32 Eq", I32(42), I32(42), true},
+		{"Int32 Not Eq", I32(42), I32(43), false},
 	}
 
 	for _, tt := range tests {
@@ -132,14 +70,14 @@ func TestScalar_Equal(t *testing.T) {
 			var result bool
 			switch a := tt.a.(type) {
 			case F32:
-				result = Equal(a, tt.b.(F32))
+				result = Eq(a, tt.b.(F32))
 			case F64:
-				result = Equal(a, tt.b.(F64))
+				result = Eq(a, tt.b.(F64))
 			case I32:
-				result = Equal(a, tt.b.(I32))
+				result = Eq(a, tt.b.(I32))
 			}
 			if result != tt.expected {
-				t.Errorf("Equal(%v, %v) = %v, want %v", tt.a, tt.b, result, tt.expected)
+				t.Errorf("Eq(%v, %v) = %v, want %v", tt.a, tt.b, result, tt.expected)
 			}
 		})
 	}
@@ -241,21 +179,12 @@ func TestScalar_ScalarTypes(t *testing.T) {
 	})
 }
 
-func BenchmarkScalar_Equal(b *testing.B) {
+func BenchmarkScalar_Eq(b *testing.B) {
 	f1 := F64(1.0)
 	f2 := F64(1.0000001)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Equal(f1, f2)
-	}
-}
-
-func BenchmarkScalar_IsFinite(b *testing.B) {
-	f := F64(1.0)
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		IsFinite(f)
+		Eq(f1, f2)
 	}
 }

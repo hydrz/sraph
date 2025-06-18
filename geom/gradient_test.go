@@ -190,7 +190,7 @@ func TestLinearGradient_ToBuffer_EmptyStops(t *testing.T) {
 }
 
 func TestNewRadialGradient(t *testing.T) {
-	center := NewPoint[F32](0.5, 0.5)
+	center := Point[F32]{0.5, 0.5}
 	radius := F32(1.0)
 	stops := []GradientStop{
 		{Color: ColorWhite, Position: 0.0},
@@ -199,7 +199,7 @@ func TestNewRadialGradient(t *testing.T) {
 
 	gradient := NewRadialGradient(center, radius, stops)
 
-	if !gradient.Center.Equal(center) {
+	if !gradient.Center.Eq(center) {
 		t.Errorf("Center mismatch: got %v, want %v", gradient.Center, center)
 	}
 
@@ -213,7 +213,7 @@ func TestNewRadialGradient(t *testing.T) {
 }
 
 func TestRadialGradient_ToBuffer(t *testing.T) {
-	center := NewPoint[F32](0, 0)
+	center := Point[F32]{0, 0}
 	stops := []GradientStop{
 		{Color: ColorRed, Position: 0.0},
 		{Color: ColorBlue, Position: 1.0},

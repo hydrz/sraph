@@ -27,8 +27,8 @@ type StrokeStyle[T Scalar] struct {
 	MiterLimit T          // Limit for miter joins; controls when a miter is replaced by a bevel.
 }
 
-// Equal returns true if all fields of two StrokeStyle values are equal.
-func (s StrokeStyle[T]) Equal(other StrokeStyle[T]) bool {
+// Eq returns true if all fields of two StrokeStyle values are Eq.
+func (s StrokeStyle[T]) Eq(other StrokeStyle[T]) bool {
 	return s.Width == other.Width &&
 		s.Cap == other.Cap &&
 		s.Join == other.Join &&

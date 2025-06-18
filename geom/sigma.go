@@ -16,7 +16,7 @@ type Sigma[T Scalar] struct {
 // Returns 0 if Sigma is not greater than 0.5.
 func (s Sigma[T]) ToRadians() Radians[T] {
 	if s.sigma.Float64() > 0.5 {
-		return NewRadians[T](T((s.sigma.Float64() - 0.5) * kernelRadiusPerSigma))
+		return NewRadians(T((s.sigma.Float64() - 0.5) * kernelRadiusPerSigma))
 	}
 	return NewRadians[T](0.0)
 }

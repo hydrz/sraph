@@ -1,33 +1,14 @@
 package geom
 
-// RoundRect represents a rectangle with rounded corners.
-// It extends Rect and provides additional methods for rounded rectangle geometry and path generation.
-type RoundRect[T Scalar] interface {
-	Rect[T]
-	// Bounds returns the bounding rectangle of the round rect.
-	Bounds() Rect[T]
-	// Radius returns the radii for all four corners.
-	Radius() RoundingRadii[T]
-
-	// IsRect returns true if all corner radii are zero and the rectangle is not empty.
-	IsRect() bool
-	// IsOval returns true if all corner radii are equal and equal to half the width/height.
-	IsOval() bool
-
-	// Dispatch sends the path data of the round rect to the given PathReceiver.
-	// If includeEnd is true, PathEnd will be called at the end.
-	Dispatch(receiver PathReceiver[T], includeEnd bool)
-}
-
 // NewRoundRect creates a new RoundRect with the given rectangle and corner radii.
 func NewRoundRect[T Scalar](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
-	return &roundRect[T]{
+	return RoundRect[T]{
 		Rect:  rect,
 		radii: radii,
 	}
 }
 
-// NewRoundRectOval creates a new RoundRect that is an oval, with radii equal to half the width and height of the rectangle.
+// NewRoundRectOval creates a new RoundRect that is an oval, with radii Eq to half the width and height of the rectangle.
 func NewRoundRectOval[T Scalar](rect Rect[T]) RoundRect[T] {
 	return NewRoundRect(
 		rect,
@@ -46,7 +27,7 @@ func NewRoundRectRadius[T Scalar](rect Rect[T], radius T) RoundRect[T] {
 func NewRoundRectXY[T Scalar](rect Rect[T], xRadius, yRadius T) RoundRect[T] {
 	return NewRoundRect(
 		rect,
-		NewRoundingRadiiFromSizes(NewSize(xRadius, yRadius)),
+		NewRoundingRadiiFromSizes(Size[T]{Width: xRadius, Height: yRadius}),
 	)
 }
 
@@ -57,63 +38,72 @@ func NewRoundRectLTRB[T Scalar](rect Rect[T], left, top, right, bottom T) RoundR
 	)
 }
 
-type roundRect[T Scalar] struct {
+// RoundRect represents a rectangle with rounded corners.
+type RoundRect[T Scalar] struct {
 	Rect[T]
 	radii RoundingRadii[T]
 }
 
 // Bounds returns the bounding rectangle of the round rect.
-func (r *roundRect[T]) Bounds() Rect[T] {
+func (r *RoundRect[T]) Bounds() Rect[T] {
 	return r.Rect
 }
 
 // Radius returns the radii for all four corners.
-func (r *roundRect[T]) Radius() RoundingRadii[T] {
+func (r *RoundRect[T]) Radius() RoundingRadii[T] {
 	return r.radii
 }
 
 // IsRect returns true if all corner radii are zero and the rectangle is not empty.
-func (r *roundRect[T]) IsRect() bool {
+func (r *RoundRect[T]) IsRect() bool {
 	return !r.Rect.IsEmpty() && r.radii.IsEmpty()
 }
 
-// IsOval returns true if all corner radii are equal and equal to half the width/height.
-func (r *roundRect[T]) IsOval() bool {
+// IsOval returns true if all corner radii are Eq and Eq to half the width/height.
+func (r *RoundRect[T]) IsOval() bool {
 	return !r.Bounds().IsEmpty() && r.radii.IsUniform() &&
-		Equal(r.radii.TopLeft().Width(), r.Rect.Width()/2) &&
-		Equal(r.radii.TopLeft().Height(), r.Rect.Height()/2)
+		Eq(r.radii.TopLeft.Width, r.Rect.Width()/T(2)) &&
+		Eq(r.radii.TopLeft.Height, r.Rect.Height()/T(2))
 }
 
 // Dispatch sends the path data of the round rect to the given PathReceiver.
 // If includeEnd is true, PathEnd will be called at the end.
-func (r *roundRect[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
-	left := r.Rect.Left()
-	right := r.Rect.Right()
-	bottom := r.Rect.Bottom()
-	top := r.Rect.Top()
+func (r *RoundRect[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
+	left := r.Rect.Left
+	right := r.Rect.Right
+	bottom := r.Rect.Bottom
+	top := r.Rect.Top
 
-	receiver.MoveTo(NewPoint(left+r.radii.TopLeft().Width(), r.Rect.Top()), true)
-	receiver.LineTo(NewPoint(right-r.radii.TopRight().Width(), r.Rect.Top()))
+	receiver.MoveTo(Point[T]{X: left + r.radii.TopLeft.Width, Y: top}, true)
+	receiver.LineTo(Point[T]{X: right - r.radii.TopRight.Width, Y: top})
 
-	receiver.ConicTo(NewPoint(right, top),
-		NewPoint(right, top+r.radii.TopRight().Height()),
-		Sqrt2Over2)
+	receiver.ConicTo(
+		Point[T]{X: right, Y: top},
+		Point[T]{X: right, Y: top + r.radii.TopRight.Height},
+		Sqrt2Over2,
+	)
 
-	receiver.LineTo(NewPoint(right, bottom-r.radii.BottomRight().Height()))
+	receiver.LineTo(Point[T]{X: right, Y: bottom - r.radii.BottomRight.Height})
 
-	receiver.ConicTo(NewPoint(right, bottom),
-		NewPoint(right-r.radii.BottomRight().Width(), bottom),
-		Sqrt2Over2)
+	receiver.ConicTo(
+		Point[T]{X: right, Y: bottom},
+		Point[T]{X: right - r.radii.BottomRight.Width, Y: bottom},
+		Sqrt2Over2,
+	)
 
-	receiver.LineTo(NewPoint(left+r.radii.BottomLeft().Width(), bottom))
-	receiver.ConicTo(NewPoint(left, bottom),
-		NewPoint(left, bottom-r.radii.BottomLeft().Height()),
-		Sqrt2Over2)
+	receiver.LineTo(Point[T]{X: left + r.radii.BottomLeft.Width, Y: bottom})
+	receiver.ConicTo(
+		Point[T]{X: left, Y: bottom},
+		Point[T]{X: left, Y: bottom - r.radii.BottomLeft.Height},
+		Sqrt2Over2,
+	)
 
-	receiver.LineTo(NewPoint(left, top+r.radii.TopLeft().Height()))
-	receiver.ConicTo(NewPoint(left, top),
-		NewPoint(left+r.radii.TopLeft().Width(), top),
-		Sqrt2Over2)
+	receiver.LineTo(Point[T]{X: left, Y: top + r.radii.TopLeft.Height})
+	receiver.ConicTo(
+		Point[T]{X: left, Y: top},
+		Point[T]{X: left + r.radii.TopLeft.Width, Y: top},
+		Sqrt2Over2,
+	)
 
 	receiver.Close()
 
@@ -122,28 +112,28 @@ func (r *roundRect[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
 	}
 }
 
-// IsFinite overrides Rect's IsFinite method to check both the rectangle and its radii.
-func (r *roundRect[T]) IsFinite() bool {
+// IsFinite checks if both the rectangle and its radii are finite.
+func (r *RoundRect[T]) IsFinite() bool {
 	return r.Rect.IsFinite() && r.radii.IsFinite()
 }
 
-// Contains overrides Rect's Contains method to check containment within the rounded rectangle.
-func (r *roundRect[T]) Contains(p Point[T]) bool {
+// Contains checks if the point is contained within the rounded rectangle.
+func (r *RoundRect[T]) Contains(p Point[T]) bool {
 	if !r.Rect.Contains(p) {
 		return false
 	}
 
 	var (
-		roundRectUpperLeftDirection  = point[T]{-1, -1}
-		roundRectUpperRightDirection = point[T]{1, -1}
-		roundRectLowerLeftDirection  = point[T]{-1, 1}
-		roundRectLowerRightDirection = point[T]{1, 1}
+		upperLeftDirection  = Point[T]{X: -1, Y: -1}
+		upperRightDirection = Point[T]{X: 1, Y: -1}
+		lowerLeftDirection  = Point[T]{X: -1, Y: 1}
+		lowerRightDirection = Point[T]{X: 1, Y: 1}
 	)
 
-	if (!r.cornerContains(p, r.Rect.LeftTop(), roundRectUpperLeftDirection, r.radii.TopLeft())) ||
-		(!r.cornerContains(p, r.Rect.RightTop(), roundRectUpperRightDirection, r.radii.TopRight())) ||
-		(!r.cornerContains(p, r.Rect.LeftBottom(), roundRectLowerLeftDirection, r.radii.BottomLeft())) ||
-		(!r.cornerContains(p, r.Rect.RightBottom(), roundRectLowerRightDirection, r.radii.BottomRight())) {
+	if !r.cornerContains(p, r.Rect.LeftTop(), upperLeftDirection, r.radii.TopLeft) ||
+		!r.cornerContains(p, r.Rect.RightTop(), upperRightDirection, r.radii.TopRight) ||
+		!r.cornerContains(p, r.Rect.LeftBottom(), lowerLeftDirection, r.radii.BottomLeft) ||
+		!r.cornerContains(p, r.Rect.RightBottom(), lowerRightDirection, r.radii.BottomRight) {
 		return false
 	}
 
@@ -151,42 +141,32 @@ func (r *roundRect[T]) Contains(p Point[T]) bool {
 }
 
 // cornerContains checks if the point p is contained within the rounded corner defined by corner, direction, and radii.
-func (r *roundRect[T]) cornerContains(p Point[T], corner Point[T], direction point[T], radii Size[T]) bool {
-	// This corner is not curved, therefore the containment is the same as
-	// the previously checked bounds containment.
+func (r *RoundRect[T]) cornerContains(p Point[T], corner Point[T], direction Point[T], radii Size[T]) bool {
 	if radii.IsZero() {
 		return true
 	}
 
-	// The positive X,Y distance between the corner and the point.
+	// Compute the positive X,Y distance between the corner and the point, in the direction of the corner.
 	cornerRelative := corner.Sub(p).Mul(direction)
 
 	// The distance from the "center" of the corner's elliptical curve.
-	// If both numbers are positive then we need to do an elliptical distance
-	// check to determine if it is inside the curve.
-	// If either number is negative, then the point is outside this quadrant
-	// and is governed by inclusion in the bounds and inclusion within other
-	// corners of this round rect. In that case, we return true here to allow
-	// further evaluation within other quadrants.
-	rp := NewPoint(radii.Width(), radii.Height())
+	rp := Point[T]{X: radii.Width, Y: radii.Height}
 
 	quadrantRelative := rp.Sub(cornerRelative)
-	if quadrantRelative.X() <= 0 || quadrantRelative.Y() <= 0 {
-		// Not within the curved quadrant of this corner, therefore "inside"
-		// relative to this one corner.
+	if quadrantRelative.X <= 0 || quadrantRelative.Y <= 0 {
+		// Not within the curved quadrant of this corner, so "inside" relative to this one corner.
 		return true
 	}
 
-	// Dividing the quadrantRelative point by the radii gives a corresponding
-	// location within a unit circle which can be more easily tested for
-	// containment. We can use x^2 + y^2 and compare it against the radius
-	// squared (1.0) to avoid the sqrt.
-	unitCirclePoint := quadrantRelative.Div(rp)
-	return unitCirclePoint.LengthSquared() <= 1.0
+	// Dividing the quadrantRelative point by the radii gives a corresponding location within a unit circle.
+	unitCirclePoint := Point[T]{
+		X: quadrantRelative.X / rp.X,
+		Y: quadrantRelative.Y / rp.Y,
+	}
+	return unitCirclePoint.LengthSquared() <= T(1)
 }
 
 // RoundRectPathSource implements PathSource for a single RoundRect.
-// It emits the path for the round rect as a filled shape.
 type RoundRectPathSource[T Scalar] struct {
 	roundRect RoundRect[T]
 }
@@ -216,7 +196,6 @@ func (r *RoundRectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 }
 
 // DiffRoundRectPathSource implements PathSource for the difference between two RoundRects.
-// It emits the path for the outer round rect minus the inner round rect, using even-odd fill.
 type DiffRoundRectPathSource[T Scalar] struct {
 	outter RoundRect[T]
 	inner  RoundRect[T]

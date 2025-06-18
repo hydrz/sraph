@@ -7,62 +7,29 @@ import (
 )
 
 // Scalar is a generic interface for numeric types used in geometry calculations.
-// It supports conversion to float64 and string representation.
 type Scalar interface {
-	~int | ~int32 | ~int64 | ~float32 | ~float64
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~float32 | ~float64
 	Float64() float64
 	String() string
 }
 
-// New creates a new scalar value of type T.
-func New[T Scalar](value T) T {
-	return value
-}
-
-// Max returns the maximum value for the given scalar type T.
-func Max[T Scalar]() T {
-	var zero T
-	switch any(zero).(type) {
-	case I32:
-		return any(I32(math.MaxInt32)).(T)
-	case F32:
-		return any(F32(math.MaxFloat32)).(T)
-	case F64:
-		return any(F64(math.MaxFloat64)).(T)
-	case I26_6:
-		return any(I26_6(math.MaxInt32)).(T)
-	default:
-		// fallback for unknown types
-		return zero
-	}
-}
-
-// EqualFloat32 can avoid type assertion for Float32 comparisons.
-func EqualFloat32(a, b F32) bool {
-	diff := a - b
-	return math.Abs(float64(diff)) < Epsilon32
-}
-
-// EqualFloat64 can avoid type assertion for Float64 comparisons.
-func EqualFloat64(a, b F64) bool {
-	diff := a - b
-	return math.Abs(float64(diff)) < Epsilon32
-}
-
-// Equal compares two scalar values of type T with a tolerance.
+// Eq compares two scalar values of type T with a tolerance.
 //
 // 0.001 for Float32 and 0.0000001 for Float64.
-func Equal[T Scalar](a, b T) bool {
+func Eq[T Scalar](a, b T) bool {
+	if a == b {
+		return true
+	}
 	tolerance := Epsilon32
-
 	if _, ok := any(a).(F64); ok {
 		tolerance = Epsilon64
-	} else if _, ok := any(b).(F64); ok {
-		tolerance = Epsilon64
 	}
-
-	diff := a.Float64() - b.Float64()
-	return math.Abs(diff) < tolerance
+	diff := a - b
+	if diff < 0 {
+		diff = -diff
+	}
+	return diff.Float64() < tolerance
 }
 
 // IsFinite checks if the scalar value is finite.
@@ -71,9 +38,16 @@ func IsFinite[T Scalar](s T) bool {
 		return !math.IsNaN(s.Float64()) && !math.IsInf(s.Float64(), 0)
 	}
 	if _, ok := any(s).(F32); ok {
-		return !math.IsNaN(float64(s.Float64())) && !math.IsInf(float64(s.Float64()), 0)
+		return !math.IsNaN(s.Float64()) && !math.IsInf(s.Float64(), 0)
 	}
 	return true // For integer types, we assume they are finite
+}
+
+func Abs[T Scalar](s T) T {
+	if s < 0 {
+		return -s
+	}
+	return s
 }
 
 // Clamp clamps the scalar value between min and max.
@@ -85,19 +59,6 @@ func Clamp[T cmp.Ordered](value, min, max T) T {
 		return max
 	}
 	return value
-}
-
-// I32 is a 32-bit integer scalar type.
-type I32 int32
-
-// Float64 implements Scalar.
-func (i I32) Float64() float64 {
-	return float64(i)
-}
-
-// String implements Scalar.
-func (i I32) String() string {
-	return strconv.FormatInt(int64(i), 10)
 }
 
 // F32 is a 32-bit floating point scalar type.
@@ -129,6 +90,32 @@ func (f F64) Float64() float64 {
 // String implements Scalar.
 func (f F64) String() string {
 	return strconv.FormatFloat(float64(f), 'f', -1, 64)
+}
+
+// I32 is a 32-bit integer scalar type.
+type I32 int32
+
+// Float64 implements Scalar.
+func (i I32) Float64() float64 {
+	return float64(i)
+}
+
+// String implements Scalar.
+func (i I32) String() string {
+	return strconv.FormatInt(int64(i), 10)
+}
+
+// I64 is a 64-bit integer scalar type.
+type I64 int64
+
+// Float64 implements Scalar.
+func (i I64) Float64() float64 {
+	return float64(i)
+}
+
+// String implements Scalar.
+func (i I64) String() string {
+	return strconv.FormatInt(int64(i), 10)
 }
 
 // I26_6 is a signed 26.6 fixed-point number.

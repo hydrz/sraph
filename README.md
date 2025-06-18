@@ -1,4 +1,6 @@
-# template.go
+# Sraph
+
+Sraph is a UI toolkit for building beautiful, natively compiled applications for mobile, web, desktop, and embedded devices using the Go programming language.
 
 ## Overview
 

@@ -19,33 +19,33 @@ func NewRSTransform[T Scalar](origin Point[T], scale T, radians Radians[T]) RSTr
 	return RSTransform[T]{
 		ScaledCos:  cos * scale,
 		ScaledSin:  sin * scale,
-		TranslateX: origin.X(),
-		TranslateY: origin.Y(),
+		TranslateX: origin.X,
+		TranslateY: origin.Y,
 	}
 }
 
 // IsAxisAligned returns true if the resulting transformed quad will be axis-aligned.
 func (r RSTransform[T]) IsAxisAligned() bool {
 	var zero T
-	return Equal(r.ScaledCos, zero) || Equal(r.ScaledSin, zero)
+	return Eq(r.ScaledCos, zero) || Eq(r.ScaledSin, zero)
 }
 
 // Matrix returns the 4x4 matrix representing this RSTransform.
 func (r RSTransform[T]) Matrix() Matrix[T] {
-	return NewMatrixColumn(
-		r.ScaledCos, r.ScaledSin, T(0), T(0),
-		-r.ScaledSin, r.ScaledCos, T(0), T(0),
-		T(0), T(0), T(1), T(0),
-		r.TranslateX, r.TranslateY, T(0), T(1),
-	)
+	return Matrix[T]{
+		r.ScaledCos, r.ScaledSin, 0, 0,
+		-r.ScaledSin, r.ScaledCos, 0, 0,
+		0, 0, 1, 0,
+		r.TranslateX, r.TranslateY, 0, 1,
+	}
 }
 
 // Quad returns the 4 corner points of the transformed quad for a sub-image of the given width and height.
 // The order is UpperLeft, UpperRight, LowerLeft, LowerRight.
 func (r RSTransform[T]) Quad(width, height T) Quad[T] {
-	origin := NewPoint(r.TranslateX, r.TranslateY)
-	dx := NewPoint(r.ScaledCos*width, r.ScaledSin*width)
-	dy := NewPoint(-r.ScaledSin*height, r.ScaledCos*height)
+	origin := Point[T]{r.TranslateX, r.TranslateY}
+	dx := Point[T]{r.ScaledCos * width, r.ScaledSin * width}
+	dy := Point[T]{-r.ScaledSin * height, r.ScaledCos * height}
 	return Quad[T]{
 		origin,
 		origin.Add(dx),
@@ -56,7 +56,7 @@ func (r RSTransform[T]) Quad(width, height T) Quad[T] {
 
 // QuadSize returns the 4 corner points for a sub-image of the given size.
 func (r RSTransform[T]) QuadSize(size Size[T]) Quad[T] {
-	return r.Quad(size.Width(), size.Height())
+	return r.Quad(size.Width, size.Height)
 }
 
 // Bounds returns the bounding rectangle of the transformed quad for the given width and height.
@@ -67,5 +67,5 @@ func (r RSTransform[T]) Bounds(width, height T) Rect[T] {
 
 // BoundsSize returns the bounding rectangle for the given size.
 func (r RSTransform[T]) BoundsSize(size Size[T]) Rect[T] {
-	return r.Bounds(size.Width(), size.Height())
+	return r.Bounds(size.Width, size.Height)
 }

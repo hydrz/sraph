@@ -124,12 +124,12 @@ func (c Color) String() string {
 	return fmt.Sprintf("Color(%.3f, %.3f, %.3f, %.3f)", c.R, c.G, c.B, c.A)
 }
 
-// Equal compares two colors for equality within tolerance.
-func (c Color) Equal(other Color) bool {
-	return EqualFloat32(c.R, other.R) &&
-		EqualFloat32(c.G, other.G) &&
-		EqualFloat32(c.B, other.B) &&
-		EqualFloat32(c.A, other.A)
+// Eq compares two colors for Eqity within tolerance.
+func (c Color) Eq(other Color) bool {
+	return Eq(c.R, other.R) &&
+		Eq(c.G, other.G) &&
+		Eq(c.B, other.B) &&
+		Eq(c.A, other.A)
 }
 
 // Add performs component-wise addition.

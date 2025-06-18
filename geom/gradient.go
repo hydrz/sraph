@@ -60,7 +60,7 @@ func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
 		previousStop := F32(0.0)
 		previousColorIndex := 0
 
-		// First index is always equal to the first color
+		// First index is always Eq to the first color
 		appendColor(previousColor, &data)
 
 		for i := uint32(1); i < textureSize-1; i++ {
@@ -68,8 +68,8 @@ func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
 			nextColor := colors[previousColorIndex+1]
 			nextStop := stops[previousColorIndex+1]
 
-			// Check if we're nearly equal to the next stop
-			if EqualFloat32(scaledI, nextStop) {
+			// Check if we're nearly Eq to the next stop
+			if Eq(scaledI, nextStop) {
 				appendColor(nextColor, &data)
 				previousColor = nextColor
 				previousStop = nextStop
@@ -98,7 +98,7 @@ func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
 			}
 		}
 
-		// Last index is always equal to the last color
+		// Last index is always Eq to the last color
 		appendColor(colors[len(colors)-1], &data)
 	}
 

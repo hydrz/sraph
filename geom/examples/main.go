@@ -170,9 +170,9 @@ func drawMatrixTransformations() {
 
 	// Apply rotation around center
 	center := baseRect.Center()
-	matrix = matrix.Translate2D(geom.NewVector2(center.X(), center.Y()))
+	matrix = matrix.Translate2D(geom.Vector2[geom.F32]{X: center.X, Y: center.Y})
 	matrix = matrix.RotateZ(geom.NewRadians[geom.F32](0.5)) // ~30 degrees
-	matrix = matrix.Translate2D(geom.NewVector2(-center.X(), -center.Y()))
+	matrix = matrix.Translate2D(geom.Vector2[geom.F32]{X: -center.X, Y: -center.Y})
 
 	// Transform rectangle corners
 	corners := baseRect.Points()
@@ -283,11 +283,11 @@ func drawRSTransformExamples() {
 		angle  geom.Radians[geom.F32]
 		color  color.RGBA
 	}{
-		{geom.NewPoint[geom.F32](100, 100), 1.0, geom.NewRadians[geom.F32](0.0), color.RGBA{255, 100, 100, 255}},
-		{geom.NewPoint[geom.F32](200, 100), 1.2, geom.NewRadians[geom.F32](0.5), color.RGBA{100, 255, 100, 255}},
-		{geom.NewPoint[geom.F32](300, 100), 0.8, geom.NewRadians[geom.F32](1.0), color.RGBA{100, 100, 255, 255}},
-		{geom.NewPoint[geom.F32](150, 200), 1.5, geom.NewRadians[geom.F32](1.5), color.RGBA{255, 255, 100, 255}},
-		{geom.NewPoint[geom.F32](250, 200), 1.0, geom.NewRadians[geom.F32](2.0), color.RGBA{255, 100, 255, 255}},
+		{geom.Point[geom.F32]{X: 100, Y: 100}, 1.0, geom.NewRadians[geom.F32](0.0), color.RGBA{255, 100, 100, 255}},
+		{geom.Point[geom.F32]{X: 200, Y: 100}, 1.2, geom.NewRadians[geom.F32](0.5), color.RGBA{100, 255, 100, 255}},
+		{geom.Point[geom.F32]{X: 300, Y: 100}, 0.8, geom.NewRadians[geom.F32](1.0), color.RGBA{100, 100, 255, 255}},
+		{geom.Point[geom.F32]{X: 150, Y: 200}, 1.5, geom.NewRadians[geom.F32](1.5), color.RGBA{255, 255, 100, 255}},
+		{geom.Point[geom.F32]{X: 250, Y: 200}, 1.0, geom.NewRadians[geom.F32](2.0), color.RGBA{255, 100, 255, 255}},
 	}
 
 	for _, tf := range transforms {

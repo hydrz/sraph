@@ -53,12 +53,12 @@ func TestRoundRect_Contains(t *testing.T) {
 		point Point[F32]
 		want  bool
 	}{
-		{"Inside", NewPoint[F32](5, 5), true},
-		{"Outside", NewPoint[F32](20, 20), false},
-		{"On corner", NewPoint[F32](2, 2), true},
-		{"On rounded edge", NewPoint[F32](2, 0), true},
-		{"On straight edge", NewPoint[F32](5, 0), true},
-		{"Outside rounded edge", NewPoint[F32](0, 0), false},
+		{"Inside", Point[F32]{5, 5}, true},
+		{"Outside", Point[F32]{20, 20}, false},
+		{"On corner", Point[F32]{2, 2}, true},
+		{"On rounded edge", Point[F32]{2, 0}, true},
+		{"On straight edge", Point[F32]{5, 0}, true},
+		{"Outside rounded edge", Point[F32]{0, 0}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestRoundRectPathSource(t *testing.T) {
 	if !src.IsConvex() {
 		t.Errorf("RoundRectPathSource: IsConvex should be true")
 	}
-	if !src.Bounds().Equal(rect) {
+	if !src.Bounds().Eq(rect) {
 		t.Errorf("RoundRectPathSource: Bounds mismatch")
 	}
 	receiver := &testPathReceiver[F32]{}
@@ -114,7 +114,7 @@ func TestDiffRoundRectPathSource(t *testing.T) {
 	if src.IsConvex() {
 		t.Errorf("DiffRoundRectPathSource: IsConvex should be false")
 	}
-	if !src.Bounds().Equal(rect) {
+	if !src.Bounds().Eq(rect) {
 		t.Errorf("DiffRoundRectPathSource: Bounds mismatch")
 	}
 	receiver := &testPathReceiver[F32]{}
