@@ -17,6 +17,8 @@ type Canvas struct {
 	bounds geom.Rect[Scalar]
 	// Current device pixel ratio
 	devicePixelRatio Scalar
+	// Renderer for actual drawing operations
+	renderer Renderer
 }
 
 // ClipState represents the current clipping state.
@@ -126,6 +128,14 @@ func (c *Canvas) SaveLayer(bounds *geom.Rect[Scalar], paint *Paint) {
 	// 1. Creating an offscreen render target
 	// 2. Setting up the layer bounds
 	// 3. Applying paint effects to the layer
+}
+
+// getCurrentTransform retrieves the current transformation matrix from the stack.
+func (c *Canvas) getCurrentTransform() geom.Matrix[Scalar] {
+	if len(c.transformStack) == 0 {
+		return geom.NewMatrix[Scalar]()
+	}
+	return c.transformStack[len(c.transformStack)-1]
 }
 
 // Translate implements OpReceiver.Translate.
@@ -318,4 +328,128 @@ func (c *Canvas) DrawPoints(mode PointMode, points []geom.Point[Scalar], paint P
 func (c *Canvas) DrawVertices(vertices *Vertices, blendMode BlendMode, paint Paint) {
 	// TODO: Implement vertices drawing
 	// This would draw the vertices as triangles with the given blend mode and paint
+}
+
+// DrawImage draws an image at the specified position.
+func (c *Canvas) DrawImage(image Image, position geom.Point[Scalar], paint Paint) {
+	// TODO: Implement image drawing
+	// This would draw the image at the given position with the paint
+}
+
+// DrawImageRect draws an image scaled to fit the destination rectangle.
+func (c *Canvas) DrawImageRect(image Image, src, dst geom.Rect[Scalar], paint Paint, constraint SrcRectConstraint) {
+	// TODO: Implement image rectangle drawing
+	// This would draw the image from src rect to dst rect
+}
+
+// DrawImageNine draws a nine-patch image.
+func (c *Canvas) DrawImageNine(image Image, center geom.Rect[Scalar], dst geom.Rect[Scalar], paint Paint) {
+	// TODO: Implement nine-patch image drawing
+	// This would draw the image as a nine-patch to fit the destination
+}
+
+// DrawImageWithSampling draws an image with specific sampling options.
+func (c *Canvas) DrawImageWithSampling(image Image, position geom.Point[Scalar], sampling SamplingOptions, paint Paint) {
+	// TODO: Implement image drawing with sampling
+}
+
+// DrawParagraph draws a text paragraph at the specified position.
+func (c *Canvas) DrawParagraph(paragraph *Paragraph, position geom.Point[Scalar]) {
+	// TODO: Implement paragraph drawing
+	paragraph.Paint(*c, position)
+}
+
+// DrawTextBlob draws a text blob at the specified position.
+func (c *Canvas) DrawTextBlob(text string, position geom.Point[Scalar], font Font, paint Paint) {
+	// TODO: Implement text blob drawing
+	// This would draw text with the given font and paint
+}
+
+// DrawShadow draws a shadow for the given path.
+func (c *Canvas) DrawShadow(path geom.PathSource[Scalar], color Color, elevation float32, transparentOccluder, dpr Scalar) {
+	// TODO: Implement shadow drawing
+	// This would draw a shadow based on the path elevation and lighting
+}
+
+// DrawAtlas draws multiple sprites from a texture atlas.
+func (c *Canvas) DrawAtlas(atlas Image, transforms []geom.RSTransform[Scalar], texCoords []geom.Rect[Scalar], colors []Color, blendMode BlendMode, paint Paint) {
+	// TODO: Implement atlas drawing
+	// This would draw multiple sprites efficiently from an atlas texture
+}
+
+// DrawPatch draws a patch (cubic Bezier patch) for advanced 3D-style rendering.
+func (c *Canvas) DrawPatch(cubics []geom.Point[Scalar], colors []Color, texCoords []geom.Point[Scalar], blendMode BlendMode, paint Paint) {
+	// TODO: Implement patch drawing
+	// This would draw a cubic Bezier patch with interpolated colors and textures
+}
+
+// ComputeShadowBounds computes the bounds of a shadow for the given path.
+func (c *Canvas) ComputeShadowBounds(path geom.PathSource[Scalar], elevation float32, dpr Scalar, transform geom.Matrix[Scalar]) geom.Rect[Scalar] {
+	// TODO: Implement shadow bounds computation
+	// This would calculate the bounds that a shadow would occupy
+	return geom.Rect[Scalar]{}
+}
+
+// FlushPendingOperations flushes any pending drawing operations to the underlying renderer.
+func (c *Canvas) FlushPendingOperations() {
+	// TODO: Implement operation flushing
+	// This would ensure all queued operations are executed
+}
+
+// IsRecording returns true if this canvas is recording operations rather than rendering.
+func (c *Canvas) IsRecording() bool {
+	return false // Canvas renders immediately, doesn't record
+}
+
+// GetLocalClipBounds returns the current local clip bounds.
+func (c *Canvas) GetLocalClipBounds() geom.Rect[Scalar] {
+	// TODO: Implement local clip bounds calculation
+	return c.bounds
+}
+
+// GetDeviceClipBounds returns the current device clip bounds.
+func (c *Canvas) GetDeviceClipBounds() geom.Rect[Scalar] {
+	// TODO: Implement device clip bounds calculation
+	transform := c.getCurrentTransform()
+	return c.bounds.TransformBounds(transform)
+}
+
+// DrawDisplayList draws another display list into this canvas.
+func (c *Canvas) DrawDisplayList(displayList *DisplayList, opacity float32) {
+	// TODO: Implement display list drawing
+	// This would execute all operations from another display list
+}
+
+// DrawLayer draws a layer with the given paint.
+func (c *Canvas) DrawLayer(layer Layer, paint Paint) {
+	// TODO: Implement layer drawing
+	// This would draw a pre-rendered layer
+}
+
+// CreateLayer creates a new layer for off-screen rendering.
+func (c *Canvas) CreateLayer(bounds geom.Rect[Scalar]) Layer {
+	// TODO: Implement layer creation
+	// This would create a new render target
+	return nil
+}
+
+// CanvasDrawingStyle defines various drawing style options.
+type CanvasDrawingStyle struct {
+	compositingOperation  BlendMode
+	globalAlpha           float32
+	imageSmoothingEnabled bool
+	shadowBlur            float32
+	shadowColor           Color
+	shadowOffsetX         float32
+	shadowOffsetY         float32
+}
+
+// NewCanvasDrawingStyle creates a new drawing style with default values.
+func NewCanvasDrawingStyle() CanvasDrawingStyle {
+	return CanvasDrawingStyle{
+		compositingOperation:  BlendModeSrcOver,
+		globalAlpha:           1.0,
+		imageSmoothingEnabled: true,
+		shadowColor:           ColorTransparent,
+	}
 }

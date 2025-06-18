@@ -15,7 +15,14 @@ type Paint struct {
 	isStroke    bool
 	isAntiAlias bool
 	style       PaintStyle
-	// TODO: Add support for shaders, image filters, color filters, etc.
+	// Advanced attributes
+	colorSource  ColorSource // For gradients, patterns, etc.
+	colorFilter  ColorFilter // For color transformations
+	imageFilter  ImageFilter // For blur, drop shadow, etc.
+	maskFilter   MaskFilter  // For blur masks
+	pathEffect   PathEffect  // For dash patterns, etc.
+	invertColors bool        // Whether to invert colors
+	dither       bool        // Whether to apply dithering
 }
 
 // NewPaint creates a new Paint with default values.

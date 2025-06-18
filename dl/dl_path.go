@@ -334,6 +334,211 @@ func (pb *PathBuilder) AddRoundRect(rrect geom.RoundRect[Scalar]) *PathBuilder {
 	return pb
 }
 
+// AddSuperellipse adds a superellipse to the path.
+// A superellipse is a generalization of an ellipse with adjustable curvature.
+func (pb *PathBuilder) AddSuperellipse(bounds geom.Rect[Scalar], n float32) *PathBuilder {
+	// TODO: Implement superellipse path generation
+	// This would create a superellipse with the given exponent n
+	return pb
+}
+
+// AddPolygon adds a regular polygon to the path.
+func (pb *PathBuilder) AddPolygon(center geom.Point[Scalar], radius Scalar, sides int, rotation Scalar) *PathBuilder {
+	if sides < 3 {
+		return pb
+	}
+
+	angleStep := 2.0 * 3.14159265359 / float64(sides)
+	startAngle := float64(rotation)
+
+	// Calculate first point
+	firstAngle := startAngle
+	firstX := center.X + radius*Scalar(cos(firstAngle))
+	firstY := center.Y + radius*Scalar(sin(firstAngle))
+	pb.MoveTo(firstX, firstY)
+
+	// Add lines to other vertices
+	for i := 1; i < sides; i++ {
+		angle := startAngle + float64(i)*angleStep
+		x := center.X + radius*Scalar(cos(angle))
+		y := center.Y + radius*Scalar(sin(angle))
+		pb.LineTo(x, y)
+	}
+
+	pb.Close()
+	return pb
+}
+
+// AddStar adds a star shape to the path.
+func (pb *PathBuilder) AddStar(center geom.Point[Scalar], outerRadius, innerRadius Scalar, points int, rotation Scalar) *PathBuilder {
+	if points < 3 {
+		return pb
+	}
+
+	angleStep := 3.14159265359 / float64(points)
+	startAngle := float64(rotation)
+
+	// Start at first outer point
+	firstAngle := startAngle
+	firstX := center.X + outerRadius*Scalar(cos(firstAngle))
+	firstY := center.Y + outerRadius*Scalar(sin(firstAngle))
+	pb.MoveTo(firstX, firstY)
+
+	// Alternate between outer and inner points
+	for i := 0; i < points*2; i++ {
+		radius := outerRadius
+		if i%2 == 1 {
+			radius = innerRadius
+		}
+		angle := startAngle + float64(i+1)*angleStep
+		x := center.X + radius*Scalar(cos(angle))
+		y := center.Y + radius*Scalar(sin(angle))
+		pb.LineTo(x, y)
+	}
+
+	pb.Close()
+	return pb
+}
+
+// AddArrow adds an arrow shape to the path.
+func (pb *PathBuilder) AddArrow(start, end geom.Point[Scalar], headLength, headWidth Scalar) *PathBuilder {
+	// Calculate arrow direction
+	dx := end.X - start.X
+	dy := end.Y - start.Y
+	length := Scalar(sqrt(float64(dx*dx + dy*dy)))
+
+	if length == 0 {
+		return pb
+	}
+
+	// Normalize direction
+	dirX := dx / length
+	dirY := dy / length
+
+	// Calculate perpendicular
+	perpX := -dirY
+	perpY := dirX
+
+	// Arrow shaft
+	pb.MoveTo(start.X, start.Y)
+	shaftEndX := end.X - dirX*headLength
+	shaftEndY := end.Y - dirY*headLength
+	pb.LineTo(shaftEndX, shaftEndY)
+
+	// Arrow head
+	headBaseX := shaftEndX + perpX*headWidth/2
+	headBaseY := shaftEndY + perpY*headWidth/2
+	pb.LineTo(headBaseX, headBaseY)
+	pb.LineTo(end.X, end.Y)
+
+	headBaseX2 := shaftEndX - perpX*headWidth/2
+	headBaseY2 := shaftEndY - perpY*headWidth/2
+	pb.LineTo(headBaseX2, headBaseY2)
+	pb.LineTo(shaftEndX, shaftEndY)
+
+	return pb
+}
+
+// AddDashedLine adds a dashed line to the path.
+func (pb *PathBuilder) AddDashedLine(start, end geom.Point[Scalar], dashPattern []Scalar, phase Scalar) *PathBuilder {
+	// TODO: Implement dashed line generation
+	// This would create a dashed line following the dash pattern
+	pb.MoveTo(start.X, start.Y)
+	pb.LineTo(end.X, end.Y)
+	return pb
+}
+
+// AddWavyLine adds a wavy line to the path.
+func (pb *PathBuilder) AddWavyLine(start, end geom.Point[Scalar], amplitude, frequency Scalar) *PathBuilder {
+	// Calculate line direction and length
+	dx := end.X - start.X
+	dy := end.Y - start.Y
+	length := Scalar(sqrt(float64(dx*dx + dy*dy)))
+
+	if length == 0 {
+		return pb
+	}
+
+	// Normalize direction and calculate perpendicular
+	dirX := dx / length
+	dirY := dy / length
+	perpX := -dirY
+	perpY := dirX
+
+	pb.MoveTo(start.X, start.Y)
+
+	// Create wavy line with multiple segments
+	segments := int(length * frequency / 10) // Approximate number of segments
+	if segments < 2 {
+		segments = 2
+	}
+
+	for i := 1; i <= segments; i++ {
+		t := Scalar(i) / Scalar(segments)
+		baseX := start.X + t*dx
+		baseY := start.Y + t*dy
+
+		// Calculate wave offset
+		wavePhase := t * frequency * 2 * 3.14159265359
+		waveOffset := amplitude * Scalar(sin(float64(wavePhase)))
+
+		// Apply wave offset perpendicular to line direction
+		x := baseX + perpX*waveOffset
+		y := baseY + perpY*waveOffset
+
+		pb.LineTo(x, y)
+	}
+
+	return pb
+}
+
+// AddSpiral adds a spiral to the path.
+func (pb *PathBuilder) AddSpiral(center geom.Point[Scalar], startRadius, endRadius Scalar, turns float64, clockwise bool) *PathBuilder {
+	if turns <= 0 {
+		return pb
+	}
+
+	steps := int(turns * 50) // Number of line segments per turn
+	angleStep := 2 * 3.14159265359 * turns / float64(steps)
+	radiusStep := (endRadius - startRadius) / Scalar(steps)
+
+	if !clockwise {
+		angleStep = -angleStep
+	}
+
+	// Start point
+	x := center.X + startRadius
+	y := center.Y
+	pb.MoveTo(x, y)
+
+	// Generate spiral points
+	for i := 1; i <= steps; i++ {
+		angle := float64(i) * angleStep
+		radius := startRadius + Scalar(i)*radiusStep
+		x := center.X + radius*Scalar(cos(angle))
+		y := center.Y + radius*Scalar(sin(angle))
+		pb.LineTo(x, y)
+	}
+
+	return pb
+}
+
+// Helper functions for mathematical operations
+func cos(x float64) float64 {
+	// TODO: Use proper math library
+	return 1.0 // Placeholder
+}
+
+func sin(x float64) float64 {
+	// TODO: Use proper math library
+	return 0.0 // Placeholder
+}
+
+func sqrt(x float64) float64 {
+	// TODO: Use proper math library
+	return x // Placeholder
+}
+
 // GetBounds returns the bounding rectangle of the path.
 func (pb *PathBuilder) GetBounds() geom.Rect[Scalar] {
 	return pb.bounds

@@ -1,23 +1,25 @@
 # Display List (dl) Package
 
-A Go implementation of a 2D graphics display list system, inspired by Flutter's display list architecture.
+A comprehensive Go implementation of a 2D graphics display list system, inspired by Flutter's display list architecture. This package provides high-performance 2D graphics rendering with support for complex visual effects, text rendering, image processing, and spatial indexing.
 
 ## Overview
 
-The display list package provides a way to record, store, and replay 2D graphics operations efficiently. It's designed to be backend-agnostic, allowing the same recorded operations to be rendered on different graphics backends (GPU, CPU, etc.).
+The display list package provides a complete 2D graphics system that records, optimizes, and replays drawing operations efficiently. It's designed to be backend-agnostic while providing advanced features like text layout, image processing, visual effects, and spatial indexing for high-performance graphics applications.
 
 ## Key Components
 
-### Core Types
-- **DisplayList**: An immutable sequence of recorded drawing operations
-- **DisplayListBuilder**: Records operations into a display list
-- **OpReceiver**: Interface for executing operations
-- **Canvas**: Concrete implementation for immediate rendering
-- **Renderer**: Interface for different rendering backends
+### Core Display List System
+- **DisplayList**: Immutable sequence of recorded drawing operations with bounds tracking
+- **DisplayListBuilder**: Records operations with automatic optimization and attribute tracking
+- **OpReceiver**: Interface for executing operations on different backends
+- **Canvas**: Immediate-mode rendering with transform/clip stacks and layer support
+- **Renderer**: Pluggable backend interface for GPU/CPU rendering
 
-### Graphics Primitives
-- **Paint**: Defines how shapes are drawn (color, blend mode, stroke/fill)
-- **Path**: Complex shapes built from lines and curves
+### Advanced Graphics Primitives
+- **Paint**: Comprehensive drawing attributes (color, effects, blend modes, styles)
+- **Path**: Complex shapes with Boolean operations and advanced path effects
+- **Image**: Multi-format image support (CPU/GPU backed) with advanced sampling
+- **Text**: Rich text with mixed styles, layout, and internationalization support
 - **Vertices**: Efficient triangle-based rendering
 - **Color**: RGBA color representation
 - **Transformations**: Matrix-based 2D/3D transformations

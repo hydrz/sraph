@@ -47,6 +47,26 @@ func NewSamplingOptionsCubic(b, c float32) SamplingOptions {
 	}
 }
 
+// NewSamplingOptionsCatmullRom creates sampling options for Catmull-Rom cubic filtering.
+func NewSamplingOptionsCatmullRom() SamplingOptions {
+	return NewSamplingOptionsCubic(0.0, 0.5)
+}
+
+// NewSamplingOptionsMitchell creates sampling options for Mitchell cubic filtering.
+func NewSamplingOptionsMitchell() SamplingOptions {
+	return NewSamplingOptionsCubic(1.0/3.0, 1.0/3.0)
+}
+
+// NewSamplingOptionsAniso creates sampling options for anisotropic filtering.
+func NewSamplingOptionsAniso(maxAnisotropy float32) SamplingOptions {
+	return SamplingOptions{
+		filterMode:    FilterModeLinear,
+		imageSampling: ImageSamplingMipmapLinear,
+		useCubic:      false,
+		// TODO: Add anisotropy support
+	}
+}
+
 // FilterMode returns the filter mode.
 func (s SamplingOptions) FilterMode() FilterMode {
 	return s.filterMode
@@ -90,7 +110,7 @@ var (
 	// SamplingOptionsMipmap represents mipmap linear sampling.
 	SamplingOptionsMipmap = NewSamplingOptionsMipmap()
 	// SamplingOptionsCatmullRom represents Catmull-Rom cubic sampling.
-	SamplingOptionsCatmullRom = NewSamplingOptionsCubic(0, 0.5)
+	SamplingOptionsCatmullRom = NewSamplingOptionsCatmullRom()
 	// SamplingOptionsMitchell represents Mitchell cubic sampling.
-	SamplingOptionsMitchell = NewSamplingOptionsCubic(1.0/3.0, 1.0/3.0)
+	SamplingOptionsMitchell = NewSamplingOptionsMitchell()
 )
