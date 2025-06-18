@@ -508,6 +508,21 @@ func (m Matrix[T]) Scale(v Vector3[T]) Matrix[T] {
 	}
 }
 
+// Skew creates a skew matrix.
+// The resulting matrix is:
+// [ 1   sx  0   0 ]
+// [ sy  1   0   0 ]
+// [ 0   0   1   0 ]
+// [ 0   0   0   1 ]
+func (m Matrix[T]) Skew(sx, sy T) Matrix[T] {
+	return Matrix[T]{
+		m[0], sy, m[2], m[3],
+		sx, m[5], m[6], m[7],
+		m[8], m[9], m[10], m[11],
+		m[12], m[13], m[14], m[15],
+	}
+}
+
 // Scale2D creates a 2D scale matrix.
 // The resulting matrix is:
 // [ sx  0   0   0 ]
