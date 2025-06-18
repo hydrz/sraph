@@ -7,4 +7,6 @@ use (
 	./gio
 	./gpu
 	./gpu/gen
+	./shiny
+	./surface
 )
