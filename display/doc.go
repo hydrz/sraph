@@ -1,4 +1,4 @@
-// Package dl provides a display list system for 2D graphics rendering.
+// package display provides a display list system for 2D graphics rendering.
 //
 // The display list system allows you to record a sequence of drawing operations
 // and replay them efficiently on different rendering backends. This is inspired
@@ -65,7 +65,7 @@
 //   - Operations are backend-agnostic and can target GPU or CPU renderers
 //
 // For more examples and detailed usage, see the dl_examples.go file.
-package dl
+package display
 
 // TODO: Future features to implement
 //

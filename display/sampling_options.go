@@ -1,4 +1,4 @@
-package dl
+package display
 
 // SamplingOptions defines options for sampling textures and images.
 type SamplingOptions struct {

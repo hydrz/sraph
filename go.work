@@ -2,11 +2,9 @@ go 1.24.3
 
 use (
 	.
-	./dl/examples
 	./geom
 	./gio
 	./gpu
 	./gpu/gen
 	./shiny
-	./surface
 )

@@ -1,4 +1,4 @@
-package dl
+package display
 
 // OpFlags represents flags that describe the characteristics of display list operations.
 type OpFlags uint32

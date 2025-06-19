@@ -1,4 +1,4 @@
-package dl
+package display
 
 import "github.com/opensraph/sraph/geom"
 
