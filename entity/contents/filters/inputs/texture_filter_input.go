@@ -1,8 +1,8 @@
 package inputs
 
 import (
-	"github.com/hydrz/sraph/geom"
-	"github.com/hydrz/sraph/render"
+	"github.com/opensraph/sraph/geom"
+	"github.com/opensraph/sraph/render"
 )
 
 // TextureFilterInput represents a texture input for filter operations
@@ -19,7 +19,7 @@ func NewTextureFilterInput(texture *render.Texture) *TextureFilterInput {
 		},
 		Texture: texture,
 	}
-	
+
 	// Set bounds based on texture size if available
 	if texture != nil {
 		// TODO: Get actual texture dimensions
@@ -28,7 +28,7 @@ func NewTextureFilterInput(texture *render.Texture) *TextureFilterInput {
 			Size:   geom.Size{Width: 1, Height: 1}, // Placeholder
 		}
 	}
-	
+
 	return input
 }
 
@@ -53,7 +53,7 @@ func (t *TextureFilterInput) Clone() FilterInput {
 // SetTexture sets the underlying texture
 func (t *TextureFilterInput) SetTexture(texture *render.Texture) {
 	t.Texture = texture
-	
+
 	// Update bounds based on new texture
 	if texture != nil {
 		// TODO: Get actual texture dimensions and update bounds
@@ -65,7 +65,7 @@ func (t *TextureFilterInput) GetTextureSize() geom.Size {
 	if t.Texture == nil {
 		return geom.Size{Width: 0, Height: 0}
 	}
-	
+
 	// TODO: Return actual texture size
 	return geom.Size{Width: 1, Height: 1}
 }
@@ -75,7 +75,7 @@ func (t *TextureFilterInput) GetTextureFormat() render.PixelFormat {
 	if t.Texture == nil {
 		return render.PixelFormatUnknown
 	}
-	
+
 	// TODO: Return actual texture format
 	return render.PixelFormatRGBA8
 }

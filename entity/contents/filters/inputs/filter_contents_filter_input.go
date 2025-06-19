@@ -1,8 +1,7 @@
 package inputs
 
 import (
-	"github.com/hydrz/sraph/geom"
-	"github.com/hydrz/sraph/render"
+	"github.com/opensraph/sraph/render"
 )
 
 // FilterContentsFilterInput represents an input from another filter for filter operations
@@ -27,7 +26,7 @@ func (f *FilterContentsFilterInput) GetTexture() *render.Texture {
 	if f.Texture != nil {
 		return f.Texture
 	}
-	
+
 	// TODO: Render filter contents to texture if not already cached
 	return nil
 }
