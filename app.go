@@ -5,19 +5,6 @@ import (
 	"log/slog"
 )
 
-type App interface {
-	Run() error
-	NewWindow(opts ...WindowOptions) Window
-}
-
-func New(opts ...AppOptions) App {
-	opt := defaultAppOptions
-	opt.apply(opts...)
-	return &app{
-		opt: opt,
-	}
-}
-
 type AppOptions struct {
 	Ctx    context.Context
 	Logger Logger
