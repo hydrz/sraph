@@ -32,7 +32,7 @@ sraph/
 │   ├── builder.go
 │   ├── canvas.go
 │   ├── paint.go
-│   └── operation.go
+│   └── operations.go
 │
 ├── render/                      # High-level rendering pipeline
 │   ├── renderer.go
