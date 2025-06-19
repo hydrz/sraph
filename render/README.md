@@ -1,13 +1,150 @@
-# Sraph Render Package
+# Render Package
 
-The `render` package provides a comprehensive, GPU-accelerated rendering system for Sraph, inspired by Flutter's Impeller renderer architecture. It bridges the gap between high-level display lists and low-level GPU operations.
+The render package provides the core rendering infrastructure for the sraph graphics framework. It is inspired by Flutter's Impeller renderer architecture and provides a modern, GPU-accelerated rendering system.
 
 ## Architecture Overview
 
-The render package follows a layered architecture:
+The render package is organized into several key components:
 
-1. **Context Layer** - Manages GPU resources and rendering capabilities
-2. **Resource Management** - Handles buffers, textures, shaders, and pipelines
+### Core Components
+
+- **Context**: The main rendering context that manages GPU resources and state
+- **CommandBuffer**: Encodes and manages rendering commands
+- **CommandQueue**: Manages command buffer execution
+- **RenderPass**: Manages render passes with render targets
+- **Pipeline**: Manages render and compute pipelines
+- **Resources**: Manages GPU resources like buffers, textures, and samplers
+
+### Resource Management
+
+- **Buffer**: GPU buffer resources for vertex, index, and uniform data
+- **Texture**: GPU texture resources for images and render targets
+- **Sampler**: Texture sampling configuration
+- **Resource Pool**: Efficient resource pooling for performance
+
+### Rendering Pipeline
+
+- **RenderTarget**: Defines render targets with color/depth/stencil attachments
+- **Surface**: Manages presentable surfaces
+- **Vertex Descriptors**: Defines vertex attribute layouts
+- **Shader Functions**: Manages vertex and fragment shaders
+
+### Backend Support
+
+The render package supports multiple graphics backends through the `backend` subpackage:
+
+- OpenGL
+- Vulkan
+- Metal
+- DirectX 11/12
+- WebGPU
+
+## Key Features
+
+### Modern GPU Architecture
+- Command buffer-based rendering
+- Multiple render passes
+- Compute shader support
+- Resource state management
+
+### Performance Optimizations
+- Resource pooling
+- Efficient memory management
+- Batch rendering support
+- GPU-driven rendering
+
+### Cross-Platform Support
+- Abstracted backend interface
+- Platform-specific optimizations
+- Automatic backend selection
+
+## Usage Example
+
+```go
+// Create a rendering context
+context := render.NewContext()
+
+// Create a render target
+renderTarget := render.NewRenderTarget(render.RenderTargetConfig{
+    Width:  800,
+    Height: 600,
+})
+
+// Create a command buffer
+cmdBuffer := context.CreateCommandBuffer()
+
+// Begin render pass
+renderPass := cmdBuffer.BeginRenderPass(renderTarget)
+
+// Set pipeline and draw
+renderPass.SetPipeline(myPipeline)
+renderPass.DrawIndexed(indexCount, instanceCount, 0, 0, 0)
+
+// End render pass and submit
+cmdBuffer.EndRenderPass()
+cmdBuffer.Submit()
+```
+
+## File Structure
+
+```
+render/
+├── render.go              # Main render package interface
+├── context.go             # Render context implementation
+├── command_buffer.go      # Command buffer management
+├── command_queue.go       # Command queue management
+├── render_pass.go         # Render pass management
+├── pipeline.go            # Pipeline management
+├── pipeline_library.go    # Pipeline caching
+├── shader_function.go     # Shader function management
+├── shader_library.go      # Shader caching
+├── vertex_descriptor.go   # Vertex attribute descriptions
+├── buffer.go              # Buffer resource management
+├── resource.go            # Base resource management
+├── surface.go             # Surface management
+├── render_target.go       # Render target management
+├── capabilities.go        # GPU capabilities
+├── resource_allocator.go  # Resource allocation
+├── sampler_library.go     # Sampler caching
+├── blit_command.go        # Blit operations
+├── blit_pass.go           # Blit pass management
+├── compute_pass.go        # Compute pass management
+├── compute_pipeline_descriptor.go # Compute pipeline configuration
+├── pipeline_descriptor.go # Render pipeline configuration
+├── command.go             # Individual render commands
+├── pool.go                # Resource pooling
+├── snapshot.go            # Render state snapshots
+├── vertex_buffer_builder.go # Vertex buffer utilities
+└── backend/
+    └── backend.go         # Backend abstraction
+```
+
+## Design Principles
+
+1. **Performance First**: Optimized for modern GPU architectures
+2. **Cross-Platform**: Abstracted backend interface for portability
+3. **Resource Efficiency**: Automatic resource management and pooling
+4. **Developer Friendly**: Clean, intuitive API design
+5. **Extensible**: Modular architecture for easy extension
+
+## Integration with Entity System
+
+The render package works closely with the entity system to provide:
+
+- Entity rendering through the entity renderer
+- Content-based rendering pipeline
+- Efficient batching and sorting
+- GPU-accelerated effects and filters
+
+## TODO
+
+This architecture provides the foundation for:
+- [ ] Backend implementations (OpenGL, Vulkan, Metal, etc.)
+- [ ] Shader compilation and management
+- [ ] Advanced rendering techniques
+- [ ] Performance profiling and debugging tools
+- [ ] Integration with the entity system
+- [ ] Comprehensive test coverage
 3. **Entity System** - Converts display list operations to renderable entities
 4. **Render Passes** - Manages GPU command recording and execution
 

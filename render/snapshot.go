@@ -5,19 +5,19 @@ package render
 type Snapshot interface {
 	// GetRenderTarget returns the render target at the time of snapshot
 	GetRenderTarget() RenderTarget
-	
+
 	// GetViewport returns the viewport at the time of snapshot
 	GetViewport() Viewport
-	
+
 	// GetScissorRect returns the scissor rectangle at the time of snapshot
 	GetScissorRect() Rect
-	
+
 	// GetPipeline returns the active pipeline at the time of snapshot
 	GetPipeline() Pipeline
-	
+
 	// IsValid returns true if the snapshot is valid
 	IsValid() bool
-	
+
 	// GetTimestamp returns the timestamp when the snapshot was taken
 	GetTimestamp() int64
 }
@@ -102,20 +102,20 @@ func getCurrentTimestamp() int64 {
 type SnapshotManager interface {
 	// TakeSnapshot takes a snapshot of the current render state
 	TakeSnapshot(renderTarget RenderTarget, viewport Viewport, scissorRect Rect, pipeline Pipeline) Snapshot
-	
+
 	// RestoreSnapshot restores the render state from a snapshot
 	RestoreSnapshot(snapshot Snapshot) error
-	
+
 	// GetSnapshotCount returns the number of snapshots managed
 	GetSnapshotCount() int
-	
+
 	// ClearSnapshots clears all managed snapshots
 	ClearSnapshots()
 }
 
 // SnapshotManagerImpl is the default implementation of SnapshotManager
 type SnapshotManagerImpl struct {
-	snapshots []Snapshot
+	snapshots    []Snapshot
 	maxSnapshots int
 }
 
@@ -130,14 +130,14 @@ func NewSnapshotManager(maxSnapshots int) SnapshotManager {
 // TakeSnapshot takes a snapshot of the current render state
 func (sm *SnapshotManagerImpl) TakeSnapshot(renderTarget RenderTarget, viewport Viewport, scissorRect Rect, pipeline Pipeline) Snapshot {
 	snapshot := NewSnapshot(renderTarget, viewport, scissorRect, pipeline)
-	
+
 	// Add to managed snapshots
 	if len(sm.snapshots) >= sm.maxSnapshots {
 		// Remove oldest snapshot if at max capacity
 		sm.snapshots = sm.snapshots[1:]
 	}
 	sm.snapshots = append(sm.snapshots, snapshot)
-	
+
 	return snapshot
 }
 
@@ -146,7 +146,7 @@ func (sm *SnapshotManagerImpl) RestoreSnapshot(snapshot Snapshot) error {
 	if snapshot == nil || !snapshot.IsValid() {
 		return ErrInvalidArgument
 	}
-	
+
 	// TODO: Implement render state restoration
 	return nil
 }

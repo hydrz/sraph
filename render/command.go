@@ -4,16 +4,16 @@ package render
 type Command interface {
 	// Execute executes the command
 	Execute() error
-	
+
 	// IsValid returns true if the command is valid
 	IsValid() bool
-	
+
 	// GetType returns the command type
 	GetType() CommandType
-	
+
 	// GetLabel returns the debug label for this command
 	GetLabel() string
-	
+
 	// SetLabel sets a debug label for this command
 	SetLabel(label string)
 }
@@ -69,10 +69,10 @@ func (c *CommandImpl) SetLabel(label string) {
 // DrawIndexedCommand represents an indexed draw command
 type DrawIndexedCommand struct {
 	*CommandImpl
-	indexCount   int
+	indexCount    int
 	instanceCount int
-	firstIndex   int
-	baseVertex   int
+	firstIndex    int
+	baseVertex    int
 	firstInstance int
 }
 
@@ -183,7 +183,7 @@ func (c *CopyBufferCommand) Execute() error {
 	if !c.IsValid() {
 		return ErrInvalidState
 	}
-	
+
 	return c.destinationBuffer.CopyFromBuffer(c.sourceBuffer, c.sourceOffset, c.destinationOffset, c.size)
 }
 
@@ -211,6 +211,6 @@ func (c *CopyTextureCommand) Execute() error {
 	if !c.IsValid() {
 		return ErrInvalidState
 	}
-	
+
 	return c.destinationTexture.CopyFromTexture(c.sourceTexture)
 }

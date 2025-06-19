@@ -4,19 +4,19 @@ package backend
 type Backend interface {
 	// GetName returns the name of the backend
 	GetName() string
-	
+
 	// Initialize initializes the backend
 	Initialize() error
-	
+
 	// Shutdown shuts down the backend
 	Shutdown() error
-	
+
 	// IsSupported returns true if the backend is supported on the current platform
 	IsSupported() bool
-	
+
 	// GetCapabilities returns the capabilities of the backend
 	GetCapabilities() Capabilities
-	
+
 	// CreateContext creates a new render context
 	CreateContext() (Context, error)
 }
@@ -36,51 +36,51 @@ const (
 
 // Capabilities represents the capabilities of a graphics backend
 type Capabilities struct {
-	MaxTextureSize         int
-	MaxCubeMapTextureSize  int
-	Max3DTextureSize       int
-	MaxArrayTextureLayers  int
-	MaxColorAttachments    int
-	MaxSamples             int
-	MaxVertexAttributes    int
-	MaxVertexBufferBindings int
-	MaxUniformBufferBindings int
-	MaxStorageBufferBindings int
-	MaxTextureBindings     int
-	MaxSamplerBindings     int
-	SupportsCompute        bool
-	SupportsGeometryShader bool
-	SupportsTessellation   bool
+	MaxTextureSize            int
+	MaxCubeMapTextureSize     int
+	Max3DTextureSize          int
+	MaxArrayTextureLayers     int
+	MaxColorAttachments       int
+	MaxSamples                int
+	MaxVertexAttributes       int
+	MaxVertexBufferBindings   int
+	MaxUniformBufferBindings  int
+	MaxStorageBufferBindings  int
+	MaxTextureBindings        int
+	MaxSamplerBindings        int
+	SupportsCompute           bool
+	SupportsGeometryShader    bool
+	SupportsTessellation      bool
 	SupportsMultiDrawIndirect bool
-	SupportsTimestampQueries bool
+	SupportsTimestampQueries  bool
 }
 
 // Context represents a render context for a specific backend
 type Context interface {
 	// GetBackendType returns the backend type
 	GetBackendType() BackendType
-	
+
 	// GetCapabilities returns the backend capabilities
 	GetCapabilities() Capabilities
-	
+
 	// CreateBuffer creates a new buffer
 	CreateBuffer(size int, usage BufferUsage) (Buffer, error)
-	
+
 	// CreateTexture creates a new texture
 	CreateTexture(descriptor TextureDescriptor) (Texture, error)
-	
+
 	// CreateSampler creates a new sampler
 	CreateSampler(descriptor SamplerDescriptor) (Sampler, error)
-	
+
 	// CreateRenderPipeline creates a new render pipeline
 	CreateRenderPipeline(descriptor RenderPipelineDescriptor) (RenderPipeline, error)
-	
+
 	// CreateComputePipeline creates a new compute pipeline
 	CreateComputePipeline(descriptor ComputePipelineDescriptor) (ComputePipeline, error)
-	
+
 	// CreateCommandBuffer creates a new command buffer
 	CreateCommandBuffer() (CommandBuffer, error)
-	
+
 	// Present presents the rendered content
 	Present() error
 }
@@ -89,13 +89,13 @@ type Context interface {
 type BackendRegistry interface {
 	// RegisterBackend registers a new backend
 	RegisterBackend(backendType BackendType, backend Backend) error
-	
+
 	// GetBackend returns a backend by type
 	GetBackend(backendType BackendType) (Backend, error)
-	
+
 	// GetAvailableBackends returns all available backends
 	GetAvailableBackends() []BackendType
-	
+
 	// GetDefaultBackend returns the default backend for the current platform
 	GetDefaultBackend() (Backend, error)
 }
@@ -117,7 +117,7 @@ func (r *BackendRegistryImpl) RegisterBackend(backendType BackendType, backend B
 	if backend == nil {
 		return ErrInvalidArgument
 	}
-	
+
 	r.backends[backendType] = backend
 	return nil
 }
@@ -128,7 +128,7 @@ func (r *BackendRegistryImpl) GetBackend(backendType BackendType) (Backend, erro
 	if !exists {
 		return nil, ErrResourceNotFound
 	}
-	
+
 	return backend, nil
 }
 
@@ -149,7 +149,7 @@ func (r *BackendRegistryImpl) GetDefaultBackend() (Backend, error) {
 			return backend, nil
 		}
 	}
-	
+
 	return nil, ErrResourceNotFound
 }
 

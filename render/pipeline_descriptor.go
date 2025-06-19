@@ -4,58 +4,58 @@ package render
 type PipelineDescriptor interface {
 	// GetLabel returns the debug label for the pipeline
 	GetLabel() string
-	
+
 	// IsValid returns true if the descriptor is valid
 	IsValid() bool
 }
 
 // RenderPipelineDescriptor describes the configuration for a render pipeline
 type RenderPipelineDescriptor struct {
-	Label                string
-	VertexFunction       ShaderFunction
-	FragmentFunction     ShaderFunction
-	VertexDescriptor     VertexDescriptor
-	ColorAttachmentCount int
-	ColorAttachments     []ColorAttachmentDescriptor
-	DepthAttachmentFormat PixelFormat
+	Label                   string
+	VertexFunction          ShaderFunction
+	FragmentFunction        ShaderFunction
+	VertexDescriptor        VertexDescriptor
+	ColorAttachmentCount    int
+	ColorAttachments        []ColorAttachmentDescriptor
+	DepthAttachmentFormat   PixelFormat
 	StencilAttachmentFormat PixelFormat
-	SampleCount          int
-	AlphaToCoverageEnabled bool
-	AlphaToOneEnabled    bool
-	RasterizationEnabled bool
-	WindingOrder         WindingOrder
-	CullMode             CullMode
-	FillMode             FillMode
-	DepthClipMode        DepthClipMode
-	DepthTestEnabled     bool
-	DepthWriteEnabled    bool
-	DepthCompareFunction CompareFunction
-	StencilTestEnabled   bool
-	StencilFrontFace     StencilDescriptor
-	StencilBackFace      StencilDescriptor
+	SampleCount             int
+	AlphaToCoverageEnabled  bool
+	AlphaToOneEnabled       bool
+	RasterizationEnabled    bool
+	WindingOrder            WindingOrder
+	CullMode                CullMode
+	FillMode                FillMode
+	DepthClipMode           DepthClipMode
+	DepthTestEnabled        bool
+	DepthWriteEnabled       bool
+	DepthCompareFunction    CompareFunction
+	StencilTestEnabled      bool
+	StencilFrontFace        StencilDescriptor
+	StencilBackFace         StencilDescriptor
 }
 
 // ColorAttachmentDescriptor describes a color attachment for a render pipeline
 type ColorAttachmentDescriptor struct {
-	Format             PixelFormat
-	BlendingEnabled    bool
-	SourceRGBBlendFactor      BlendFactor
-	DestinationRGBBlendFactor BlendFactor
-	RGBBlendOperation  BlendOperation
+	Format                      PixelFormat
+	BlendingEnabled             bool
+	SourceRGBBlendFactor        BlendFactor
+	DestinationRGBBlendFactor   BlendFactor
+	RGBBlendOperation           BlendOperation
 	SourceAlphaBlendFactor      BlendFactor
 	DestinationAlphaBlendFactor BlendFactor
-	AlphaBlendOperation BlendOperation
-	WriteMask          ColorWriteMask
+	AlphaBlendOperation         BlendOperation
+	WriteMask                   ColorWriteMask
 }
 
 // StencilDescriptor describes stencil test configuration
 type StencilDescriptor struct {
-	StencilCompareFunction CompareFunction
-	StencilFailureOperation StencilOperation
-	DepthFailureOperation   StencilOperation
+	StencilCompareFunction    CompareFunction
+	StencilFailureOperation   StencilOperation
+	DepthFailureOperation     StencilOperation
 	DepthStencilPassOperation StencilOperation
-	ReadMask               uint32
-	WriteMask              uint32
+	ReadMask                  uint32
+	WriteMask                 uint32
 }
 
 // Enumeration types for render pipeline configuration
@@ -169,7 +169,7 @@ func (d *RenderPipelineDescriptor) IsValid() bool {
 // RenderPipeline represents a render pipeline
 type RenderPipeline interface {
 	Pipeline
-	
+
 	// GetRenderPipelineDescriptor returns the render pipeline descriptor
 	GetRenderPipelineDescriptor() RenderPipelineDescriptor
 }

@@ -4,19 +4,19 @@ package render
 type Pool[T any] interface {
 	// Get retrieves a resource from the pool or creates a new one
 	Get() T
-	
+
 	// Put returns a resource to the pool for reuse
 	Put(resource T)
-	
+
 	// Clear removes all resources from the pool
 	Clear()
-	
+
 	// Size returns the current size of the pool
 	Size() int
-	
+
 	// SetMaxSize sets the maximum size of the pool
 	SetMaxSize(maxSize int)
-	
+
 	// GetMaxSize returns the maximum size of the pool
 	GetMaxSize() int
 }
@@ -53,7 +53,7 @@ func (p *PoolImpl[T]) Get() T {
 		p.resources = p.resources[:len(p.resources)-1]
 		return resource
 	}
-	
+
 	// Create new resource if pool is empty
 	return p.createFn()
 }
@@ -64,12 +64,12 @@ func (p *PoolImpl[T]) Put(resource T) {
 		// Pool is full, discard the resource
 		return
 	}
-	
+
 	// Reset the resource if reset function is provided
 	if p.resetFn != nil {
 		p.resetFn(resource)
 	}
-	
+
 	// Add to pool
 	p.resources = append(p.resources, resource)
 }
@@ -87,7 +87,7 @@ func (p *PoolImpl[T]) Size() int {
 // SetMaxSize sets the maximum size of the pool
 func (p *PoolImpl[T]) SetMaxSize(maxSize int) {
 	p.maxSize = maxSize
-	
+
 	// Trim pool if it exceeds new max size
 	if len(p.resources) > maxSize {
 		p.resources = p.resources[:maxSize]
@@ -102,7 +102,7 @@ func (p *PoolImpl[T]) GetMaxSize() int {
 // BufferPool is a specialized pool for buffers
 type BufferPool interface {
 	Pool[Buffer]
-	
+
 	// GetBuffer retrieves a buffer with the specified size and usage
 	GetBuffer(size int, usage BufferUsage) Buffer
 }
@@ -119,11 +119,11 @@ func NewBufferPool(bufferSize int, usage BufferUsage) BufferPool {
 	createFn := func() Buffer {
 		return NewBuffer(bufferSize, usage)
 	}
-	
+
 	resetFn := func(buffer Buffer) {
 		// TODO: Reset buffer state if needed
 	}
-	
+
 	return &BufferPoolImpl{
 		PoolImpl:    NewPool(createFn, resetFn).(*PoolImpl[Buffer]),
 		bufferSize:  bufferSize,
@@ -136,7 +136,7 @@ func (bp *BufferPoolImpl) GetBuffer(size int, usage BufferUsage) Buffer {
 	if size == bp.bufferSize && usage == bp.bufferUsage {
 		return bp.Get()
 	}
-	
+
 	// Create new buffer with different specs
 	return NewBuffer(size, usage)
 }

@@ -16,10 +16,10 @@ var (
 type Resource interface {
 	// GetLabel returns the debug label for this resource
 	GetLabel() string
-	
+
 	// SetLabel sets a debug label for this resource
 	SetLabel(label string)
-	
+
 	// IsValid returns true if the resource is valid
 	IsValid() bool
 }
@@ -48,22 +48,22 @@ func (r *ResourceImpl) IsValid() bool {
 // Sampler represents a texture sampler
 type Sampler interface {
 	Resource
-	
+
 	// GetMinFilter returns the minification filter
 	GetMinFilter() Filter
-	
+
 	// GetMagFilter returns the magnification filter
 	GetMagFilter() Filter
-	
+
 	// GetMipFilter returns the mip filter
 	GetMipFilter() MipFilter
-	
+
 	// GetAddressModeU returns the address mode for U coordinate
 	GetAddressModeU() AddressMode
-	
+
 	// GetAddressModeV returns the address mode for V coordinate
 	GetAddressModeV() AddressMode
-	
+
 	// GetAddressModeW returns the address mode for W coordinate
 	GetAddressModeW() AddressMode
 }

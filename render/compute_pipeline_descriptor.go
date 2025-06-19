@@ -2,12 +2,12 @@ package render
 
 // ComputePipelineDescriptor describes the configuration for a compute pipeline
 type ComputePipelineDescriptor struct {
-	Label            string
-	ComputeFunction  ShaderFunction
+	Label                         string
+	ComputeFunction               ShaderFunction
 	MaxTotalThreadsPerThreadgroup int
-	ThreadgroupSizeX int
-	ThreadgroupSizeY int
-	ThreadgroupSizeZ int
+	ThreadgroupSizeX              int
+	ThreadgroupSizeY              int
+	ThreadgroupSizeZ              int
 }
 
 // IsValid checks if the compute pipeline descriptor is valid
@@ -18,13 +18,13 @@ func (d *ComputePipelineDescriptor) IsValid() bool {
 // ComputePipeline represents a compute pipeline for compute shaders
 type ComputePipeline interface {
 	Pipeline
-	
+
 	// GetDescriptor returns the compute pipeline descriptor
 	GetDescriptor() ComputePipelineDescriptor
-	
+
 	// GetMaxTotalThreadsPerThreadgroup returns the maximum total threads per threadgroup
 	GetMaxTotalThreadsPerThreadgroup() int
-	
+
 	// GetThreadgroupSize returns the threadgroup size in each dimension
 	GetThreadgroupSize() (int, int, int)
 }
@@ -58,7 +58,7 @@ func (p *ComputePipelineImpl) GetMaxTotalThreadsPerThreadgroup() int {
 
 // GetThreadgroupSize returns the threadgroup size in each dimension
 func (p *ComputePipelineImpl) GetThreadgroupSize() (int, int, int) {
-	return p.descriptor.ThreadgroupSizeX, 
-		   p.descriptor.ThreadgroupSizeY, 
-		   p.descriptor.ThreadgroupSizeZ
+	return p.descriptor.ThreadgroupSizeX,
+		p.descriptor.ThreadgroupSizeY,
+		p.descriptor.ThreadgroupSizeZ
 }

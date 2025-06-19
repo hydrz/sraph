@@ -3,19 +3,19 @@ package render
 // Buffer represents a GPU buffer resource
 type Buffer interface {
 	Resource
-	
+
 	// GetSize returns the size of the buffer in bytes
 	GetSize() int
-	
+
 	// GetUsage returns the buffer usage flags
 	GetUsage() BufferUsage
-	
+
 	// Map maps the buffer for CPU access
 	Map() ([]byte, error)
-	
+
 	// Unmap unmaps the buffer from CPU access
 	Unmap() error
-	
+
 	// CopyFromBuffer copies data from another buffer
 	CopyFromBuffer(source Buffer, sourceOffset, destOffset, size int) error
 }
@@ -82,16 +82,16 @@ func (b *BufferImpl) CopyFromBuffer(source Buffer, sourceOffset, destOffset, siz
 	if !b.IsValid() || source == nil || !source.IsValid() {
 		return ErrInvalidState
 	}
-	
+
 	sourceData, err := source.Map()
 	if err != nil {
 		return err
 	}
-	
+
 	if sourceOffset+size > len(sourceData) || destOffset+size > len(b.data) {
 		return ErrInvalidArgument
 	}
-	
+
 	copy(b.data[destOffset:destOffset+size], sourceData[sourceOffset:sourceOffset+size])
 	return nil
 }
@@ -126,15 +126,15 @@ const (
 
 // TextureDescriptor describes the configuration for a texture
 type TextureDescriptor struct {
-	Type         TextureType
-	Format       PixelFormat
-	Width        int
-	Height       int
-	Depth        int
-	MipLevels    int
-	SampleCount  int
-	Usage        TextureUsage
-	StorageMode  StorageMode
+	Type        TextureType
+	Format      PixelFormat
+	Width       int
+	Height      int
+	Depth       int
+	MipLevels   int
+	SampleCount int
+	Usage       TextureUsage
+	StorageMode StorageMode
 }
 
 // TextureUsage defines how a texture can be used
@@ -151,25 +151,25 @@ const (
 // Texture represents a GPU texture resource
 type Texture interface {
 	Resource
-	
+
 	// GetType returns the texture type
 	GetType() TextureType
-	
+
 	// GetFormat returns the pixel format
 	GetFormat() PixelFormat
-	
+
 	// GetSize returns the texture dimensions
 	GetSize() (int, int, int)
-	
+
 	// GetMipLevels returns the number of mip levels
 	GetMipLevels() int
-	
+
 	// GetSampleCount returns the sample count for MSAA
 	GetSampleCount() int
-	
+
 	// GetUsage returns the texture usage flags
 	GetUsage() TextureUsage
-	
+
 	// CopyFromTexture copies data from another texture
 	CopyFromTexture(source Texture) error
 }
@@ -226,7 +226,7 @@ func (t *TextureImpl) CopyFromTexture(source Texture) error {
 	if !t.IsValid() || source == nil || !source.IsValid() {
 		return ErrInvalidState
 	}
-	
+
 	// TODO: Implement texture copying
 	return nil
 }

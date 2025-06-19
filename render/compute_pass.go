@@ -3,25 +3,25 @@ package render
 // ComputePass represents a compute pass for encoding compute shader commands
 type ComputePass interface {
 	ResourceBinder
-	
+
 	// IsValid returns true if the compute pass is valid
 	IsValid() bool
-	
+
 	// SetLabel sets a debug label for the compute pass
 	SetLabel(label string)
-	
+
 	// SetCommandLabel sets a debug label for the next command
 	SetCommandLabel(label string)
-	
+
 	// SetPipeline sets the compute pipeline to use
 	SetPipeline(pipeline ComputePipeline)
-	
+
 	// Compute dispatches compute work with the specified grid size
 	Compute(gridSizeX, gridSizeY, gridSizeZ int) error
-	
+
 	// AddBufferMemoryBarrier ensures buffer writes are visible to subsequent commands
 	AddBufferMemoryBarrier()
-	
+
 	// AddTextureMemoryBarrier ensures texture writes are visible to subsequent commands
 	AddTextureMemoryBarrier()
 }
@@ -30,10 +30,10 @@ type ComputePass interface {
 type ResourceBinder interface {
 	// BindBuffer binds a buffer to the specified binding point
 	BindBuffer(buffer Buffer, binding int) error
-	
+
 	// BindTexture binds a texture to the specified binding point
 	BindTexture(texture Texture, binding int) error
-	
+
 	// BindSampler binds a sampler to the specified binding point
 	BindSampler(sampler Sampler, binding int) error
 }
@@ -79,7 +79,7 @@ func (cp *ComputePassImpl) Compute(gridSizeX, gridSizeY, gridSizeZ int) error {
 	if !cp.IsValid() || cp.pipeline == nil {
 		return ErrInvalidState
 	}
-	
+
 	// TODO: Implement compute dispatch
 	return nil
 }
