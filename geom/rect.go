@@ -430,10 +430,10 @@ func (r Rect[T]) RoundIn() Rect[I32] {
 func (r Rect[T]) Transform(transform Matrix[T]) [4]Point[T] {
 	corners := r.Points()
 	return [4]Point[T]{
-		transform.TransformPoint(corners[0]),
-		transform.TransformPoint(corners[1]),
-		transform.TransformPoint(corners[2]),
-		transform.TransformPoint(corners[3]),
+		transform.transformPoint(corners[0]),
+		transform.transformPoint(corners[1]),
+		transform.transformPoint(corners[2]),
+		transform.transformPoint(corners[3]),
 	}
 }
 
@@ -479,8 +479,8 @@ func (r Rect[T]) NormalizingTransform() Matrix[T] {
 	scaleX := T(1) / r.Width()
 	scaleY := T(1) / r.Height()
 	matrix := Matrix[T]{}
-	matrix = matrix.Scale2D(Vector2[T]{scaleX, scaleY})
-	matrix = matrix.Translate2D(Vector2[T]{-r.Left, -r.Top})
+	matrix = matrix.Scale(Vector2[T]{scaleX, scaleY})
+	matrix = matrix.Translate(Vector2[T]{-r.Left, -r.Top})
 	return matrix
 }
 

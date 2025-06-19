@@ -5,56 +5,6 @@ import (
 	"math"
 )
 
-// MatrixFlags represents the components of a matrix decomposition.
-type MatrixFlags uint32
-
-const (
-	MatrixFlagsTranslation MatrixFlags = 1 << iota
-	MatrixFlagsScale
-	MatrixFlagsShear
-	MatrixFlagsPerspective
-	MatrixFlagsRotation
-)
-
-type MatrixDecomp[T Scalar] struct {
-	Translation Vector3[T]
-	Scale       Vector3[T]
-	Shear       Shear[T]
-	Perspective Vector4[T]
-	Rotation    Quaternion[T]
-}
-
-func (md *MatrixDecomp[T]) Mask() MatrixFlags {
-	var mask MatrixFlags
-
-	// Check translation
-	if md.Translation.X != 0 || md.Translation.Y != 0 || md.Translation.Z != 0 {
-		mask |= MatrixFlagsTranslation
-	}
-
-	// Check scale
-	if md.Scale.X != 1 || md.Scale.Y != 1 || md.Scale.Z != 1 {
-		mask |= MatrixFlagsScale
-	}
-
-	// Check shear
-	if md.Shear.XY != 0 || md.Shear.XZ != 0 || md.Shear.YZ != 0 {
-		mask |= MatrixFlagsShear
-	}
-
-	// Check perspective
-	if md.Perspective.X != 0 || md.Perspective.Y != 0 || md.Perspective.Z != 0 || md.Perspective.W != 1 {
-		mask |= MatrixFlagsPerspective
-	}
-
-	// Check rotation (identity quaternion has W=1, others=0)
-	if md.Rotation.X != 0 || md.Rotation.Y != 0 || md.Rotation.Z != 0 || md.Rotation.W != 1 {
-		mask |= MatrixFlagsRotation
-	}
-
-	return mask
-}
-
 // Matrix represents a 4x4 matrix using column-major storage.
 //
 // All methods that use normalized device coordinates (NDC) with Matrix
@@ -99,7 +49,6 @@ func (m *Matrix[T]) Set(row int, col int, value T) {
 }
 
 // Add returns the sum of this matrix and another matrix (element-wise addition).
-// Formula: C[i][j] = A[i][j] + B[i][j] for all i,j
 func (m Matrix[T]) Add(other Matrix[T]) Matrix[T] {
 	o := other
 	return Matrix[T]{
@@ -111,7 +60,6 @@ func (m Matrix[T]) Add(other Matrix[T]) Matrix[T] {
 }
 
 // Sub returns the difference of this matrix and another matrix (element-wise subtraction).
-// Formula: C[i][j] = A[i][j] - B[i][j] for all i,j
 func (m Matrix[T]) Sub(other Matrix[T]) Matrix[T] {
 	o := other
 	return Matrix[T]{
@@ -123,10 +71,7 @@ func (m Matrix[T]) Sub(other Matrix[T]) Matrix[T] {
 }
 
 // Mul returns the product of this matrix and another matrix (matrix multiplication).
-// Formula: C[i][j] = Σ(A[i][k] * B[k][j]) for k=0 to 3
-// Note: Matrix multiplication is NOT commutative (A*B ≠ B*A in general)
-func (m Matrix[T]) Mul(other Matrix[T]) Matrix[T] {
-	o := other
+func (m Matrix[T]) Mul(o Matrix[T]) Matrix[T] {
 	return Matrix[T]{
 		m[0]*o[0] + m[4]*o[1] + m[8]*o[2] + m[12]*o[3],
 		m[1]*o[0] + m[5]*o[1] + m[9]*o[2] + m[13]*o[3],
@@ -490,78 +435,111 @@ func (m Matrix[T]) GetScale() Vector3[T] {
 // This computes how much the matrix scales a vector in the specified direction.
 // Useful for anisotropic filtering and determining scaling in arbitrary directions.
 func (m Matrix[T]) GetDirectionScale(dir Vector3[T]) T {
-	return 1 / (m.Base().Invert().TransformVector3D(dir.Normalize())).Length() * dir.Length()
+	return 1 / (m.Base().Invert().transformVector3D(dir.Normalize())).Length() * dir.Length()
 }
 
-// Scale creates a 3D scale matrix.
+// Scale scales the matrix by a given vector or scalar.
+//
+// Typical v types include:
+// - [Scalar]
+// - [Vector2]
+// - [Vector3]
+//
 // The resulting matrix is:
 // [ sx  0   0   0 ]
 // [  0 sy   0   0 ]
-// [  0  0  sz   0 ]
+// [  0  0   sz  0 ]
 // [  0  0   0   1 ]
-func (m Matrix[T]) Scale(v Vector3[T]) Matrix[T] {
-	return Matrix[T]{
-		m[0] * v.X, m[1] * v.X, m[2] * v.X, m[3] * v.X,
-		m[4] * v.Y, m[5] * v.Y, m[6] * v.Y, m[7] * v.Y,
-		m[8] * v.Z, m[9] * v.Z, m[10] * v.Z, m[11] * v.Z,
-		m[12], m[13], m[14], m[15],
+func (m Matrix[T]) Scale(s any) Matrix[T] {
+	var v Vector3[T]
+	switch s := s.(type) {
+	case T:
+		v = Vector3[T]{s, s, s}
+	case Vector2[T]:
+		v = Vector3[T]{s.X, s.Y, 1}
+	case Vector3[T]:
+		v = s
+	default:
+		panic("unsupported type for Scale: must be Scalar, Vector2, or Vector3")
 	}
-}
-
-// Skew creates a skew matrix.
-// The resulting matrix is:
-// [ 1   sx  0   0 ]
-// [ sy  1   0   0 ]
-// [ 0   0   1   0 ]
-// [ 0   0   0   1 ]
-func (m Matrix[T]) Skew(sx, sy T) Matrix[T] {
-	return Matrix[T]{
-		m[0], sy, m[2], m[3],
-		sx, m[5], m[6], m[7],
-		m[8], m[9], m[10], m[11],
-		m[12], m[13], m[14], m[15],
+	sm := Matrix[T]{
+		v.X, 0, 0, 0,
+		0, v.Y, 0, 0,
+		0, 0, v.Z, 0,
+		0, 0, 0, 1,
 	}
+	return m.Mul(sm)
 }
 
-// Scale2D creates a 2D scale matrix.
-// The resulting matrix is:
-// [ sx  0   0   0 ]
-// [  0 sy   0   0 ]
-// [  0  0   1   0 ]
-// [  0  0   0   1 ]
-func (m Matrix[T]) Scale2D(v Vector2[T]) Matrix[T] {
-	return m.Scale(Vector3[T]{v.X, v.Y, T(1)})
-}
-
-// Translate creates a 3D translation matrix.
+// Translate moves the matrix by a given vector.
+//
+// Typical v types include:
+// - [Scalar]
+// - [Vector2]
+// - [Vector3]
+//
 // The resulting matrix is:
 // [ 1   0   0   0 ]
 // [ 0   1   0   0 ]
 // [ 0   0   1   0 ]
 // [ tx  ty  tz  1 ]
-func (m Matrix[T]) Translate(v Vector3[T]) Matrix[T] {
-	return Matrix[T]{
-		m[0], m[1], m[2], m[3],
-		m[4], m[5], m[6], m[7],
-		m[8], m[9], m[10], m[11],
-		m[0]*v.X + m[4]*v.Y + m[8]*v.Z + m[12],
-		m[1]*v.X + m[5]*v.Y + m[9]*v.Z + m[13],
-		m[2]*v.X + m[6]*v.Y + m[10]*v.Z + m[14],
-		m[3]*v.X + m[7]*v.Y + m[11]*v.Z + m[15],
+func (m Matrix[T]) Translate(t any) Matrix[T] {
+	var v Vector3[T]
+	switch t := t.(type) {
+	case T:
+		v = Vector3[T]{t, t, t}
+	case Vector2[T]:
+		v = Vector3[T]{t.X, t.Y, 0}
+	case Vector3[T]:
+		v = t
+	default:
+		panic("unsupported type for Translate: must be Scalar, Vector2, or Vector3")
 	}
+	tm := Matrix[T]{
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		v.X, v.Y, v.Z, 1,
+	}
+	return m.Mul(tm)
 }
 
-// Translate2D creates a 2D translation matrix.
+// Skew creates a shear matrix.
+//
+// Typical v types include:
+// - [Scalar]
+// - [Vector2]
+// - [Vector3]
+//
 // The resulting matrix is:
-// [ 1   0   0   0 ]
-// [ 0   1   0   0 ]
+// [ 1   sy  0   0 ]
+// [ sx  1   0   0 ]
 // [ 0   0   1   0 ]
-// [ tx  ty  0   1 ]
-func (m Matrix[T]) Translate2D(v Vector2[T]) Matrix[T] {
-	return m.Translate(Vector3[T]{v.X, v.Y, T(0)})
+// [ 0   0   0   1 ]
+func (m Matrix[T]) Skew(s any) Matrix[T] {
+	var v Vector3[T]
+	switch s := s.(type) {
+	case T:
+		v = Vector3[T]{s, s, s}
+	case Vector2[T]:
+		v = Vector3[T]{s.X, s.Y, 0}
+	case Vector3[T]:
+		v = s
+	default:
+		panic("unsupported type for Skew: must be Scalar, Vector2, or Vector3")
+	}
+
+	sm := Matrix[T]{
+		1, v.Y, 0, 0,
+		v.X, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1,
+	}
+	return m.Mul(sm)
 }
 
 // RotateX creates a rotation matrix around the X axis.
+//
 // The resulting matrix is:
 // [ 1    0       0    0 ]
 // [ 0  cosθ   -sinθ  0 ]
@@ -579,6 +557,7 @@ func (m Matrix[T]) RotateX(angle Radians) Matrix[T] {
 }
 
 // RotateY creates a rotation matrix around the Y axis.
+//
 // The resulting matrix is:
 // [ cosθ  0  sinθ  0 ]
 // [   0   1   0    0 ]
@@ -596,6 +575,7 @@ func (m Matrix[T]) RotateY(angle Radians) Matrix[T] {
 }
 
 // RotateZ creates a rotation matrix around the Z axis.
+//
 // The resulting matrix is:
 // [ cosθ  -sinθ  0  0 ]
 // [ sinθ   cosθ  0  0 ]
@@ -612,14 +592,20 @@ func (m Matrix[T]) RotateZ(angle Radians) Matrix[T] {
 	return m.Mul(rot)
 }
 
-// RotateAxisAngle creates a rotation matrix around an arbitrary axis using Rodrigues' formula.
-// Formula: R = I + sin(θ)K + (1-cos(θ))K^2, where K is the cross-product matrix of the axis.
-func (m Matrix[T]) RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T] {
+// Rotate creates a rotation matrix around an arbitrary axis using Rodrigues' formula.
+//
+// The resulting matrix rotates points around the specified axis by the given angle.
+// The axis vector should be normalized before calling this function.
+// The resulting matrix is:
+// [ cosθ + (1-cosθ)*vx^2   (1-cosθ)*vx*vy - vz*sinθ  (1-cosθ)*vx*vz + vy*sinθ  0 ]
+// [ (1-cosθ)*vx*vy + vz*sinθ  cosθ + (1-cosθ)*vy^2   (1-cosθ)*vy*vz - vx*sinθ  0 ]
+// [ (1-cosθ)*vx*vz - vy*sinθ  (1-cosθ)*vy*vz + vx*sinθ  cosθ + (1-cosθ)*vz^2   0 ]
+// [ 0  0  0  1 ]
+func (m Matrix[T]) Rotate(angle Radians, axis Vector3[T]) Matrix[T] {
 	v := axis.Normalize()
 	cos, sin := m.CosSin(angle)
 	cosp := T(1) - cos
-
-	return Matrix[T]{
+	rm := Matrix[T]{
 		cos + cosp*v.X*v.X,
 		cosp*v.X*v.Y + v.Z*sin,
 		cosp*v.X*v.Z - v.Y*sin,
@@ -634,118 +620,180 @@ func (m Matrix[T]) RotateAxisAngle(angle Radians, axis Vector3[T]) Matrix[T] {
 		0,
 		0, 0, 0, 1,
 	}
+	return m.Mul(rm)
 }
 
-// RotateQuaternion creates a rotation matrix from a quaternion.
-// See quaternion to matrix conversion formulas.
-func (m Matrix[T]) RotateQuaternion(quat Quaternion[T]) Matrix[T] {
+// RotateQuat creates a rotation matrix from a quaternion.
+//
+// The quaternion should be normalized before calling this function.
+// The resulting matrix applies the rotation defined by the quaternion to points in 3D space.
+// The quaternion is represented as:
+// Quaternion{X: x, Y: y, Z: z, W: w}
+//
+// The resulting matrix is:
+// [ 1 - 2*(y^2 + z^2)   2*(x*y + z*w)   2*(x*z - y*w)  0 ]
+// [ 2*(x*y - z*w)   1 - 2*(x^2 + z^2)   2*(y*z + x*w)  0 ]
+// [ 2*(x*z + y*w)   2*(y*z - x*w)   1 - 2*(x^2 + y^2)  0 ]
+// [ 0   0   0   1 ]
+func (m Matrix[T]) RotateQuat(quat Quaternion[T]) Matrix[T] {
 	x, y, z, w := quat.X, quat.Y, quat.Z, quat.W
-	rot := Matrix[T]{
-		1 - T(2)*(y*y+z*z), T(2) * (x*y + z*w), T(2) * (x*z - y*w), 0,
-		T(2) * (x*y - z*w), 1 - T(2)*(x*x+z*z), T(2) * (y*z + x*w), 0,
-		T(2) * (x*z + y*w), T(2) * (y*z - x*w), 1 - T(2)*(x*x+y*y), 0,
+	rm := Matrix[T]{
+		1 - 2*(y*y+z*z), 2 * (x*y + z*w), 2 * (x*z - y*w), 0,
+		2 * (x*y - z*w), 1 - 2*(x*x+z*z), 2 * (y*z + x*w), 0,
+		2 * (x*z + y*w), 2 * (y*z - x*w), 1 - 2*(x*x+y*y), 0,
 		0, 0, 0, 1,
 	}
-	return m.Mul(rot)
+	return m.Mul(rm)
 }
 
-// Orthographic creates an orthographic projection matrix for the given view size.
+// Orthographic creates an orthographic projection matrix based on the current transformation.
 // The result maps the rectangle [0, width] x [0, height] to normalized device coordinates (NDC) [-1, 1].
-// The resulting matrix typically looks like:
-// [ 2/w   0      0    0 ]
-// [ 0     2/h    0    0 ]
-// [ 0     0      1    0 ]
-// [ -1    1      0.5  1 ]
 func (m Matrix[T]) Orthographic(size Size[T]) Matrix[T] {
-	t := Matrix[T]{
+	om := Matrix[T]{
 		2 / size.Width, 0, 0, 0,
 		0, 2 / size.Height, 0, 0,
 		0, 0, 1, 0,
 		-1, 1, 1 / 2, 1,
 	}
-	return m.Mul(t)
+	return m.Mul(om)
 }
 
-// LookAt creates a view matrix for a camera at position looking at target with up vector.
-// The resulting matrix orients the camera in 3D space.
+// LookAt creates a view matrix for a camera based on the current transformation.
 func (m Matrix[T]) LookAt(position, target, up Vector3[T]) Matrix[T] {
 	forward := target.Sub(position).Normalize()
 	right := up.Cross(forward)
 	upNorm := forward.Cross(right)
 
-	return Matrix[T]{
+	lm := Matrix[T]{
 		right.X, upNorm.X, forward.X, 0,
 		right.Y, upNorm.Y, forward.Y, 0,
 		right.Z, upNorm.Z, forward.Z, 0,
 		-right.Dot(position), -upNorm.Dot(position), -forward.Dot(position), 1,
 	}
+	return m.Mul(lm)
 }
 
-// TransformPoint transforms a point using the matrix in homogeneous coordinates.
-// Formula: p' = M * p, where p is a 4D point (x, y, z, w).
-func (m Matrix[T]) TransformPoint(point Point[T]) Point[T] {
-	x, y := point.X, point.Y
-	w := x*m[3] + y*m[7] + m[15]
-	resultX := x*m[0] + y*m[4] + m[12]
-	resultY := x*m[1] + y*m[5] + m[13]
+// Perspective creates a perspective projection matrix.
+func (m Matrix[T]) Perspective(fovY Radians, aspectRatio, zNear, zFar T) Matrix[T] {
+	height := T(math.Tan(fovY.Float64() * 0.5))
+	width := height * aspectRatio
 
+	pm := Matrix[T]{
+		1 / width, 0, 0, 0,
+		0, 1 / height, 0, 0,
+		0, 0, zFar / (zFar - zNear), 1,
+		0, 0, -(zFar * zNear) / (zFar - zNear), 0,
+	}
+	return m.Mul(pm)
+}
+
+// PerspectiveSize creates a perspective projection matrix from size.
+func (m Matrix[T]) PerspectiveSize(fovY Radians, size Size[T], zNear, zFar T) Matrix[T] {
+	aspectRatio := size.Width / size.Height
+	return m.Perspective(fovY, aspectRatio, zNear, zFar)
+}
+
+// Transform transforms a geometry using the matrix.
+//
+// This applies the matrix to the geometry's types include:
+// - [Point]  transforms a 2D point, suitable for 2D affine or projection transformations.
+// - [Vector3] fill in the homogeneous components, and finally perform perspective division.
+// - [Vector4] transforms a 4D vector, useful for homogeneous coordinates in 3D transformations and projections.
+// - [Quad] transforms a quadrilateral by transforming each of its four points.
+func (m Matrix[T]) Transform(t any) any {
+	switch t := t.(type) {
+	case Point[T]:
+		return m.transformPoint(t)
+	case Vector3[T]:
+		return m.transformVector3D(t)
+	case Vector4[T]:
+		return m.transformVector4D(t)
+	case Quad[T]:
+		return Quad[T]{
+			m.transformPoint(t[0]),
+			m.transformPoint(t[1]),
+			m.transformPoint(t[2]),
+			m.transformPoint(t[3]),
+		}
+	default:
+		panic(fmt.Sprintf("unsupported geometry type for Transform: %T", t))
+	}
+}
+
+// TransformDirection do a linear transformation without perspective division.
+// This is useful for transforming directions or normals.
+//
+// It applies the matrix to the geometry's types include:
+// - [Vector2]
+// - [Vector3]
+// - [Vector4]
+func (m Matrix[T]) TransformDirection(v any) any {
+	switch v := v.(type) {
+	case Vector2[T]:
+		return Vector2[T]{X: v.X*m[0] + v.Y*m[4], Y: v.X*m[1] + v.Y*m[5]}
+	case Vector3[T]:
+		return Vector3[T]{
+			X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
+			Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
+			Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
+		}
+	case Vector4[T]:
+		return Vector4[T]{
+			X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
+			Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
+			Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
+			W: v.W,
+		}
+	default:
+		panic(fmt.Sprintf("unsupported geometry type for TransformDirection: %T", v))
+	}
+}
+
+// TransformHomogenous extends a 2D point to 3D homogeneous coordinates and transforms it.
+func (m Matrix[T]) TransformHomogenous(p Point[T]) Vector3[T] {
+	return Vector3[T]{
+		X: p.X*m[0] + p.Y*m[4] + m[12],
+		Y: p.X*m[1] + p.Y*m[5] + m[13],
+		Z: p.X*m[3] + p.Y*m[7] + m[15],
+	}
+}
+
+// transformPoint performs a 2D point transformation.
+func (m Matrix[T]) transformPoint(p Point[T]) Point[T] {
+	w := p.X*m[3] + p.Y*m[7] + m[15]
+	r := Point[T]{
+		X: p.X*m[0] + p.Y*m[4] + m[12],
+		Y: p.X*m[1] + p.Y*m[5] + m[13],
+	}
 	if w != 0 {
 		w = T(1) / w
 	}
-	return Point[T]{resultX * w, resultY * w}
+	return Point[T]{r.X * w, r.Y * w}
 }
 
-// TransformVector2D transforms a 2D direction vector (ignoring translation).
-// Formula: v' = M * v, where v is a direction vector (z=0, w=0).
-func (m Matrix[T]) TransformVector2D(vector Vector2[T]) Vector2[T] {
-	x, y := vector.X, vector.Y
-	return Vector2[T]{
-		x*m[0] + y*m[4],
-		x*m[1] + y*m[5],
+// transformVector3D performs a 3D vector transformation.
+// Automatically fill in the homogeneous components, and finally perform perspective division.
+func (m Matrix[T]) transformVector3D(v Vector3[T]) Vector3[T] {
+	w := v.X*m[3] + v.Y*m[7] + v.Z*m[11] + m[15]
+	r := Vector3[T]{
+		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + m[12],
+		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + m[13],
+		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + m[14],
 	}
-}
-
-// TransformVector3D transforms a 3D direction vector (ignoring translation).
-// Formula: v' = M * v, where v is a direction vector (w=0).
-func (m Matrix[T]) TransformVector3D(vector Vector3[T]) Vector3[T] {
-	w := vector.X*m[3] + vector.Y*m[7] + vector.Z*m[11] + m[15]
-
-	v := Vector3[T]{
-		vector.X*m[0] + vector.Y*m[4] + vector.Z*m[8] + m[12],
-		vector.X*m[1] + vector.Y*m[5] + vector.Z*m[9] + m[13],
-		vector.X*m[2] + vector.Y*m[6] + vector.Z*m[10] + m[14],
-	}
-
 	if w != 0 {
 		w = 1 / w
 	}
-
-	return v.Scale(w)
+	return r.Scale(w)
 }
 
-// TransformVector4D transforms a 4D direction vector (ignoring translation).
-// Formula: v' = M * v, where v is a direction vector.
-func (m Matrix[T]) TransformVector4D(vector Vector4[T]) Vector4[T] {
-	x, y, z, w := vector.X, vector.Y, vector.Z, vector.W
+// transformVector4D performs a 4D vector transformation.
+// This is used for homogeneous coordinates in 3D transformations and projections.
+func (m Matrix[T]) transformVector4D(v Vector4[T]) Vector4[T] {
 	return Vector4[T]{
-		x*m[0] + y*m[4] + z*m[8] + w*m[12],
-		x*m[1] + y*m[5] + z*m[9] + w*m[13],
-		x*m[2] + y*m[6] + z*m[10] + w*m[14],
-		x*m[3] + y*m[7] + z*m[11] + w*m[15],
-	}
-}
-
-// Decompose returns the matrix decomposition into translation, scale, shear, perspective, and rotation comp1nts.
-// This is useful for extracting transformation parameters from a matrix.
-func (m Matrix[T]) Decompose() MatrixDecomp[T] {
-	// This is a simplified version - full decomposition is complex
-	// For now, return basic comp1nts
-	return MatrixDecomp[T]{
-		Translation: Vector3[T]{m[12], m[13], m[14]},
-		Scale:       m.GetScale(),
-		Shear:       Shear[T]{XY: 0, XZ: 0, YZ: 0},
-		Perspective: Vector4[T]{0, 0, 0, 1},
-		Rotation:    Quaternion[T]{0, 0, 0, 1},
+		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + v.W*m[12],
+		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + v.W*m[13],
+		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + v.W*m[14],
+		v.X*m[3] + v.Y*m[7] + v.Z*m[11] + v.W*m[15],
 	}
 }
 
@@ -776,4 +824,68 @@ func (m Matrix[T]) String() string {
 		m[8], m[9], m[10], m[11],
 		m[12], m[13], m[14], m[15],
 	)
+}
+
+// Decompose returns the matrix decomposition into translation, scale, shear, perspective, and rotation comp1nts.
+// This is useful for extracting transformation parameters from a matrix.
+func (m Matrix[T]) Decompose() MatrixDecomp[T] {
+	// This is a simplified version - full decomposition is complex
+	// For now, return basic comp1nts
+	return MatrixDecomp[T]{
+		Translation: Vector3[T]{m[12], m[13], m[14]},
+		Scale:       m.GetScale(),
+		Shear:       Shear[T]{XY: 0, XZ: 0, YZ: 0},
+		Perspective: Vector4[T]{0, 0, 0, 1},
+		Rotation:    Quaternion[T]{0, 0, 0, 1},
+	}
+}
+
+// MatrixFlags represents the components of a matrix decomposition.
+type MatrixFlags uint32
+
+const (
+	MatrixFlagsTranslation MatrixFlags = 1 << iota
+	MatrixFlagsScale
+	MatrixFlagsShear
+	MatrixFlagsPerspective
+	MatrixFlagsRotation
+)
+
+type MatrixDecomp[T Scalar] struct {
+	Translation Vector3[T]
+	Scale       Vector3[T]
+	Shear       Shear[T]
+	Perspective Vector4[T]
+	Rotation    Quaternion[T]
+}
+
+func (md *MatrixDecomp[T]) Mask() MatrixFlags {
+	var mask MatrixFlags
+
+	// Check translation
+	if md.Translation.X != 0 || md.Translation.Y != 0 || md.Translation.Z != 0 {
+		mask |= MatrixFlagsTranslation
+	}
+
+	// Check scale
+	if md.Scale.X != 1 || md.Scale.Y != 1 || md.Scale.Z != 1 {
+		mask |= MatrixFlagsScale
+	}
+
+	// Check shear
+	if md.Shear.XY != 0 || md.Shear.XZ != 0 || md.Shear.YZ != 0 {
+		mask |= MatrixFlagsShear
+	}
+
+	// Check perspective
+	if md.Perspective.X != 0 || md.Perspective.Y != 0 || md.Perspective.Z != 0 || md.Perspective.W != 1 {
+		mask |= MatrixFlagsPerspective
+	}
+
+	// Check rotation (identity quaternion has W=1, others=0)
+	if md.Rotation.X != 0 || md.Rotation.Y != 0 || md.Rotation.Z != 0 || md.Rotation.W != 1 {
+		mask |= MatrixFlagsRotation
+	}
+
+	return mask
 }

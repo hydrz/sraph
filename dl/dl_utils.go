@@ -163,13 +163,13 @@ func NewTransformBuilder() *TransformBuilder {
 
 // Translate adds a translation to the transformation.
 func (tb *TransformBuilder) Translate(dx, dy Scalar) *TransformBuilder {
-	tb.matrix = tb.matrix.Translate2D(geom.Vector2[Scalar]{X: dx, Y: dy})
+	tb.matrix = tb.matrix.Translate(geom.Vector2[Scalar]{X: dx, Y: dy})
 	return tb
 }
 
 // Scale adds a scale to the transformation.
 func (tb *TransformBuilder) Scale(sx, sy Scalar) *TransformBuilder {
-	tb.matrix = tb.matrix.Scale2D(geom.Vector2[Scalar]{X: sx, Y: sy})
+	tb.matrix = tb.matrix.Scale(geom.Vector2[Scalar]{X: sx, Y: sy})
 	return tb
 }
 

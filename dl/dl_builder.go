@@ -155,7 +155,7 @@ func (b *DisplayListBuilder) Translate(dx, dy Scalar) {
 
 	// Update transformation stack
 	current := b.CurrentTransform()
-	translated := current.Translate2D(geom.Vector2[Scalar]{X: dx, Y: dy})
+	translated := current.Translate(geom.Vector2[Scalar]{X: dx, Y: dy})
 	b.transformStack[len(b.transformStack)-1] = translated
 }
 
@@ -166,7 +166,7 @@ func (b *DisplayListBuilder) Scale(sx, sy Scalar) {
 
 	// Update transformation stack
 	current := b.CurrentTransform()
-	scaled := current.Scale2D(geom.Vector2[Scalar]{X: sx, Y: sy})
+	scaled := current.Scale(geom.Vector2[Scalar]{X: sx, Y: sy})
 	b.transformStack[len(b.transformStack)-1] = scaled
 }
 
@@ -188,7 +188,7 @@ func (b *DisplayListBuilder) Skew(sx, sy Scalar) {
 
 	// Update transformation stack
 	current := b.CurrentTransform()
-	skewed := current.Skew(sx, sy)
+	skewed := current.Skew(geom.Vector2[Scalar]{X: sx, Y: sy})
 	b.transformStack[len(b.transformStack)-1] = skewed
 }
 

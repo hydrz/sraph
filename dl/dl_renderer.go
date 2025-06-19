@@ -137,7 +137,7 @@ func (rc *RenderContext) SaveLayer(bounds *geom.Rect[Scalar], paint *Paint) {
 // Translate implements OpReceiver.Translate.
 func (rc *RenderContext) Translate(dx, dy Scalar) {
 	current := rc.CurrentTransform()
-	translated := current.Translate2D(geom.Vector2[Scalar]{X: dx, Y: dy})
+	translated := current.Translate(geom.Vector2[Scalar]{X: dx, Y: dy})
 	rc.transformStack[len(rc.transformStack)-1] = translated
 	rc.renderer.SetTransform(translated)
 }
@@ -145,7 +145,7 @@ func (rc *RenderContext) Translate(dx, dy Scalar) {
 // Scale implements OpReceiver.Scale.
 func (rc *RenderContext) Scale(sx, sy Scalar) {
 	current := rc.CurrentTransform()
-	scaled := current.Scale2D(geom.Vector2[Scalar]{X: sx, Y: sy})
+	scaled := current.Scale(geom.Vector2[Scalar]{X: sx, Y: sy})
 	rc.transformStack[len(rc.transformStack)-1] = scaled
 	rc.renderer.SetTransform(scaled)
 }

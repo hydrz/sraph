@@ -194,7 +194,7 @@ func TestMatrix_TransformPoint(t *testing.T) {
 	point := Point[F32]{1, 2}
 
 	// Identity transform should return same point
-	result := m.TransformPoint(point)
+	result := m.transformPoint(point)
 	if !ScalarEq(result.X, point.X) || !ScalarEq(result.Y, point.Y) {
 		t.Errorf("Identity transform failed")
 	}
@@ -205,7 +205,7 @@ func TestMatrix_TransformVector(t *testing.T) {
 	v3 := Vector3[F32]{1, 2, 3}
 
 	// Identity}transform should return same vector
-	result := m.TransformVector3D(v3)
+	result := m.transformVector3D(v3)
 	if !ScalarEq(result.X, v3.X) || !ScalarEq(result.Y, v3.Y) || !ScalarEq(result.Z, v3.Z) {
 		t.Errorf("Identity vector transform failed")
 	}
@@ -303,7 +303,7 @@ func TestMatrix_QuaternionRotation(t *testing.T) {
 	m := NewMatrix[F32]()
 	quat := Quaternion[F32]{0, 0, 0, 1}
 
-	rotMatrix := m.RotateQuaternion(quat)
+	rotMatrix := m.RotateQuat(quat)
 
 	// Identity quaternion should produce identity rotation matrix
 	if !rotMatrix.IsIdentity() {
@@ -316,7 +316,7 @@ func TestMatrix_AxisAngleRotation(t *testing.T) {
 	axis := Vector3[F32]{0.0, 0.0, 1.0}
 	angle := Radians(0.0)
 
-	rotMatrix := m.RotateAxisAngle(angle, axis)
+	rotMatrix := m.Rotate(angle, axis)
 
 	// Zero angle should produce identity matrix
 	if !rotMatrix.IsIdentity() {
@@ -656,8 +656,8 @@ func TestMatrix_SpecialCases(t *testing.T) {
 		v1 := Vector3[F32]{1.0, 0.0, 0.0}
 		v2 := Vector3[F32]{0.0, 1.0, 0.0}
 
-		transformed_v1 := uniform.TransformVector3D(v1)
-		transformed_v2 := uniform.TransformVector3D(v2)
+		transformed_v1 := uniform.transformVector3D(v1)
+		transformed_v2 := uniform.transformVector3D(v2)
 
 		// Angle between transformed vectors should be same as original (90 degrees)
 		originalDot := v1.Dot(v2) // Should be 0
@@ -741,7 +741,7 @@ func BenchmarkMatrixOperations(b *testing.B) {
 	b.Run("VectorTransform", func(b *testing.B) {
 		v := Vector3[F32]{1.0, 2.0, 3.0}
 		for i := 0; i < b.N; i++ {
-			m1.TransformVector3D(v)
+			m1.transformVector3D(v)
 		}
 	})
 

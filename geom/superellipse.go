@@ -98,23 +98,23 @@ type superellipseBuilder[T Scalar] struct {
 // reverse: whether to reverse the drawing direction.
 // scaleSign: sign vector for scaling and flipping.
 func (b *superellipseBuilder[T]) AddQuadrant(quadrant SuperellipseQuadrant[T], reverse bool, scaleSign Point[T]) {
-	transform := NewMatrix[T]().Scale2D(quadrant.SignedScale.Mul(scaleSign)).Translate2D(quadrant.Offset)
+	transform := NewMatrix[T]().Scale(quadrant.SignedScale.Mul(scaleSign)).Translate(quadrant.Offset)
 	// If either octant is degenerate (degree < 2), fallback to straight lines.
 	if quadrant.Top.Degree < 2 || quadrant.Right.Degree < 2 {
 		b.receiver.LineTo(
-			transform.TransformPoint(
+			transform.transformPoint(
 				quadrant.Top.Offset.Add(Point[T]{X: quadrant.Top.SemiAxis, Y: quadrant.Top.SemiAxis}),
 			),
 		)
 		if !reverse {
 			b.receiver.LineTo(
-				transform.TransformPoint(
+				transform.transformPoint(
 					quadrant.Top.Offset.Add(Point[T]{X: quadrant.Top.SemiAxis, Y: 0}),
 				),
 			)
 		} else {
 			b.receiver.LineTo(
-				transform.TransformPoint(
+				transform.transformPoint(
 					quadrant.Top.Offset.Add(Point[T]{X: 0, Y: quadrant.Top.SemiAxis}),
 				),
 			)
@@ -136,7 +136,7 @@ func (b *superellipseBuilder[T]) AddQuadrant(quadrant SuperellipseQuadrant[T], r
 // externalTransform: transformation matrix to apply.
 func (b *superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse, flip bool, externalTransform Matrix[T]) {
 	transform := externalTransform.Mul(
-		NewMatrix[T]().Translate2D(octant.Offset),
+		NewMatrix[T]().Translate(octant.Offset),
 	)
 
 	if flip {
@@ -154,25 +154,25 @@ func (b *superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse
 
 	if !reverse {
 		b.receiver.CubicTo(
-			transform.TransformPoint(sePoints[1]),
-			transform.TransformPoint(sePoints[2]),
-			transform.TransformPoint(sePoints[3]),
+			transform.transformPoint(sePoints[1]),
+			transform.transformPoint(sePoints[2]),
+			transform.transformPoint(sePoints[3]),
 		)
 		b.receiver.CubicTo(
-			transform.TransformPoint(circlePoints[1]),
-			transform.TransformPoint(circlePoints[2]),
-			transform.TransformPoint(circlePoints[3]),
+			transform.transformPoint(circlePoints[1]),
+			transform.transformPoint(circlePoints[2]),
+			transform.transformPoint(circlePoints[3]),
 		)
 	} else {
 		b.receiver.CubicTo(
-			transform.TransformPoint(circlePoints[2]),
-			transform.TransformPoint(circlePoints[1]),
-			transform.TransformPoint(circlePoints[0]),
+			transform.transformPoint(circlePoints[2]),
+			transform.transformPoint(circlePoints[1]),
+			transform.transformPoint(circlePoints[0]),
 		)
 		b.receiver.CubicTo(
-			transform.TransformPoint(sePoints[2]),
-			transform.TransformPoint(sePoints[1]),
-			transform.TransformPoint(sePoints[0]),
+			transform.transformPoint(sePoints[2]),
+			transform.transformPoint(sePoints[1]),
+			transform.transformPoint(sePoints[0]),
 		)
 	}
 

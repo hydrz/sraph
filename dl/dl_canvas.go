@@ -137,7 +137,7 @@ func (c *Canvas) Translate(dx, dy Scalar) {
 	}
 
 	current := c.transformStack[len(c.transformStack)-1]
-	translated := current.Translate2D(geom.Vector2[Scalar]{X: dx, Y: dy})
+	translated := current.Translate(geom.Vector2[Scalar]{X: dx, Y: dy})
 	c.transformStack[len(c.transformStack)-1] = translated
 }
 
@@ -148,7 +148,7 @@ func (c *Canvas) Scale(sx, sy Scalar) {
 	}
 
 	current := c.transformStack[len(c.transformStack)-1]
-	scaled := current.Scale2D(geom.Vector2[Scalar]{X: sx, Y: sy})
+	scaled := current.Scale(geom.Vector2[Scalar]{X: sx, Y: sy})
 	c.transformStack[len(c.transformStack)-1] = scaled
 }
 
