@@ -71,6 +71,7 @@ import (
     "github.com/opensraph/sraph/geom"
 )
 
+
 func main() {
     // Create a builder to record operations
     builder := dl.NewDisplayListBuilder()
