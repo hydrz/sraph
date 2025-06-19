@@ -20,11 +20,14 @@ type Renderer interface {
 	// CreateSurface creates a new rendering surface.
 	CreateSurface(desc SurfaceDescriptor) (*Surface, error)
 
-	// GetDevice returns the underlying GPU device.
-	GetDevice() gpu.Device
+	// GetContext returns the rendering context.
+	GetContext() Context
 
 	// GetCapabilities returns the renderer capabilities.
-	GetCapabilities() RendererCapabilities
+	GetCapabilities() *Capabilities
+
+	// Shutdown shuts down the renderer and releases resources.
+	Shutdown() error
 }
 
 // Surface represents a render target, similar to Impeller's Surface concept.
@@ -34,10 +37,12 @@ type Surface struct {
 	size        geom.Size[geom.F32]
 	format      gpu.TextureFormat
 	sampleCount uint32
+	label       string
 }
 
 // SurfaceDescriptor describes how to create a surface.
 type SurfaceDescriptor struct {
+	Label       string
 	Size        geom.Size[geom.F32]
 	Format      gpu.TextureFormat
 	Usage       gpu.TextureUsage
@@ -69,6 +74,7 @@ func NewSurface(device gpu.Device, desc SurfaceDescriptor) (*Surface, error) {
 		size:        desc.Size,
 		format:      desc.Format,
 		sampleCount: desc.SampleCount,
+		label:       desc.Label,
 	}, nil
 }
 
@@ -87,74 +93,38 @@ func (s *Surface) GetSize() geom.Size[geom.F32] {
 	return s.size
 }
 
-// RendererCapabilities describes what the renderer can do.
-type RendererCapabilities struct {
-	SupportsAdvancedBlends bool
-	MaxTextureSize         uint32
-	SupportsCompute        bool
-	SupportsTimestamps     bool
+// GetLabel returns the surface label.
+func (s *Surface) GetLabel() string {
+	return s.label
 }
 
-// ContentContext provides rendering context for entity contents.
-// This mirrors Impeller's ContentContext.
-type ContentContext struct {
-	device          gpu.Device
-	queue           gpu.Queue
-	renderPipelines map[string]gpu.RenderPipeline
-	bindGroups      map[string]gpu.BindGroup
-	uniformBuffers  map[string]gpu.Buffer
-}
-
-// NewContentContext creates a new content context.
-func NewContentContext(device gpu.Device) *ContentContext {
-	return &ContentContext{
-		device:          device,
-		queue:           device.Queue(),
-		renderPipelines: make(map[string]gpu.RenderPipeline),
-		bindGroups:      make(map[string]gpu.BindGroup),
-		uniformBuffers:  make(map[string]gpu.Buffer),
-	}
-}
-
-// GetDevice returns the GPU device.
-func (c *ContentContext) GetDevice() gpu.Device {
-	return c.device
-}
-
-// GetQueue returns the GPU queue.
-func (c *ContentContext) GetQueue() gpu.Queue {
-	return c.queue
+// SetLabel sets the surface label.
+func (s *Surface) SetLabel(label string) {
+	s.label = label
 }
 
 // ImpellerRenderer implements the Renderer interface using Impeller-style architecture.
 type ImpellerRenderer struct {
-	device       gpu.Device
-	context      *ContentContext
-	capabilities RendererCapabilities
+	context Context
 }
 
 // NewImpellerRenderer creates a new Impeller-style renderer.
-func NewImpellerRenderer(device gpu.Device) *ImpellerRenderer {
-	return &ImpellerRenderer{
-		device:  device,
-		context: NewContentContext(device),
-		capabilities: RendererCapabilities{
-			SupportsAdvancedBlends: true, // TODO: Query actual capabilities
-			MaxTextureSize:         8192, // TODO: Query actual capabilities
-			SupportsCompute:        true, // TODO: Query actual capabilities
-			SupportsTimestamps:     true, // TODO: Query actual capabilities
-		},
+func NewImpellerRenderer(device gpu.Device) (*ImpellerRenderer, error) {
+	context, err := NewImpellerContext(device)
+	if err != nil {
+		return nil, err
 	}
+
+	return &ImpellerRenderer{
+		context: context,
+	}, nil
 }
 
 // Render implements Renderer.
 func (r *ImpellerRenderer) Render(surface *Surface, displayList *display.DisplayList) error {
-	commandEncoder := r.device.CreateCommandEncoder(gpu.CommandEncoderDescriptor{
-		Label: "Render Pass",
-	})
-
-	renderPass := commandEncoder.BeginRenderPass(gpu.RenderPassDescriptor{
-		ColorAttachments: []gpu.RenderPassColorAttachment{
+	// Create render target from surface
+	renderTarget := &RenderTarget{
+		colorAttachments: []ColorAttachment{
 			{
 				View:       surface.GetTextureView(),
 				LoadOp:     gpu.LoadOpClear,
@@ -162,30 +132,33 @@ func (r *ImpellerRenderer) Render(surface *Surface, displayList *display.Display
 				ClearValue: gpu.Color{R: 0.0, G: 0.0, B: 0.0, A: 1.0},
 			},
 		},
-	})
+		size:        surface.GetSize(),
+		sampleCount: surface.sampleCount,
+	}
 
-	// TODO: Properly integrate with display list
-	// For now, we just end the render pass
-	renderPass.End()
-	commandBuffer := commandEncoder.Finish(gpu.CommandBufferDescriptor{})
-	r.device.Queue().Submit([]gpu.CommandBuffer{commandBuffer})
-
-	return nil
+	// Use entity renderer to render the display list
+	entityRenderer := NewEntityRenderer(r.context)
+	return entityRenderer.RenderDisplayList(displayList, renderTarget)
 }
 
 // CreateSurface implements Renderer.
 func (r *ImpellerRenderer) CreateSurface(desc SurfaceDescriptor) (*Surface, error) {
-	return NewSurface(r.device, desc)
+	return NewSurface(r.context.GetDevice(), desc)
 }
 
-// GetDevice implements Renderer.
-func (r *ImpellerRenderer) GetDevice() gpu.Device {
-	return r.device
+// GetContext implements Renderer.
+func (r *ImpellerRenderer) GetContext() Context {
+	return r.context
 }
 
 // GetCapabilities implements Renderer.
-func (r *ImpellerRenderer) GetCapabilities() RendererCapabilities {
-	return r.capabilities
+func (r *ImpellerRenderer) GetCapabilities() *Capabilities {
+	return r.context.GetCapabilities()
+}
+
+// Shutdown implements Renderer.
+func (r *ImpellerRenderer) Shutdown() error {
+	return r.context.Shutdown()
 }
 
 // RenderObject is an object in the render tree.

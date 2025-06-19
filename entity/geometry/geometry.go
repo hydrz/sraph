@@ -5,6 +5,8 @@
 package geometry
 
 import (
+	"math"
+
 	"github.com/opensraph/sraph/geom"
 )
 
@@ -127,11 +129,11 @@ func (c *CircleGeometry) GetVertices() ([]Vertex, error) {
 	}
 
 	// Circle vertices
-	angleStep := 2.0 * geom.Pi / geom.F32(c.segments)
+	angleStep := 2.0 * math.Pi / geom.F32(c.segments)
 	for i := 0; i < c.segments; i++ {
 		angle := geom.F32(i) * angleStep
-		x := c.center.X + c.radius*geom.F32(geom.Cos(float64(angle)))
-		y := c.center.Y + c.radius*geom.F32(geom.Sin(float64(angle)))
+		x := c.center.X + c.radius*geom.F32(math.Cos(float64(angle)))
+		y := c.center.Y + c.radius*geom.F32(math.Sin(float64(angle)))
 
 		// Texture coordinates map from [-1,1] to [0,1]
 		texX := (x-c.center.X)/c.radius*0.5 + 0.5

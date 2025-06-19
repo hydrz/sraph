@@ -1,5 +1,5 @@
 // Package entity provides texture entity implementation.
-package entity
+package geometry
 
 import (
 	"github.com/opensraph/sraph/geom"

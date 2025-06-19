@@ -3,7 +3,9 @@ package shader
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 )
 
@@ -182,20 +184,41 @@ func (b *DefaultBundleBuilder) AddShader(name string, shader CompiledShader) err
 
 // AddShaderFromFile implements BundleBuilder.
 func (b *DefaultBundleBuilder) AddShaderFromFile(name, filename string, shaderType ShaderType) error {
-	// TODO: Read shader source from file
-	// source := readFile(filename)
-	// shaderSource := ShaderSource{
-	//     Name:   name,
-	//     Source: source,
-	//     Type:   shaderType,
-	// }
-	// compiled, err := b.compiler.Compile(shaderSource)
-	// if err != nil {
-	//     return err
-	// }
-	// return b.AddShader(name, compiled)
+	// Read shader source from file
+	source, err := b.readFile(filename)
+	if err != nil {
+		return fmt.Errorf("failed to read shader file '%s': %v", filename, err)
+	}
 
-	return fmt.Errorf("file loading not implemented")
+	shaderSource := ShaderSource{
+		Name:    name,
+		Source:  source,
+		Type:    shaderType,
+		Defines: make(map[string]string),
+	}
+
+	compiled, err := b.compiler.Compile(shaderSource)
+	if err != nil {
+		return fmt.Errorf("failed to compile shader '%s': %v", name, err)
+	}
+
+	return b.AddShader(name, compiled)
+}
+
+// readFile reads the content of a file.
+func (b *DefaultBundleBuilder) readFile(filename string) (string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+
+	return string(content), nil
 }
 
 // AddShadersFromDirectory implements BundleBuilder.

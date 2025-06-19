@@ -1,4 +1,4 @@
-package entity
+package geometry
 
 import (
 	"github.com/opensraph/sraph/geom"

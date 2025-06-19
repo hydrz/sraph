@@ -3,6 +3,9 @@ package shader
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -128,13 +131,80 @@ func (c *WGSLCompiler) PreprocessShader(source ShaderSource) (string, error) {
 		result = define + "\n" + result
 	}
 
-	// Process includes (simplified implementation)
-	for _, include := range source.Includes {
-		// TODO: Load include file and replace #include directives
-		_ = include
+	// Process includes
+	processedResult, err := c.processIncludes(result, source.Includes)
+	if err != nil {
+		return "", err
 	}
 
-	return result, nil
+	return processedResult, nil
+}
+
+// processIncludes processes #include directives in shader source.
+func (c *WGSLCompiler) processIncludes(source string, includes []string) (string, error) {
+	lines := strings.Split(source, "\n")
+	var result strings.Builder
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#include") {
+			// Extract include filename
+			parts := strings.Fields(trimmed)
+			if len(parts) < 2 {
+				return "", fmt.Errorf("invalid #include directive: %s", line)
+			}
+
+			filename := strings.Trim(parts[1], "\"<>")
+
+			// Try to find and read the include file
+			includeContent, err := c.readIncludeFile(filename)
+			if err != nil {
+				return "", fmt.Errorf("failed to read include file '%s': %v", filename, err)
+			}
+
+			result.WriteString(includeContent)
+			result.WriteString("\n")
+		} else {
+			result.WriteString(line)
+			result.WriteString("\n")
+		}
+	}
+
+	return result.String(), nil
+}
+
+// readIncludeFile reads an include file from the include paths.
+func (c *WGSLCompiler) readIncludeFile(filename string) (string, error) {
+	// Try each include path
+	for _, includePath := range c.includePaths {
+		fullPath := filepath.Join(includePath, filename)
+		if content, err := c.readFile(fullPath); err == nil {
+			return content, nil
+		}
+	}
+
+	// Try current directory
+	if content, err := c.readFile(filename); err == nil {
+		return content, nil
+	}
+
+	return "", fmt.Errorf("include file not found: %s", filename)
+}
+
+// readFile reads the content of a file.
+func (c *WGSLCompiler) readFile(filename string) (string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+
+	return string(content), nil
 }
 
 // ValidateShader implements Compiler.
