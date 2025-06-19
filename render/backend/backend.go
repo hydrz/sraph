@@ -1,38 +1,12 @@
 package backend
 
+import "github.com/opensraph/sraph/gpu"
+
 // Backend defines the interface for graphics backends
-type Backend interface {
-	// GetName returns the name of the backend
-	GetName() string
-
-	// Initialize initializes the backend
-	Initialize() error
-
-	// Shutdown shuts down the backend
-	Shutdown() error
-
-	// IsSupported returns true if the backend is supported on the current platform
-	IsSupported() bool
-
-	// GetCapabilities returns the capabilities of the backend
-	GetCapabilities() Capabilities
-
-	// CreateContext creates a new render context
-	CreateContext() (Context, error)
-}
+type Backend gpu.Backend
 
 // BackendType defines the type of graphics backend
-type BackendType int
-
-const (
-	BackendTypeUnknown BackendType = iota
-	BackendTypeOpenGL
-	BackendTypeVulkan
-	BackendTypeMetal
-	BackendTypeD3D11
-	BackendTypeD3D12
-	BackendTypeWebGPU
-)
+type BackendType gpu.BackendType
 
 // Capabilities represents the capabilities of a graphics backend
 type Capabilities struct {
