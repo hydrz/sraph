@@ -1,6 +1,7 @@
 package vulkan
 
 import (
+	"github.com/opensraph/sraph/gpu"
 	"github.com/opensraph/sraph/render"
 	"github.com/vulkan-go/vulkan"
 )
@@ -41,8 +42,8 @@ func NewCapabilitiesVK(device vulkan.Device, physicalDevice vulkan.PhysicalDevic
 }
 
 // SupportsBackendType checks if the backend type is supported
-func (c *CapabilitiesVK) SupportsBackendType(backendType render.BackendType) bool {
-	return backendType == render.BackendTypeVulkan
+func (c *CapabilitiesVK) SupportsBackendType(backendType gpu.BackendType) bool {
+	return backendType == gpu.BackendTypeVulkan
 }
 
 // SupportsTextureFormat checks if a texture format is supported

@@ -2,6 +2,7 @@ package vulkan
 
 import (
 	"strings"
+
 	"github.com/vulkan-go/vulkan"
 )
 
@@ -9,19 +10,19 @@ import (
 type WorkaroundsVK struct {
 	deviceProperties vulkan.PhysicalDeviceProperties
 	driverInfo       *DriverInfoVK
-	
+
 	// Workaround flags
-	DisableRobustBufferAccess    bool
-	DisableGeometryShaders       bool
-	DisableTessellationShaders   bool
+	DisableRobustBufferAccess       bool
+	DisableGeometryShaders          bool
+	DisableTessellationShaders      bool
 	UseExplicitFlushForMappedMemory bool
 	AllocateExtraMemoryForBuffers   bool
-	DisableSubgroupOperations    bool
-	DisableStorageBuffers        bool
-	ForceLinearTextures          bool
-	DisableAnisotropicFiltering  bool
-	UseReducedShaderOptimization bool
-	DisableComputeShaders        bool
+	DisableSubgroupOperations       bool
+	DisableStorageBuffers           bool
+	ForceLinearTextures             bool
+	DisableAnisotropicFiltering     bool
+	UseReducedShaderOptimization    bool
+	DisableComputeShaders           bool
 }
 
 // NewWorkaroundsVK creates a new workarounds manager
@@ -30,7 +31,7 @@ func NewWorkaroundsVK(deviceProperties vulkan.PhysicalDeviceProperties) *Workaro
 		deviceProperties: deviceProperties,
 		driverInfo:       NewDriverInfoVK(deviceProperties),
 	}
-	
+
 	w.applyWorkarounds()
 	return w
 }
@@ -40,35 +41,35 @@ func (w *WorkaroundsVK) applyWorkarounds() {
 	deviceName := strings.ToLower(vulkan.ToString(w.deviceProperties.DeviceName[:]))
 	vendorID := w.deviceProperties.VendorID
 	driverVersion := w.deviceProperties.DriverVersion
-	
+
 	// Intel GPU workarounds
 	if vendorID == 0x8086 {
 		w.applyIntelWorkarounds(deviceName, driverVersion)
 	}
-	
+
 	// NVIDIA GPU workarounds
 	if vendorID == 0x10DE {
 		w.applyNVIDIAWorkarounds(deviceName, driverVersion)
 	}
-	
+
 	// AMD GPU workarounds
 	if vendorID == 0x1002 {
 		w.applyAMDWorkarounds(deviceName, driverVersion)
 	}
-	
+
 	// Qualcomm GPU workarounds
 	if vendorID == 0x5143 {
 		w.applyQualcommWorkarounds(deviceName, driverVersion)
 	}
-	
+
 	// ARM Mali GPU workarounds
 	if vendorID == 0x13B5 {
 		w.applyARMWorkarounds(deviceName, driverVersion)
 	}
-	
+
 	// Mobile/embedded device workarounds
 	w.applyMobileWorkarounds(deviceName)
-	
+
 	// API version specific workarounds
 	w.applyAPIVersionWorkarounds()
 }
@@ -77,16 +78,16 @@ func (w *WorkaroundsVK) applyWorkarounds() {
 func (w *WorkaroundsVK) applyIntelWorkarounds(deviceName string, driverVersion uint32) {
 	// Intel GPUs often have issues with robust buffer access
 	w.DisableRobustBufferAccess = true
-	
+
 	// Older Intel integrated GPUs have limited geometry shader support
 	if strings.Contains(deviceName, "hd") || strings.Contains(deviceName, "iris") {
 		w.DisableGeometryShaders = true
 		w.DisableTessellationShaders = true
 	}
-	
+
 	// Intel drivers sometimes require explicit memory flushes
 	w.UseExplicitFlushForMappedMemory = true
-	
+
 	// Some Intel GPUs benefit from extra memory allocation
 	w.AllocateExtraMemoryForBuffers = true
 }
@@ -94,7 +95,7 @@ func (w *WorkaroundsVK) applyIntelWorkarounds(deviceName string, driverVersion u
 // applyNVIDIAWorkarounds applies NVIDIA GPU specific workarounds
 func (w *WorkaroundsVK) applyNVIDIAWorkarounds(deviceName string, driverVersion uint32) {
 	// NVIDIA GPUs generally work well, minimal workarounds needed
-	
+
 	// Older NVIDIA drivers had subgroup operation issues
 	if driverVersion < 400000000 { // Roughly driver version 400.x
 		w.DisableSubgroupOperations = true
@@ -107,7 +108,7 @@ func (w *WorkaroundsVK) applyAMDWorkarounds(deviceName string, driverVersion uin
 	if driverVersion < 200000000 { // Roughly AMDGPU driver version 20.x
 		w.DisableStorageBuffers = true
 	}
-	
+
 	// AMD GPUs sometimes benefit from linear textures for certain operations
 	if strings.Contains(deviceName, "vega") {
 		w.ForceLinearTextures = true
@@ -118,10 +119,10 @@ func (w *WorkaroundsVK) applyAMDWorkarounds(deviceName string, driverVersion uin
 func (w *WorkaroundsVK) applyQualcommWorkarounds(deviceName string, driverVersion uint32) {
 	// Adreno GPUs often have reduced shader optimization needs
 	w.UseReducedShaderOptimization = true
-	
+
 	// Some Adreno GPUs have limited anisotropic filtering support
 	w.DisableAnisotropicFiltering = true
-	
+
 	// Memory allocation padding for Adreno GPUs
 	w.AllocateExtraMemoryForBuffers = true
 }
@@ -130,10 +131,10 @@ func (w *WorkaroundsVK) applyQualcommWorkarounds(deviceName string, driverVersio
 func (w *WorkaroundsVK) applyARMWorkarounds(deviceName string, driverVersion uint32) {
 	// Mali GPUs often have limited compute shader support
 	w.DisableComputeShaders = true
-	
+
 	// Mali GPUs benefit from reduced shader optimization
 	w.UseReducedShaderOptimization = true
-	
+
 	// Explicit memory management for Mali
 	w.UseExplicitFlushForMappedMemory = true
 }
@@ -142,13 +143,13 @@ func (w *WorkaroundsVK) applyARMWorkarounds(deviceName string, driverVersion uin
 func (w *WorkaroundsVK) applyMobileWorkarounds(deviceName string) {
 	// Check for mobile device indicators
 	if strings.Contains(deviceName, "mali") ||
-	   strings.Contains(deviceName, "adreno") ||
-	   strings.Contains(deviceName, "powervr") {
-		
+		strings.Contains(deviceName, "adreno") ||
+		strings.Contains(deviceName, "powervr") {
+
 		// Mobile GPUs often have memory constraints
 		w.AllocateExtraMemoryForBuffers = false // Actually allocate less on mobile
 		w.UseReducedShaderOptimization = true
-		
+
 		// Disable advanced features on mobile
 		w.DisableGeometryShaders = true
 		w.DisableTessellationShaders = true
@@ -159,7 +160,7 @@ func (w *WorkaroundsVK) applyMobileWorkarounds(deviceName string) {
 // applyAPIVersionWorkarounds applies workarounds based on Vulkan API version
 func (w *WorkaroundsVK) applyAPIVersionWorkarounds() {
 	apiVersion := w.deviceProperties.ApiVersion
-	
+
 	// Workarounds for older Vulkan versions
 	if apiVersion < vulkan.ApiVersion11 {
 		w.DisableSubgroupOperations = true
