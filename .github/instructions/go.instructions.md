@@ -22,3 +22,6 @@ applyTo: "**/*.go"
 - Use descriptive test names that indicate the purpose of the test.
 - Use the `testing` package for writing tests.
 - Test method names should be in the format `TestFileName_FunctionName`, where `FileName` is the name of the file containing the function being tested, and `FunctionName` is the name of the function being tested.
+
+
+不要急着修复错误，先完成整体架构

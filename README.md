@@ -20,33 +20,13 @@ sraph/
 │   ├── rstransform.go
 │   └── ...
 │
-├── tess/                        # Path tessellation and geometry processing
-│   ├── tess.go
-│   ├── polygon.go
-│   ├── stroke.go
-│   ├── gradient.go
-│   └── curve.go
+├── tess/                        # Path tessellation and geometry processin
 │
 ├── display/                     # Display list and drawing operations
-│   ├── list.go
-│   ├── builder.go
-│   ├── canvas.go
-│   ├── paint.go
-│   └── operations.go
 │
 ├── render/                      # High-level rendering pipeline
-│   ├── renderer.go
-│   ├── context.go
-│   ├── pass.go
-│   ├── pipeline.go
-│   └── surface.go
 │
 ├── entity/                      # Renderable entities and content
-│   ├── entity.go
-│   ├── solid.go                 # Solid color entities
-│   ├── texture.go               # Texture entities
-│   ├── gradient.go              # Gradient entities
-│   └── text.go                  # Text entities
 │
 ├── gpu/                         # GPU backends and hardware abstraction
 │   ├── gpu.go
@@ -55,11 +35,6 @@ sraph/
 │   ├── vulkan/                  # Vulkan backend support
 │   ├── metal/                   # Metal backend support
 │   ├── gles/                    # OpenGL ES backend support
-│   ├── context.go
-│   ├── buffer.go
-│   ├── texture.go
-│   ├── shader.go
-│   ├── pipeline.go
 │   └── gen/                     # Code generation tools
 │       └── main.go
 │
@@ -73,11 +48,6 @@ sraph/
 │       └── gradient.wgsl
 │
 ├── font/                        # Font loading and text layout
-│   ├── font.go
-│   ├── glyph.go
-│   ├── atlas.go
-│   ├── layout.go
-│   └── paragraph.go
 │
 ├── gio/                         # Window management and platform integration
 │   ├── gio.go
@@ -95,34 +65,15 @@ sraph/
 │   └── android/                 # Android support
 │
 ├── widget/                      # UI widgets and layout
-│   ├── widget.go
-│   ├── button.go
-│   ├── text.go
-│   ├── container.go
-│   ├── flex.go
-│   └── constraint.go
 │
 ├── app/                         # Application framework and runtime
-│   ├── app.go
-│   ├── engine.go
-│   ├── scheduler.go
-│   └── state.go
 │
-├── debug/                       # Debugging and profiling utilities
-│   ├── profile.go
-│   ├── metrics.go
-│   └── trace.go
 │
 ├── examples/                    # Example applications
 │   ├── hello/
 │   ├── shapes/
 │   ├── text/
-│   └── animation/
-│
-└── tools/                       # Development tools
-    ├── shader_compiler/
-    ├── font_tool/
-    └── asset_bundler/
+└──   └── animation/
 
 ```
 

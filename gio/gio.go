@@ -145,6 +145,36 @@ type PlatformInfo struct {
 	BestDriver       DriverType   // The best driver for this platform
 }
 
+// WindowManager manages multiple windows and their lifecycle.
+type WindowManager interface {
+	// CreateWindow creates a new window with the given options.
+	CreateWindow(options ...NewWindowOptions) (Window, error)
+
+	// GetWindow returns the window with the given ID.
+	GetWindow(id WindowID) (Window, bool)
+
+	// GetWindows returns all managed windows.
+	GetWindows() []Window
+
+	// CloseWindow closes the window with the given ID.
+	CloseWindow(id WindowID) error
+
+	// CloseAllWindows closes all managed windows.
+	CloseAllWindows() error
+
+	// SetMainWindow sets the main window.
+	SetMainWindow(window Window)
+
+	// GetMainWindow returns the main window.
+	GetMainWindow() Window
+}
+
+// NewWindowManager creates a new window manager.
+func NewWindowManager() WindowManager {
+	// TODO: Implement window manager creation
+	return nil
+}
+
 // String returns a human-readable description of the platform info
 func (pi PlatformInfo) String() string {
 	driverNames := make([]string, len(pi.AvailableDrivers))
