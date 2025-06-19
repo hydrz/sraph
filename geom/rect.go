@@ -171,10 +171,10 @@ func (r Rect[T]) Points() [4]Point[T] {
 
 // Eq reports whether two rectangles are Eq.
 func (r Rect[T]) Eq(other Rect[T]) bool {
-	return NearlyEq(r.Left, other.Left) &&
-		NearlyEq(r.Top, other.Top) &&
-		NearlyEq(r.Right, other.Right) &&
-		NearlyEq(r.Bottom, other.Bottom)
+	return ScalarEq(r.Left, other.Left) &&
+		ScalarEq(r.Top, other.Top) &&
+		ScalarEq(r.Right, other.Right) &&
+		ScalarEq(r.Bottom, other.Bottom)
 }
 
 // IsEmpty reports whether the rectangle is empty (width or height <= 0).
@@ -189,7 +189,7 @@ func (r Rect[T]) IsFinite() bool {
 
 // IsSquare reports whether the rectangle is a square (width == height).
 func (r Rect[T]) IsSquare() bool {
-	return NearlyEq(r.Width(), r.Height()) && !r.IsEmpty()
+	return ScalarEq(r.Width(), r.Height()) && !r.IsEmpty()
 }
 
 // ContainsExclusive reports whether the rectangle contains a point (excluding edges).

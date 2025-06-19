@@ -153,7 +153,7 @@ func (m Matrix[T]) Mul(other Matrix[T]) Matrix[T] {
 func (m Matrix[T]) Eq(other Matrix[T]) bool {
 	o := other
 	for i := 0; i < 16; i++ {
-		if !NearlyEq(m[i], o[i]) {
+		if !ScalarEq(m[i], o[i]) {
 			return false
 		}
 	}
@@ -176,9 +176,9 @@ func (m Matrix[T]) IsFinite() bool {
 // Affine transformations preserve parallel lines and ratios of distances along lines.
 // They include translation, rotation, scaling, and shearing, but not perspective projection.
 func (m Matrix[T]) IsAffine() bool {
-	return NearlyEq(m[2], 0) && NearlyEq(m[3], 0) && NearlyEq(m[6], 0) && NearlyEq(m[7], 0) &&
-		NearlyEq(m[8], 0) && NearlyEq(m[9], 0) && NearlyEq(m[10], 1) && NearlyEq(m[11], 0) &&
-		NearlyEq(m[14], 0) && NearlyEq(m[15], 1)
+	return ScalarEq(m[2], 0) && ScalarEq(m[3], 0) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
+		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && ScalarEq(m[10], 1) && ScalarEq(m[11], 0) &&
+		ScalarEq(m[14], 0) && ScalarEq(m[15], 1)
 }
 
 // IsIdentity returns true if the matrix is an identity matrix.
@@ -189,10 +189,10 @@ func (m Matrix[T]) IsAffine() bool {
 //   - Shears are 0.
 func (m Matrix[T]) IsIdentity() bool {
 
-	return NearlyEq(m[0], 1) && NearlyEq(m[1], 0) && NearlyEq(m[2], 0) && NearlyEq(m[3], 0) &&
-		NearlyEq(m[4], 0) && NearlyEq(m[5], 1) && NearlyEq(m[6], 0) && NearlyEq(m[7], 0) &&
-		NearlyEq(m[8], 0) && NearlyEq(m[9], 0) && NearlyEq(m[10], 1) && NearlyEq(m[11], 0) &&
-		NearlyEq(m[12], 0) && NearlyEq(m[13], 0) && NearlyEq(m[14], 0) && NearlyEq(m[15], 1)
+	return ScalarEq(m[0], 1) && ScalarEq(m[1], 0) && ScalarEq(m[2], 0) && ScalarEq(m[3], 0) &&
+		ScalarEq(m[4], 0) && ScalarEq(m[5], 1) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
+		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && ScalarEq(m[10], 1) && ScalarEq(m[11], 0) &&
+		ScalarEq(m[12], 0) && ScalarEq(m[13], 0) && ScalarEq(m[14], 0) && ScalarEq(m[15], 1)
 }
 
 // IsInvertible returns true if the matrix is invertible (determinant != 0).
@@ -230,21 +230,21 @@ func (m Matrix[T]) Determinant() T {
 // Perspective transformations cause parallel lines to converge at vanishing points.
 // The bottom row [a b c d] where a≠0 or b≠0 or c≠0 or d≠1 indicates perspective.
 func (m Matrix[T]) HasPerspective() bool {
-	return !NearlyEq(m[3], 0) || !NearlyEq(m[7], 0) || !NearlyEq(m[11], 0) || !NearlyEq(m[15], 1)
+	return !ScalarEq(m[3], 0) || !ScalarEq(m[7], 0) || !ScalarEq(m[11], 0) || !ScalarEq(m[15], 1)
 }
 
 // HasPerspective2D returns true if the matrix contains a 2D perspective comp1nt.
 // 2D perspective affects the homogeneous coordinate in 2D transformations.
 // This is less common than 3D perspective but used in some 2D effects.
 func (m Matrix[T]) HasPerspective2D() bool {
-	return !NearlyEq(m[3], 0) || !NearlyEq(m[7], 0) || !NearlyEq(m[15], 1)
+	return !ScalarEq(m[3], 0) || !ScalarEq(m[7], 0) || !ScalarEq(m[15], 1)
 }
 
 // HasTranslation returns true if the matrix contains a translation comp1nt (non0 last column except [0 0 0 1]).
 // Translation moves points by adding a vector to their coordinates.
 // If a matrix has translation, it cannot be purely rotational or uniform scaling.
 func (m Matrix[T]) HasTranslation() bool {
-	return !NearlyEq(m[12], 0) || !NearlyEq(m[13], 0)
+	return !ScalarEq(m[12], 0) || !ScalarEq(m[13], 0)
 }
 
 // IsAxisAligned returns true if the matrix is axis-aligned (no rotation or shear).
@@ -257,9 +257,9 @@ func (m Matrix[T]) IsAxisAligned() bool {
 
 	// Check if all three basis vectors are aligned to an axis
 	v := [9]bool{
-		!NearlyEq(m[0], 0), !NearlyEq(m[1], 0), !NearlyEq(m[2], 0),
-		!NearlyEq(m[4], 0), !NearlyEq(m[5], 0), !NearlyEq(m[6], 0),
-		!NearlyEq(m[8], 0), !NearlyEq(m[9], 0), !NearlyEq(m[10], 0),
+		!ScalarEq(m[0], 0), !ScalarEq(m[1], 0), !ScalarEq(m[2], 0),
+		!ScalarEq(m[4], 0), !ScalarEq(m[5], 0), !ScalarEq(m[6], 0),
+		!ScalarEq(m[8], 0), !ScalarEq(m[9], 0), !ScalarEq(m[10], 0),
 	}
 
 	bti := func(b bool) int {
@@ -293,10 +293,10 @@ func (m Matrix[T]) IsAxisAligned2D() bool {
 		return false
 	}
 
-	if NearlyEq(m[1], 0) && NearlyEq(m[4], 0) {
+	if ScalarEq(m[1], 0) && ScalarEq(m[4], 0) {
 		return true
 	}
-	if NearlyEq(m[0], 0) && NearlyEq(m[5], 0) {
+	if ScalarEq(m[0], 0) && ScalarEq(m[5], 0) {
 		return true
 	}
 	return false
@@ -310,10 +310,10 @@ func (m Matrix[T]) IsAxisAligned2D() bool {
 // [ 0 0 0 1 ]
 func (m Matrix[T]) IsTranslationOnly() bool {
 
-	return NearlyEq(m[0], 1) && NearlyEq(m[1], 0) && NearlyEq(m[2], 0) && NearlyEq(m[3], 0) &&
-		NearlyEq(m[4], 0) && NearlyEq(m[5], 1) && NearlyEq(m[6], 0) && NearlyEq(m[7], 0) &&
-		NearlyEq(m[8], 0) && NearlyEq(m[9], 0) && NearlyEq(m[10], 1) && NearlyEq(m[11], 0) &&
-		NearlyEq(m[15], 1)
+	return ScalarEq(m[0], 1) && ScalarEq(m[1], 0) && ScalarEq(m[2], 0) && ScalarEq(m[3], 0) &&
+		ScalarEq(m[4], 0) && ScalarEq(m[5], 1) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
+		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && ScalarEq(m[10], 1) && ScalarEq(m[11], 0) &&
+		ScalarEq(m[15], 1)
 }
 
 // IsTranslationScaleOnly returns true if the matrix contains only translation and scale.
@@ -325,10 +325,10 @@ func (m Matrix[T]) IsTranslationOnly() bool {
 // where sx, sy, sz are scale factors.
 func (m Matrix[T]) IsTranslationScaleOnly() bool {
 
-	return !NearlyEq(m[0], 0) && NearlyEq(m[1], 0) && NearlyEq(m[2], 0) && NearlyEq(m[3], 0) &&
-		NearlyEq(m[4], 0) && !NearlyEq(m[5], 0) && NearlyEq(m[6], 0) && NearlyEq(m[7], 0) &&
-		NearlyEq(m[8], 0) && NearlyEq(m[9], 0) && !NearlyEq(m[10], 0) && NearlyEq(m[11], 0) &&
-		NearlyEq(m[15], 1)
+	return !ScalarEq(m[0], 0) && ScalarEq(m[1], 0) && ScalarEq(m[2], 0) && ScalarEq(m[3], 0) &&
+		ScalarEq(m[4], 0) && !ScalarEq(m[5], 0) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
+		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && !ScalarEq(m[10], 0) && ScalarEq(m[11], 0) &&
+		ScalarEq(m[15], 1)
 }
 
 // Transpose returns the transpose of the matrix.
@@ -457,7 +457,7 @@ func (m Matrix[T]) MaxBasisLengthXY() T {
 	// for translate/scale only matrices. This substantially limits the range of
 	// precision for small and large scales. Instead, check for the common cases
 	// and directly return the max scaling factor.
-	if NearlyEq(m[1], 0) && NearlyEq(m[4], 0) {
+	if ScalarEq(m[1], 0) && ScalarEq(m[4], 0) {
 		return max(Abs(m[0]), Abs(m[5]))
 	}
 

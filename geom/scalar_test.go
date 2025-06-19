@@ -70,11 +70,11 @@ func TestScalar_Eq(t *testing.T) {
 			var result bool
 			switch a := tt.a.(type) {
 			case F32:
-				result = NearlyEq(a, tt.b.(F32))
+				result = ScalarEq(a, tt.b.(F32))
 			case F64:
-				result = NearlyEq(a, tt.b.(F64))
+				result = ScalarEq(a, tt.b.(F64))
 			case I32:
-				result = NearlyEq(a, tt.b.(I32))
+				result = ScalarEq(a, tt.b.(I32))
 			}
 			if result != tt.expected {
 				t.Errorf("Eq(%v, %v) = %v, want %v", tt.a, tt.b, result, tt.expected)
@@ -141,50 +141,12 @@ func TestScalar_Clamp(t *testing.T) {
 	}
 }
 
-func TestScalar_ScalarTypes(t *testing.T) {
-	t.Run("Int32", func(t *testing.T) {
-		i := I32(42)
-		if i.Float64() != 42.0 {
-			t.Errorf("Int32.Float64() = %v, want 42.0", i.Float64())
-		}
-		if i.String() != "42" {
-			t.Errorf("Int32.String() = %v, want '42'", i.String())
-		}
-	})
-
-	t.Run("Float32", func(t *testing.T) {
-		f := F32(3.14)
-		if math.Abs(f.Float64()-3.14) > 1e-6 {
-			t.Errorf("Float32.Float64() = %v, want 3.14", f.Float64())
-		}
-		if f.Value() != 3.14 {
-			t.Errorf("Float32.Value() = %v, want 3.14", f.Value())
-		}
-	})
-
-	t.Run("Float64", func(t *testing.T) {
-		f := F64(2.718)
-		if f.Float64() != 2.718 {
-			t.Errorf("Float64.Float64() = %v, want 2.718", f.Float64())
-		}
-	})
-
-	t.Run("Fixed26_6", func(t *testing.T) {
-		// Test Fixed26_6: 1.25 = 1<<6 + 1<<4 = 64 + 16 = 80
-		f := I26_6(80)
-		expected := 1.25
-		if math.Abs(f.Float64()-expected) > 1e-10 {
-			t.Errorf("Fixed26_6.Float64() = %v, want %v", f.Float64(), expected)
-		}
-	})
-}
-
 func BenchmarkScalar_Eq(b *testing.B) {
 	f1 := F64(1.0)
 	f2 := F64(1.0000001)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		NearlyEq(f1, f2)
+		ScalarEq(f1, f2)
 	}
 }

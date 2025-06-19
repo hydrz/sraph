@@ -62,8 +62,8 @@ func (r *RoundRect[T]) IsRect() bool {
 // IsOval returns true if all corner radii are Eq and Eq to half the width/height.
 func (r *RoundRect[T]) IsOval() bool {
 	return !r.Bounds().IsEmpty() && r.radii.IsUniform() &&
-		NearlyEq(r.radii.TopLeft.Width, r.Rect.Width()/T(2)) &&
-		NearlyEq(r.radii.TopLeft.Height, r.Rect.Height()/T(2))
+		ScalarEq(r.radii.TopLeft.Width, r.Rect.Width()/T(2)) &&
+		ScalarEq(r.radii.TopLeft.Height, r.Rect.Height()/T(2))
 }
 
 // Dispatch sends the path data of the round rect to the given PathReceiver.

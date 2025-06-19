@@ -94,7 +94,7 @@ func TestMatrix_Properties(t *testing.T) {
 
 	t.Run("Determinant", func(t *testing.T) {
 		det := identity.Determinant()
-		if !NearlyEq(det, F32(1.0)) {
+		if !ScalarEq(det, F32(1.0)) {
 			t.Errorf("Identity matrix determinant = %v, want 1.0", det)
 		}
 	})
@@ -127,10 +127,10 @@ func TestMatrix_Transformations(t *testing.T) {
 		result := m.RotateX(angle)
 
 		// Check rotation matrix properties
-		if !NearlyEq(result.At(0, 0), F32(1.0)) {
+		if !ScalarEq(result.At(0, 0), F32(1.0)) {
 			t.Error("X rotation should not affect X axis")
 		}
-		if !NearlyEq(result.At(1, 1), F32(0.0)) {
+		if !ScalarEq(result.At(1, 1), F32(0.0)) {
 			t.Error("90 degree X rotation Y component should be 0")
 		}
 	})
@@ -184,7 +184,7 @@ func TestMatrix_Scale(t *testing.T) {
 	m.Set(2, 2, F32(4.0))
 
 	scale := m.GetScale()
-	if !NearlyEq(scale.X, F32(2.0)) || !NearlyEq(scale.Y, F32(3.0)) || !NearlyEq(scale.Z, F32(4.0)) {
+	if !ScalarEq(scale.X, F32(2.0)) || !ScalarEq(scale.Y, F32(3.0)) || !ScalarEq(scale.Z, F32(4.0)) {
 		t.Errorf("Scale() = (%v, %v, %v), want (2.0, 3.0, 4.0)", scale.X, scale.Y, scale.Z)
 	}
 }
@@ -195,7 +195,7 @@ func TestMatrix_TransformPoint(t *testing.T) {
 
 	// Identity transform should return same point
 	result := m.TransformPoint(point)
-	if !NearlyEq(result.X, point.X) || !NearlyEq(result.Y, point.Y) {
+	if !ScalarEq(result.X, point.X) || !ScalarEq(result.Y, point.Y) {
 		t.Errorf("Identity transform failed")
 	}
 }
@@ -206,7 +206,7 @@ func TestMatrix_TransformVector(t *testing.T) {
 
 	// Identity}transform should return same vector
 	result := m.TransformVector3D(v3)
-	if !NearlyEq(result.X, v3.X) || !NearlyEq(result.Y, v3.Y) || !NearlyEq(result.Z, v3.Z) {
+	if !ScalarEq(result.X, v3.X) || !ScalarEq(result.Y, v3.Y) || !ScalarEq(result.Z, v3.Z) {
 		t.Errorf("Identity vector transform failed")
 	}
 }
@@ -244,15 +244,15 @@ func TestMatrix_Decompose(t *testing.T) {
 	d := m.Decompose()
 
 	// Check identity decomposition
-	if !NearlyEq(d.Translation.X, F32(0.0)) ||
-		!NearlyEq(d.Translation.Y, F32(0.0)) ||
-		!NearlyEq(d.Translation.Z, F32(0.0)) {
+	if !ScalarEq(d.Translation.X, F32(0.0)) ||
+		!ScalarEq(d.Translation.Y, F32(0.0)) ||
+		!ScalarEq(d.Translation.Z, F32(0.0)) {
 		t.Error("Identity matrix should have zero translation")
 	}
 
-	if !NearlyEq(d.Scale.X, F32(1.0)) ||
-		!NearlyEq(d.Scale.Y, F32(1.0)) ||
-		!NearlyEq(d.Scale.Z, F32(1.0)) {
+	if !ScalarEq(d.Scale.X, F32(1.0)) ||
+		!ScalarEq(d.Scale.Y, F32(1.0)) ||
+		!ScalarEq(d.Scale.Z, F32(1.0)) {
 		t.Error("Identity matrix should have unit scale")
 	}
 }
@@ -262,13 +262,13 @@ func TestMatrix_CosSin(t *testing.T) {
 
 	// Test 90 degrees
 	cos, sin := m.CosSin(Radians(math.Pi / 2))
-	if !NearlyEq(cos, F32(0.0)) || !NearlyEq(sin, F32(1.0)) {
+	if !ScalarEq(cos, F32(0.0)) || !ScalarEq(sin, F32(1.0)) {
 		t.Errorf("CosSin(π/2) = (%v, %v), want (0.0, 1.0)", cos, sin)
 	}
 
 	// Test 0 degrees
 	cos, sin = m.CosSin(Radians(0))
-	if !NearlyEq(cos, F32(1.0)) || !NearlyEq(sin, F32(0.0)) {
+	if !ScalarEq(cos, F32(1.0)) || !ScalarEq(sin, F32(0.0)) {
 		t.Errorf("CosSin(0) = (%v, %v), want (1.0, 0.0)", cos, sin)
 	}
 }
@@ -354,7 +354,7 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 		}
 
 		// Test that translation component is preserved correctly
-		if !NearlyEq(result.At(0, 3), F32(1.0)) {
+		if !ScalarEq(result.At(0, 3), F32(1.0)) {
 			t.Errorf("Expected translation X to be 1.0, got %v", result.At(0, 3))
 		}
 	})
@@ -387,7 +387,7 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 
 		// Check that it's still a valid rotation matrix (determinant should be 1)
 		det := result.Determinant()
-		if !NearlyEq(det, F32(1.0)) {
+		if !ScalarEq(det, F32(1.0)) {
 			t.Errorf("Rotation matrix determinant should be 1.0, got %v", det)
 		}
 
@@ -413,7 +413,7 @@ func TestMatrix_BoundaryConditions(t *testing.T) {
 		}
 
 		// Determinant should be 0
-		if !NearlyEq(result.Determinant(), F32(0.0)) {
+		if !ScalarEq(result.Determinant(), F32(0.0)) {
 			t.Error("Zero scale matrix determinant should be 0")
 		}
 	})
@@ -565,7 +565,7 @@ func TestMatrix_RealWorldScenarios(t *testing.T) {
 
 		// Child should have combined scale
 		childScale := childWorldTransform.GetScale()
-		if !NearlyEq(childScale.X, F32(0.5)) {
+		if !ScalarEq(childScale.X, F32(0.5)) {
 			t.Errorf("Child should inherit scale, got %v", childScale.X)
 		}
 	})
@@ -641,7 +641,7 @@ func TestMatrix_SpecialCases(t *testing.T) {
 
 		// Identity + Identity should have diagonal elements = 2
 		sum := identity.Add(identity)
-		if !NearlyEq(sum.At(0, 0), F32(2.0)) {
+		if !ScalarEq(sum.At(0, 0), F32(2.0)) {
 			t.Error("Identity + Identity should have diagonal elements = 2")
 		}
 	})
@@ -663,7 +663,7 @@ func TestMatrix_SpecialCases(t *testing.T) {
 		originalDot := v1.Dot(v2) // Should be 0
 		transformedDot := transformed_v1.Normalize().Dot(transformed_v2.Normalize())
 
-		if !NearlyEq(originalDot, transformedDot) {
+		if !ScalarEq(originalDot, transformedDot) {
 			t.Error("Uniform scaling should preserve angles")
 		}
 	})

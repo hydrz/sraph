@@ -93,7 +93,7 @@ func TestPoint_PointMath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.testFunc(tt.point)
-			if !NearlyEq(result.X, tt.expected.X) || !NearlyEq(result.Y, tt.expected.Y) {
+			if !ScalarEq(result.X, tt.expected.X) || !ScalarEq(result.Y, tt.expected.Y) {
 				t.Errorf("%s() = (%v, %v), want (%v, %v)", tt.name, result.X, result.Y, tt.expected.X, tt.expected.Y)
 			}
 		})
@@ -148,7 +148,7 @@ func TestPoint_PointVectorOperations(t *testing.T) {
 	t.Run("Length", func(t *testing.T) {
 		length := p1.Length()
 		expected := F32(5.0) // sqrt(3^2 + 4^2) = 5
-		if !NearlyEq(length, expected) {
+		if !ScalarEq(length, expected) {
 			t.Errorf("Length() = %v, want %v", length, expected)
 		}
 	})
@@ -156,7 +156,7 @@ func TestPoint_PointVectorOperations(t *testing.T) {
 	t.Run("LengthSquared", func(t *testing.T) {
 		lengthSq := p1.LengthSquared()
 		expected := F32(25.0) // 3^2 + 4^2 = 25
-		if !NearlyEq(lengthSq, expected) {
+		if !ScalarEq(lengthSq, expected) {
 			t.Errorf("LengthSquared() = %v, want %v", lengthSq, expected)
 		}
 	})
@@ -164,7 +164,7 @@ func TestPoint_PointVectorOperations(t *testing.T) {
 	t.Run("Distance", func(t *testing.T) {
 		distance := p1.Distance(p2)
 		expected := F32(math.Sqrt(8.0)) // sqrt((3-1)^2 + (4-2)^2) = sqrt(8)
-		if !NearlyEq(distance, expected) {
+		if !ScalarEq(distance, expected) {
 			t.Errorf("Distance() = %v, want %v", distance, expected)
 		}
 	})
@@ -172,7 +172,7 @@ func TestPoint_PointVectorOperations(t *testing.T) {
 	t.Run("DistanceSquared", func(t *testing.T) {
 		distanceSq := p1.DistanceSquared(p2)
 		expected := F32(8.0) // (3-1)^2 + (4-2)^2 = 8
-		if !NearlyEq(distanceSq, expected) {
+		if !ScalarEq(distanceSq, expected) {
 			t.Errorf("DistanceSquared() = %v, want %v", distanceSq, expected)
 		}
 	})
@@ -180,7 +180,7 @@ func TestPoint_PointVectorOperations(t *testing.T) {
 	t.Run("Dot", func(t *testing.T) {
 		dot := p1.Dot(p2)
 		expected := F32(11.0) // 3*1 + 4*2 = 11
-		if !NearlyEq(dot, expected) {
+		if !ScalarEq(dot, expected) {
 			t.Errorf("Dot() = %v, want %v", dot, expected)
 		}
 	})
@@ -188,7 +188,7 @@ func TestPoint_PointVectorOperations(t *testing.T) {
 	t.Run("Cross", func(t *testing.T) {
 		cross := p1.Cross(p2)
 		expected := F32(2.0) // 3*2 - 4*1 = 2
-		if !NearlyEq(cross, expected) {
+		if !ScalarEq(cross, expected) {
 			t.Errorf("Cross() = %v, want %v", cross, expected)
 		}
 	})
@@ -201,7 +201,7 @@ func TestPoint_PointNormalize(t *testing.T) {
 
 		// Should have length 1
 		length := normalized.Length()
-		if !NearlyEq(length, F32(1.0)) {
+		if !ScalarEq(length, F32(1.0)) {
 			t.Errorf("Normalized point length = %v, want 1.0", length)
 		}
 	})
@@ -211,7 +211,7 @@ func TestPoint_PointNormalize(t *testing.T) {
 		normalized := zero.Normalize()
 
 		// Should return default unit vector (1, 0)
-		if !NearlyEq(normalized.X, F32(1.0)) || !NearlyEq(normalized.Y, F32(0.0)) {
+		if !ScalarEq(normalized.X, F32(1.0)) || !ScalarEq(normalized.Y, F32(0.0)) {
 			t.Errorf("Normalized zero point = (%v, %v), want (1.0, 0.0)", normalized.X, normalized.Y)
 		}
 	})
@@ -223,7 +223,7 @@ func TestPoint_PointRotate(t *testing.T) {
 	t.Run("90 degrees", func(t *testing.T) {
 		rotated := p.Rotate(Radians(math.Pi / 2))
 		// Should be approximately (0, 1)
-		if !NearlyEq(rotated.X, F32(0.0)) || !NearlyEq(rotated.Y, F32(1.0)) {
+		if !ScalarEq(rotated.X, F32(0.0)) || !ScalarEq(rotated.Y, F32(1.0)) {
 			t.Errorf("Rotate(π/2) = (%v, %v), want (0.0, 1.0)", rotated.X, rotated.Y)
 		}
 	})
@@ -231,7 +231,7 @@ func TestPoint_PointRotate(t *testing.T) {
 	t.Run("180 degrees", func(t *testing.T) {
 		rotated := p.Rotate(Radians(math.Pi))
 		// Should be approximately (-1, 0)
-		if !NearlyEq(rotated.X, F32(-1.0)) || !NearlyEq(rotated.Y, F32(0.0)) {
+		if !ScalarEq(rotated.X, F32(-1.0)) || !ScalarEq(rotated.Y, F32(0.0)) {
 			t.Errorf("Rotate(π) = (%v, %v), want (-1.0, 0.0)", rotated.X, rotated.Y)
 		}
 	})
@@ -286,7 +286,7 @@ func TestPoint_PointLerp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
 			result := p1.Lerp(p2, tt.t)
-			if !NearlyEq(result.X, tt.expected.X) || !NearlyEq(result.Y, tt.expected.Y) {
+			if !ScalarEq(result.X, tt.expected.X) || !ScalarEq(result.Y, tt.expected.Y) {
 				t.Errorf("Lerp(%v) = (%v, %v), want (%v, %v)", tt.t, result.X, result.Y, tt.expected.X, tt.expected.Y)
 			}
 		})

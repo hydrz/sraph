@@ -27,7 +27,7 @@ func NewRSTransform[T Scalar](origin Point[T], scale T, radians Radians) RSTrans
 // IsAxisAligned returns true if the resulting transformed quad will be axis-aligned.
 func (r RSTransform[T]) IsAxisAligned() bool {
 	var zero T
-	return NearlyEq(r.ScaledCos, zero) || NearlyEq(r.ScaledSin, zero)
+	return ScalarEq(r.ScaledCos, zero) || ScalarEq(r.ScaledSin, zero)
 }
 
 // Matrix returns the 4x4 matrix representing this RSTransform.

@@ -111,7 +111,7 @@ func TestSuperellipse_FindCircleCenterAndReplaceNaN(t *testing.T) {
 	v := Point[F64]{F64(math.NaN()), 2}
 	def := Size[F64]{1, 3}
 	res := replaceNaNWithDefault(v, def)
-	if !NearlyEq(res.X, F64(1)) || !NearlyEq(res.Y, F64(2)) {
+	if !ScalarEq(res.X, F64(1)) || !ScalarEq(res.Y, F64(2)) {
 		t.Error("replaceNaNWithDefault did not replace NaN as expected")
 	}
 }

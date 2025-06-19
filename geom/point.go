@@ -107,7 +107,7 @@ func (p Point[T]) Round() Point[T] {
 
 // Eq reports whether p and o are equal.
 func (p Point[T]) Eq(o Point[T]) bool {
-	return NearlyEq(p.X, o.X) && NearlyEq(p.Y, o.Y)
+	return ScalarEq(p.X, o.X) && ScalarEq(p.Y, o.Y)
 }
 
 // IsFinite returns true if both coordinates are finite.

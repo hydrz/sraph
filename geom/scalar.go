@@ -1,7 +1,6 @@
 package geom
 
 import (
-	"cmp"
 	"math"
 	"strconv"
 )
@@ -13,10 +12,10 @@ type Scalar interface {
 	String() string
 }
 
-// NearlyEq compares two scalar values of type T with a tolerance.
+// ScalarEq compares two scalar values of type T with a tolerance.
 //
 // 0.001 for Float32 and 0.0000001 for Float64.
-func NearlyEq[T Scalar](a, b T) bool {
+func ScalarEq[T Scalar](a, b T) bool {
 	if a == b {
 		return true
 	}
@@ -31,35 +30,6 @@ func NearlyEq[T Scalar](a, b T) bool {
 	return diff.Float64() < tolerance
 }
 
-// IsFinite checks if the scalar value is finite.
-func IsFinite[T Scalar](s T) bool {
-	if _, ok := any(s).(F64); ok {
-		return !math.IsNaN(s.Float64()) && !math.IsInf(s.Float64(), 0)
-	}
-	if _, ok := any(s).(F32); ok {
-		return !math.IsNaN(s.Float64()) && !math.IsInf(s.Float64(), 0)
-	}
-	return true // For integer types, we assume they are finite
-}
-
-func Abs[T Scalar](s T) T {
-	if s < 0 {
-		return -s
-	}
-	return s
-}
-
-// Clamp clamps the scalar value between min and max.
-func Clamp[T cmp.Ordered](value, min, max T) T {
-	if value < min {
-		return min
-	}
-	if value > max {
-		return max
-	}
-	return value
-}
-
 // F32 is a 32-bit floating point scalar type.
 type F32 float32
 
@@ -71,11 +41,6 @@ func (f F32) Float64() float64 {
 // String implements Scalar.
 func (f F32) String() string {
 	return strconv.FormatFloat(float64(f), 'f', -1, 32)
-}
-
-// Value returns the underlying float32 value.
-func (f F32) Value() float32 {
-	return float32(f)
 }
 
 // F64 is a 64-bit floating point scalar type.

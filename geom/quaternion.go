@@ -67,10 +67,10 @@ func (q Quaternion[T]) Div(other Quaternion[T]) Quaternion[T] {
 
 // Eq checks if this quaternion is Eq to another.
 func (q Quaternion[T]) Eq(other Quaternion[T]) bool {
-	return NearlyEq(q.X, other.X) &&
-		NearlyEq(q.Y, other.Y) &&
-		NearlyEq(q.Z, other.Z) &&
-		NearlyEq(q.W, other.W)
+	return ScalarEq(q.X, other.X) &&
+		ScalarEq(q.Y, other.Y) &&
+		ScalarEq(q.Z, other.Z) &&
+		ScalarEq(q.W, other.W)
 }
 
 // Scale scales the quaternion by a scalar value and returns the result.
@@ -146,7 +146,7 @@ func (q Quaternion[T]) Invert() Quaternion[T] {
 func (q Quaternion[T]) Slerp(other Quaternion[T], time float64) Quaternion[T] {
 	time = Clamp(time, 0.0, 1.0) // Ensure time is between 0 and 1
 	cosine := q.Dot(other).Float64()
-	if NearlyEq(T(cosine), 1.0) {
+	if ScalarEq(T(cosine), 1.0) {
 		// Spherical Interpolation
 		sine := math.Sqrt(1.0 - cosine*cosine)
 		angle := math.Atan2(sine, cosine)

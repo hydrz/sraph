@@ -13,8 +13,8 @@ func TestQuaternion_NewQuaternionFromAxisAngle(t *testing.T) {
 
 	// For 90 degree rotation around Z-axis: q = (0, 0, sin(π/4), cos(π/4)) = (0, 0, √2/2, √2/2)
 	expected := F32(math.Sqrt(2.0) / 2.0)
-	if !NearlyEq(q.X, F32(0.0)) || !NearlyEq(q.Y, F32(0.0)) ||
-		!NearlyEq(q.Z, expected) || !NearlyEq(q.W, expected) {
+	if !ScalarEq(q.X, F32(0.0)) || !ScalarEq(q.Y, F32(0.0)) ||
+		!ScalarEq(q.Z, expected) || !ScalarEq(q.W, expected) {
 		t.Errorf("NewQuaternionFromAxisAngle() = (%v, %v, %v, %v), want (0, 0, %v, %v)",
 			q.X, q.Y, q.Z, q.W, expected, expected)
 	}
@@ -68,7 +68,7 @@ func TestQuaternion_QuaternionLength(t *testing.T) {
 	q := Quaternion[F32]{1.0, 2.0, 3.0, 4.0}
 	length := q.Length()
 	expected := F32(math.Sqrt(30.0)) // sqrt(1+4+9+16) = sqrt(30)
-	if !NearlyEq(length, expected) {
+	if !ScalarEq(length, expected) {
 		t.Errorf("Length() = %v, want %v", length, expected)
 	}
 }
@@ -79,7 +79,7 @@ func TestQuaternion_QuaternionDotProduct(t *testing.T) {
 
 	dot := q1.Dot(q2)
 	expected := F32(70.0) // 1*5 + 2*6 + 3*7 + 4*8 = 70
-	if !NearlyEq(dot, expected) {
+	if !ScalarEq(dot, expected) {
 		t.Errorf("Dot() = %v, want %v", dot, expected)
 	}
 }
@@ -91,7 +91,7 @@ func TestQuaternion_QuaternionNormalize(t *testing.T) {
 
 		// Should have length 1
 		length := normalized.Length()
-		if !NearlyEq(length, F32(1.0)) {
+		if !ScalarEq(length, F32(1.0)) {
 			t.Errorf("Normalized quaternion length = %v, want 1.0", length)
 		}
 	})
@@ -101,8 +101,8 @@ func TestQuaternion_QuaternionNormalize(t *testing.T) {
 		normalized := zero.Normalize()
 
 		// Should return zero quaternion
-		if !NearlyEq(normalized.X, F32(0.0)) || !NearlyEq(normalized.Y, F32(0.0)) ||
-			!NearlyEq(normalized.Z, F32(0.0)) || !NearlyEq(normalized.W, F32(0.0)) {
+		if !ScalarEq(normalized.X, F32(0.0)) || !ScalarEq(normalized.Y, F32(0.0)) ||
+			!ScalarEq(normalized.Z, F32(0.0)) || !ScalarEq(normalized.W, F32(0.0)) {
 			t.Errorf("Normalized zero quaternion should be zero")
 		}
 	})
@@ -117,8 +117,8 @@ func TestQuaternion_QuaternionInvert(t *testing.T) {
 	identityNormalized := identity.Normalize()
 
 	// Check if it's close to identity quaternion (0, 0, 0, 1) or (0, 0, 0, -1)
-	if !NearlyEq(identityNormalized.X, F32(0.0)) || !NearlyEq(identityNormalized.Y, F32(0.0)) ||
-		!NearlyEq(identityNormalized.Z, F32(0.0)) {
+	if !ScalarEq(identityNormalized.X, F32(0.0)) || !ScalarEq(identityNormalized.Y, F32(0.0)) ||
+		!ScalarEq(identityNormalized.Z, F32(0.0)) {
 		t.Errorf("Quaternion inversion failed")
 	}
 }
@@ -160,7 +160,7 @@ func TestQuaternion_QuaternionRotateVector3(t *testing.T) {
 	rotated := q.RotateVector3(v)
 
 	// Should result in approximately (0, 1, 0)
-	if !NearlyEq(rotated.X, F32(0.0)) || !NearlyEq(rotated.Y, F32(1.0)) || !NearlyEq(rotated.Z, F32(0.0)) {
+	if !ScalarEq(rotated.X, F32(0.0)) || !ScalarEq(rotated.Y, F32(1.0)) || !ScalarEq(rotated.Z, F32(0.0)) {
 		t.Errorf("RotateVector3() = (%v, %v, %v), want (0, 1, 0)", rotated.X, rotated.Y, rotated.Z)
 	}
 }

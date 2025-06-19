@@ -76,7 +76,7 @@ func (s Size[T]) ScaleWH(width, height T) Size[T] {
 
 // Eq reports whether s and o are equal.
 func (s Size[T]) Eq(o Size[T]) bool {
-	return NearlyEq(s.Width, o.Width) && NearlyEq(s.Height, o.Height)
+	return ScalarEq(s.Width, o.Width) && ScalarEq(s.Height, o.Height)
 }
 
 // Min returns the size with the minimum width and height among all.
@@ -177,7 +177,7 @@ func (s Size[T]) Round() Size[T] {
 // Used to detect degenerate or empty objects.
 func (s Size[T]) IsZero() bool {
 	var zero T
-	return NearlyEq(s.Width, zero) && NearlyEq(s.Height, zero)
+	return ScalarEq(s.Width, zero) && ScalarEq(s.Height, zero)
 }
 
 // IsFinite returns true if both width and height are finite.
@@ -195,7 +195,7 @@ func (s Size[T]) IsInfinite() bool {
 // IsSquare returns true if width and height are equal.
 // Useful for aspect ratio checks, e.g., for icons or tiles.
 func (s Size[T]) IsSquare() bool {
-	return NearlyEq(s.Width, s.Height)
+	return ScalarEq(s.Width, s.Height)
 }
 
 // MipCount returns the mipmap count for the size.

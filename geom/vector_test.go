@@ -32,7 +32,7 @@ func TestVector3Arithmetic(t *testing.T) {
 
 	t.Run("Div", func(t *testing.T) {
 		result := v2.Div(v1)
-		if !NearlyEq(result.X, F32(4.0)) || !NearlyEq(result.Y, F32(2.5)) || !NearlyEq(result.Z, F32(2.0)) {
+		if !ScalarEq(result.X, F32(4.0)) || !ScalarEq(result.Y, F32(2.5)) || !ScalarEq(result.Z, F32(2.0)) {
 			t.Errorf("Div() = (%v, %v, %v), want (4.0, 2.5, 2.0)", result.X, result.Y, result.Z)
 		}
 	})
@@ -51,7 +51,7 @@ func TestVector3VectorOperations(t *testing.T) {
 	t.Run("Length", func(t *testing.T) {
 		length := v.Length()
 		expected := F32(5.0) // sqrt(3^2 + 4^2 + 0^2) = 5
-		if !NearlyEq(length, expected) {
+		if !ScalarEq(length, expected) {
 			t.Errorf("Length() = %v, want %v", length, expected)
 		}
 	})
@@ -61,14 +61,14 @@ func TestVector3VectorOperations(t *testing.T) {
 
 		// Should have length 1
 		length := normalized.Length()
-		if !NearlyEq(length, F32(1.0)) {
+		if !ScalarEq(length, F32(1.0)) {
 			t.Errorf("Normalized vector length = %v, want 1.0", length)
 		}
 
 		// Check components
 		expectedX := F32(0.6) // 3/5
 		expectedY := F32(0.8) // 4/5
-		if !NearlyEq(normalized.X, expectedX) || !NearlyEq(normalized.Y, expectedY) || !NearlyEq(normalized.Z, F32(0.0)) {
+		if !ScalarEq(normalized.X, expectedX) || !ScalarEq(normalized.Y, expectedY) || !ScalarEq(normalized.Z, F32(0.0)) {
 			t.Errorf("Normalize() = (%v, %v, %v), want (%v, %v, 0.0)", normalized.X, normalized.Y, normalized.Z, expectedX, expectedY)
 		}
 	})
@@ -78,7 +78,7 @@ func TestVector3VectorOperations(t *testing.T) {
 		normalized := zero.Normalize()
 
 		// Should return zero vector
-		if !NearlyEq(normalized.X, F32(0.0)) || !NearlyEq(normalized.Y, F32(0.0)) || !NearlyEq(normalized.Z, F32(0.0)) {
+		if !ScalarEq(normalized.X, F32(0.0)) || !ScalarEq(normalized.Y, F32(0.0)) || !ScalarEq(normalized.Z, F32(0.0)) {
 			t.Errorf("Normalized zero vector should be zero")
 		}
 	})
@@ -90,7 +90,7 @@ func TestVector3DotProduct(t *testing.T) {
 
 	dot := v1.Dot(v2)
 	expected := F32(32.0) // 1*4 + 2*5 + 3*6 = 32
-	if !NearlyEq(dot, expected) {
+	if !ScalarEq(dot, expected) {
 		t.Errorf("Dot() = %v, want %v", dot, expected)
 	}
 }
@@ -101,7 +101,7 @@ func TestVector3CrossProduct(t *testing.T) {
 
 	cross := v1.Cross(v2)
 	// (1,0,0) × (0,1,0) = (0,0,1)
-	if !NearlyEq(cross.X, F32(0.0)) || !NearlyEq(cross.Y, F32(0.0)) || !NearlyEq(cross.Z, F32(1.0)) {
+	if !ScalarEq(cross.X, F32(0.0)) || !ScalarEq(cross.Y, F32(0.0)) || !ScalarEq(cross.Z, F32(1.0)) {
 		t.Errorf("Cross() = (%v, %v, %v), want (0.0, 0.0, 1.0)", cross.X, cross.Y, cross.Z)
 	}
 }
@@ -156,7 +156,7 @@ func TestVector3Lerp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
 			result := v1.Lerp(v2, tt.t)
-			if !NearlyEq(result.X, tt.expected.X) || !NearlyEq(result.Y, tt.expected.Y) || !NearlyEq(result.Z, tt.expected.Z) {
+			if !ScalarEq(result.X, tt.expected.X) || !ScalarEq(result.Y, tt.expected.Y) || !ScalarEq(result.Z, tt.expected.Z) {
 				t.Errorf("Lerp(%v) = (%v, %v, %v), want (%v, %v, %v)", tt.t, result.X, result.Y, result.Z, tt.expected.X, tt.expected.Y, tt.expected.Z)
 			}
 		})
@@ -210,7 +210,7 @@ func TestVector4Length(t *testing.T) {
 	v := Vector4[F32]{1.0, 2.0, 3.0, 4.0}
 	length := v.Length()
 	expected := F32(math.Sqrt(30.0)) // sqrt(1^2 + 2^2 + 3^2 + 4^2) = sqrt(30)
-	if !NearlyEq(length, expected) {
+	if !ScalarEq(length, expected) {
 		t.Errorf("Length() = %v, want %v", length, expected)
 	}
 }

@@ -7,7 +7,7 @@ type Shear[T Scalar] struct {
 }
 
 func (s Shear[T]) Eq(o Shear[T]) bool {
-	return NearlyEq(s.XY, o.XY) && NearlyEq(s.XZ, o.XZ) && NearlyEq(s.YZ, o.YZ)
+	return ScalarEq(s.XY, o.XY) && ScalarEq(s.XZ, o.XZ) && ScalarEq(s.YZ, o.YZ)
 }
 
 func (s Shear[T]) String() string {
