@@ -152,7 +152,7 @@ func TestQuaternion_QuaternionSlerp(t *testing.T) {
 func TestQuaternion_QuaternionRotateVector3(t *testing.T) {
 	// Test 90 degree rotation around Z axis
 	axis := Vector3[F32]{0.0, 0.0, 1.0}
-	angle := Radians(math.PiOver2)
+	angle := Radians(math.Pi / 2)
 	q := NewQuaternionFromAxisAngle(axis, angle)
 
 	// Rotate vector (1, 0, 0) around Z axis by 90 degrees
