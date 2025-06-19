@@ -1,5 +1,7 @@
 package geom
 
+import "image"
+
 // Rect represents an axis-aligned rectangle defined by four edges or by origin and size.
 // All methods are immutable and return new values.
 type Rect[T Scalar] struct {
@@ -47,6 +49,17 @@ func NewRectOriginSize[T Scalar](origin Point[T], size Size[T]) Rect[T] {
 // NewRectSize returns a rectangle at (0,0) with the given size.
 func NewRectSize[T Scalar](size Size[T]) Rect[T] {
 	return Rect[T]{Left: 0, Top: 0, Right: size.Width, Bottom: size.Height}
+}
+
+// NewRectFromGo converts a Go image.Rectangle to a Rect.
+// The Go rectangle is inclusive on the left and top, exclusive on the right and bottom.
+func NewRectFromGo[T Scalar](r image.Rectangle) Rect[T] {
+	return Rect[T]{
+		Left:   T(r.Min.X),
+		Top:    T(r.Min.Y),
+		Right:  T(r.Max.X),
+		Bottom: T(r.Max.Y),
+	}
 }
 
 // BoundingRect returns the minimal bounding rectangle for a set of points.
@@ -474,4 +487,12 @@ func (r Rect[T]) NormalizingTransform() Matrix[T] {
 // String returns a string representation, e.g. (LeftTop => RightBottom).
 func (r Rect[T]) String() string {
 	return "(" + r.LeftTop().String() + " => " + r.RightBottom().String() + ")"
+}
+
+// ToGo converts the rectangle to a Go image.Rectangle.
+func (r Rect[T]) ToGo() image.Rectangle {
+	return image.Rectangle{
+		Min: image.Point{X: int(r.Left), Y: int(r.Top)},
+		Max: image.Point{X: int(r.Right), Y: int(r.Bottom)},
+	}
 }

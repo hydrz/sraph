@@ -501,12 +501,12 @@ func TestPredefinedColors(t *testing.T) {
 		name  string
 		color Color
 	}{
-		{"ColorWhite", ColorWhite},
-		{"ColorBlack", ColorBlack},
-		{"ColorRed", ColorRed},
-		{"ColorGreen", ColorGreen},
-		{"ColorBlue", ColorBlue},
-		{"ColorTransparent", ColorTransparent},
+		{"ColorWhite", ColorWhite()},
+		{"ColorBlack", ColorBlack()},
+		{"ColorRed", ColorRed()},
+		{"ColorGreen", ColorGreen()},
+		{"ColorBlue", ColorBlue()},
+		{"ColorTransparent", ColorTransparent()},
 	}
 
 	for _, tt := range tests {
@@ -563,7 +563,7 @@ func TestColor_EdgeCases(t *testing.T) {
 	// Should not panic
 	_ = extremeColor.Clamp01()
 	_ = extremeColor.Scale(0.5)
-	_ = extremeColor.Add(ColorWhite)
+	_ = extremeColor.Add(ColorWhite())
 
 	// Test premultiply/unpremultiply cycle
 	original := Color{R: 0.8, G: 0.6, B: 0.4, A: 0.7}

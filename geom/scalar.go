@@ -1,13 +1,16 @@
 package geom
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 )
 
 // Scalar is a generic interface for numeric types used in geometry calculations.
 type Scalar interface {
-	~int32 | ~int64 | ~float32 | ~float64
+	// no unsigned integers because they are not compatible with negative values
+	// which are common in geometry calculations.
+	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~float32 | ~float64
 	Float64() float64
 	String() string
 }
@@ -82,6 +85,19 @@ func (i I64) String() string {
 	return strconv.FormatInt(int64(i), 10)
 }
 
+// Int is a go built-in integer type.
+type Int int
+
+// Float64 implements Scalar.
+func (i Int) Float64() float64 {
+	return float64(i)
+}
+
+// String implements Scalar.
+func (i Int) String() string {
+	return strconv.Itoa(int(i))
+}
+
 // I26_6 is a signed 26.6 fixed-point number.
 // The integer part ranges from -33554432 to 33554431.
 // The format is: [integer(26)][fraction(6)].
@@ -89,13 +105,21 @@ func (i I64) String() string {
 type I26_6 int32
 
 // Float64 implements Scalar.
-func (f I26_6) Float64() float64 {
-	return float64(f) / (1 << 6) // Divide by 2^6 to convert to float64
+func (x I26_6) Float64() float64 {
+	return float64(x) / (1 << 6) // Divide by 2^6 to convert to float64
 }
 
 // String implements Scalar.
-func (f I26_6) String() string {
-	return strconv.FormatFloat(f.Float64(), 'f', -1, 64)
+func (x I26_6) String() string {
+	const shift, mask = 6, 1<<6 - 1
+	if x >= 0 {
+		return fmt.Sprintf("%d:%02d", int32(x>>shift), int32(x&mask))
+	}
+	x = -x
+	if x >= 0 {
+		return fmt.Sprintf("-%d:%02d", int32(x>>shift), int32(x&mask))
+	}
+	return "-33554432:00" // The minimum value is -(1<<25).
 }
 
 // Radians represents an angle in radians.
@@ -107,12 +131,12 @@ func (r Radians) Degrees() Degrees {
 	return Degrees(r * 180 / math.Pi)
 }
 
-// Float64 returns the float64 value of the radians.
+// Float64 implements Scalar.
 func (r Radians) Float64() float64 {
 	return F32(r).Float64()
 }
 
-// String returns a string representation of the radians value.
+// String implements Scalar.
 func (r Radians) String() string {
 	return F32(r).String() + " rad"
 }
@@ -125,12 +149,12 @@ func (d Degrees) Radians() Radians {
 	return Radians(d * math.Pi / 180)
 }
 
-// Float64 returns the float64 value of the degrees.
+// Float64 implements Scalar.
 func (d Degrees) Float64() float64 {
 	return F32(d).Float64()
 }
 
-// String returns a string representation of the degrees value.
+// String implements Scalar.
 func (d Degrees) String() string {
 	return F32(d).String() + "°"
 }

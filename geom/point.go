@@ -1,8 +1,11 @@
 package geom
 
 import (
+	"image"
 	"math"
 )
+
+type Quad[T Scalar] = [4]Point[T]
 
 // Point represents a 2D point with X and Y coordinates.
 type Point[T Scalar] struct {
@@ -14,7 +17,9 @@ func Pt[T Scalar](x, y T) Point[T] {
 	return Point[T]{X: x, Y: y}
 }
 
-type Quad[T Scalar] = [4]Point[T]
+func NewPointFromGo[T Scalar](p image.Point) Point[T] {
+	return Point[T]{X: T(p.X), Y: T(p.Y)}
+}
 
 // Add returns the sum of this point and another.
 func (p Point[T]) Add(o Point[T]) Point[T] {
@@ -209,4 +214,9 @@ func (p Point[T]) Lerp(o Point[T], t T) Point[T] {
 // String returns a string representation of the point, like "(x, y)".
 func (p Point[T]) String() string {
 	return "(" + p.X.String() + ", " + p.Y.String() + ")"
+}
+
+// ToGo converts this point to an image.Point.
+func (p Point[T]) ToGo() image.Point {
+	return image.Point{X: int(p.X.Float64()), Y: int(p.Y.Float64())}
 }

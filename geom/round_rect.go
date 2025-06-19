@@ -1,5 +1,11 @@
 package geom
 
+// RoundRect represents a rectangle with rounded corners.
+type RoundRect[T Scalar] struct {
+	Rect[T]
+	radii RoundingRadii[T]
+}
+
 // NewRoundRect creates a new RoundRect with the given rectangle and corner radii.
 func NewRoundRect[T Scalar](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
 	return RoundRect[T]{
@@ -36,12 +42,6 @@ func NewRoundRectLTRB[T Scalar](rect Rect[T], left, top, right, bottom T) RoundR
 		rect,
 		NewRoundingRadiiLTRB(left, top, right, bottom),
 	)
-}
-
-// RoundRect represents a rectangle with rounded corners.
-type RoundRect[T Scalar] struct {
-	Rect[T]
-	radii RoundingRadii[T]
 }
 
 // Bounds returns the bounding rectangle of the round rect.

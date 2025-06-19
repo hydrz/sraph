@@ -162,9 +162,9 @@ func TestGradientData_IsValid(t *testing.T) {
 
 func TestNewLinearGradient(t *testing.T) {
 	stops := []GradientStop{
-		{Color: ColorRed, Position: 0.0},
-		{Color: ColorGreen, Position: 0.5},
-		{Color: ColorBlue, Position: 1.0},
+		{Color: ColorRed(), Position: 0.0},
+		{Color: ColorGreen(), Position: 0.5},
+		{Color: ColorBlue(), Position: 1.0},
 	}
 
 	gradient := NewLinearGradient(stops)
@@ -193,8 +193,8 @@ func TestNewRadialGradient(t *testing.T) {
 	center := Point[F32]{0.5, 0.5}
 	radius := F32(1.0)
 	stops := []GradientStop{
-		{Color: ColorWhite, Position: 0.0},
-		{Color: ColorBlack, Position: 1.0},
+		{Color: ColorWhite(), Position: 0.0},
+		{Color: ColorBlack(), Position: 1.0},
 	}
 
 	gradient := NewRadialGradient(center, radius, stops)
@@ -215,8 +215,8 @@ func TestNewRadialGradient(t *testing.T) {
 func TestRadialGradient_ToBuffer(t *testing.T) {
 	center := Point[F32]{0, 0}
 	stops := []GradientStop{
-		{Color: ColorRed, Position: 0.0},
-		{Color: ColorBlue, Position: 1.0},
+		{Color: ColorRed(), Position: 0.0},
+		{Color: ColorBlue(), Position: 1.0},
 	}
 
 	gradient := NewRadialGradient(center, 1.0, stops)
@@ -233,7 +233,7 @@ func TestRadialGradient_ToBuffer(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkCreateGradientBuffer_TwoColors(b *testing.B) {
-	colors := []Color{ColorRed, ColorBlue}
+	colors := []Color{ColorRed(), ColorBlue()}
 	stops := []F32{0.0, 1.0}
 
 	b.ResetTimer()
@@ -243,7 +243,7 @@ func BenchmarkCreateGradientBuffer_TwoColors(b *testing.B) {
 }
 
 func BenchmarkCreateGradientBuffer_MultipleColors(b *testing.B) {
-	colors := []Color{ColorRed, ColorGreen, ColorBlue, ColorYellow, ColorCyan}
+	colors := []Color{ColorRed(), ColorGreen(), ColorBlue(), ColorYellow(), ColorCyan()}
 	stops := []F32{0.0, 0.25, 0.5, 0.75, 1.0}
 
 	b.ResetTimer()
@@ -287,7 +287,7 @@ func TestGradient_EdgeCases(t *testing.T) {
 
 	// Test with identical stops
 	t.Run("identical_stops", func(t *testing.T) {
-		colors := []Color{ColorRed, ColorGreen, ColorBlue}
+		colors := []Color{ColorRed(), ColorGreen(), ColorBlue()}
 		stops := []F32{0.5, 0.5, 0.5} // All same position
 
 		result := CreateGradientBuffer(colors, stops)
@@ -301,8 +301,8 @@ func TestGradient_EdgeCases(t *testing.T) {
 // Integration test with color operations
 func TestGradient_Integration(t *testing.T) {
 	// Create gradient with blended colors
-	baseColor := ColorRed
-	blendedColor := baseColor.Blend(ColorBlue, BlendModeMultiply)
+	baseColor := ColorRed()
+	blendedColor := baseColor.Blend(ColorBlue(), BlendModeMultiply)
 
 	stops := []GradientStop{
 		{Color: baseColor, Position: 0.0},
@@ -317,7 +317,7 @@ func TestGradient_Integration(t *testing.T) {
 	}
 
 	// Test with color space conversion
-	linearColor := ColorRed.SRGBToLinear()
+	linearColor := ColorRed().SRGBToLinear()
 	stops2 := []GradientStop{
 		{Color: linearColor, Position: 0.0},
 		{Color: linearColor.LinearToSRGB(), Position: 1.0},
