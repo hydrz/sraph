@@ -13,7 +13,7 @@ func TestScalar_Radians(t *testing.T) {
 	}{
 		{"Zero", Radians(0.0), Degrees(0.0)},
 		{"Pi", Radians(math.Pi), Degrees(180.0)},
-		{"Half Pi", Radians(math.Pi / 2), Degrees(90.0)},
+		{"Half Pi", Radians(math.PiOver2), Degrees(90.0)},
 		{"Two Pi", Radians(2 * math.Pi), Degrees(360.0)},
 	}
 
@@ -35,7 +35,7 @@ func TestScalar_Degrees(t *testing.T) {
 	}{
 		{"Zero", Degrees(0.0), Radians(0.0)},
 		{"180", Degrees(180.0), Radians(math.Pi)},
-		{"90", Degrees(90.0), Radians(math.Pi / 2)},
+		{"90", Degrees(90.0), Radians(math.PiOver2)},
 		{"360", Degrees(360.0), Radians(2 * math.Pi)},
 	}
 

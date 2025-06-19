@@ -93,7 +93,7 @@ func TestSuperellipse_InternalHelpers(t *testing.T) {
 		Degree:         F64(4),
 		CircleStart:    Point[F64]{10.0, 10.0},
 		CircleCenter:   Point[F64]{0.0, 0.0},
-		CircleMaxAngle: Radians(math.Pi / 2),
+		CircleMaxAngle: Radians(math.PiOver2),
 	}
 	_ = builder.circularArcPoints(octant)
 	_ = builder.superellipseArcPoints(octant)
