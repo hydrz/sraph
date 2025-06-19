@@ -221,7 +221,7 @@ func TestPoint_PointRotate(t *testing.T) {
 	p := Point[F32]{X: 1.0, Y: 0.0}
 
 	t.Run("90 degrees", func(t *testing.T) {
-		rotated := p.Rotate(Radians(PiOver2))
+		rotated := p.Rotate(Radians(math.Pi / 2))
 		// Should be approximately (0, 1)
 		if !ScalarEq(rotated.X, F32(0.0)) || !ScalarEq(rotated.Y, F32(1.0)) {
 			t.Errorf("Rotate(π/2) = (%v, %v), want (0.0, 1.0)", rotated.X, rotated.Y)

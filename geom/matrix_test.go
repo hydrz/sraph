@@ -123,7 +123,7 @@ func TestMatrix_Transformations(t *testing.T) {
 
 	t.Run("RotationX", func(t *testing.T) {
 		m := NewMatrix[F32]()
-		angle := Radians(PiOver2) // 90 degrees
+		angle := Radians(math.Pi / 2) // 90 degrees
 		result := m.RotateX(angle)
 
 		// Check rotation matrix properties
@@ -261,7 +261,7 @@ func TestMatrix_CosSin(t *testing.T) {
 	m := NewMatrix[F32]()
 
 	// Test 90 degrees
-	cos, sin := m.CosSin(Radians(PiOver2))
+	cos, sin := m.CosSin(Radians(math.Pi / 2))
 	if !ScalarEq(cos, F32(0.0)) || !ScalarEq(sin, F32(1.0)) {
 		t.Errorf("CosSin(π/2) = (%v, %v), want (0.0, 1.0)", cos, sin)
 	}
@@ -449,7 +449,7 @@ func TestMatrix_BoundaryConditions(t *testing.T) {
 		m := NewMatrix[F32]()
 
 		// Test common angles
-		angles := []F32{0, math.Pi / 6, math.Pi / 4, math.Pi / 3, PiOver2, math.Pi, 2 * math.Pi}
+		angles := []F32{0, math.Pi / 6, math.Pi / 4, math.Pi / 3, math.Pi / 2, math.Pi, 2 * math.Pi}
 
 		for _, angle := range angles {
 			result := m.RotateZ(Radians(angle))
@@ -690,7 +690,7 @@ func TestMatrix_SpecialCases(t *testing.T) {
 		}
 
 		// 90 degree rotation should be axis-aligned
-		rotated90 := m.RotateZ(Radians(PiOver2))
+		rotated90 := m.RotateZ(Radians(math.Pi / 2))
 		if !rotated90.IsAxisAligned() {
 			t.Error("90 degree rotation should be axis-aligned")
 		}

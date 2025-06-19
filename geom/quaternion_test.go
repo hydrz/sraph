@@ -7,7 +7,7 @@ import (
 
 func TestQuaternion_NewQuaternionFromAxisAngle(t *testing.T) {
 	axis := Vector3[F32]{0.0, 0.0, 1.0} // Z-axis
-	angle := Radians(PiOver2)           // 90 degrees
+	angle := Radians(math.Pi / 2)       // 90 degrees
 
 	q := NewQuaternionFromAxisAngle(axis, angle)
 
