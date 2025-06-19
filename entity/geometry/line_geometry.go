@@ -1,8 +1,8 @@
 package geometry
 
 import (
-	"github.com/hydrz/sraph/geom"
-	"github.com/hydrz/sraph/render"
+	"github.com/opensraph/sraph/geom"
+	"github.com/opensraph/sraph/render"
 )
 
 // LineGeometry represents line geometry
