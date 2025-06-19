@@ -9,21 +9,21 @@ import (
 
 // RenderPassCacheVK manages a cache of Vulkan render passes
 type RenderPassCacheVK struct {
-	context     *ContextVK
-	cache       map[RenderPassKey]*CachedRenderPass
-	mutex       sync.RWMutex
+	context      *ContextVK
+	cache        map[RenderPassKey]*CachedRenderPass
+	mutex        sync.RWMutex
 	maxCacheSize int
 }
 
 // RenderPassKey uniquely identifies a render pass configuration
 type RenderPassKey struct {
-	ColorFormats    []vulkan.Format
-	DepthFormat     vulkan.Format
-	Samples         vulkan.SampleCountFlagBits
-	LoadOps         []vulkan.AttachmentLoadOp
-	StoreOps        []vulkan.AttachmentStoreOp
-	InitialLayouts  []vulkan.ImageLayout
-	FinalLayouts    []vulkan.ImageLayout
+	ColorFormats   []vulkan.Format
+	DepthFormat    vulkan.Format
+	Samples        vulkan.SampleCountFlagBits
+	LoadOps        []vulkan.AttachmentLoadOp
+	StoreOps       []vulkan.AttachmentStoreOp
+	InitialLayouts []vulkan.ImageLayout
+	FinalLayouts   []vulkan.ImageLayout
 }
 
 // CachedRenderPass represents a cached render pass with usage tracking
@@ -142,7 +142,7 @@ func (cache *RenderPassCacheVK) createRenderPass(descriptor *RenderPassCacheDesc
 
 	// Add depth attachment if present
 	if descriptor.DepthAttachment != nil {
-		builder.AddDepthAttachment(descriptor.DepthAttachment.Format, 
+		builder.AddDepthAttachment(descriptor.DepthAttachment.Format,
 			descriptor.DepthAttachment.LoadOp, descriptor.DepthAttachment.StoreOp)
 	}
 

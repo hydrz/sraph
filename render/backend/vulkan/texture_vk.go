@@ -2,27 +2,26 @@ package vulkan
 
 import (
 	"fmt"
-	"unsafe"
 
 	"github.com/vulkan-go/vulkan"
 )
 
 // TextureVK represents a Vulkan texture implementation
 type TextureVK struct {
-	context         *ContextVK
-	image           vulkan.Image
-	imageView       vulkan.ImageView
-	deviceMemory    vulkan.DeviceMemory
-	format          vulkan.Format
-	extent          vulkan.Extent3D
-	mipLevels       uint32
-	arrayLayers     uint32
-	sampleCount     vulkan.SampleCountFlagBits
-	usage           vulkan.ImageUsageFlags
-	layout          vulkan.ImageLayout
-	aspectMask      vulkan.ImageAspectFlags
-	ownsImage       bool
-	ownsImageView   bool
+	context          *ContextVK
+	image            vulkan.Image
+	imageView        vulkan.ImageView
+	deviceMemory     vulkan.DeviceMemory
+	format           vulkan.Format
+	extent           vulkan.Extent3D
+	mipLevels        uint32
+	arrayLayers      uint32
+	sampleCount      vulkan.SampleCountFlagBits
+	usage            vulkan.ImageUsageFlags
+	layout           vulkan.ImageLayout
+	aspectMask       vulkan.ImageAspectFlags
+	ownsImage        bool
+	ownsImageView    bool
 	isSwapchainImage bool
 }
 
@@ -33,17 +32,17 @@ func NewTextureVK(context *ContextVK, descriptor *TextureDescriptor) (*TextureVK
 	}
 
 	texture := &TextureVK{
-		context:         context,
-		format:          descriptor.Format,
-		extent:          descriptor.Extent,
-		mipLevels:       descriptor.MipLevels,
-		arrayLayers:     descriptor.ArrayLayers,
-		sampleCount:     descriptor.SampleCount,
-		usage:           descriptor.Usage,
-		layout:          vulkan.ImageLayoutUndefined,
-		aspectMask:      getImageAspectFlags(descriptor.Format),
-		ownsImage:       true,
-		ownsImageView:   true,
+		context:          context,
+		format:           descriptor.Format,
+		extent:           descriptor.Extent,
+		mipLevels:        descriptor.MipLevels,
+		arrayLayers:      descriptor.ArrayLayers,
+		sampleCount:      descriptor.SampleCount,
+		usage:            descriptor.Usage,
+		layout:           vulkan.ImageLayoutUndefined,
+		aspectMask:       getImageAspectFlags(descriptor.Format),
+		ownsImage:        true,
+		ownsImageView:    true,
 		isSwapchainImage: false,
 	}
 
@@ -70,18 +69,18 @@ func NewTextureVK(context *ContextVK, descriptor *TextureDescriptor) (*TextureVK
 // NewTextureVKFromImage creates a texture from an existing Vulkan image
 func NewTextureVKFromImage(context *ContextVK, image vulkan.Image, format vulkan.Format, extent vulkan.Extent3D) (*TextureVK, error) {
 	texture := &TextureVK{
-		context:         context,
-		image:           image,
-		format:          format,
-		extent:          extent,
-		mipLevels:       1,
-		arrayLayers:     1,
-		sampleCount:     vulkan.SampleCount1Bit,
-		usage:           vulkan.ImageUsageColorAttachmentBit,
-		layout:          vulkan.ImageLayoutUndefined,
-		aspectMask:      getImageAspectFlags(format),
-		ownsImage:       false,
-		ownsImageView:   true,
+		context:          context,
+		image:            image,
+		format:           format,
+		extent:           extent,
+		mipLevels:        1,
+		arrayLayers:      1,
+		sampleCount:      vulkan.SampleCount1Bit,
+		usage:            vulkan.ImageUsageColorAttachmentBit,
+		layout:           vulkan.ImageLayoutUndefined,
+		aspectMask:       getImageAspectFlags(format),
+		ownsImage:        false,
+		ownsImageView:    true,
 		isSwapchainImage: true,
 	}
 

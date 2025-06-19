@@ -8,24 +8,24 @@ import (
 
 // RenderPassBuilderVK builds Vulkan render passes
 type RenderPassBuilderVK struct {
-	context     *ContextVK
-	attachments []AttachmentDescriptor
-	extent      vulkan.Extent2D
+	context       *ContextVK
+	attachments   []AttachmentDescriptor
+	extent        vulkan.Extent2D
 	multisampling bool
-	samples     vulkan.SampleCountFlagBits
+	samples       vulkan.SampleCountFlagBits
 }
 
 // AttachmentDescriptor describes a render pass attachment
 type AttachmentDescriptor struct {
-	Format      vulkan.Format
-	LoadOp      vulkan.AttachmentLoadOp
-	StoreOp     vulkan.AttachmentStoreOp
+	Format         vulkan.Format
+	LoadOp         vulkan.AttachmentLoadOp
+	StoreOp        vulkan.AttachmentStoreOp
 	StencilLoadOp  vulkan.AttachmentLoadOp
 	StencilStoreOp vulkan.AttachmentStoreOp
 	InitialLayout  vulkan.ImageLayout
 	FinalLayout    vulkan.ImageLayout
-	Type        AttachmentType
-	ClearValue  vulkan.ClearValue
+	Type           AttachmentType
+	ClearValue     vulkan.ClearValue
 }
 
 // NewRenderPassBuilderVK creates a new render pass builder
@@ -56,14 +56,14 @@ func (builder *RenderPassBuilderVK) SetMultisampling(samples vulkan.SampleCountF
 // AddColorAttachment adds a color attachment to the render pass
 func (builder *RenderPassBuilderVK) AddColorAttachment(format vulkan.Format, loadOp vulkan.AttachmentLoadOp, storeOp vulkan.AttachmentStoreOp) *RenderPassBuilderVK {
 	attachment := AttachmentDescriptor{
-		Format:        format,
-		LoadOp:        loadOp,
-		StoreOp:       storeOp,
-		StencilLoadOp: vulkan.AttachmentLoadOpDontCare,
+		Format:         format,
+		LoadOp:         loadOp,
+		StoreOp:        storeOp,
+		StencilLoadOp:  vulkan.AttachmentLoadOpDontCare,
 		StencilStoreOp: vulkan.AttachmentStoreOpDontCare,
-		InitialLayout: vulkan.ImageLayoutUndefined,
-		FinalLayout:   vulkan.ImageLayoutPresentSrcKhr,
-		Type:          AttachmentTypeColor,
+		InitialLayout:  vulkan.ImageLayoutUndefined,
+		FinalLayout:    vulkan.ImageLayoutPresentSrcKhr,
+		Type:           AttachmentTypeColor,
 	}
 
 	// Set clear color to black
@@ -76,14 +76,14 @@ func (builder *RenderPassBuilderVK) AddColorAttachment(format vulkan.Format, loa
 // AddColorAttachmentWithClear adds a color attachment with custom clear color
 func (builder *RenderPassBuilderVK) AddColorAttachmentWithClear(format vulkan.Format, loadOp vulkan.AttachmentLoadOp, storeOp vulkan.AttachmentStoreOp, clearColor [4]float32) *RenderPassBuilderVK {
 	attachment := AttachmentDescriptor{
-		Format:        format,
-		LoadOp:        loadOp,
-		StoreOp:       storeOp,
-		StencilLoadOp: vulkan.AttachmentLoadOpDontCare,
+		Format:         format,
+		LoadOp:         loadOp,
+		StoreOp:        storeOp,
+		StencilLoadOp:  vulkan.AttachmentLoadOpDontCare,
 		StencilStoreOp: vulkan.AttachmentStoreOpDontCare,
-		InitialLayout: vulkan.ImageLayoutUndefined,
-		FinalLayout:   vulkan.ImageLayoutPresentSrcKhr,
-		Type:          AttachmentTypeColor,
+		InitialLayout:  vulkan.ImageLayoutUndefined,
+		FinalLayout:    vulkan.ImageLayoutPresentSrcKhr,
+		Type:           AttachmentTypeColor,
 	}
 
 	attachment.ClearValue.SetColor(clearColor[:])
@@ -95,14 +95,14 @@ func (builder *RenderPassBuilderVK) AddColorAttachmentWithClear(format vulkan.Fo
 // AddDepthAttachment adds a depth attachment to the render pass
 func (builder *RenderPassBuilderVK) AddDepthAttachment(format vulkan.Format, loadOp vulkan.AttachmentLoadOp, storeOp vulkan.AttachmentStoreOp) *RenderPassBuilderVK {
 	attachment := AttachmentDescriptor{
-		Format:        format,
-		LoadOp:        loadOp,
-		StoreOp:       storeOp,
-		StencilLoadOp: vulkan.AttachmentLoadOpDontCare,
+		Format:         format,
+		LoadOp:         loadOp,
+		StoreOp:        storeOp,
+		StencilLoadOp:  vulkan.AttachmentLoadOpDontCare,
 		StencilStoreOp: vulkan.AttachmentStoreOpDontCare,
-		InitialLayout: vulkan.ImageLayoutUndefined,
-		FinalLayout:   vulkan.ImageLayoutDepthStencilAttachmentOptimal,
-		Type:          AttachmentTypeDepth,
+		InitialLayout:  vulkan.ImageLayoutUndefined,
+		FinalLayout:    vulkan.ImageLayoutDepthStencilAttachmentOptimal,
+		Type:           AttachmentTypeDepth,
 	}
 
 	// Set clear depth to 1.0
@@ -115,14 +115,14 @@ func (builder *RenderPassBuilderVK) AddDepthAttachment(format vulkan.Format, loa
 // AddDepthStencilAttachment adds a depth-stencil attachment to the render pass
 func (builder *RenderPassBuilderVK) AddDepthStencilAttachment(format vulkan.Format, loadOp vulkan.AttachmentLoadOp, storeOp vulkan.AttachmentStoreOp, stencilLoadOp vulkan.AttachmentLoadOp, stencilStoreOp vulkan.AttachmentStoreOp) *RenderPassBuilderVK {
 	attachment := AttachmentDescriptor{
-		Format:        format,
-		LoadOp:        loadOp,
-		StoreOp:       storeOp,
-		StencilLoadOp: stencilLoadOp,
+		Format:         format,
+		LoadOp:         loadOp,
+		StoreOp:        storeOp,
+		StencilLoadOp:  stencilLoadOp,
 		StencilStoreOp: stencilStoreOp,
-		InitialLayout: vulkan.ImageLayoutUndefined,
-		FinalLayout:   vulkan.ImageLayoutDepthStencilAttachmentOptimal,
-		Type:          AttachmentTypeDepthStencil,
+		InitialLayout:  vulkan.ImageLayoutUndefined,
+		FinalLayout:    vulkan.ImageLayoutDepthStencilAttachmentOptimal,
+		Type:           AttachmentTypeDepthStencil,
 	}
 
 	// Set clear depth to 1.0 and stencil to 0

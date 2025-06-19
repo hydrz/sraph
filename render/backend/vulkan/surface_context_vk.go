@@ -8,28 +8,28 @@ import (
 
 // SurfaceContextVK manages Vulkan surface and swapchain
 type SurfaceContextVK struct {
-	context          *ContextVK
-	surface          vulkan.Surface
-	swapchain        vulkan.Swapchain
-	swapchainImages  []vulkan.Image
+	context             *ContextVK
+	surface             vulkan.Surface
+	swapchain           vulkan.Swapchain
+	swapchainImages     []vulkan.Image
 	swapchainImageViews []vulkan.ImageView
-	surfaceFormat    vulkan.SurfaceFormat
-	presentMode      vulkan.PresentMode
-	extent           vulkan.Extent2D
-	imageCount       uint32
-	currentImageIndex uint32
-	renderPass       *RenderPassVK
-	framebuffers     []vulkan.Framebuffer
+	surfaceFormat       vulkan.SurfaceFormat
+	presentMode         vulkan.PresentMode
+	extent              vulkan.Extent2D
+	imageCount          uint32
+	currentImageIndex   uint32
+	renderPass          *RenderPassVK
+	framebuffers        []vulkan.Framebuffer
 }
 
 // SurfaceConfig contains surface configuration parameters
 type SurfaceConfig struct {
-	PreferredFormat vulkan.Format
-	PreferredColorSpace vulkan.ColorSpace
+	PreferredFormat      vulkan.Format
+	PreferredColorSpace  vulkan.ColorSpace
 	PreferredPresentMode vulkan.PresentMode
-	Width           uint32
-	Height          uint32
-	VSync           bool
+	Width                uint32
+	Height               uint32
+	VSync                bool
 }
 
 // NewSurfaceContextVK creates a new Vulkan surface context
@@ -76,7 +76,7 @@ func NewSurfaceContextVK(context *ContextVK, surface vulkan.Surface, config *Sur
 func (sc *SurfaceContextVK) querySurfaceSupport() error {
 	// Check surface support (this is a simplified version)
 	var supported vulkan.Bool32
-	if result := vulkan.GetPhysicalDeviceSurfaceSupport(sc.context.physicalDevice, 
+	if result := vulkan.GetPhysicalDeviceSurfaceSupport(sc.context.physicalDevice,
 		sc.context.graphicsQueueFamilyIndex, sc.surface, &supported); result != vulkan.Success {
 		return fmt.Errorf("failed to check surface support: %s", result)
 	}
@@ -93,7 +93,7 @@ func (sc *SurfaceContextVK) chooseSurfaceFormat(config *SurfaceConfig) error {
 	// Query surface formats
 	var formatCount uint32
 	vulkan.GetPhysicalDeviceSurfaceFormats(sc.context.physicalDevice, sc.surface, &formatCount, nil)
-	
+
 	if formatCount == 0 {
 		return fmt.Errorf("no surface formats available")
 	}
@@ -119,7 +119,7 @@ func (sc *SurfaceContextVK) choosePresentMode(config *SurfaceConfig) error {
 	// Query present modes
 	var presentModeCount uint32
 	vulkan.GetPhysicalDeviceSurfacePresentModes(sc.context.physicalDevice, sc.surface, &presentModeCount, nil)
-	
+
 	if presentModeCount == 0 {
 		return fmt.Errorf("no present modes available")
 	}
@@ -247,7 +247,7 @@ func (sc *SurfaceContextVK) createImageViews() error {
 func (sc *SurfaceContextVK) AcquireNextImage(semaphore vulkan.Semaphore, fence vulkan.Fence) (uint32, error) {
 	var imageIndex uint32
 	result := vulkan.AcquireNextImage(sc.context.device, sc.swapchain, ^uint64(0), semaphore, fence, &imageIndex)
-	
+
 	if result == vulkan.ErrorOutOfDate || result == vulkan.Suboptimal {
 		return imageIndex, fmt.Errorf("swapchain out of date")
 	} else if result != vulkan.Success {

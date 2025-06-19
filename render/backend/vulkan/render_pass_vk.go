@@ -8,13 +8,13 @@ import (
 
 // RenderPassVK represents a Vulkan render pass implementation
 type RenderPassVK struct {
-	context      *ContextVK
-	renderPass   vulkan.RenderPass
-	framebuffer  vulkan.Framebuffer
-	attachments  []AttachmentVK
-	extent       vulkan.Extent2D
-	clearValues  []vulkan.ClearValue
-	isActive     bool
+	context       *ContextVK
+	renderPass    vulkan.RenderPass
+	framebuffer   vulkan.Framebuffer
+	attachments   []AttachmentVK
+	extent        vulkan.Extent2D
+	clearValues   []vulkan.ClearValue
+	isActive      bool
 	commandBuffer vulkan.CommandBuffer
 }
 
@@ -109,9 +109,9 @@ func (rp *RenderPassVK) createRenderPass() error {
 
 	// Create subpass description
 	subpass := vulkan.SubpassDescription{
-		PipelineBindPoint:    vulkan.PipelineBindPointGraphics,
-		ColorAttachmentCount: uint32(len(colorAttachmentRefs)),
-		PColorAttachments:    colorAttachmentRefs,
+		PipelineBindPoint:       vulkan.PipelineBindPointGraphics,
+		ColorAttachmentCount:    uint32(len(colorAttachmentRefs)),
+		PColorAttachments:       colorAttachmentRefs,
 		PDepthStencilAttachment: depthAttachmentRef,
 	}
 

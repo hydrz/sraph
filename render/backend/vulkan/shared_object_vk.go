@@ -8,21 +8,12 @@ import (
 
 // SharedObjectVK manages shared Vulkan objects and resources
 type SharedObjectVK struct {
-	context     *ContextVK
-	buffers     map[string]*BufferVK
-	textures    map[string]*TextureVK
+	context        *ContextVK
+	buffers        map[string]*BufferVK
+	textures       map[string]*TextureVK
 	descriptorSets map[string]vulkan.DescriptorSet
-	samplers    map[string]*SamplerVK
-	refCounts   map[string]int
-}
-
-// BufferVK represents a Vulkan buffer
-type BufferVK struct {
-	buffer       vulkan.Buffer
-	deviceMemory vulkan.DeviceMemory
-	size         vulkan.DeviceSize
-	usage        vulkan.BufferUsageFlags
-	properties   vulkan.MemoryPropertyFlags
+	samplers       map[string]*SamplerVK
+	refCounts      map[string]int
 }
 
 // NewSharedObjectVK creates a new shared object manager
@@ -230,66 +221,17 @@ func (so *SharedObjectVK) Destroy() {
 	so.Clear()
 }
 
-// BufferVK methods
-
-// GetBuffer returns the Vulkan buffer handle
-func (b *BufferVK) GetBuffer() vulkan.Buffer {
-	return b.buffer
-}
-
-// GetDeviceMemory returns the device memory handle
-func (b *BufferVK) GetDeviceMemory() vulkan.DeviceMemory {
-	return b.deviceMemory
-}
-
-// GetSize returns the buffer size
-func (b *BufferVK) GetSize() vulkan.DeviceSize {
-	return b.size
-}
-
-// GetUsage returns the buffer usage flags
-func (b *BufferVK) GetUsage() vulkan.BufferUsageFlags {
-	return b.usage
-}
-
-// Map maps the buffer memory for CPU access
-func (b *BufferVK) Map(context *ContextVK, offset vulkan.DeviceSize, size vulkan.DeviceSize) (unsafe.Pointer, error) {
-	var data unsafe.Pointer
-	if result := vulkan.MapMemory(context.device, b.deviceMemory, offset, size, 0, &data); result != vulkan.Success {
-		return nil, fmt.Errorf("failed to map memory: %s", result)
-	}
-	return data, nil
-}
-
-// Unmap unmaps the buffer memory
-func (b *BufferVK) Unmap(context *ContextVK) {
-	vulkan.UnmapMemory(context.device, b.deviceMemory)
-}
-
-// Destroy destroys the buffer and frees memory
-func (b *BufferVK) Destroy(context *ContextVK) {
-	if b.buffer != vulkan.NullBuffer {
-		vulkan.DestroyBuffer(context.device, b.buffer, nil)
-		b.buffer = vulkan.NullBuffer
-	}
-
-	if b.deviceMemory != vulkan.NullDeviceMemory {
-		vulkan.FreeMemory(context.device, b.deviceMemory, nil)
-		b.deviceMemory = vulkan.NullDeviceMemory
-	}
-}
-
 // SamplerDescriptor describes sampler creation parameters
 type SamplerDescriptor struct {
-	MagFilter    vulkan.Filter
-	MinFilter    vulkan.Filter
-	AddressModeU vulkan.SamplerAddressMode
-	AddressModeV vulkan.SamplerAddressMode
-	AddressModeW vulkan.SamplerAddressMode
-	Anisotropy   bool
+	MagFilter     vulkan.Filter
+	MinFilter     vulkan.Filter
+	AddressModeU  vulkan.SamplerAddressMode
+	AddressModeV  vulkan.SamplerAddressMode
+	AddressModeW  vulkan.SamplerAddressMode
+	Anisotropy    bool
 	MaxAnisotropy float32
 	CompareEnable bool
-	CompareOp    vulkan.CompareOp
-	MinLod       float32
-	MaxLod       float32
+	CompareOp     vulkan.CompareOp
+	MinLod        float32
+	MaxLod        float32
 }
