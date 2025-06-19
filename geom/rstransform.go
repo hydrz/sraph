@@ -24,6 +24,34 @@ func NewRSTransform[T Scalar](origin Point[T], scale T, radians Radians) RSTrans
 	}
 }
 
+// TX returns the translation along the X axis.
+func (r RSTransform[T]) TX() T {
+	return r.TranslateX
+}
+
+// TY returns the translation along the Y axis.
+func (r RSTransform[T]) TY() T {
+	return r.TranslateY
+}
+
+// SX returns the scale factor along the X axis.
+func (r RSTransform[T]) SX() T {
+	var zero T
+	if ScalarEq(r.ScaledCos, zero) {
+		return zero
+	}
+	return r.ScaledCos / Abs(r.ScaledCos)
+}
+
+// SY returns the scale factor along the Y axis.
+func (r RSTransform[T]) SY() T {
+	var zero T
+	if ScalarEq(r.ScaledCos, zero) {
+		return zero
+	}
+	return r.ScaledSin / Abs(r.ScaledCos)
+}
+
 // IsAxisAligned returns true if the resulting transformed quad will be axis-aligned.
 func (r RSTransform[T]) IsAxisAligned() bool {
 	var zero T

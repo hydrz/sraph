@@ -111,8 +111,5 @@ local/
 dev-data/
 
 output/
-impeller
 shiny
 react
-tessellator
-display_list
