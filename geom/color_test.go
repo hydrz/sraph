@@ -472,7 +472,7 @@ func TestPredefinedColors(t *testing.T) {
 		{"ColorRed", ColorRed()},
 		{"ColorGreen", ColorGreen()},
 		{"ColorBlue", ColorBlue()},
-		{"ColorTransparent", ColorWhiteTransparent()},
+		{"ColorWhiteTransparent", ColorWhiteTransparent()},
 	}
 
 	for _, tt := range tests {
@@ -492,9 +492,9 @@ func TestPredefinedColors(t *testing.T) {
 				if tt.color.R != 0.0 || tt.color.G != 0.0 || tt.color.B != 0.0 || tt.color.A != 1.0 {
 					t.Errorf("ColorBlack should be (0,0,0,1), got %v", tt.color)
 				}
-			case "ColorTransparent":
+			case "ColorWhiteTransparent":
 				if !tt.color.IsTransparent() {
-					t.Errorf("ColorTransparent should be transparent, got %v", tt.color)
+					t.Errorf("ColorWhiteTransparent should be transparent, got %v", tt.color)
 				}
 			}
 		})

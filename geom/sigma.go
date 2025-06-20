@@ -30,5 +30,5 @@ func NewSigma(radius Radians) Sigma {
 
 // String returns a string representation of the Sigma value.
 func (s Sigma) String() string {
-	return strconv.FormatFloat(s.sigma, 'f', -1, 64) + "σ"
+	return strconv.FormatFloat(ToFloat64(s.sigma), 'f', -1, 64) + "σ"
 }

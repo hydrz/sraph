@@ -32,7 +32,7 @@ type Floater interface {
 
 // Scalar is the primary numeric type used for geometric calculations.
 // It is an alias for float64 to provide clarity and consistency across the package.
-type Scalar = float64
+type Scalar = float32
 
 // Radians represents an angle measured in radians.
 // This type provides type safety and clarity when working with angular measurements.

@@ -3,7 +3,7 @@ package geom
 import "testing"
 
 func TestRoundingRadii_NewAndProperties(t *testing.T) {
-	r := NewRoundingRadii(5.0)
+	r := NewRoundingRadii[Scalar](5.0)
 	if !r.TopLeft.Equal(Size[Scalar]{5, 5}) ||
 		!r.TopRight.Equal(Size[Scalar]{5, 5}) ||
 		!r.BottomLeft.Equal(Size[Scalar]{5, 5}) ||
@@ -22,7 +22,7 @@ func TestRoundingRadii_NewAndProperties(t *testing.T) {
 }
 
 func TestRoundingRadiiLTRB(t *testing.T) {
-	r := NewRoundingRadiiLTRB(1.0, 2.0, 3.0, 4.0)
+	r := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
 	if !r.TopLeft.Equal(Size[Scalar]{1, 2}) ||
 		!r.TopRight.Equal(Size[Scalar]{3, 2}) ||
 		!r.BottomLeft.Equal(Size[Scalar]{1, 4}) ||
@@ -46,7 +46,7 @@ func TestRoundingRadii_IsEmpty(t *testing.T) {
 }
 
 func TestRoundingRadii_Scale(t *testing.T) {
-	r := NewRoundingRadiiLTRB(1.0, 2.0, 3.0, 4.0)
+	r := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
 	s := r.Scale(2.0)
 	if !s.TopLeft.Equal(Size[Scalar]{2, 4}) ||
 		!s.TopRight.Equal(Size[Scalar]{6, 4}) ||
