@@ -25,10 +25,10 @@ import (
 //
 //	https://learn.microsoft.com/zh-cn/windows/win32/learnwin32/appendix--matrix-transforms
 //	https://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
-type Matrix[T Number] [16]T
+type Matrix[T TScalar] [16]T
 
 // NewMatrix creates a new identity matrix.
-func NewMatrix[T Number]() Matrix[T] {
+func NewMatrix[T TScalar]() Matrix[T] {
 	return Matrix[T]{
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -801,7 +801,7 @@ const (
 	MatrixFlagsRotation
 )
 
-type MatrixDecomp[T Number] struct {
+type MatrixDecomp[T TScalar] struct {
 	Translation Vector3[T]
 	Scale       Vector3[T]
 	Shear       Shear[T]

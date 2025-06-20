@@ -3,7 +3,7 @@ package geom
 var _ PathReceiver[Scalar] = (*testPathReceiver[Scalar])(nil)
 
 // testPathReceiver is a generic PathReceiver for test assertions.
-type testPathReceiver[T Number] struct {
+type testPathReceiver[T TScalar] struct {
 	ops      []string
 	moves    []Point[T]
 	lines    []Point[T]

@@ -20,7 +20,7 @@ const (
 
 // StrokeStyle describes the parameters for stroking a path or geometric object.
 // T is a numeric type that represents the stroke width and miter limit.
-type StrokeStyle[T Number] struct {
+type StrokeStyle[T TScalar] struct {
 	Width      T          // Stroke width.
 	Cap        StrokeCap  // Style of the stroke's end caps.
 	Join       StrokeJoin // Style of the join between segments.

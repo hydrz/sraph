@@ -1,13 +1,13 @@
 package geom
 
 // RoundRect represents a rectangle with rounded corners.
-type RoundRect[T Number] struct {
+type RoundRect[T TScalar] struct {
 	Rect[T]
 	Radii RoundingRadii[T]
 }
 
 // NewRoundRect creates a new RoundRect with the given rectangle and corner radii.
-func NewRoundRect[T Number](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
+func NewRoundRect[T TScalar](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
 	return RoundRect[T]{
 		Rect:  rect,
 		Radii: radii,
@@ -15,7 +15,7 @@ func NewRoundRect[T Number](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
 }
 
 // NewRoundRectOval creates a new RoundRect that is an oval, with radii Eq to half the width and height of the rectangle.
-func NewRoundRectOval[T Number](rect Rect[T]) RoundRect[T] {
+func NewRoundRectOval[T TScalar](rect Rect[T]) RoundRect[T] {
 	size := rect.Size()
 	halfSize := Size[T]{Width: size.Width / T(2), Height: size.Height / T(2)}
 	return NewRoundRect(
@@ -25,21 +25,21 @@ func NewRoundRectOval[T Number](rect Rect[T]) RoundRect[T] {
 }
 
 // NewRoundRectRadius creates a new RoundRect with the given rectangle and uniform corner radius.
-func NewRoundRectRadius[T Number](rect Rect[T], radius T) RoundRect[T] {
+func NewRoundRectRadius[T TScalar](rect Rect[T], radius T) RoundRect[T] {
 	return NewRoundRect(
 		rect,
 		NewRoundingRadii(radius),
 	)
 }
 
-func NewRoundRectXY[T Number](rect Rect[T], xRadius, yRadius T) RoundRect[T] {
+func NewRoundRectXY[T TScalar](rect Rect[T], xRadius, yRadius T) RoundRect[T] {
 	return NewRoundRect(
 		rect,
 		NewRoundingRadiiFromSizes(Size[T]{Width: xRadius, Height: yRadius}),
 	)
 }
 
-func NewRoundRectLTRB[T Number](rect Rect[T], left, top, right, bottom T) RoundRect[T] {
+func NewRoundRectLTRB[T TScalar](rect Rect[T], left, top, right, bottom T) RoundRect[T] {
 	return NewRoundRect(
 		rect,
 		NewRoundingRadiiLTRB(left, top, right, bottom),
@@ -169,11 +169,11 @@ func (r *RoundRect[T]) cornerContains(p Point[T], corner Point[T], direction Poi
 }
 
 // RoundRectPathSource implements PathSource for a single RoundRect.
-type RoundRectPathSource[T Number] struct {
+type RoundRectPathSource[T TScalar] struct {
 	roundRect RoundRect[T]
 }
 
-func NewRoundRectPathSource[T Number](rr RoundRect[T]) PathSource[T] {
+func NewRoundRectPathSource[T TScalar](rr RoundRect[T]) PathSource[T] {
 	return &RoundRectPathSource[T]{roundRect: rr}
 }
 
@@ -198,12 +198,12 @@ func (r *RoundRectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 }
 
 // DiffRoundRectPathSource implements PathSource for the difference between two RoundRects.
-type DiffRoundRectPathSource[T Number] struct {
+type DiffRoundRectPathSource[T TScalar] struct {
 	outter RoundRect[T]
 	inner  RoundRect[T]
 }
 
-func NewDiffRoundRectPathSource[T Number](outter, inner RoundRect[T]) PathSource[T] {
+func NewDiffRoundRectPathSource[T TScalar](outter, inner RoundRect[T]) PathSource[T] {
 	return &DiffRoundRectPathSource[T]{
 		outter: outter,
 		inner:  inner,

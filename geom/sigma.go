@@ -7,7 +7,7 @@ const kernelRadiusPerSigma = 1.7320508075688772935274463415058723669428052538103
 // Sigma represents the standard deviation ("sigma") for Gaussian distributions in filter operations.
 // It is measured in terms of the local space pixel grid of the filter input.
 // Sigma determines how wide the Gaussian distribution stretches.
-type Sigma[T Number] struct {
+type Sigma[T TScalar] struct {
 	sigma T
 }
 
@@ -23,7 +23,7 @@ func (s Sigma[T]) ToRadians() Radians {
 
 // NewSigma creates a Sigma value from a given kernel radius in radians.
 // If the radius is negative, returns 0.
-func NewSigma[T Number](radius Radians) Sigma[T] {
+func NewSigma[T TScalar](radius Radians) Sigma[T] {
 	if ToFloat64(radius) < 0.0 {
 		return Sigma[T]{sigma: T(0.0)}
 	}

@@ -1,6 +1,6 @@
 package geom
 
-type Shear[T Number] struct {
+type Shear[T TScalar] struct {
 	XY T
 	XZ T
 	YZ T

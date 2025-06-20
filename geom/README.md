@@ -67,11 +67,11 @@ func main() {
 ### Scalar Types and Precision
 
 ```go
-// DifferenT Number types for different use cases
+// Different Number types for different use cases
 type Scalar float32  // 32-bit floating point
-type F64 float64  // 64-bit floating point
-type I32 int32    // 32-bit signed integer
-type I26_6 int32  // 26.6 fixed-point for precise typography
+type F64 float64     // 64-bit floating point
+type I32 int32       // 32-bit signed integer
+type I26_6 int32     // 26.6 fixed-point for precise typography
 
 // Configurable epsilon for floating-point comparisons
 const (
@@ -112,7 +112,7 @@ vec4 := geom.Vector4[geom.Scalar]{X: 1, Y: 2, Z: 3, W: 1}
 // Create rectangles in different ways
 rect1 := geom.NewRect[geom.Scalar](0, 0, 100, 200)           // LTRB
 rect2 := geom.NewRectXYWH[geom.Scalar](10, 20, 80, 60)       // XYWH
-rect3 := geom.NewRectOriginSize(origin, size)              // Origin + Size
+rect3 := geom.NewRectOriginSize(origin, size)                // Origin + Size
 
 // Rectangle operations
 union := rect1.Union(rect2)
@@ -162,7 +162,7 @@ scale := decomp.Scale
 // Create colors in various formats
 color1 := geom.NewColorRGB8(255, 128, 64)                    // 8-bit RGB
 color2 := geom.NewColorHex(0xFF8040)                         // Hex
-color3 := geom.NewColor[geom.Scalar](1.0, 0.5, 0.25, 1.0)     // Float RGBA
+color3 := geom.NewColor[geom.Scalar](1.0, 0.5, 0.25, 1.0)    // Float RGBA
 color4 := geom.ColorRed()                                    // Predefined colors
 
 // Color operations
@@ -354,8 +354,8 @@ goPoint := point.ToGo()                  // image.Point
 goColor := color.ToRGBA()                // color.RGBA
 
 // From standard Go types
-rect := geom.NewRectFromGo[geom.Scalar](goRect)
-point := geom.NewPointFromGo[geom.Scalar](goPoint)
+rect := geom.NewRectGo[geom.Scalar](goRect)
+point := geom.NewPointGo[geom.Scalar](goPoint)
 color := geom.NewColorFromRGBA(goColor)
 ```
 

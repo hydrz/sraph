@@ -5,19 +5,19 @@ import (
 	"math"
 )
 
-type Quad[T Number] = [4]Point[T]
+type Quad[T TScalar] = [4]Point[T]
 
 // Point represents a 2D point with X and Y coordinates.
-type Point[T Number] struct {
+type Point[T TScalar] struct {
 	X T
 	Y T
 }
 
-func NewPoint[T Number](x, y T) Point[T] {
+func NewPoint[T TScalar](x, y T) Point[T] {
 	return Point[T]{X: x, Y: y}
 }
 
-func NewPointGo[T Number](p image.Point) Point[T] {
+func NewPointGo[T TScalar](p image.Point) Point[T] {
 	return Point[T]{X: T(p.X), Y: T(p.Y)}
 }
 

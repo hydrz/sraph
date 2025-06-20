@@ -3,20 +3,20 @@ package geom
 import "math"
 
 // Vector2 is an alias for a 2D vector, implemented as Point.
-type Vector2[T Number] = Point[T]
+type Vector2[T TScalar] = Point[T]
 
-func NewVector2[T Number](x, y T) Vector2[T] {
+func NewVector2[T TScalar](x, y T) Vector2[T] {
 	return Vector2[T]{X: x, Y: y}
 }
 
 // Vector3 represents a 3D vector with X, Y, Z components.
-type Vector3[T Number] struct {
+type Vector3[T TScalar] struct {
 	X T
 	Y T
 	Z T
 }
 
-func NewVector3[T Number](x, y, z T) Vector3[T] {
+func NewVector3[T TScalar](x, y, z T) Vector3[T] {
 	return Vector3[T]{X: x, Y: y, Z: z}
 }
 
@@ -167,14 +167,14 @@ func (v Vector3[T]) String() string {
 }
 
 // Vector4 represents a 4D vector with X, Y, Z, W components.
-type Vector4[T Number] struct {
+type Vector4[T TScalar] struct {
 	X T
 	Y T
 	Z T
 	W T
 }
 
-func NewVector4[T Number](x, y, z, w T) Vector4[T] {
+func NewVector4[T TScalar](x, y, z, w T) Vector4[T] {
 	return Vector4[T]{X: x, Y: y, Z: z, W: w}
 }
 

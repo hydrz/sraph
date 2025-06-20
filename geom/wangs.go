@@ -12,7 +12,7 @@ const precision = 4
 // stay within a distance of "1/precision" pixels from the true curve.
 //
 // The scaleFactor should be the max basis XY of the current transform.
-func CubicSubdivisions[T Number](scaleFactor T, p0, p1, p2, p3 Point[T]) T {
+func CubicSubdivisions[T TScalar](scaleFactor T, p0, p1, p2, p3 Point[T]) T {
 	k := ToFloat64(scaleFactor) * 0.75 * precision
 	a := p0.Sub(p1.Scale(2)).Add(p2).Abs()
 	b := p1.Sub(p2.Scale(2)).Add(p3).Abs()
@@ -24,13 +24,13 @@ func CubicSubdivisions[T Number](scaleFactor T, p0, p1, p2, p3 Point[T]) T {
 // stay within a distance of "1/precision" pixels from the true curve.
 //
 // The scaleFactor should be the max basis XY of the current transform.
-func QuadraticSubdivisions[T Number](scaleFactor T, p0, p1, p2 Point[T]) T {
+func QuadraticSubdivisions[T TScalar](scaleFactor T, p0, p1, p2 Point[T]) T {
 	k := ToFloat64(scaleFactor) * 0.25 * precision
 	return T(math.Sqrt(k * ToFloat64(p0.Sub(p1.Scale(2)).Add(p2).Length())))
 }
 
 // ConicSubdivisions returns Wang's formula specialized for a conic curve.
-func ConicSubdivisions[T Number](scaleFactor T, p0, p1, p2 Point[T], weight T) T {
+func ConicSubdivisions[T TScalar](scaleFactor T, p0, p1, p2 Point[T], weight T) T {
 	// Compute center of bounding box in projected space
 	c := (p0.Min(p1).Min(p2).Add(p0.Max(p1).Max(p2))).Scale(-2)
 	p0 = p0.Sub(c)

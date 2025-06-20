@@ -7,7 +7,7 @@ import (
 
 // Rect represents an axis-aligned rectangle defined by four edges or by origin and size.
 // All methods are immutable and return new values.
-type Rect[T Number] struct {
+type Rect[T TScalar] struct {
 	Left   T
 	Top    T
 	Right  T
@@ -15,13 +15,13 @@ type Rect[T Number] struct {
 }
 
 // NewRect returns a rectangle from left, top, right, bottom.
-func NewRect[T Number](left, top, right, bottom T) Rect[T] {
+func NewRect[T TScalar](left, top, right, bottom T) Rect[T] {
 	return Rect[T]{Left: left, Top: top, Right: right, Bottom: bottom}
 }
 
 // NewRectXYWH returns a rectangle from x, y, width, height.
 // Negative width/height will flip the rectangle accordingly.
-func NewRectXYWH[T Number](x, y, width, height T) Rect[T] {
+func NewRectXYWH[T TScalar](x, y, width, height T) Rect[T] {
 	if width < 0 {
 		x += width
 		width = -width
@@ -35,7 +35,7 @@ func NewRectXYWH[T Number](x, y, width, height T) Rect[T] {
 
 // NewRectOriginSize returns a rectangle from an origin point and a size.
 // Negative size will flip the rectangle accordingly.
-func NewRectOriginSize[T Number](origin Point[T], size Size[T]) Rect[T] {
+func NewRectOriginSize[T TScalar](origin Point[T], size Size[T]) Rect[T] {
 	x, y := origin.X, origin.Y
 	w, h := size.Width, size.Height
 	if w < 0 {
@@ -50,12 +50,12 @@ func NewRectOriginSize[T Number](origin Point[T], size Size[T]) Rect[T] {
 }
 
 // NewRectSize returns a rectangle at (0,0) with the given size.
-func NewRectSize[T Number](size Size[T]) Rect[T] {
+func NewRectSize[T TScalar](size Size[T]) Rect[T] {
 	return Rect[T]{Left: 0, Top: 0, Right: size.Width, Bottom: size.Height}
 }
 
 // NewRectGo converts [image.Rectangle] to Rect.
-func NewRectGo[T Number](r image.Rectangle) Rect[T] {
+func NewRectGo[T TScalar](r image.Rectangle) Rect[T] {
 	return Rect[T]{
 		Left:   T(r.Min.X),
 		Top:    T(r.Min.Y),
@@ -66,7 +66,7 @@ func NewRectGo[T Number](r image.Rectangle) Rect[T] {
 
 // BoundingRect returns the minimal bounding rectangle for a set of points.
 // If no points are given, returns an empty rectangle at (0,0).
-func BoundingRect[T Number](points ...Point[T]) Rect[T] {
+func BoundingRect[T TScalar](points ...Point[T]) Rect[T] {
 	if len(points) == 0 {
 		return NewRect[T](0, 0, 0, 0)
 	}

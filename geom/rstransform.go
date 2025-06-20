@@ -6,7 +6,7 @@ package geom
 //
 //	x' = ScaledCos * x - ScaledSin * y + TranslateX
 //	y' = ScaledSin * x + ScaledCos * y + TranslateY
-type RSTransform[T Number] struct {
+type RSTransform[T TScalar] struct {
 	ScaledCos  T // Cosine of the rotation angle, multiplied by the uniform scale factor.
 	ScaledSin  T // Sine of the rotation angle, multiplied by the uniform scale factor.
 	TranslateX T // Translation offset along the X axis.
@@ -14,7 +14,7 @@ type RSTransform[T Number] struct {
 }
 
 // NewRSTransform constructs an RSTransform from the given origin, scale, and radians.
-func NewRSTransform[T Number](origin Point[T], scale T, radians Radians) RSTransform[T] {
+func NewRSTransform[T TScalar](origin Point[T], scale T, radians Radians) RSTransform[T] {
 	cos, sin := NewMatrix[T]().CosSin(radians)
 	return RSTransform[T]{
 		ScaledCos:  cos * scale,

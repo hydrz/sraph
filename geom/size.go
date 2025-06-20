@@ -7,11 +7,11 @@ import (
 // Size represents a 2D size (width and height) in graphics programming.
 // It is commonly used for describing the dimensions of rectangles, images, viewports, and other graphical objects.
 // The struct provides a set of arithmetic and utility operations for manipulating and querying size values.
-type Size[T Number] struct {
+type Size[T TScalar] struct {
 	Width, Height T
 }
 
-func NewSize[T Number](width, height T) Size[T] {
+func NewSize[T TScalar](width, height T) Size[T] {
 	return Size[T]{
 		Width:  width,
 		Height: height,

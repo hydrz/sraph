@@ -17,8 +17,8 @@ const (
 	Sqrt2Over2 = math.Sqrt2 / 2
 )
 
-// Number is a generic interface for numeric types used in geometry calculations.
-type Number interface {
+// TScalar is a type constraint for scalar types.
+type TScalar interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
 		~float32 | ~float64
 }
@@ -33,7 +33,37 @@ type Floater interface {
 	Float64() float64
 }
 
-// Int26_6 is a signed 26.6 fixed-point number.
+// Scalar is an alias for float32, which is used for most geometric calculations.
+type Scalar = float32
+
+// Radians represents an angle in radians.
+// It is a generic struct for type safety and clarity in geometry calculations.
+type Radians Scalar
+
+// Degrees converts radians to degrees.
+func (r Radians) Degrees() Degrees {
+	return Degrees(r * 180 / math.Pi)
+}
+
+// String implements Scalar.
+func (r Radians) String() string {
+	return strconv.FormatFloat(float64(r), 'f', -1, 64) + " rad"
+}
+
+// Degrees represents an angle in degrees.
+type Degrees Scalar
+
+// Radians converts degrees to radians.
+func (d Degrees) Radians() Radians {
+	return Radians(d * math.Pi / 180)
+}
+
+// String implements [fmt.Stringer].
+func (d Degrees) String() string {
+	return strconv.FormatFloat(float64(d), 'f', -1, 64) + "°"
+}
+
+// Int26_6 is a signed 26.6 fixed-point [TScalar] type.
 // The integer part ranges from -33554432 to 33554431.
 // The format is: [integer(26)][fraction(6)].
 // For example, the number one-and-a-quarter is Int26_6(1<<6 + 1<<4).
@@ -60,7 +90,7 @@ func (x Int26_6) String() string {
 // NearlyEqual compares two number values of type T with a tolerance.
 //
 // 0.001 for Float32 and 0.0000001 for Float64.
-func NearlyEqual[T Number](a, b T) bool {
+func NearlyEqual[T TScalar](a, b T) bool {
 	if a == b {
 		return true
 	}
@@ -72,7 +102,7 @@ func NearlyEqual[T Number](a, b T) bool {
 }
 
 // Abs returns the absolute value of the number.
-func Abs[T Number](s T) T {
+func Abs[T TScalar](s T) T {
 	if s < 0 {
 		return -s
 	}
@@ -80,7 +110,7 @@ func Abs[T Number](s T) T {
 }
 
 // IsFinite checks if the number is finite.
-func IsFinite[T Number](s T) bool {
+func IsFinite[T TScalar](s T) bool {
 	return !(math.IsNaN(ToFloat64(s)) || math.IsInf(ToFloat64(s), 0))
 }
 
@@ -96,7 +126,7 @@ func Clamp[T cmp.Ordered](value, min, max T) T {
 }
 
 // ToFloat64 converts a number to float64.
-func ToFloat64[T Number](s T) float64 {
+func ToFloat64[T TScalar](s T) float64 {
 	if f, ok := any(s).(Floater); ok {
 		return f.Float64()
 	}
@@ -104,7 +134,7 @@ func ToFloat64[T Number](s T) float64 {
 }
 
 // ToString converts a number to its string representation.
-func ToString[T Number](s T) string {
+func ToString[T TScalar](s T) string {
 	if f, ok := any(s).(fmt.Stringer); ok {
 		return f.String()
 	}

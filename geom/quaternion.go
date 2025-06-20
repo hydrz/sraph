@@ -8,12 +8,12 @@ import (
 // Quaternion represents a quaternion for 3D rotations.
 // Quaternions are used in 3D graphics and robotics to represent rotations
 // and orientations because they avoid gimbal lock and provide smooth interpolation.
-type Quaternion[T Number] struct {
+type Quaternion[T TScalar] struct {
 	X, Y, Z, W T
 }
 
 // NewQuaternionFromAxisAngle creates a new quaternion from an axis and angle.
-func NewQuaternionFromAxisAngle[T Number](axis Vector3[T], angle Radians) Quaternion[T] {
+func NewQuaternionFromAxisAngle[T TScalar](axis Vector3[T], angle Radians) Quaternion[T] {
 	axis = axis.Normalize()
 	halfAngle := ToFloat64(angle) / 2
 	sinHalfAngle := T(math.Sin(halfAngle))
