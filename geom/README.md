@@ -411,5 +411,5 @@ func (r *Renderer) DrawPath(path geom.PathSource[geom.Scalar]) {
 
 ## Dependencies
 
-- Go 1.21+ (requires generics support)
+- Go 1.21+ (requires min, max support)
 - Standard library only
