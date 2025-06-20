@@ -383,7 +383,7 @@ type SuperellipseParam[T Number] struct {
 
 func NewSuperellipseParam[T Number](bounds Rect[T], radii RoundingRadii[T]) SuperellipseParam[T] {
 	if radii.IsUniform() && !radii.TopRight.IsZero() {
-		sq := newSuperellipseQuadrant(bounds.Center(), bounds.RightTop(), radii.TopRight, Size[T]{-1, 1})
+		sq := newSuperellipseQuadrant(bounds.Center(), bounds.TopRight(), radii.TopRight, Size[T]{-1, 1})
 		return SuperellipseParam[T]{
 			TopRight:  sq,
 			IsUniform: radii.IsUniform(),
@@ -404,23 +404,23 @@ func NewSuperellipseParam[T Number](bounds Rect[T], radii RoundingRadii[T]) Supe
 
 	return SuperellipseParam[T]{
 		TopRight: newSuperellipseQuadrant(
-			Point[T]{topSplit, rightSplit}, bounds.RightTop(), radii.TopRight, Size[T]{1, -1},
+			Point[T]{topSplit, rightSplit}, bounds.TopRight(), radii.TopRight, Size[T]{1, -1},
 		),
 		BottomRight: newSuperellipseQuadrant(
-			Point[T]{bottomSplit, rightSplit}, bounds.RightBottom(), radii.BottomRight, Size[T]{1, 1},
+			Point[T]{bottomSplit, rightSplit}, bounds.BottomRight(), radii.BottomRight, Size[T]{1, 1},
 		),
 		BottomLeft: newSuperellipseQuadrant(
-			Point[T]{bottomSplit, leftSplit}, bounds.LeftBottom(), radii.BottomLeft, Size[T]{-1, 1},
+			Point[T]{bottomSplit, leftSplit}, bounds.BottomLeft(), radii.BottomLeft, Size[T]{-1, 1},
 		),
 		TopLeft: newSuperellipseQuadrant(
-			Point[T]{topSplit, leftSplit}, bounds.LeftTop(), radii.TopLeft, Size[T]{-1, -1},
+			Point[T]{topSplit, leftSplit}, bounds.TopLeft(), radii.TopLeft, Size[T]{-1, -1},
 		),
 		IsUniform: false,
 	}
 }
 
 func NewSuperellipseParamRadius[T Number](bounds Rect[T], radius T) SuperellipseParam[T] {
-	sq := newSuperellipseQuadrant(bounds.Center(), bounds.RightTop(), Size[T]{radius, radius}, Size[T]{-1, 1})
+	sq := newSuperellipseQuadrant(bounds.Center(), bounds.TopRight(), Size[T]{radius, radius}, Size[T]{-1, 1})
 	return SuperellipseParam[T]{
 		TopRight:  sq,
 		IsUniform: true,

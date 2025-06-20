@@ -85,10 +85,10 @@ func (r *rectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 	}
 
 	// Draw rectangle as four lines
-	topLeft := r.rect.LeftTop()
-	topRight := r.rect.RightTop()
-	bottomRight := r.rect.RightBottom()
-	bottomLeft := r.rect.LeftBottom()
+	topLeft := r.rect.TopLeft()
+	topRight := r.rect.TopRight()
+	bottomRight := r.rect.BottomRight()
+	bottomLeft := r.rect.BottomLeft()
 
 	receiver.MoveTo(topLeft, true)
 	receiver.LineTo(topRight)

@@ -34,6 +34,8 @@ func NewColorMatrix() ColorMatrix {
 	}
 }
 
+var _ color.Color = Color{}
+
 // Color represents an RGBA color with components in the range [0, 1].
 // It implements Go's standard color.Color interface.
 type Color struct {
@@ -60,8 +62,8 @@ func NewColorRGB8(r, g, b uint8) Color {
 	return NewColorRGBA8(r, g, b, 255)
 }
 
-// NewColorFromGo creates a Color from any color.Color.
-func NewColorFromGo(c color.Color) Color {
+// NewColorGo creates a Color from any color.Color.
+func NewColorGo(c color.Color) Color {
 	r, g, b, a := c.RGBA()
 	return Color{
 		R: Scalar(r) / 65535.0,
@@ -152,7 +154,7 @@ func (c Color) ToIColor() uint32 {
 	return c.ToARGB()
 }
 
-// Eq compares two colors for Eqity within tolerance.
+// Eq compares two colors for equality.
 func (c Color) Eq(other Color) bool {
 	return NearlyEqual(c.R, other.R) &&
 		NearlyEqual(c.G, other.G) &&

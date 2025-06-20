@@ -3,14 +3,14 @@ package geom
 // RoundRect represents a rectangle with rounded corners.
 type RoundRect[T Number] struct {
 	Rect[T]
-	radii RoundingRadii[T]
+	Radii RoundingRadii[T]
 }
 
 // NewRoundRect creates a new RoundRect with the given rectangle and corner radii.
 func NewRoundRect[T Number](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
 	return RoundRect[T]{
 		Rect:  rect,
-		radii: radii,
+		Radii: radii,
 	}
 }
 
@@ -53,19 +53,19 @@ func (r *RoundRect[T]) Bounds() Rect[T] {
 
 // Radius returns the radii for all four corners.
 func (r *RoundRect[T]) Radius() RoundingRadii[T] {
-	return r.radii
+	return r.Radii
 }
 
 // IsRect returns true if all corner radii are zero and the rectangle is not empty.
 func (r *RoundRect[T]) IsRect() bool {
-	return !r.Rect.IsEmpty() && r.radii.IsEmpty()
+	return !r.Rect.IsEmpty() && r.Radii.IsEmpty()
 }
 
 // IsOval returns true if all corner radii are Eq and Eq to half the width/height.
 func (r *RoundRect[T]) IsOval() bool {
-	return !r.Bounds().IsEmpty() && r.radii.IsUniform() &&
-		NearlyEqual(r.radii.TopLeft.Width, r.Rect.Width()/T(2)) &&
-		NearlyEqual(r.radii.TopLeft.Height, r.Rect.Height()/T(2))
+	return !r.Bounds().IsEmpty() && r.Radii.IsUniform() &&
+		NearlyEqual(r.Radii.TopLeft.Width, r.Rect.Width()/T(2)) &&
+		NearlyEqual(r.Radii.TopLeft.Height, r.Rect.Height()/T(2))
 }
 
 // Dispatch sends the path data of the round rect to the given PathReceiver.
@@ -76,34 +76,34 @@ func (r *RoundRect[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
 	bottom := r.Rect.Bottom
 	top := r.Rect.Top
 
-	receiver.MoveTo(Point[T]{X: left + r.radii.TopLeft.Width, Y: top}, true)
-	receiver.LineTo(Point[T]{X: right - r.radii.TopRight.Width, Y: top})
+	receiver.MoveTo(Point[T]{X: left + r.Radii.TopLeft.Width, Y: top}, true)
+	receiver.LineTo(Point[T]{X: right - r.Radii.TopRight.Width, Y: top})
 
 	receiver.ConicTo(
 		Point[T]{X: right, Y: top},
-		Point[T]{X: right, Y: top + r.radii.TopRight.Height},
+		Point[T]{X: right, Y: top + r.Radii.TopRight.Height},
 		Sqrt2Over2,
 	)
 
-	receiver.LineTo(Point[T]{X: right, Y: bottom - r.radii.BottomRight.Height})
+	receiver.LineTo(Point[T]{X: right, Y: bottom - r.Radii.BottomRight.Height})
 
 	receiver.ConicTo(
 		Point[T]{X: right, Y: bottom},
-		Point[T]{X: right - r.radii.BottomRight.Width, Y: bottom},
+		Point[T]{X: right - r.Radii.BottomRight.Width, Y: bottom},
 		Sqrt2Over2,
 	)
 
-	receiver.LineTo(Point[T]{X: left + r.radii.BottomLeft.Width, Y: bottom})
+	receiver.LineTo(Point[T]{X: left + r.Radii.BottomLeft.Width, Y: bottom})
 	receiver.ConicTo(
 		Point[T]{X: left, Y: bottom},
-		Point[T]{X: left, Y: bottom - r.radii.BottomLeft.Height},
+		Point[T]{X: left, Y: bottom - r.Radii.BottomLeft.Height},
 		Sqrt2Over2,
 	)
 
-	receiver.LineTo(Point[T]{X: left, Y: top + r.radii.TopLeft.Height})
+	receiver.LineTo(Point[T]{X: left, Y: top + r.Radii.TopLeft.Height})
 	receiver.ConicTo(
 		Point[T]{X: left, Y: top},
-		Point[T]{X: left + r.radii.TopLeft.Width, Y: top},
+		Point[T]{X: left + r.Radii.TopLeft.Width, Y: top},
 		Sqrt2Over2,
 	)
 
@@ -116,7 +116,7 @@ func (r *RoundRect[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
 
 // IsFinite checks if both the rectangle and its radii are finite.
 func (r *RoundRect[T]) IsFinite() bool {
-	return r.Rect.IsFinite() && r.radii.IsFinite()
+	return r.Rect.IsFinite() && r.Radii.IsFinite()
 }
 
 // Contains checks if the point is contained within the rounded rectangle.
@@ -132,10 +132,10 @@ func (r *RoundRect[T]) Contains(p Point[T]) bool {
 		lowerRightDirection = Point[T]{X: 1, Y: 1}
 	)
 
-	if !r.cornerContains(p, r.Rect.LeftTop(), upperLeftDirection, r.radii.TopLeft) ||
-		!r.cornerContains(p, r.Rect.RightTop(), upperRightDirection, r.radii.TopRight) ||
-		!r.cornerContains(p, r.Rect.LeftBottom(), lowerLeftDirection, r.radii.BottomLeft) ||
-		!r.cornerContains(p, r.Rect.RightBottom(), lowerRightDirection, r.radii.BottomRight) {
+	if !r.cornerContains(p, r.Rect.TopLeft(), upperLeftDirection, r.Radii.TopLeft) ||
+		!r.cornerContains(p, r.Rect.TopRight(), upperRightDirection, r.Radii.TopRight) ||
+		!r.cornerContains(p, r.Rect.BottomLeft(), lowerLeftDirection, r.Radii.BottomLeft) ||
+		!r.cornerContains(p, r.Rect.BottomRight(), lowerRightDirection, r.Radii.BottomRight) {
 		return false
 	}
 

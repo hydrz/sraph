@@ -13,11 +13,11 @@ type Point[T Number] struct {
 	Y T
 }
 
-func Pt[T Number](x, y T) Point[T] {
+func NewPoint[T Number](x, y T) Point[T] {
 	return Point[T]{X: x, Y: y}
 }
 
-func NewPointFromGo[T Number](p image.Point) Point[T] {
+func NewPointGo[T Number](p image.Point) Point[T] {
 	return Point[T]{X: T(p.X), Y: T(p.Y)}
 }
 

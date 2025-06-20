@@ -11,6 +11,13 @@ type Size[T Number] struct {
 	Width, Height T
 }
 
+func NewSize[T Number](width, height T) Size[T] {
+	return Size[T]{
+		Width:  width,
+		Height: height,
+	}
+}
+
 // Add returns the element-wise sum of this size and another.
 // Useful for combining the dimensions of two graphical objects.
 func (s Size[T]) Add(other Size[T]) Size[T] {

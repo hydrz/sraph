@@ -5,11 +5,19 @@ import "math"
 // Vector2 is an alias for a 2D vector, implemented as Point.
 type Vector2[T Number] = Point[T]
 
+func NewVector2[T Number](x, y T) Vector2[T] {
+	return Vector2[T]{X: x, Y: y}
+}
+
 // Vector3 represents a 3D vector with X, Y, Z components.
 type Vector3[T Number] struct {
 	X T
 	Y T
 	Z T
+}
+
+func NewVector3[T Number](x, y, z T) Vector3[T] {
+	return Vector3[T]{X: x, Y: y, Z: z}
 }
 
 // Add adds another vector to this vector.
@@ -164,6 +172,10 @@ type Vector4[T Number] struct {
 	Y T
 	Z T
 	W T
+}
+
+func NewVector4[T Number](x, y, z, w T) Vector4[T] {
+	return Vector4[T]{X: x, Y: y, Z: z, W: w}
 }
 
 // XY returns the first two components as a Vector2.

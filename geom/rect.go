@@ -54,9 +54,8 @@ func NewRectSize[T Number](size Size[T]) Rect[T] {
 	return Rect[T]{Left: 0, Top: 0, Right: size.Width, Bottom: size.Height}
 }
 
-// NewRectFromGo converts a Go image.Rectangle to a Rect.
-// The Go rectangle is inclusive on the left and top, exclusive on the right and bottom.
-func NewRectFromGo[T Number](r image.Rectangle) Rect[T] {
+// NewRectGo converts [image.Rectangle] to Rect.
+func NewRectGo[T Number](r image.Rectangle) Rect[T] {
 	return Rect[T]{
 		Left:   T(r.Min.X),
 		Top:    T(r.Min.Y),
@@ -93,69 +92,36 @@ func BoundingRect[T Number](points ...Point[T]) Rect[T] {
 }
 
 // X returns the x coordinate of the origin (left edge).
-func (r Rect[T]) X() T {
-	return r.Left
-}
+func (r Rect[T]) X() T { return r.Left }
 
 // Y returns the y coordinate of the origin (top edge).
-func (r Rect[T]) Y() T {
-	return r.Top
-}
+func (r Rect[T]) Y() T { return r.Top }
 
 // Width returns the width (right - left).
-func (r Rect[T]) Width() T {
-	return r.Right - r.Left
-}
+func (r Rect[T]) Width() T { return r.Right - r.Left }
 
 // Height returns the height (bottom - top).
-func (r Rect[T]) Height() T {
-	return r.Bottom - r.Top
-}
+func (r Rect[T]) Height() T { return r.Bottom - r.Top }
 
-// LeftTop returns the top-left corner.
-func (r Rect[T]) LeftTop() Point[T] {
-	return Point[T]{r.Left, r.Top}
-}
-
-// RightTop returns the top-right corner.
-func (r Rect[T]) RightTop() Point[T] {
-	return Point[T]{r.Right, r.Top}
-}
-
-// LeftBottom returns the bottom-left corner.
-func (r Rect[T]) LeftBottom() Point[T] {
-	return Point[T]{r.Left, r.Bottom}
-}
-
-// RightBottom returns the bottom-right corner.
-func (r Rect[T]) RightBottom() Point[T] {
-	return Point[T]{r.Right, r.Bottom}
-}
+func (r Rect[T]) TopLeft() Point[T]     { return Point[T]{r.Left, r.Top} }
+func (r Rect[T]) TopRight() Point[T]    { return Point[T]{r.Right, r.Top} }
+func (r Rect[T]) BottomLeft() Point[T]  { return Point[T]{r.Left, r.Bottom} }
+func (r Rect[T]) BottomRight() Point[T] { return Point[T]{r.Right, r.Bottom} }
 
 // LTRB returns (left, top, right, bottom).
-func (r Rect[T]) LTRB() (T, T, T, T) {
-	return r.Left, r.Top, r.Right, r.Bottom
-}
+func (r Rect[T]) LTRB() (T, T, T, T) { return r.Left, r.Top, r.Right, r.Bottom }
 
 // XYWH returns (x, y, width, height).
-func (r Rect[T]) XYWH() (T, T, T, T) {
-	return r.Left, r.Top, r.Width(), r.Height()
-}
+func (r Rect[T]) XYWH() (T, T, T, T) { return r.Left, r.Top, r.Width(), r.Height() }
 
 // Origin returns the origin point (left, top).
-func (r Rect[T]) Origin() Point[T] {
-	return Point[T]{r.Left, r.Top}
-}
+func (r Rect[T]) Origin() Point[T] { return Point[T]{r.Left, r.Top} }
 
 // Size returns the size (width, height).
-func (r Rect[T]) Size() Size[T] {
-	return Size[T]{r.Width(), r.Height()}
-}
+func (r Rect[T]) Size() Size[T] { return Size[T]{r.Width(), r.Height()} }
 
 // Area returns the area (width * height).
-func (r Rect[T]) Area() T {
-	return r.Width() * r.Height()
-}
+func (r Rect[T]) Area() T { return r.Width() * r.Height() }
 
 // Center returns the center point.
 func (r Rect[T]) Center() Point[T] {
@@ -178,10 +144,10 @@ func (r Rect[T]) Positive() Rect[T] {
 // Points returns the four corners: left-top, right-top, left-bottom, right-bottom.
 func (r Rect[T]) Points() [4]Point[T] {
 	return [4]Point[T]{
-		r.LeftTop(),
-		r.RightTop(),
-		r.LeftBottom(),
-		r.RightBottom(),
+		r.TopLeft(),
+		r.TopRight(),
+		r.BottomLeft(),
+		r.BottomRight(),
 	}
 }
 
@@ -489,10 +455,10 @@ func (r Rect[T]) NormalizingTransform() Matrix[T] {
 
 // String returns a string representation, e.g. (LeftTop => RightBottom).
 func (r Rect[T]) String() string {
-	return "(" + r.LeftTop().String() + " => " + r.RightBottom().String() + ")"
+	return "(" + r.TopLeft().String() + " => " + r.BottomRight().String() + ")"
 }
 
-// ToGo converts the rectangle to a Go image.Rectangle.
+// ToGo converts the rect
 func (r Rect[T]) ToGo() image.Rectangle {
 	return image.Rectangle{
 		Min: image.Point{X: int(r.Left), Y: int(r.Top)},
