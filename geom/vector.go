@@ -161,6 +161,35 @@ func (v Vector3[T]) Combine(b Vector3[T], bScale T) Vector3[T] {
 	}
 }
 
+// IsZero checks if all components are nearly zero.
+func (v Vector3[T]) IsZero() bool {
+	return NearlyEqual(v.X, 0) && NearlyEqual(v.Y, 0) && NearlyEqual(v.Z, 0)
+}
+
+// Transform applies a transformation matrix to this vector.
+func (v Vector3[T]) Transform(m Matrix[T]) Vector3[T] {
+	w := v.X*m[3] + v.Y*m[7] + v.Z*m[11] + m[15]
+	r := Vector3[T]{
+		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + m[12],
+		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + m[13],
+		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + m[14],
+	}
+	if w != 0 {
+		w = 1 / w
+	}
+	return r.Scale(w)
+}
+
+// TransformDirection applies a transformation matrix to this vector,
+// treating it as a direction vector (ignoring translation).
+func (v Vector3[T]) TransformDirection(m Matrix[T]) Vector3[T] {
+	return Vector3[T]{
+		X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
+		Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
+		Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
+	}
+}
+
 // String returns a string representation of the vector, like "(1, 2, 3)".
 func (v Vector3[T]) String() string {
 	return "(" + ToString(v.X) + ", " + ToString(v.Y) + ", " + ToString(v.Z) + ")"
@@ -345,12 +374,39 @@ func (v Vector4[T]) Combine(b Vector4[T], bScale T) Vector4[T] {
 	}
 }
 
-// String returns a string representation of the vector, like "(1, 2, 3, 4)".
-func (v Vector4[T]) String() string {
-	return "(" + ToString(v.X) + ", " + ToString(v.Y) + ", " + ToString(v.Z) + ", " + ToString(v.W) + ")"
+// IsZero checks if all components are nearly zero.
+func (v Vector4[T]) IsZero() bool {
+	return NearlyEqual(v.X, 0) && NearlyEqual(v.Y, 0) &&
+		NearlyEqual(v.Z, 0) && NearlyEqual(v.W, 0)
 }
 
 // IsFinite returns true if all components are finite.
 func (v Vector4[T]) IsFinite() bool {
 	return IsFinite(v.X) && IsFinite(v.Y) && IsFinite(v.Z) && IsFinite(v.W)
+}
+
+// Transform applies a transformation matrix to this vector.
+func (v Vector4[T]) Transform(m Matrix[T]) Vector4[T] {
+	return Vector4[T]{
+		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + v.W*m[12],
+		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + v.W*m[13],
+		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + v.W*m[14],
+		v.X*m[3] + v.Y*m[7] + v.Z*m[11] + v.W*m[15],
+	}
+}
+
+// TransformDirection applies a transformation matrix to this vector,
+// treating it as a direction vector (ignoring translation).
+func (v Vector4[T]) TransformDirection(m Matrix[T]) Vector4[T] {
+	return Vector4[T]{
+		X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
+		Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
+		Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
+		W: v.W,
+	}
+}
+
+// String returns a string representation of the vector, like "(1, 2, 3, 4)".
+func (v Vector4[T]) String() string {
+	return "(" + ToString(v.X) + ", " + ToString(v.Y) + ", " + ToString(v.Z) + ", " + ToString(v.W) + ")"
 }

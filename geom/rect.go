@@ -147,8 +147,8 @@ func (r Rect[T]) Positive() Rect[T] {
 
 // Points returns the four corner points of the rectangle.
 // The order is: top-left, top-right, bottom-left, bottom-right.
-func (r Rect[T]) Points() [4]Point[T] {
-	return [4]Point[T]{
+func (r Rect[T]) Points() Quad[T] {
+	return Quad[T]{
 		r.TopLeft(),
 		r.TopRight(),
 		r.BottomLeft(),
@@ -414,13 +414,13 @@ func (r Rect[T]) Project(source Rect[T]) Rect[T] {
 
 // Transform applies a transformation matrix to the four corners of the rectangle.
 // Returns the transformed corner points.
-func (r Rect[T]) Transform(transform Matrix[T]) [4]Point[T] {
+func (r Rect[T]) Transform(transform Matrix[T]) Quad[T] {
 	corners := r.Points()
-	return [4]Point[T]{
-		transform.transformPoint(corners[0]),
-		transform.transformPoint(corners[1]),
-		transform.transformPoint(corners[2]),
-		transform.transformPoint(corners[3]),
+	return Quad[T]{
+		corners[0].Transform(transform),
+		corners[1].Transform(transform),
+		corners[2].Transform(transform),
+		corners[3].Transform(transform),
 	}
 }
 

@@ -105,21 +105,15 @@ func (b superellipseBuilder[T]) AddQuadrant(quadrant SuperellipseQuadrant[T], re
 	// If either octant is degenerate (degree < 2), fallback to straight lines.
 	if quadrant.Top.Degree < 2 || quadrant.Right.Degree < 2 {
 		b.receiver.LineTo(
-			transform.transformPoint(
-				quadrant.Top.Offset.Add(Point[T]{X: quadrant.Top.SemiAxis, Y: quadrant.Top.SemiAxis}),
-			),
+			quadrant.Top.Offset.Add(Point[T]{X: quadrant.Top.SemiAxis, Y: quadrant.Top.SemiAxis}).Transform(transform),
 		)
 		if !reverse {
 			b.receiver.LineTo(
-				transform.transformPoint(
-					quadrant.Top.Offset.Add(Point[T]{X: quadrant.Top.SemiAxis, Y: 0}),
-				),
+				quadrant.Top.Offset.Add(Point[T]{X: quadrant.Top.SemiAxis, Y: 0}).Transform(transform),
 			)
 		} else {
 			b.receiver.LineTo(
-				transform.transformPoint(
-					quadrant.Top.Offset.Add(Point[T]{X: 0, Y: quadrant.Top.SemiAxis}),
-				),
+				quadrant.Top.Offset.Add(Point[T]{X: 0, Y: quadrant.Top.SemiAxis}).Transform(transform),
 			)
 		}
 		return
@@ -134,15 +128,15 @@ func (b superellipseBuilder[T]) AddQuadrant(quadrant SuperellipseQuadrant[T], re
 }
 
 // AddOctant adds an octant curve to the path.
-// reverse determines curve direction; flip swaps x/y axes; externalTransform is applied.
-func (b superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse, flip bool, externalTransform Matrix[T]) {
-	transform := externalTransform.Mul(
+// reverse determines curve direction; flip swaps x/y axes; mat is applied.
+func (b superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse, flip bool, mat Matrix[T]) {
+	mat = mat.Mul(
 		NewMatrix[T]().Translate(octant.Offset),
 	)
 
 	if flip {
 		// Flip the octant by swapping x and y axes.
-		transform = transform.Mul(Matrix[T]{
+		mat = mat.Mul(Matrix[T]{
 			0, 1, 0, 0,
 			1, 0, 0, 0,
 			0, 0, 1, 0,
@@ -155,32 +149,32 @@ func (b superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse,
 
 	if !reverse {
 		b.receiver.CubicTo(
-			transform.transformPoint(sePoints[1]),
-			transform.transformPoint(sePoints[2]),
-			transform.transformPoint(sePoints[3]),
+			sePoints[1].Transform(mat),
+			sePoints[2].Transform(mat),
+			sePoints[3].Transform(mat),
 		)
 		b.receiver.CubicTo(
-			transform.transformPoint(circlePoints[1]),
-			transform.transformPoint(circlePoints[2]),
-			transform.transformPoint(circlePoints[3]),
+			circlePoints[1].Transform(mat),
+			circlePoints[2].Transform(mat),
+			circlePoints[3].Transform(mat),
 		)
 	} else {
 		b.receiver.CubicTo(
-			transform.transformPoint(circlePoints[2]),
-			transform.transformPoint(circlePoints[1]),
-			transform.transformPoint(circlePoints[0]),
+			circlePoints[2].Transform(mat),
+			circlePoints[1].Transform(mat),
+			circlePoints[0].Transform(mat),
 		)
 		b.receiver.CubicTo(
-			transform.transformPoint(sePoints[2]),
-			transform.transformPoint(sePoints[1]),
-			transform.transformPoint(sePoints[0]),
+			sePoints[2].Transform(mat),
+			sePoints[1].Transform(mat),
+			sePoints[0].Transform(mat),
 		)
 	}
 
 }
 
 // circularArcPoints returns the four control points for the circular arc segment of the octant.
-func (b superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
+func (b superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) Quad[T] {
 	startVector := octant.CircleStart.Sub(octant.CircleCenter)
 	endVector := startVector.Rotate(Radians(-octant.CircleMaxAngle))
 	circleEnd := octant.CircleCenter.Add(endVector)
@@ -189,7 +183,7 @@ func (b superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) 
 	bezierFactor := T(math.Tan(ToFloat64(octant.CircleMaxAngle) / 4 * 4 / 3))
 	radius := startVector.Length()
 
-	return [4]Point[T]{
+	return Quad[T]{
 		octant.CircleStart,
 		octant.CircleStart.Add(startTangent.Scale(bezierFactor * radius)),
 		circleEnd.Add(endTangent.Scale(bezierFactor * radius)),
@@ -198,14 +192,14 @@ func (b superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) 
 }
 
 // arcPoints returns the four control points for the superellipse arc segment of the octant.
-func (b superellipseBuilder[T]) arcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
+func (b superellipseBuilder[T]) arcPoints(octant SuperellipseOctant[T]) Quad[T] {
 	start := Point[T]{X: 0, Y: octant.SemiAxis}
 	end := octant.CircleStart
 	startTangent := Point[T]{X: 1, Y: 0}
 	circleStartVector := octant.CircleStart.Sub(octant.CircleCenter)
 	endTangent := Point[T]{X: -circleStartVector.Y, Y: circleStartVector.X}.Normalize()
 	factors := b.bezierFactors(octant.SemiAxis)
-	return [4]Point[T]{
+	return Quad[T]{
 		start,
 		start.Add(startTangent.Scale(factors[0] * octant.SemiAxis)),
 		end.Add(endTangent.Scale(factors[1] * octant.SemiAxis)),

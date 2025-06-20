@@ -400,7 +400,7 @@ func (m Matrix[T]) GetScale() Vector3[T] {
 // GetDirectionScale returns the scaling factor applied to vectors in the specified direction.
 // This is useful for anisotropic filtering and directional scaling analysis.
 func (m Matrix[T]) GetDirectionScale(dir Vector3[T]) T {
-	return 1 / (m.Base().Invert().transformVector3D(dir.Normalize())).Length() * dir.Length()
+	return 1 / dir.Normalize().Transform(m.Base().Invert()).Length() * dir.Length()
 }
 
 // Scale returns a new matrix with scaling transformation applied.
@@ -594,100 +594,6 @@ func (m Matrix[T]) Perspective(fovY Radians, aspectRatio, zNear, zFar T) Matrix[
 func (m Matrix[T]) PerspectiveSize(fovY Radians, size Size[T], zNear, zFar T) Matrix[T] {
 	aspectRatio := size.Width / size.Height
 	return m.Perspective(fovY, aspectRatio, zNear, zFar)
-}
-
-// Transform applies the matrix transformation to various geometric types.
-// Supports Point (2D affine), Vector3 (3D with perspective division),
-// Vector4 (4D homogeneous), and Quad (transforms all four points).
-func (m Matrix[T]) Transform(t any) any {
-	switch t := t.(type) {
-	case Point[T]:
-		return m.transformPoint(t)
-	case Vector3[T]:
-		return m.transformVector3D(t)
-	case Vector4[T]:
-		return m.transformVector4D(t)
-	case Quad[T]:
-		return Quad[T]{
-			m.transformPoint(t[0]),
-			m.transformPoint(t[1]),
-			m.transformPoint(t[2]),
-			m.transformPoint(t[3]),
-		}
-	default:
-		panic(fmt.Sprintf("unsupported geometry type for Transform: %T", t))
-	}
-}
-
-// TransformDirection applies linear transformation without translation or perspective division.
-// Supports Vector2, Vector3, and Vector4 for transforming direction vectors and normals.
-func (m Matrix[T]) TransformDirection(v any) any {
-	switch v := v.(type) {
-	case Vector2[T]:
-		return Vector2[T]{X: v.X*m[0] + v.Y*m[4], Y: v.X*m[1] + v.Y*m[5]}
-	case Vector3[T]:
-		return Vector3[T]{
-			X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
-			Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
-			Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
-		}
-	case Vector4[T]:
-		return Vector4[T]{
-			X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
-			Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
-			Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
-			W: v.W,
-		}
-	default:
-		panic(fmt.Sprintf("unsupported geometry type for TransformDirection: %T", v))
-	}
-}
-
-// TransformHomogenous transforms a 2D point to 3D homogeneous coordinates.
-// Returns the transformed point as a Vector3 before perspective division.
-func (m Matrix[T]) TransformHomogenous(p Point[T]) Vector3[T] {
-	return Vector3[T]{
-		X: p.X*m[0] + p.Y*m[4] + m[12],
-		Y: p.X*m[1] + p.Y*m[5] + m[13],
-		Z: p.X*m[3] + p.Y*m[7] + m[15],
-	}
-}
-
-// transformPoint applies 2D point transformation with perspective division.
-func (m Matrix[T]) transformPoint(p Point[T]) Point[T] {
-	w := p.X*m[3] + p.Y*m[7] + m[15]
-	r := Point[T]{
-		X: p.X*m[0] + p.Y*m[4] + m[12],
-		Y: p.X*m[1] + p.Y*m[5] + m[13],
-	}
-	if w != 0 {
-		w = 1 / w
-	}
-	return Point[T]{r.X * w, r.Y * w}
-}
-
-// transformVector3D applies 3D vector transformation with perspective division.
-func (m Matrix[T]) transformVector3D(v Vector3[T]) Vector3[T] {
-	w := v.X*m[3] + v.Y*m[7] + v.Z*m[11] + m[15]
-	r := Vector3[T]{
-		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + m[12],
-		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + m[13],
-		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + m[14],
-	}
-	if w != 0 {
-		w = 1 / w
-	}
-	return r.Scale(w)
-}
-
-// transformVector4D applies 4D vector transformation for homogeneous coordinates.
-func (m Matrix[T]) transformVector4D(v Vector4[T]) Vector4[T] {
-	return Vector4[T]{
-		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + v.W*m[12],
-		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + v.W*m[13],
-		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + v.W*m[14],
-		v.X*m[3] + v.Y*m[7] + v.Z*m[11] + v.W*m[15],
-	}
 }
 
 // CosSin returns the cosine and sine of the given angle.

@@ -5,7 +5,17 @@ import (
 	"math"
 )
 
-type Quad[T TScalar] = [4]Point[T]
+type Quad[T TScalar] [4]Point[T]
+
+// Transform applies a transformation matrix to the quad.
+func (q Quad[T]) Transform(m Matrix[T]) Quad[T] {
+	return Quad[T]{
+		q[0].Transform(m),
+		q[1].Transform(m),
+		q[2].Transform(m),
+		q[3].Transform(m),
+	}
+}
 
 // Point represents a 2D point or vector in Cartesian coordinates.
 type Point[T TScalar] struct {
@@ -204,11 +214,6 @@ func (p Point[T]) Lerp(o Point[T], t T) Point[T] {
 	}
 }
 
-// String returns a string representation of p in the form "(x, y)".
-func (p Point[T]) String() string {
-	return "(" + ToString(p.X) + ", " + ToString(p.Y) + ")"
-}
-
 // Complex returns the complex128 representation of p.
 func (p Point[T]) Complex() complex128 {
 	return complex(ToFloat64(p.X), ToFloat64(p.Y))
@@ -217,4 +222,41 @@ func (p Point[T]) Complex() complex128 {
 // Go converts p to image.Point, truncating coordinates to int.
 func (p Point[T]) Go() image.Point {
 	return image.Point{X: int(ToFloat64(p.X)), Y: int(ToFloat64(p.Y))}
+}
+
+// Transform applies the given matrix transformation to the point p.
+func (p Point[T]) Transform(m Matrix[T]) Point[T] {
+	w := p.X*m[3] + p.Y*m[7] + m[15]
+	r := Point[T]{
+		X: p.X*m[0] + p.Y*m[4] + m[12],
+		Y: p.X*m[1] + p.Y*m[5] + m[13],
+	}
+	if w != 0 {
+		w = 1 / w
+	}
+	return Point[T]{r.X * w, r.Y * w}
+}
+
+// TransformDirection applies the given matrix transformation to the point p,
+// treating it as a direction vector (ignoring translation).
+func (p Point[T]) TransformDirection(m Matrix[T]) Point[T] {
+	return Point[T]{
+		X: p.X*m[0] + p.Y*m[4],
+		Y: p.X*m[1] + p.Y*m[5],
+	}
+}
+
+// TransformHomogenous transforms a 2D point to 3D homogeneous coordinates.
+// It applies the transformation matrix to the point and returns a Vector3
+func (p Point[T]) TransformHomogenous(m Matrix[T]) Vector3[T] {
+	return Vector3[T]{
+		X: p.X*m[0] + p.Y*m[4] + m[12],
+		Y: p.X*m[1] + p.Y*m[5] + m[13],
+		Z: p.X*m[3] + p.Y*m[7] + m[15],
+	}
+}
+
+// String returns a string representation of p in the form "(x, y)".
+func (p Point[T]) String() string {
+	return "(" + ToString(p.X) + ", " + ToString(p.Y) + ")"
 }
