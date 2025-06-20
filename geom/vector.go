@@ -3,10 +3,10 @@ package geom
 import "math"
 
 // Vector2 is an alias for a 2D vector, implemented as Point.
-type Vector2[T Scalar] = Point[T]
+type Vector2[T Number] = Point[T]
 
 // Vector3 represents a 3D vector with X, Y, Z components.
-type Vector3[T Scalar] struct {
+type Vector3[T Number] struct {
 	X T
 	Y T
 	Z T
@@ -50,9 +50,9 @@ func (v Vector3[T]) Div(other Vector3[T]) Vector3[T] {
 
 // Eq checks if this vector is Eq to another vector.
 func (v Vector3[T]) Eq(other Vector3[T]) bool {
-	return ScalarEq(v.X, other.X) &&
-		ScalarEq(v.Y, other.Y) &&
-		ScalarEq(v.Z, other.Z)
+	return NearlyEqual(v.X, other.X) &&
+		NearlyEqual(v.Y, other.Y) &&
+		NearlyEqual(v.Z, other.Z)
 }
 
 // Scale scales this vector by a scalar.
@@ -97,27 +97,27 @@ func (v Vector3[T]) Abs() Vector3[T] {
 // Floor returns the component-wise floor.
 func (v Vector3[T]) Floor() Vector3[T] {
 	return Vector3[T]{
-		X: T(math.Floor(v.X.Float64())),
-		Y: T(math.Floor(v.Y.Float64())),
-		Z: T(math.Floor(v.Z.Float64())),
+		X: T(math.Floor(ToFloat64(v.X))),
+		Y: T(math.Floor(ToFloat64(v.Y))),
+		Z: T(math.Floor(ToFloat64(v.Z))),
 	}
 }
 
 // Ceil returns the component-wise ceil.
 func (v Vector3[T]) Ceil() Vector3[T] {
 	return Vector3[T]{
-		X: T(math.Ceil(v.X.Float64())),
-		Y: T(math.Ceil(v.Y.Float64())),
-		Z: T(math.Ceil(v.Z.Float64())),
+		X: T(math.Ceil(ToFloat64(v.X))),
+		Y: T(math.Ceil(ToFloat64(v.Y))),
+		Z: T(math.Ceil(ToFloat64(v.Z))),
 	}
 }
 
 // Round returns the component-wise round.
 func (v Vector3[T]) Round() Vector3[T] {
 	return Vector3[T]{
-		X: T(math.Round(v.X.Float64())),
-		Y: T(math.Round(v.Y.Float64())),
-		Z: T(math.Round(v.Z.Float64())),
+		X: T(math.Round(ToFloat64(v.X))),
+		Y: T(math.Round(ToFloat64(v.Y))),
+		Z: T(math.Round(ToFloat64(v.Z))),
 	}
 }
 
@@ -155,11 +155,11 @@ func (v Vector3[T]) Combine(b Vector3[T], bScale T) Vector3[T] {
 
 // String returns a string representation of the vector, like "(1, 2, 3)".
 func (v Vector3[T]) String() string {
-	return "(" + v.X.String() + ", " + v.Y.String() + ", " + v.Z.String() + ")"
+	return "(" + ToString(v.X) + ", " + ToString(v.Y) + ", " + ToString(v.Z) + ")"
 }
 
 // Vector4 represents a 4D vector with X, Y, Z, W components.
-type Vector4[T Scalar] struct {
+type Vector4[T Number] struct {
 	X T
 	Y T
 	Z T
@@ -213,10 +213,10 @@ func (v Vector4[T]) Div(other Vector4[T]) Vector4[T] {
 
 // Eq checks if this vector is Eq to another vector.
 func (v Vector4[T]) Eq(other Vector4[T]) bool {
-	return ScalarEq(v.X, other.X) &&
-		ScalarEq(v.Y, other.Y) &&
-		ScalarEq(v.Z, other.Z) &&
-		ScalarEq(v.W, other.W)
+	return NearlyEqual(v.X, other.X) &&
+		NearlyEqual(v.Y, other.Y) &&
+		NearlyEqual(v.Z, other.Z) &&
+		NearlyEqual(v.W, other.W)
 }
 
 // Scale scales this vector by a scalar.
@@ -274,30 +274,30 @@ func (v Vector4[T]) Abs() Vector4[T] {
 // Floor returns the component-wise floor.
 func (v Vector4[T]) Floor() Vector4[T] {
 	return Vector4[T]{
-		X: T(math.Floor(v.X.Float64())),
-		Y: T(math.Floor(v.Y.Float64())),
-		Z: T(math.Floor(v.Z.Float64())),
-		W: T(math.Floor(v.W.Float64())),
+		X: T(math.Floor(ToFloat64(v.X))),
+		Y: T(math.Floor(ToFloat64(v.Y))),
+		Z: T(math.Floor(ToFloat64(v.Z))),
+		W: T(math.Floor(ToFloat64(v.W))),
 	}
 }
 
 // Ceil returns the component-wise ceil.
 func (v Vector4[T]) Ceil() Vector4[T] {
 	return Vector4[T]{
-		X: T(math.Ceil(v.X.Float64())),
-		Y: T(math.Ceil(v.Y.Float64())),
-		Z: T(math.Ceil(v.Z.Float64())),
-		W: T(math.Ceil(v.W.Float64())),
+		X: T(math.Ceil(ToFloat64(v.X))),
+		Y: T(math.Ceil(ToFloat64(v.Y))),
+		Z: T(math.Ceil(ToFloat64(v.Z))),
+		W: T(math.Ceil(ToFloat64(v.W))),
 	}
 }
 
 // Round returns the component-wise round.
 func (v Vector4[T]) Round() Vector4[T] {
 	return Vector4[T]{
-		X: T(math.Round(v.X.Float64())),
-		Y: T(math.Round(v.Y.Float64())),
-		Z: T(math.Round(v.Z.Float64())),
-		W: T(math.Round(v.W.Float64())),
+		X: T(math.Round(ToFloat64(v.X))),
+		Y: T(math.Round(ToFloat64(v.Y))),
+		Z: T(math.Round(ToFloat64(v.Z))),
+		W: T(math.Round(ToFloat64(v.W))),
 	}
 }
 
@@ -335,7 +335,7 @@ func (v Vector4[T]) Combine(b Vector4[T], bScale T) Vector4[T] {
 
 // String returns a string representation of the vector, like "(1, 2, 3, 4)".
 func (v Vector4[T]) String() string {
-	return "(" + v.X.String() + ", " + v.Y.String() + ", " + v.Z.String() + ", " + v.W.String() + ")"
+	return "(" + ToString(v.X) + ", " + ToString(v.Y) + ", " + ToString(v.Z) + ", " + ToString(v.W) + ")"
 }
 
 // IsFinite returns true if all components are finite.

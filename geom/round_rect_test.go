@@ -5,13 +5,13 @@ import "testing"
 func TestRoundRect_IsRect(t *testing.T) {
 	tests := []struct {
 		name  string
-		rect  Rect[F32]
-		radii RoundingRadii[F32]
+		rect  Rect[Scalar]
+		radii RoundingRadii[Scalar]
 		want  bool
 	}{
-		{"Zero radii", NewRect[F32](0, 0, 10, 10), NewRoundingRadii[F32](0), true},
-		{"Non-zero radii", NewRect[F32](0, 0, 10, 10), NewRoundingRadii[F32](2), false},
-		{"Empty rect", NewRect[F32](0, 0, 0, 0), NewRoundingRadii[F32](0), false},
+		{"Zero radii", NewRect[Scalar](0, 0, 10, 10), NewRoundingRadii[Scalar](0), true},
+		{"Non-zero radii", NewRect[Scalar](0, 0, 10, 10), NewRoundingRadii[Scalar](2), false},
+		{"Empty rect", NewRect[Scalar](0, 0, 0, 0), NewRoundingRadii[Scalar](0), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -26,13 +26,13 @@ func TestRoundRect_IsRect(t *testing.T) {
 func TestRoundRect_IsOval(t *testing.T) {
 	tests := []struct {
 		name  string
-		rect  Rect[F32]
-		radii RoundingRadii[F32]
+		rect  Rect[Scalar]
+		radii RoundingRadii[Scalar]
 		want  bool
 	}{
-		{"Oval", NewRect[F32](0, 0, 10, 10), NewRoundingRadii[F32](5), true},
-		{"Not oval", NewRect[F32](0, 0, 10, 10), NewRoundingRadii[F32](2), false},
-		{"Empty rect", NewRect[F32](0, 0, 0, 0), NewRoundingRadii[F32](0), false},
+		{"Oval", NewRect[Scalar](0, 0, 10, 10), NewRoundingRadii[Scalar](5), true},
+		{"Not oval", NewRect[Scalar](0, 0, 10, 10), NewRoundingRadii[Scalar](2), false},
+		{"Empty rect", NewRect[Scalar](0, 0, 0, 0), NewRoundingRadii[Scalar](0), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -45,20 +45,20 @@ func TestRoundRect_IsOval(t *testing.T) {
 }
 
 func TestRoundRect_Contains(t *testing.T) {
-	rect := NewRect[F32](0, 0, 10, 10)
-	radii := NewRoundingRadii[F32](2)
+	rect := NewRect[Scalar](0, 0, 10, 10)
+	radii := NewRoundingRadii[Scalar](2)
 	rr := NewRoundRect(rect, radii)
 	tests := []struct {
 		name  string
-		point Point[F32]
+		point Point[Scalar]
 		want  bool
 	}{
-		{"Inside", Point[F32]{5, 5}, true},
-		{"Outside", Point[F32]{20, 20}, false},
-		{"On corner", Point[F32]{2, 2}, true},
-		{"On rounded edge", Point[F32]{2, 0}, true},
-		{"On straight edge", Point[F32]{5, 0}, true},
-		{"Outside rounded edge", Point[F32]{0, 0}, false},
+		{"Inside", Point[Scalar]{5, 5}, true},
+		{"Outside", Point[Scalar]{20, 20}, false},
+		{"On corner", Point[Scalar]{2, 2}, true},
+		{"On rounded edge", Point[Scalar]{2, 0}, true},
+		{"On straight edge", Point[Scalar]{5, 0}, true},
+		{"Outside rounded edge", Point[Scalar]{0, 0}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -70,10 +70,10 @@ func TestRoundRect_Contains(t *testing.T) {
 }
 
 func TestRoundRect_Dispatch(t *testing.T) {
-	rect := NewRect[F32](0, 0, 10, 10)
-	radii := NewRoundingRadii[F32](2)
+	rect := NewRect[Scalar](0, 0, 10, 10)
+	radii := NewRoundingRadii[Scalar](2)
 	rr := NewRoundRect(rect, radii)
-	receiver := &testPathReceiver[F32]{}
+	receiver := &testPathReceiver[Scalar]{}
 	rr.Dispatch(receiver, true)
 	if len(receiver.ops) == 0 {
 		t.Errorf("Dispatch: should call receiver methods")
@@ -81,8 +81,8 @@ func TestRoundRect_Dispatch(t *testing.T) {
 }
 
 func TestRoundRectPathSource(t *testing.T) {
-	rect := NewRect[F32](0, 0, 10, 10)
-	radii := NewRoundingRadii[F32](2)
+	rect := NewRect[Scalar](0, 0, 10, 10)
+	radii := NewRoundingRadii[Scalar](2)
 	rr := NewRoundRect(rect, radii)
 	src := NewRoundRectPathSource(rr)
 	if src.FillType() != FillTypeNonZero {
@@ -94,7 +94,7 @@ func TestRoundRectPathSource(t *testing.T) {
 	if !src.Bounds().Eq(rect) {
 		t.Errorf("RoundRectPathSource: Bounds mismatch")
 	}
-	receiver := &testPathReceiver[F32]{}
+	receiver := &testPathReceiver[Scalar]{}
 	src.Dispatch(receiver)
 	if len(receiver.ops) == 0 {
 		t.Errorf("RoundRectPathSource: Dispatch should call receiver")
@@ -102,9 +102,9 @@ func TestRoundRectPathSource(t *testing.T) {
 }
 
 func TestDiffRoundRectPathSource(t *testing.T) {
-	rect := NewRect[F32](0, 0, 10, 10)
-	radii1 := NewRoundingRadii[F32](2)
-	radii2 := NewRoundingRadii[F32](1)
+	rect := NewRect[Scalar](0, 0, 10, 10)
+	radii1 := NewRoundingRadii[Scalar](2)
+	radii2 := NewRoundingRadii[Scalar](1)
 	rr1 := NewRoundRect(rect, radii1)
 	rr2 := NewRoundRect(rect, radii2)
 	src := NewDiffRoundRectPathSource(rr1, rr2)
@@ -117,7 +117,7 @@ func TestDiffRoundRectPathSource(t *testing.T) {
 	if !src.Bounds().Eq(rect) {
 		t.Errorf("DiffRoundRectPathSource: Bounds mismatch")
 	}
-	receiver := &testPathReceiver[F32]{}
+	receiver := &testPathReceiver[Scalar]{}
 	src.Dispatch(receiver)
 	if len(receiver.ops) == 0 {
 		t.Errorf("DiffRoundRectPathSource: Dispatch should call receiver")

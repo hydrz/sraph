@@ -1,10 +1,13 @@
 package geom
 
-import "image"
+import (
+	"image"
+	"math"
+)
 
 // Rect represents an axis-aligned rectangle defined by four edges or by origin and size.
 // All methods are immutable and return new values.
-type Rect[T Scalar] struct {
+type Rect[T Number] struct {
 	Left   T
 	Top    T
 	Right  T
@@ -12,13 +15,13 @@ type Rect[T Scalar] struct {
 }
 
 // NewRect returns a rectangle from left, top, right, bottom.
-func NewRect[T Scalar](left, top, right, bottom T) Rect[T] {
+func NewRect[T Number](left, top, right, bottom T) Rect[T] {
 	return Rect[T]{Left: left, Top: top, Right: right, Bottom: bottom}
 }
 
 // NewRectXYWH returns a rectangle from x, y, width, height.
 // Negative width/height will flip the rectangle accordingly.
-func NewRectXYWH[T Scalar](x, y, width, height T) Rect[T] {
+func NewRectXYWH[T Number](x, y, width, height T) Rect[T] {
 	if width < 0 {
 		x += width
 		width = -width
@@ -32,7 +35,7 @@ func NewRectXYWH[T Scalar](x, y, width, height T) Rect[T] {
 
 // NewRectOriginSize returns a rectangle from an origin point and a size.
 // Negative size will flip the rectangle accordingly.
-func NewRectOriginSize[T Scalar](origin Point[T], size Size[T]) Rect[T] {
+func NewRectOriginSize[T Number](origin Point[T], size Size[T]) Rect[T] {
 	x, y := origin.X, origin.Y
 	w, h := size.Width, size.Height
 	if w < 0 {
@@ -47,13 +50,13 @@ func NewRectOriginSize[T Scalar](origin Point[T], size Size[T]) Rect[T] {
 }
 
 // NewRectSize returns a rectangle at (0,0) with the given size.
-func NewRectSize[T Scalar](size Size[T]) Rect[T] {
+func NewRectSize[T Number](size Size[T]) Rect[T] {
 	return Rect[T]{Left: 0, Top: 0, Right: size.Width, Bottom: size.Height}
 }
 
 // NewRectFromGo converts a Go image.Rectangle to a Rect.
 // The Go rectangle is inclusive on the left and top, exclusive on the right and bottom.
-func NewRectFromGo[T Scalar](r image.Rectangle) Rect[T] {
+func NewRectFromGo[T Number](r image.Rectangle) Rect[T] {
 	return Rect[T]{
 		Left:   T(r.Min.X),
 		Top:    T(r.Min.Y),
@@ -64,7 +67,7 @@ func NewRectFromGo[T Scalar](r image.Rectangle) Rect[T] {
 
 // BoundingRect returns the minimal bounding rectangle for a set of points.
 // If no points are given, returns an empty rectangle at (0,0).
-func BoundingRect[T Scalar](points ...Point[T]) Rect[T] {
+func BoundingRect[T Number](points ...Point[T]) Rect[T] {
 	if len(points) == 0 {
 		return NewRect[T](0, 0, 0, 0)
 	}
@@ -184,10 +187,40 @@ func (r Rect[T]) Points() [4]Point[T] {
 
 // Eq reports whether two rectangles are Eq.
 func (r Rect[T]) Eq(other Rect[T]) bool {
-	return ScalarEq(r.Left, other.Left) &&
-		ScalarEq(r.Top, other.Top) &&
-		ScalarEq(r.Right, other.Right) &&
-		ScalarEq(r.Bottom, other.Bottom)
+	return NearlyEqual(r.Left, other.Left) &&
+		NearlyEqual(r.Top, other.Top) &&
+		NearlyEqual(r.Right, other.Right) &&
+		NearlyEqual(r.Bottom, other.Bottom)
+}
+
+// Round rounds the rectangle's edges to the nearest integer.
+func (r Rect[T]) Round() Rect[T] {
+	return NewRect(
+		T(math.Round(ToFloat64(r.Left))),
+		T(math.Round(ToFloat64(r.Top))),
+		T(math.Round(ToFloat64(r.Right))),
+		T(math.Round(ToFloat64(r.Bottom))),
+	)
+}
+
+// Floor rounds the edges outward to the nearest integer.
+func (r Rect[T]) Floor() Rect[T] {
+	return NewRect(
+		T(math.Floor(ToFloat64(r.Left))),
+		T(math.Floor(ToFloat64(r.Top))),
+		T(math.Floor(ToFloat64(r.Right))),
+		T(math.Floor(ToFloat64(r.Bottom))),
+	)
+}
+
+// Ceil rounds the edges inward (down) to the nearest integer.
+func (r Rect[T]) Ceil() Rect[T] {
+	return NewRect(
+		T(math.Ceil(ToFloat64(r.Left))),
+		T(math.Ceil(ToFloat64(r.Top))),
+		T(math.Ceil(ToFloat64(r.Right))),
+		T(math.Ceil(ToFloat64(r.Bottom))),
+	)
 }
 
 // IsEmpty reports whether the rectangle is empty (width or height <= 0).
@@ -202,16 +235,7 @@ func (r Rect[T]) IsFinite() bool {
 
 // IsSquare reports whether the rectangle is a square (width == height).
 func (r Rect[T]) IsSquare() bool {
-	return ScalarEq(r.Width(), r.Height()) && !r.IsEmpty()
-}
-
-// ContainsExclusive reports whether the rectangle contains a point (excluding edges).
-func (r Rect[T]) ContainsExclusive(p Point[T]) bool {
-	if r.IsEmpty() {
-		return false
-	}
-	return p.X > r.Left && p.X < r.Right &&
-		p.Y > r.Top && p.Y < r.Bottom
+	return NearlyEqual(r.Width(), r.Height()) && !r.IsEmpty()
 }
 
 // Contains reports whether the rectangle contains a point (including edges).
@@ -221,6 +245,15 @@ func (r Rect[T]) Contains(p Point[T]) bool {
 	}
 	return p.X >= r.Left && p.X <= r.Right &&
 		p.Y >= r.Top && p.Y <= r.Bottom
+}
+
+// Inside reports whether the rectangle contains a point (excluding edges).
+func (r Rect[T]) Inside(p Point[T]) bool {
+	if r.IsEmpty() {
+		return false
+	}
+	return p.X > r.Left && p.X < r.Right &&
+		p.Y > r.Top && p.Y < r.Bottom
 }
 
 // ContainsRect reports whether the rectangle contains another rectangle.
@@ -396,36 +429,6 @@ func (r Rect[T]) Project(source Rect[T]) Rect[T] {
 	)
 }
 
-// Round rounds the rectangle's edges to the nearest integer.
-func (r Rect[T]) Round() Rect[I32] {
-	return NewRect(
-		I32(r.Left.Float64()+0.5),
-		I32(r.Top.Float64()+0.5),
-		I32(r.Right.Float64()+0.5),
-		I32(r.Bottom.Float64()+0.5),
-	)
-}
-
-// RoundOut rounds the edges outward to the nearest integer.
-func (r Rect[T]) RoundOut() Rect[I32] {
-	return NewRect(
-		I32(r.Left.Float64()),
-		I32(r.Top.Float64()),
-		I32(r.Right.Float64()+0.999),
-		I32(r.Bottom.Float64()+0.999),
-	)
-}
-
-// RoundIn rounds the edges inward (down) to the nearest integer.
-func (r Rect[T]) RoundIn() Rect[I32] {
-	return NewRect(
-		I32(r.Left.Float64()+0.999),
-		I32(r.Top.Float64()+0.999),
-		I32(r.Right.Float64()),
-		I32(r.Bottom.Float64()),
-	)
-}
-
 // Transform applies a matrix to the four corners.
 func (r Rect[T]) Transform(transform Matrix[T]) [4]Point[T] {
 	corners := r.Points()
@@ -476,8 +479,8 @@ func (r Rect[T]) NormalizingTransform() Matrix[T] {
 	if r.IsEmpty() {
 		return Matrix[T]{}
 	}
-	scaleX := T(1) / r.Width()
-	scaleY := T(1) / r.Height()
+	scaleX := 1 / r.Width()
+	scaleY := 1 / r.Height()
 	matrix := Matrix[T]{}
 	matrix = matrix.Scale(Vector2[T]{scaleX, scaleY})
 	matrix = matrix.Translate(Vector2[T]{-r.Left, -r.Top})

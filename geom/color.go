@@ -23,7 +23,7 @@ import (
 //
 // That resulting color [R’, G’, B’, A’] then has each channel clamped to the 0
 // to 1 range.
-type ColorMatrix [20]F32
+type ColorMatrix [20]Scalar
 
 func NewColorMatrix() ColorMatrix {
 	return ColorMatrix{
@@ -37,21 +37,21 @@ func NewColorMatrix() ColorMatrix {
 // Color represents an RGBA color with components in the range [0, 1].
 // It implements Go's standard color.Color interface.
 type Color struct {
-	R, G, B, A F32
+	R, G, B, A Scalar
 }
 
 // NewColor creates a new Color with the given RGBA components.
-func NewColor(r, g, b, a F32) Color {
+func NewColor(r, g, b, a Scalar) Color {
 	return Color{R: r, G: g, B: b, A: a}
 }
 
 // NewColorRGBA8 creates a Color from 8-bit RGBA values.
 func NewColorRGBA8(r, g, b, a uint8) Color {
 	return Color{
-		R: F32(r) / 255.0,
-		G: F32(g) / 255.0,
-		B: F32(b) / 255.0,
-		A: F32(a) / 255.0,
+		R: Scalar(r) / 255.0,
+		G: Scalar(g) / 255.0,
+		B: Scalar(b) / 255.0,
+		A: Scalar(a) / 255.0,
 	}
 }
 
@@ -64,10 +64,10 @@ func NewColorRGB8(r, g, b uint8) Color {
 func NewColorFromGo(c color.Color) Color {
 	r, g, b, a := c.RGBA()
 	return Color{
-		R: F32(r) / 65535.0,
-		G: F32(g) / 65535.0,
-		B: F32(b) / 65535.0,
-		A: F32(a) / 65535.0,
+		R: Scalar(r) / 65535.0,
+		G: Scalar(g) / 65535.0,
+		B: Scalar(b) / 65535.0,
+		A: Scalar(a) / 65535.0,
 	}
 }
 
@@ -94,19 +94,19 @@ func NewColorHexA(hex uint32) Color {
 // NewColorFromRGBA creates a Color from Go's standard color.RGBA.
 func NewColorFromRGBA(c color.RGBA) Color {
 	return Color{
-		R: F32(c.R) / 255.0,
-		G: F32(c.G) / 255.0,
-		B: F32(c.B) / 255.0,
-		A: F32(c.A) / 255.0,
+		R: Scalar(c.R) / 255.0,
+		G: Scalar(c.G) / 255.0,
+		B: Scalar(c.B) / 255.0,
+		A: Scalar(c.A) / 255.0,
 	}
 }
 
 // RandomColor generates a random opaque color.
 func RandomColor() Color {
 	return Color{
-		R: F32(rand.Float32()),
-		G: F32(rand.Float32()),
-		B: F32(rand.Float32()),
+		R: Scalar(rand.Float32()),
+		G: Scalar(rand.Float32()),
+		B: Scalar(rand.Float32()),
 		A: 1.0,
 	}
 }
@@ -154,10 +154,10 @@ func (c Color) ToIColor() uint32 {
 
 // Eq compares two colors for Eqity within tolerance.
 func (c Color) Eq(other Color) bool {
-	return ScalarEq(c.R, other.R) &&
-		ScalarEq(c.G, other.G) &&
-		ScalarEq(c.B, other.B) &&
-		ScalarEq(c.A, other.A)
+	return NearlyEqual(c.R, other.R) &&
+		NearlyEqual(c.G, other.G) &&
+		NearlyEqual(c.B, other.B) &&
+		NearlyEqual(c.A, other.A)
 }
 
 // Add performs component-wise addition.
@@ -201,7 +201,7 @@ func (c Color) Div(other Color) Color {
 }
 
 // Scale multiplies all components by a scalar.
-func (c Color) Scale(scale F32) Color {
+func (c Color) Scale(scale Scalar) Color {
 	return Color{
 		R: c.R * scale,
 		G: c.G * scale,
@@ -244,7 +244,7 @@ func (c Color) Unpremultiply() Color {
 }
 
 // WithAlpha returns a new color with the specified alpha value.
-func (c Color) WithAlpha(alpha F32) Color {
+func (c Color) WithAlpha(alpha Scalar) Color {
 	return Color{R: c.R, G: c.G, B: c.B, A: alpha}
 }
 
@@ -259,7 +259,7 @@ func (c Color) IsOpaque() bool {
 }
 
 // Lerp performs linear interpolation between two colors.
-func (c Color) Lerp(other Color, t F32) Color {
+func (c Color) Lerp(other Color, t Scalar) Color {
 	return Color{
 		R: c.R + (other.R-c.R)*t,
 		G: c.G + (other.G-c.G)*t,
@@ -270,11 +270,11 @@ func (c Color) Lerp(other Color, t F32) Color {
 
 // LinearToSRGB converts color from linear space to sRGB space.
 func (c Color) LinearToSRGB() Color {
-	convert := func(component F32) F32 {
+	convert := func(component Scalar) Scalar {
 		if component <= 0.0031308 {
 			return component * 12.92
 		}
-		return F32(1.055*math.Pow(component.Float64(), 1.0/2.4) - 0.055)
+		return Scalar(1.055*math.Pow(ToFloat64(component), 1.0/2.4) - 0.055)
 	}
 
 	return Color{
@@ -287,11 +287,11 @@ func (c Color) LinearToSRGB() Color {
 
 // SRGBToLinear converts color from sRGB space to linear space.
 func (c Color) SRGBToLinear() Color {
-	convert := func(component F32) F32 {
+	convert := func(component Scalar) Scalar {
 		if component <= 0.04045 {
 			return component / 12.92
 		}
-		return F32(math.Pow((component.Float64()+0.055)/1.055, 2.4))
+		return Scalar(math.Pow((ToFloat64(component)+0.055)/1.055, 2.4))
 	}
 
 	return Color{
@@ -356,10 +356,10 @@ func (c Color) Blend(src Color, mode BlendMode) Color {
 		// r = min(s + d, 1)
 		result := src.Premultiply().Add(dst.Premultiply())
 		return Color{
-			R: F32(math.Min(result.R.Float64(), 1.0)),
-			G: F32(math.Min(result.G.Float64(), 1.0)),
-			B: F32(math.Min(result.B.Float64(), 1.0)),
-			A: F32(math.Min(result.A.Float64(), 1.0)),
+			R: Scalar(math.Min(ToFloat64(result.R), 1.0)),
+			G: Scalar(math.Min(ToFloat64(result.G), 1.0)),
+			B: Scalar(math.Min(ToFloat64(result.B), 1.0)),
+			A: Scalar(math.Min(ToFloat64(result.A), 1.0)),
 		}.Unpremultiply()
 	case BlendModeModulate:
 		// r = s*d
@@ -377,7 +377,7 @@ func (c Color) Blend(src Color, mode BlendMode) Color {
 	case BlendModeOverlay:
 		dstRGB := toRGB(dst)
 		srcRGB := toRGB(src)
-		screenSrc := dstRGB.Scale(2).Sub(Vector3[F32]{X: 1, Y: 1, Z: 1})
+		screenSrc := dstRGB.Scale(2).Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1})
 		screen := screenSrc.Add(srcRGB).Sub(screenSrc.Mul(srcRGB))
 		multiply := srcRGB.Mul(dstRGB.Scale(2))
 		blendResult := componentChoose(multiply, screen, dstRGB, 0.5)
@@ -385,48 +385,48 @@ func (c Color) Blend(src Color, mode BlendMode) Color {
 	case BlendModeDarken:
 		dstRGB := toRGB(dst)
 		srcRGB := toRGB(src)
-		blendResult := Vector3[F32]{
-			X: F32(math.Min(dstRGB.X.Float64(), srcRGB.X.Float64())),
-			Y: F32(math.Min(dstRGB.Y.Float64(), srcRGB.Y.Float64())),
-			Z: F32(math.Min(dstRGB.Z.Float64(), srcRGB.Z.Float64())),
+		blendResult := Vector3[Scalar]{
+			X: Scalar(math.Min(ToFloat64(dstRGB.X), ToFloat64(srcRGB.X))),
+			Y: Scalar(math.Min(ToFloat64(dstRGB.Y), ToFloat64(srcRGB.Y))),
+			Z: Scalar(math.Min(ToFloat64(dstRGB.Z), ToFloat64(srcRGB.Z))),
 		}
 		return applyBlendedColor(dst, src, blendResult).Unpremultiply()
 	case BlendModeLighten:
 		dstRGB := toRGB(dst)
 		srcRGB := toRGB(src)
-		blendResult := Vector3[F32]{
-			X: F32(math.Max(dstRGB.X.Float64(), srcRGB.X.Float64())),
-			Y: F32(math.Max(dstRGB.Y.Float64(), srcRGB.Y.Float64())),
-			Z: F32(math.Max(dstRGB.Z.Float64(), srcRGB.Z.Float64())),
+		blendResult := Vector3[Scalar]{
+			X: Scalar(math.Max(ToFloat64(dstRGB.X), ToFloat64(srcRGB.X))),
+			Y: Scalar(math.Max(ToFloat64(dstRGB.Y), ToFloat64(srcRGB.Y))),
+			Z: Scalar(math.Max(ToFloat64(dstRGB.Z), ToFloat64(srcRGB.Z))),
 		}
 		return applyBlendedColor(dst, src, blendResult).Unpremultiply()
 	case BlendModeColorDodge:
-		blendFunc := func(d, s F32) F32 {
+		blendFunc := func(d, s Scalar) Scalar {
 			if d < kEhCloseEnough {
 				return 0.0
 			}
 			if 1.0-s < kEhCloseEnough {
 				return 1.0
 			}
-			return F32(math.Min(1.0, d.Float64()/(1.0-s.Float64())))
+			return Scalar(math.Min(1.0, ToFloat64(d)/(1.0-ToFloat64(s))))
 		}
-		blendResult := Vector3[F32]{
+		blendResult := Vector3[Scalar]{
 			X: blendFunc(dst.R, src.R),
 			Y: blendFunc(dst.G, src.G),
 			Z: blendFunc(dst.B, src.B),
 		}
 		return applyBlendedColor(dst, src, blendResult).Unpremultiply()
 	case BlendModeColorBurn:
-		blendFunc := func(d, s F32) F32 {
+		blendFunc := func(d, s Scalar) Scalar {
 			if 1.0-d < kEhCloseEnough {
 				return 1.0
 			}
 			if s < kEhCloseEnough {
 				return 0.0
 			}
-			return 1.0 - F32(math.Min(1.0, (1.0-d.Float64())/s.Float64()))
+			return 1.0 - Scalar(math.Min(1.0, (1.0-ToFloat64(d))/ToFloat64(s)))
 		}
-		blendResult := Vector3[F32]{
+		blendResult := Vector3[Scalar]{
 			X: blendFunc(dst.R, src.R),
 			Y: blendFunc(dst.G, src.G),
 			Z: blendFunc(dst.B, src.B),
@@ -435,7 +435,7 @@ func (c Color) Blend(src Color, mode BlendMode) Color {
 	case BlendModeHardLight:
 		dstRGB := toRGB(dst)
 		srcRGB := toRGB(src)
-		screenSrc := srcRGB.Scale(2).Sub(Vector3[F32]{X: 1, Y: 1, Z: 1})
+		screenSrc := srcRGB.Scale(2).Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1})
 		screen := screenSrc.Add(dstRGB).Sub(screenSrc.Mul(dstRGB))
 		multiply := dstRGB.Mul(srcRGB.Scale(2))
 		blendResult := componentChoose(multiply, screen, srcRGB, 0.5)
@@ -444,21 +444,21 @@ func (c Color) Blend(src Color, mode BlendMode) Color {
 		dstRGB := toRGB(dst)
 		srcRGB := toRGB(src)
 		D := componentChoose(
-			Vector3[F32]{
+			Vector3[Scalar]{
 				X: ((dstRGB.X*16-12)*dstRGB.X + 4) * dstRGB.X,
 				Y: ((dstRGB.Y*16-12)*dstRGB.Y + 4) * dstRGB.Y,
 				Z: ((dstRGB.Z*16-12)*dstRGB.Z + 4) * dstRGB.Z,
 			},
-			Vector3[F32]{
-				X: F32(math.Sqrt(dstRGB.X.Float64())),
-				Y: F32(math.Sqrt(dstRGB.Y.Float64())),
-				Z: F32(math.Sqrt(dstRGB.Z.Float64())),
+			Vector3[Scalar]{
+				X: Scalar(math.Sqrt(ToFloat64(dstRGB.X))),
+				Y: Scalar(math.Sqrt(ToFloat64(dstRGB.Y))),
+				Z: Scalar(math.Sqrt(ToFloat64(dstRGB.Z))),
 			},
 			dstRGB,
 			0.25,
 		)
-		case1 := dstRGB.Sub(Vector3[F32]{X: 1, Y: 1, Z: 1}.Sub(srcRGB.Scale(2)).Mul(dstRGB).Mul(Vector3[F32]{X: 1, Y: 1, Z: 1}.Sub(dstRGB)))
-		case2 := dstRGB.Add(srcRGB.Scale(2).Sub(Vector3[F32]{X: 1, Y: 1, Z: 1}).Mul(D.Sub(dstRGB)))
+		case1 := dstRGB.Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1}.Sub(srcRGB.Scale(2)).Mul(dstRGB).Mul(Vector3[Scalar]{X: 1, Y: 1, Z: 1}.Sub(dstRGB)))
+		case2 := dstRGB.Add(srcRGB.Scale(2).Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1}).Mul(D.Sub(dstRGB)))
 		blendResult := componentChoose(case1, case2, srcRGB, 0.5)
 		return applyBlendedColor(dst, src, blendResult).Unpremultiply()
 	case BlendModeDifference:
@@ -559,16 +559,16 @@ func (b BlendMode) String() string {
 }
 
 // Helper functions for HSV blend modes
-func luminosity(color Vector3[F32]) F32 {
+func luminosity(color Vector3[Scalar]) Scalar {
 	return color.X*0.3 + color.Y*0.59 + color.Z*0.11
 }
 
-func saturation(color Vector3[F32]) F32 {
+func saturation(color Vector3[Scalar]) Scalar {
 	return max(color.X, color.Y, color.Z) -
 		min(color.X, color.Y, color.Z)
 }
 
-func clipColor(color Vector3[F32]) Vector3[F32] {
+func clipColor(color Vector3[Scalar]) Vector3[Scalar] {
 	lum := luminosity(color)
 	mn := min(color.X, color.Y, color.Z)
 	mx := max(color.X, color.Y, color.Z)
@@ -578,7 +578,7 @@ func clipColor(color Vector3[F32]) Vector3[F32] {
 		diff := lum - mn + kEhCloseEnough
 		if diff != 0 {
 			factor := lum / diff
-			color = Vector3[F32]{
+			color = Vector3[Scalar]{
 				X: lum + (color.X-lum)*factor,
 				Y: lum + (color.Y-lum)*factor,
 				Z: lum + (color.Z-lum)*factor,
@@ -590,7 +590,7 @@ func clipColor(color Vector3[F32]) Vector3[F32] {
 		diff := mx - lum + kEhCloseEnough
 		if diff != 0 {
 			factor := (1 - lum) / diff
-			color = Vector3[F32]{
+			color = Vector3[Scalar]{
 				X: lum + (color.X-lum)*factor,
 				Y: lum + (color.Y-lum)*factor,
 				Z: lum + (color.Z-lum)*factor,
@@ -601,31 +601,31 @@ func clipColor(color Vector3[F32]) Vector3[F32] {
 	return color
 }
 
-func setLuminosity(color Vector3[F32], lum F32) Vector3[F32] {
+func setLuminosity(color Vector3[Scalar], lum Scalar) Vector3[Scalar] {
 	relativeLum := lum - luminosity(color)
-	return clipColor(Vector3[F32]{
+	return clipColor(Vector3[Scalar]{
 		X: color.X + relativeLum,
 		Y: color.Y + relativeLum,
 		Z: color.Z + relativeLum,
 	})
 }
 
-func setSaturation(color Vector3[F32], sat F32) Vector3[F32] {
+func setSaturation(color Vector3[Scalar], sat Scalar) Vector3[Scalar] {
 	mn := min(color.X, color.Y, color.Z)
 	mx := max(color.X, color.Y, color.Z)
 	if mn < mx {
 		factor := sat / (mx - mn)
-		return Vector3[F32]{
+		return Vector3[Scalar]{
 			X: (color.X - mn) * factor,
 			Y: (color.Y - mn) * factor,
 			Z: (color.Z - mn) * factor,
 		}
 	}
-	return Vector3[F32]{}
+	return Vector3[Scalar]{}
 }
 
-func componentChoose(a, b, value Vector3[F32], cutoff F32) Vector3[F32] {
-	result := Vector3[F32]{}
+func componentChoose(a, b, value Vector3[Scalar], cutoff Scalar) Vector3[Scalar] {
+	result := Vector3[Scalar]{}
 	if value.X > cutoff {
 		result.X = b.X
 	} else {
@@ -644,15 +644,15 @@ func componentChoose(a, b, value Vector3[F32], cutoff F32) Vector3[F32] {
 	return result
 }
 
-func toRGB(c Color) Vector3[F32] {
-	return Vector3[F32]{X: c.R, Y: c.G, Z: c.B}
+func toRGB(c Color) Vector3[Scalar] {
+	return Vector3[Scalar]{X: c.R, Y: c.G, Z: c.B}
 }
 
-func fromRGB(rgb Vector3[F32], alpha F32) Color {
+func fromRGB(rgb Vector3[Scalar], alpha Scalar) Color {
 	return Color{R: rgb.X, G: rgb.Y, B: rgb.Z, A: alpha}
 }
 
-func applyBlendedColor(dst, src Color, blendResult Vector3[F32]) Color {
+func applyBlendedColor(dst, src Color, blendResult Vector3[Scalar]) Color {
 	dst = dst.Premultiply()
 
 	// Use the blended color for areas where the source and destination colors overlap

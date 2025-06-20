@@ -12,11 +12,11 @@ const precision = 4
 // stay within a distance of "1/precision" pixels from the true curve.
 //
 // The scaleFactor should be the max basis XY of the current transform.
-func CubicSubdivisions[T Scalar](scaleFactor T, p0, p1, p2, p3 Point[T]) T {
-	k := scaleFactor.Float64() * 0.75 * precision
+func CubicSubdivisions[T Number](scaleFactor T, p0, p1, p2, p3 Point[T]) T {
+	k := ToFloat64(scaleFactor) * 0.75 * precision
 	a := p0.Sub(p1.Scale(2)).Add(p2).Abs()
 	b := p1.Sub(p2.Scale(2)).Add(p3).Abs()
-	return T(math.Sqrt(k * a.Max(b).Length().Float64()))
+	return T(math.Sqrt(k * ToFloat64(a.Max(b).Length())))
 }
 
 // QuadraticSubdivisions returns the minimum number of evenly spaced (in parametric sense)
@@ -24,34 +24,36 @@ func CubicSubdivisions[T Scalar](scaleFactor T, p0, p1, p2, p3 Point[T]) T {
 // stay within a distance of "1/precision" pixels from the true curve.
 //
 // The scaleFactor should be the max basis XY of the current transform.
-func QuadraticSubdivisions[T Scalar](scaleFactor T, p0, p1, p2 Point[T]) T {
-	k := scaleFactor.Float64() * 0.25 * precision
-	return T(math.Sqrt(k * p0.Sub(p1.Scale(2)).Add(p2).Length().Float64()))
+func QuadraticSubdivisions[T Number](scaleFactor T, p0, p1, p2 Point[T]) T {
+	k := ToFloat64(scaleFactor) * 0.25 * precision
+	return T(math.Sqrt(k * ToFloat64(p0.Sub(p1.Scale(2)).Add(p2).Length())))
 }
 
 // ConicSubdivisions returns Wang's formula specialized for a conic curve.
-func ConicSubdivisions[T Scalar](scaleFactor T, p0, p1, p2 Point[T], weight T) T {
+func ConicSubdivisions[T Number](scaleFactor T, p0, p1, p2 Point[T], weight T) T {
 	// Compute center of bounding box in projected space
-	c := (p0.Min(p1).Min(p2).Add(p0.Max(p1).Max(p2))).Scale(1 / 2)
+	c := (p0.Min(p1).Min(p2).Add(p0.Max(p1).Max(p2))).Scale(-2)
 	p0 = p0.Sub(c)
 	p1 = p1.Sub(c)
 	p2 = p2.Sub(c)
 
 	// Compute max length
-	maxLen := T(math.Sqrt(max(p0.Dot(p0).Float64(), p1.Dot(p1).Float64(), p2.Dot(p2).Float64())))
+	maxLen := T(math.Sqrt(
+		ToFloat64(max(p0.Dot(p0), p1.Dot(p1), p2.Dot(p2))),
+	))
 
 	// Compute forward differences
 	dp := p1.Scale(-2 * weight).Add(p0).Add(p2)
-	dw := T(math.Abs(-2*weight.Float64() + 2))
+	dw := T(math.Abs(-2*ToFloat64(weight) + 2))
 
 	// Compute numerator and denominator for parametric step size of
 	// linearization. Here, the epsilon referenced from the cited paper
 	// is 1/precision.
-	k := scaleFactor.Float64() * precision
+	k := ToFloat64(scaleFactor) * precision
 
-	rpMinus1 := max(0, maxLen.Float64()*k-1)
-	numer := math.Sqrt(dp.Dot(dp).Float64())*k + rpMinus1*dw.Float64()
-	denom := 4 * min(weight.Float64(), 1.0)
+	rpMinus1 := max(0, ToFloat64(maxLen)*k-1)
+	numer := math.Sqrt(ToFloat64(dp.Dot(dp)))*k + rpMinus1*ToFloat64(dw)
+	denom := 4 * min(ToFloat64(weight), 1.0)
 
 	// Number of segments = sqrt(numer / denom).
 	// This assumes parametric interval of curve being linearized is

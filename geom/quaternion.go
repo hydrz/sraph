@@ -8,14 +8,14 @@ import (
 // Quaternion represents a quaternion for 3D rotations.
 // Quaternions are used in 3D graphics and robotics to represent rotations
 // and orientations because they avoid gimbal lock and provide smooth interpolation.
-type Quaternion[T Scalar] struct {
+type Quaternion[T Number] struct {
 	X, Y, Z, W T
 }
 
 // NewQuaternionFromAxisAngle creates a new quaternion from an axis and angle.
-func NewQuaternionFromAxisAngle[T Scalar](axis Vector3[T], angle Radians) Quaternion[T] {
+func NewQuaternionFromAxisAngle[T Number](axis Vector3[T], angle Radians) Quaternion[T] {
 	axis = axis.Normalize()
-	halfAngle := angle.Float64() / 2
+	halfAngle := ToFloat64(angle) / 2
 	sinHalfAngle := T(math.Sin(halfAngle))
 	cosHalfAngle := T(math.Cos(halfAngle))
 	return Quaternion[T]{
@@ -67,10 +67,10 @@ func (q Quaternion[T]) Div(other Quaternion[T]) Quaternion[T] {
 
 // Eq checks if this quaternion is Eq to another.
 func (q Quaternion[T]) Eq(other Quaternion[T]) bool {
-	return ScalarEq(q.X, other.X) &&
-		ScalarEq(q.Y, other.Y) &&
-		ScalarEq(q.Z, other.Z) &&
-		ScalarEq(q.W, other.W)
+	return NearlyEqual(q.X, other.X) &&
+		NearlyEqual(q.Y, other.Y) &&
+		NearlyEqual(q.Z, other.Z) &&
+		NearlyEqual(q.W, other.W)
 }
 
 // Scale scales the quaternion by a scalar value and returns the result.
@@ -96,7 +96,7 @@ func (q Quaternion[T]) Neg() Quaternion[T] {
 
 // Length calculates the length (magnitude) of the quaternion.
 func (q Quaternion[T]) Length() T {
-	return T(math.Sqrt(float64(q.X*q.X + q.Y*q.Y + q.Z*q.Z + q.W*q.W)))
+	return T(math.Sqrt(ToFloat64(q.X*q.X + q.Y*q.Y + q.Z*q.Z + q.W*q.W)))
 }
 
 // Dot calculates the dot product of this quaternion with another.
@@ -145,8 +145,8 @@ func (q Quaternion[T]) Invert() Quaternion[T] {
 // Formula: q' = q * sin((1-t) * θ) / sin(θ) + other * sin(t * θ) / sin(θ)
 func (q Quaternion[T]) Slerp(other Quaternion[T], time float64) Quaternion[T] {
 	time = Clamp(time, 0.0, 1.0) // Ensure time is between 0 and 1
-	cosine := q.Dot(other).Float64()
-	if ScalarEq(T(cosine), 1.0) {
+	cosine := ToFloat64(q.Dot(other))
+	if NearlyEqual(T(cosine), 1.0) {
 		// Spherical Interpolation
 		sine := math.Sqrt(1.0 - cosine*cosine)
 		angle := math.Atan2(sine, cosine)

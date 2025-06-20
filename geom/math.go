@@ -2,7 +2,9 @@ package geom
 
 import (
 	"cmp"
+	"fmt"
 	"math"
+	"strconv"
 )
 
 const (
@@ -17,8 +19,21 @@ const (
 
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
 		~float32 | ~float64
+}
+
+// NearlyEqual compares two number values of type T with a tolerance.
+//
+// 0.001 for Float32 and 0.0000001 for Float64.
+func NearlyEqual[T Number](a, b T) bool {
+	if a == b {
+		return true
+	}
+	var tolerance = Epsilon32
+	if _, ok := any(a).(float64); ok {
+		tolerance = Epsilon64
+	}
+	return Abs(a-b) < T(tolerance)
 }
 
 // Abs returns the absolute value of the number.
@@ -27,6 +42,11 @@ func Abs[T Number](s T) T {
 		return -s
 	}
 	return s
+}
+
+// IsFinite checks if the number is finite.
+func IsFinite[T Number](s T) bool {
+	return !(math.IsNaN(ToFloat64(s)) || math.IsInf(ToFloat64(s), 0))
 }
 
 // Clamp clamps the value between min and max.
@@ -40,7 +60,22 @@ func Clamp[T cmp.Ordered](value, min, max T) T {
 	return value
 }
 
-// IsFinite checks if the number is finite.
-func IsFinite[T Number](s T) bool {
-	return !(math.IsNaN(float64(s)) || math.IsInf(float64(s), 0))
+type Floater interface {
+	Float64() float64
+}
+
+// ToFloat64 converts a number to float64.
+func ToFloat64[T Number](s T) float64 {
+	if f, ok := any(s).(Floater); ok {
+		return f.Float64()
+	}
+	return float64(s)
+}
+
+// ToString converts a number to its string representation.
+func ToString[T Number](s T) string {
+	if f, ok := any(s).(fmt.Stringer); ok {
+		return f.String()
+	}
+	return strconv.FormatFloat(ToFloat64(s), 'f', -1, 64)
 }

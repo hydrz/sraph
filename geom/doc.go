@@ -8,7 +8,7 @@
 //
 // The geom package includes:
 //
-//   - Scalar types: F32, F64, I32, I64, Int, I26_6 (fixed-point)
+//   - Scalar types: Scalar, F64, I32, I64, Int, I26_6 (fixed-point)
 //   - Angles: Radians and Degrees with automatic conversion
 //   - Points and Vectors: 2D, 3D, and 4D vectors with comprehensive operations
 //   - Geometric shapes: Rectangles, rounded rectangles, ellipses, superellipses
@@ -23,11 +23,11 @@
 //
 // All geometric types are generic over scalar types, ensuring type safety and performance:
 //
-//	type Point[T Scalar] struct {
+//	type Point[T Number] struct {
 //		X, Y T
 //	}
 //
-//	type Matrix[T Scalar] [16]T
+//	type Matrix[T Number] [16]T
 //
 // The Scalar interface constrains numeric types to those suitable for geometry calculations:
 //
@@ -41,24 +41,24 @@
 //
 // Creating and manipulating points:
 //
-//	p1 := geom.Pt[geom.F32](10, 20)
-//	p2 := geom.Pt[geom.F32](30, 40)
+//	p1 := geom.Pt[geom.Scalar](10, 20)
+//	p2 := geom.Pt[geom.Scalar](30, 40)
 //	distance := p1.Distance(p2)
 //	midpoint := p1.Lerp(p2, 0.5)
 //
 // Working with rectangles:
 //
-//	rect := geom.NewRectXYWH[geom.F32](0, 0, 100, 200)
+//	rect := geom.NewRectXYWH[geom.Scalar](0, 0, 100, 200)
 //	center := rect.Center()
 //	area := rect.Area()
 //	contains := rect.Contains(p1)
 //
 // Matrix transformations:
 //
-//	matrix := geom.NewMatrix[geom.F32]()
-//	matrix = matrix.Translate(geom.Vector3[geom.F32]{X: 50, Y: 25, Z: 0})
+//	matrix := geom.NewMatrix[geom.Scalar]()
+//	matrix = matrix.Translate(geom.Vector3[geom.Scalar]{X: 50, Y: 25, Z: 0})
 //	matrix = matrix.RotateZ(geom.Degrees(45).Radians())
-//	matrix = matrix.Scale(geom.Vector3[geom.F32]{X: 1.5, Y: 1.5, Z: 1})
+//	matrix = matrix.Scale(geom.Vector3[geom.Scalar]{X: 1.5, Y: 1.5, Z: 1})
 //	transformedPoint := matrix.Transform(p1)
 //
 // # Color Management
@@ -81,8 +81,8 @@
 //
 //	// Custom path receiver
 //	type MyReceiver struct{}
-//	func (r *MyReceiver) MoveTo(p geom.Point[geom.F32], willBeClosed bool) { ... }
-//	func (r *MyReceiver) LineTo(p geom.Point[geom.F32]) { ... }
+//	func (r *MyReceiver) MoveTo(p geom.Point[geom.Scalar], willBeClosed bool) { ... }
+//	func (r *MyReceiver) LineTo(p geom.Point[geom.Scalar]) { ... }
 //	// ... implement other PathReceiver methods
 //
 //	receiver := &MyReceiver{}
@@ -96,7 +96,7 @@
 //   - Matrix operations use column-major storage for GPU compatibility
 //   - Wang's formula provides optimal curve tessellation
 //   - Geometric queries are optimized for common cases
-//   - Type-specific optimizations for different scalar types
+//   - Type-specific optimizations for differenT Number types
 //
 // # Coordinate Systems
 //
@@ -112,13 +112,13 @@
 // Floating-point comparisons use configurable epsilon values:
 //
 //	const (
-//		Epsilon32 = 1e-3  // For F32 comparisons
+//		Epsilon32 = 1e-3  // For Scalar comparisons
 //		Epsilon64 = 1e-6  // For F64 comparisons
 //	)
 //
-// Use ScalarEq for safe floating-point equality:
+// Use NearlyEqual for safe floating-point equality:
 //
-//	if geom.ScalarEq(a, b) {
+//	if geom.NearlyEqual(a, b) {
 //		// Values are equal within tolerance
 //	}
 //
@@ -132,8 +132,8 @@
 //	goColor := color.ToRGBA()                      // color.RGBA
 //
 //	// From standard types
-//	rect := geom.NewRectFromGo[geom.F32](goRect)
-//	point := geom.NewPointFromGo[geom.F32](goPoint)
+//	rect := geom.NewRectFromGo[geom.Scalar](goRect)
+//	point := geom.NewPointFromGo[geom.Scalar](goPoint)
 //	color := geom.NewColorFromRGBA(goColor)
 //
 // For more detailed examples and API documentation, see the individual type documentation.

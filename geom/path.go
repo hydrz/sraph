@@ -22,7 +22,7 @@ const (
 
 // PathReceiver receives path segments (lines, curves, etc.) during path traversal.
 // Typically used by path iterators or renderers.
-type PathReceiver[T Scalar] interface {
+type PathReceiver[T Number] interface {
 	// MoveTo moves the current point to p2, starting a new subpath.
 	// willBeClosed indicates if the subpath will be closed.
 	MoveTo(p2 Point[T], willBeClosed bool)
@@ -42,7 +42,7 @@ type PathReceiver[T Scalar] interface {
 }
 
 // PathSource provides path data for traversal and property queries.
-type PathSource[T Scalar] interface {
+type PathSource[T Number] interface {
 	// FillType returns the fill rule for the path (e.g., non-zero, even-odd).
 	FillType() FillType
 	// Bounds returns the bounding rectangle of the path.
@@ -54,12 +54,12 @@ type PathSource[T Scalar] interface {
 }
 
 // NewRectPathSource creates a new PathSource for rectangles.
-func NewRectPathSource[T Scalar](rect Rect[T]) PathSource[T] {
+func NewRectPathSource[T Number](rect Rect[T]) PathSource[T] {
 	return &rectPathSource[T]{rect: rect}
 }
 
 // rectPathSource is a PathSource for rectangles.
-type rectPathSource[T Scalar] struct {
+type rectPathSource[T Number] struct {
 	rect Rect[T]
 }
 
@@ -99,12 +99,12 @@ func (r *rectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 }
 
 // NewEllipsePathSource creates a new PathSource for ellipses.
-func NewEllipsePathSource[T Scalar](bounds Rect[T]) PathSource[T] {
+func NewEllipsePathSource[T Number](bounds Rect[T]) PathSource[T] {
 	return &ellipsePathSource[T]{bounds: bounds}
 }
 
 // ellipsePathSource is a PathSource for ellipses.
-type ellipsePathSource[T Scalar] struct {
+type ellipsePathSource[T Number] struct {
 	bounds Rect[T]
 }
 

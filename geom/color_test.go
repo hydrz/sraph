@@ -197,7 +197,7 @@ func TestColor_Mul(t *testing.T) {
 
 func TestColor_Scale(t *testing.T) {
 	c := Color{R: 0.2, G: 0.4, B: 0.6, A: 0.8}
-	scale := F32(2.0)
+	scale := Scalar(2.0)
 	want := Color{R: 0.4, G: 0.8, B: 1.2, A: 1.6}
 
 	got := c.Scale(scale)
@@ -312,7 +312,7 @@ func TestColor_Unpremultiply(t *testing.T) {
 
 func TestColor_WithAlpha(t *testing.T) {
 	c := Color{R: 0.5, G: 0.6, B: 0.7, A: 1.0}
-	newAlpha := F32(0.3)
+	newAlpha := Scalar(0.3)
 	want := Color{R: 0.5, G: 0.6, B: 0.7, A: 0.3}
 
 	got := c.WithAlpha(newAlpha)
@@ -391,7 +391,7 @@ func TestColor_Lerp(t *testing.T) {
 
 	tests := []struct {
 		name string
-		t    F32
+		t    Scalar
 		want Color
 	}{
 		{
@@ -584,8 +584,8 @@ func absDiffUint32(a, b uint32) uint32 {
 
 // Check if color components are finite
 func (c Color) IsFinite() bool {
-	return !math.IsInf(float64(c.R), 0) && !math.IsNaN(float64(c.R)) &&
-		!math.IsInf(float64(c.G), 0) && !math.IsNaN(float64(c.G)) &&
-		!math.IsInf(float64(c.B), 0) && !math.IsNaN(float64(c.B)) &&
-		!math.IsInf(float64(c.A), 0) && !math.IsNaN(float64(c.A))
+	return !math.IsInf(ToFloat64(c.R), 0) && !math.IsNaN(ToFloat64(c.R)) &&
+		!math.IsInf(ToFloat64(c.G), 0) && !math.IsNaN(ToFloat64(c.G)) &&
+		!math.IsInf(ToFloat64(c.B), 0) && !math.IsNaN(ToFloat64(c.B)) &&
+		!math.IsInf(ToFloat64(c.A), 0) && !math.IsNaN(ToFloat64(c.A))
 }

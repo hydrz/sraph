@@ -7,7 +7,7 @@ import (
 // Size represents a 2D size (width and height) in graphics programming.
 // It is commonly used for describing the dimensions of rectangles, images, viewports, and other graphical objects.
 // The struct provides a set of arithmetic and utility operations for manipulating and querying size values.
-type Size[T Scalar] struct {
+type Size[T Number] struct {
 	Width, Height T
 }
 
@@ -76,7 +76,7 @@ func (s Size[T]) ScaleWH(width, height T) Size[T] {
 
 // Eq reports whether s and o are equal.
 func (s Size[T]) Eq(o Size[T]) bool {
-	return ScalarEq(s.Width, o.Width) && ScalarEq(s.Height, o.Height)
+	return NearlyEqual(s.Width, o.Width) && NearlyEqual(s.Height, o.Height)
 }
 
 // Min returns the size with the minimum width and height among all.
@@ -150,8 +150,8 @@ func (s Size[T]) Abs() Size[T] {
 // Useful for aligning to pixel boundaries or integer grid systems.
 func (s Size[T]) Floor() Size[T] {
 	return Size[T]{
-		Width:  T(math.Floor(s.Width.Float64())),
-		Height: T(math.Floor(s.Height.Float64())),
+		Width:  T(math.Floor(ToFloat64(s.Width))),
+		Height: T(math.Floor(ToFloat64(s.Height))),
 	}
 }
 
@@ -159,8 +159,8 @@ func (s Size[T]) Floor() Size[T] {
 // Useful for ensuring enough space is allocated, avoiding clipping.
 func (s Size[T]) Ceil() Size[T] {
 	return Size[T]{
-		Width:  T(math.Ceil(s.Width.Float64())),
-		Height: T(math.Ceil(s.Height.Float64())),
+		Width:  T(math.Ceil(ToFloat64(s.Width))),
+		Height: T(math.Ceil(ToFloat64(s.Height))),
 	}
 }
 
@@ -168,8 +168,8 @@ func (s Size[T]) Ceil() Size[T] {
 // Used for snapping to the nearest pixel or grid unit.
 func (s Size[T]) Round() Size[T] {
 	return Size[T]{
-		Width:  T(math.Round(s.Width.Float64())),
-		Height: T(math.Round(s.Height.Float64())),
+		Width:  T(math.Round(ToFloat64(s.Width))),
+		Height: T(math.Round(ToFloat64(s.Height))),
 	}
 }
 
@@ -177,7 +177,7 @@ func (s Size[T]) Round() Size[T] {
 // Used to detect degenerate or empty objects.
 func (s Size[T]) IsZero() bool {
 	var zero T
-	return ScalarEq(s.Width, zero) && ScalarEq(s.Height, zero)
+	return NearlyEqual(s.Width, zero) && NearlyEqual(s.Height, zero)
 }
 
 // IsFinite returns true if both width and height are finite.
@@ -189,13 +189,13 @@ func (s Size[T]) IsFinite() bool {
 // IsInfinite returns true if either width or height is infinite.
 // Can be used to represent unbounded or unconstrained objects.
 func (s Size[T]) IsInfinite() bool {
-	return math.IsInf(s.Width.Float64(), 0) || math.IsInf(s.Height.Float64(), 0)
+	return math.IsInf(ToFloat64(s.Width), 0) || math.IsInf(ToFloat64(s.Height), 0)
 }
 
 // IsSquare returns true if width and height are equal.
 // Useful for aspect ratio checks, e.g., for icons or tiles.
 func (s Size[T]) IsSquare() bool {
-	return ScalarEq(s.Width, s.Height)
+	return NearlyEqual(s.Width, s.Height)
 }
 
 // MipCount returns the mipmap count for the size.
@@ -218,5 +218,5 @@ func (s Size[T]) MipCount() int {
 
 // String returns a string representation of the size, like "(width, height)".
 func (s Size[T]) String() string {
-	return "(" + s.Width.String() + ", " + s.Height.String() + ")"
+	return "(" + ToString(s.Width) + ", " + ToString(s.Height) + ")"
 }

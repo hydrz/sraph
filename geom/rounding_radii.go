@@ -2,7 +2,7 @@ package geom
 
 // RoundingRadii defines the radii for the four corners of a rectangle.
 // It is commonly used for rounded rectangle rendering and hit-testing in graphics.
-type RoundingRadii[T Scalar] struct {
+type RoundingRadii[T Number] struct {
 	TopLeft     Size[T]
 	TopRight    Size[T]
 	BottomLeft  Size[T]
@@ -10,7 +10,7 @@ type RoundingRadii[T Scalar] struct {
 }
 
 // NewRoundingRadii creates a RoundingRadii with all four corners set to the same radius.
-func NewRoundingRadii[T Scalar](radius T) RoundingRadii[T] {
+func NewRoundingRadii[T Number](radius T) RoundingRadii[T] {
 	sz := Size[T]{radius, radius}
 	return RoundingRadii[T]{
 		TopLeft:     sz,
@@ -21,7 +21,7 @@ func NewRoundingRadii[T Scalar](radius T) RoundingRadii[T] {
 }
 
 // NewRoundingRadiiLTRB creates a RoundingRadii with specified radii for each corner.
-func NewRoundingRadiiLTRB[T Scalar](left, top, right, bottom T) RoundingRadii[T] {
+func NewRoundingRadiiLTRB[T Number](left, top, right, bottom T) RoundingRadii[T] {
 	return RoundingRadii[T]{
 		TopLeft:     Size[T]{left, top},
 		TopRight:    Size[T]{right, top},
@@ -31,7 +31,7 @@ func NewRoundingRadiiLTRB[T Scalar](left, top, right, bottom T) RoundingRadii[T]
 }
 
 // NewRoundingRadiiFromSizes creates a RoundingRadii with all four corners set to the same Size.
-func NewRoundingRadiiFromSizes[T Scalar](sz Size[T]) RoundingRadii[T] {
+func NewRoundingRadiiFromSizes[T Number](sz Size[T]) RoundingRadii[T] {
 	return RoundingRadii[T]{
 		TopLeft:     sz,
 		TopRight:    sz,

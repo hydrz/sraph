@@ -7,7 +7,7 @@ const kernelRadiusPerSigma = 1.7320508075688772935274463415058723669428052538103
 // Sigma represents the standard deviation ("sigma") for Gaussian distributions in filter operations.
 // It is measured in terms of the local space pixel grid of the filter input.
 // Sigma determines how wide the Gaussian distribution stretches.
-type Sigma[T Scalar] struct {
+type Sigma[T Number] struct {
 	sigma T
 }
 
@@ -15,28 +15,28 @@ type Sigma[T Scalar] struct {
 // For Gaussian blur kernels, the radius has a linear relationship with Sigma.
 // Returns 0 if Sigma is not greater than 0.5.
 func (s Sigma[T]) ToRadians() Radians {
-	if s.sigma.Float64() > 0.5 {
-		return Radians((s.sigma.Float64() - 0.5) * kernelRadiusPerSigma)
+	if ToFloat64(s.sigma) > 0.5 {
+		return Radians((ToFloat64(s.sigma) - 0.5) * kernelRadiusPerSigma)
 	}
 	return Radians(0.0)
 }
 
 // NewSigma creates a Sigma value from a given kernel radius in radians.
 // If the radius is negative, returns 0.
-func NewSigma[T Scalar](radius Radians) Sigma[T] {
-	if radius.Float64() < 0.0 {
+func NewSigma[T Number](radius Radians) Sigma[T] {
+	if ToFloat64(radius) < 0.0 {
 		return Sigma[T]{sigma: T(0.0)}
 	}
 
-	return Sigma[T]{sigma: T(radius.Float64()/kernelRadiusPerSigma + 0.5)}
+	return Sigma[T]{sigma: T(ToFloat64(radius)/kernelRadiusPerSigma + 0.5)}
 }
 
 // Float64 implements Scalar for Sigma.
 func (s Sigma[T]) Float64() float64 {
-	return s.sigma.Float64()
+	return ToFloat64(s.sigma)
 }
 
 // String returns a string representation of the Sigma value.
 func (s Sigma[T]) String() string {
-	return strconv.FormatFloat(s.sigma.Float64(), 'f', -1, 64) + "σ"
+	return strconv.FormatFloat(ToFloat64(s.sigma), 'f', -1, 64) + "σ"
 }

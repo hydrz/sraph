@@ -9,7 +9,7 @@ func TestCreateGradientBuffer_TwoColors(t *testing.T) {
 		{R: 1.0, G: 0.0, B: 0.0, A: 1.0}, // Red
 		{R: 0.0, G: 1.0, B: 0.0, A: 1.0}, // Green
 	}
-	stops := []F32{0.0, 1.0}
+	stops := []Scalar{0.0, 1.0}
 
 	result := CreateGradientBuffer(colors, stops)
 
@@ -42,7 +42,7 @@ func TestCreateGradientBuffer_MultipleColors(t *testing.T) {
 		{R: 0.0, G: 1.0, B: 0.0, A: 1.0}, // Green
 		{R: 0.0, G: 0.0, B: 1.0, A: 1.0}, // Blue
 	}
-	stops := []F32{0.0, 0.5, 1.0}
+	stops := []Scalar{0.0, 0.5, 1.0}
 
 	result := CreateGradientBuffer(colors, stops)
 
@@ -66,7 +66,7 @@ func TestCreateGradientBuffer_Interpolation(t *testing.T) {
 		{R: 0.0, G: 0.0, B: 0.0, A: 1.0}, // Black
 		{R: 1.0, G: 1.0, B: 1.0, A: 1.0}, // White
 	}
-	stops := []F32{0.0, 1.0}
+	stops := []Scalar{0.0, 1.0}
 
 	result := CreateGradientBuffer(colors, stops)
 
@@ -96,7 +96,7 @@ func TestCreateGradientBuffer_CloseStops(t *testing.T) {
 		{R: 0.0, G: 1.0, B: 0.0, A: 1.0},
 		{R: 0.0, G: 0.0, B: 1.0, A: 1.0},
 	}
-	stops := []F32{0.0, 0.0001, 1.0} // Very close stops
+	stops := []Scalar{0.0, 0.0001, 1.0} // Very close stops
 
 	result := CreateGradientBuffer(colors, stops)
 
@@ -117,7 +117,7 @@ func TestCreateGradientBuffer_EmptyInput(t *testing.T) {
 		}
 	}()
 
-	CreateGradientBuffer([]Color{}, []F32{})
+	CreateGradientBuffer([]Color{}, []Scalar{})
 }
 
 func TestCreateGradientBuffer_MismatchedLength(t *testing.T) {
@@ -128,7 +128,7 @@ func TestCreateGradientBuffer_MismatchedLength(t *testing.T) {
 	}()
 
 	colors := []Color{{R: 1, G: 0, B: 0, A: 1}}
-	stops := []F32{0.0, 1.0} // Different length
+	stops := []Scalar{0.0, 1.0} // Different length
 
 	CreateGradientBuffer(colors, stops)
 }
@@ -190,8 +190,8 @@ func TestLinearGradient_ToBuffer_EmptyStops(t *testing.T) {
 }
 
 func TestNewRadialGradient(t *testing.T) {
-	center := Point[F32]{0.5, 0.5}
-	radius := F32(1.0)
+	center := Point[Scalar]{0.5, 0.5}
+	radius := Scalar(1.0)
 	stops := []GradientStop{
 		{Color: ColorWhite(), Position: 0.0},
 		{Color: ColorBlack(), Position: 1.0},
@@ -213,7 +213,7 @@ func TestNewRadialGradient(t *testing.T) {
 }
 
 func TestRadialGradient_ToBuffer(t *testing.T) {
-	center := Point[F32]{0, 0}
+	center := Point[Scalar]{0, 0}
 	stops := []GradientStop{
 		{Color: ColorRed(), Position: 0.0},
 		{Color: ColorBlue(), Position: 1.0},
@@ -234,7 +234,7 @@ func TestRadialGradient_ToBuffer(t *testing.T) {
 // Benchmark tests
 func BenchmarkCreateGradientBuffer_TwoColors(b *testing.B) {
 	colors := []Color{ColorRed(), ColorBlue()}
-	stops := []F32{0.0, 1.0}
+	stops := []Scalar{0.0, 1.0}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -244,7 +244,7 @@ func BenchmarkCreateGradientBuffer_TwoColors(b *testing.B) {
 
 func BenchmarkCreateGradientBuffer_MultipleColors(b *testing.B) {
 	colors := []Color{ColorRed(), ColorGreen(), ColorBlue(), ColorYellow(), ColorCyan()}
-	stops := []F32{0.0, 0.25, 0.5, 0.75, 1.0}
+	stops := []Scalar{0.0, 0.25, 0.5, 0.75, 1.0}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -256,11 +256,11 @@ func BenchmarkCreateGradientBuffer_LargeGradient(b *testing.B) {
 	// Create a gradient with many stops
 	numStops := 20
 	colors := make([]Color, numStops)
-	stops := make([]F32, numStops)
+	stops := make([]Scalar, numStops)
 
 	for i := 0; i < numStops; i++ {
 		colors[i] = RandomColor()
-		stops[i] = F32(i) / F32(numStops-1)
+		stops[i] = Scalar(i) / Scalar(numStops-1)
 	}
 
 	b.ResetTimer()
@@ -277,7 +277,7 @@ func TestGradient_EdgeCases(t *testing.T) {
 			{R: 1, G: 0, B: 0, A: 0.0}, // Transparent red
 			{R: 1, G: 0, B: 0, A: 1.0}, // Opaque red
 		}
-		stops := []F32{0.0, 1.0}
+		stops := []Scalar{0.0, 1.0}
 
 		result := CreateGradientBuffer(colors, stops)
 		if !result.IsValid() {
@@ -288,7 +288,7 @@ func TestGradient_EdgeCases(t *testing.T) {
 	// Test with identical stops
 	t.Run("identical_stops", func(t *testing.T) {
 		colors := []Color{ColorRed(), ColorGreen(), ColorBlue()}
-		stops := []F32{0.5, 0.5, 0.5} // All same position
+		stops := []Scalar{0.5, 0.5, 0.5} // All same position
 
 		result := CreateGradientBuffer(colors, stops)
 		// Should handle gracefully

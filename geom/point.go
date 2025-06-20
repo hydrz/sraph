@@ -5,19 +5,19 @@ import (
 	"math"
 )
 
-type Quad[T Scalar] = [4]Point[T]
+type Quad[T Number] = [4]Point[T]
 
 // Point represents a 2D point with X and Y coordinates.
-type Point[T Scalar] struct {
+type Point[T Number] struct {
 	X T
 	Y T
 }
 
-func Pt[T Scalar](x, y T) Point[T] {
+func Pt[T Number](x, y T) Point[T] {
 	return Point[T]{X: x, Y: y}
 }
 
-func NewPointFromGo[T Scalar](p image.Point) Point[T] {
+func NewPointFromGo[T Number](p image.Point) Point[T] {
 	return Point[T]{X: T(p.X), Y: T(p.Y)}
 }
 
@@ -89,30 +89,30 @@ func (p Point[T]) Abs() Point[T] {
 // Floor returns the point with floor applied to each coordinate.
 func (p Point[T]) Floor() Point[T] {
 	return Point[T]{
-		X: T(math.Floor(float64(p.X))),
-		Y: T(math.Floor(float64(p.Y))),
+		X: T(math.Floor(ToFloat64(p.X))),
+		Y: T(math.Floor(ToFloat64(p.Y))),
 	}
 }
 
 // Ceil returns the point with ceil applied to each coordinate.
 func (p Point[T]) Ceil() Point[T] {
 	return Point[T]{
-		X: T(math.Ceil(float64(p.X))),
-		Y: T(math.Ceil(float64(p.Y))),
+		X: T(math.Ceil(ToFloat64(p.X))),
+		Y: T(math.Ceil(ToFloat64(p.Y))),
 	}
 }
 
 // Round returns the point with round applied to each coordinate.
 func (p Point[T]) Round() Point[T] {
 	return Point[T]{
-		X: T(math.Round(float64(p.X))),
-		Y: T(math.Round(float64(p.Y))),
+		X: T(math.Round(ToFloat64(p.X))),
+		Y: T(math.Round(ToFloat64(p.Y))),
 	}
 }
 
 // Eq reports whether p and o are equal.
 func (p Point[T]) Eq(o Point[T]) bool {
-	return ScalarEq(p.X, o.X) && ScalarEq(p.Y, o.Y)
+	return NearlyEqual(p.X, o.X) && NearlyEqual(p.Y, o.Y)
 }
 
 // IsFinite returns true if both coordinates are finite.
@@ -138,8 +138,8 @@ func (p Point[T]) Scale(scale T) Point[T] {
 
 // Rotate rotates this point around the origin by the given angle in radians.
 func (p Point[T]) Rotate(angle Radians) Point[T] {
-	cos := T(math.Cos(angle.Float64()))
-	sin := T(math.Sin(angle.Float64()))
+	cos := T(math.Cos(ToFloat64(angle)))
+	sin := T(math.Sin(ToFloat64(angle)))
 	return Point[T]{
 		X: p.X*cos - p.Y*sin,
 		Y: p.X*sin + p.Y*cos,
@@ -169,14 +169,14 @@ func (p Point[T]) Cross(o Point[T]) T {
 
 // AngleTo returns the angle in radians between this point and another.
 func (p Point[T]) AngleTo(o Point[T]) Radians {
-	return Radians(math.Atan2(p.Cross(o).Float64(), p.Dot(o).Float64()))
+	return Radians(math.Atan2(ToFloat64(p.Cross(o)), ToFloat64(p.Dot(o))))
 }
 
 // Distance returns the Euclidean distance between this point and another.
 func (p Point[T]) Distance(o Point[T]) T {
 	dx := p.X - o.X
 	dy := p.Y - o.Y
-	return T(math.Sqrt(float64(dx*dx + dy*dy)))
+	return T(math.Sqrt(ToFloat64(dx*dx + dy*dy)))
 }
 
 // DistanceSquared returns the squared Euclidean distance between this point and another.
@@ -188,7 +188,7 @@ func (p Point[T]) DistanceSquared(o Point[T]) T {
 
 // Length returns the distance from this point to the origin (0,0).
 func (p Point[T]) Length() T {
-	return T(math.Sqrt(float64(p.X*p.X + p.Y*p.Y)))
+	return T(math.Sqrt(ToFloat64(p.X*p.X + p.Y*p.Y)))
 }
 
 // LengthSquared returns the squared distance from this point to the origin (0,0).
@@ -213,10 +213,10 @@ func (p Point[T]) Lerp(o Point[T], t T) Point[T] {
 
 // String returns a string representation of the point, like "(x, y)".
 func (p Point[T]) String() string {
-	return "(" + p.X.String() + ", " + p.Y.String() + ")"
+	return "(" + ToString(p.X) + ", " + ToString(p.Y) + ")"
 }
 
 // ToGo converts this point to an image.Point.
 func (p Point[T]) ToGo() image.Point {
-	return image.Point{X: int(p.X.Float64()), Y: int(p.Y.Float64())}
+	return image.Point{X: int(ToFloat64(p.X)), Y: int(ToFloat64(p.Y))}
 }

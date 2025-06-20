@@ -23,12 +23,12 @@ import (
 //
 // For more details, see:
 //
-//	https://learn.microsoft.com/en-us/windows/win32/direct3d9/projection-transform
+//	https://learn.microsoft.com/zh-cn/windows/win32/learnwin32/appendix--matrix-transforms
 //	https://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
-type Matrix[T Scalar] [16]T
+type Matrix[T Number] [16]T
 
 // NewMatrix creates a new identity matrix.
-func NewMatrix[T Scalar]() Matrix[T] {
+func NewMatrix[T Number]() Matrix[T] {
 	return Matrix[T]{
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -98,7 +98,7 @@ func (m Matrix[T]) Mul(o Matrix[T]) Matrix[T] {
 func (m Matrix[T]) Eq(other Matrix[T]) bool {
 	o := other
 	for i := 0; i < 16; i++ {
-		if !ScalarEq(m[i], o[i]) {
+		if !NearlyEqual(m[i], o[i]) {
 			return false
 		}
 	}
@@ -121,9 +121,9 @@ func (m Matrix[T]) IsFinite() bool {
 // Affine transformations preserve parallel lines and ratios of distances along lines.
 // They include translation, rotation, scaling, and shearing, but not perspective projection.
 func (m Matrix[T]) IsAffine() bool {
-	return ScalarEq(m[2], 0) && ScalarEq(m[3], 0) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
-		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && ScalarEq(m[10], 1) && ScalarEq(m[11], 0) &&
-		ScalarEq(m[14], 0) && ScalarEq(m[15], 1)
+	return NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
+		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && NearlyEqual(m[10], 1) && NearlyEqual(m[11], 0) &&
+		NearlyEqual(m[14], 0) && NearlyEqual(m[15], 1)
 }
 
 // IsIdentity returns true if the matrix is an identity matrix.
@@ -134,10 +134,10 @@ func (m Matrix[T]) IsAffine() bool {
 //   - Shears are 0.
 func (m Matrix[T]) IsIdentity() bool {
 
-	return ScalarEq(m[0], 1) && ScalarEq(m[1], 0) && ScalarEq(m[2], 0) && ScalarEq(m[3], 0) &&
-		ScalarEq(m[4], 0) && ScalarEq(m[5], 1) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
-		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && ScalarEq(m[10], 1) && ScalarEq(m[11], 0) &&
-		ScalarEq(m[12], 0) && ScalarEq(m[13], 0) && ScalarEq(m[14], 0) && ScalarEq(m[15], 1)
+	return NearlyEqual(m[0], 1) && NearlyEqual(m[1], 0) && NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) &&
+		NearlyEqual(m[4], 0) && NearlyEqual(m[5], 1) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
+		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && NearlyEqual(m[10], 1) && NearlyEqual(m[11], 0) &&
+		NearlyEqual(m[12], 0) && NearlyEqual(m[13], 0) && NearlyEqual(m[14], 0) && NearlyEqual(m[15], 1)
 }
 
 // IsInvertible returns true if the matrix is invertible (determinant != 0).
@@ -175,21 +175,21 @@ func (m Matrix[T]) Determinant() T {
 // Perspective transformations cause parallel lines to converge at vanishing points.
 // The bottom row [a b c d] where a≠0 or b≠0 or c≠0 or d≠1 indicates perspective.
 func (m Matrix[T]) HasPerspective() bool {
-	return !ScalarEq(m[3], 0) || !ScalarEq(m[7], 0) || !ScalarEq(m[11], 0) || !ScalarEq(m[15], 1)
+	return !NearlyEqual(m[3], 0) || !NearlyEqual(m[7], 0) || !NearlyEqual(m[11], 0) || !NearlyEqual(m[15], 1)
 }
 
 // HasPerspective2D returns true if the matrix contains a 2D perspective comp1nt.
 // 2D perspective affects the homogeneous coordinate in 2D transformations.
 // This is less common than 3D perspective but used in some 2D effects.
 func (m Matrix[T]) HasPerspective2D() bool {
-	return !ScalarEq(m[3], 0) || !ScalarEq(m[7], 0) || !ScalarEq(m[15], 1)
+	return !NearlyEqual(m[3], 0) || !NearlyEqual(m[7], 0) || !NearlyEqual(m[15], 1)
 }
 
 // HasTranslation returns true if the matrix contains a translation comp1nt (non0 last column except [0 0 0 1]).
 // Translation moves points by adding a vector to their coordinates.
 // If a matrix has translation, it cannot be purely rotational or uniform scaling.
 func (m Matrix[T]) HasTranslation() bool {
-	return !ScalarEq(m[12], 0) || !ScalarEq(m[13], 0)
+	return !NearlyEqual(m[12], 0) || !NearlyEqual(m[13], 0)
 }
 
 // IsAxisAligned returns true if the matrix is axis-aligned (no rotation or shear).
@@ -202,9 +202,9 @@ func (m Matrix[T]) IsAxisAligned() bool {
 
 	// Check if all three basis vectors are aligned to an axis
 	v := [9]bool{
-		!ScalarEq(m[0], 0), !ScalarEq(m[1], 0), !ScalarEq(m[2], 0),
-		!ScalarEq(m[4], 0), !ScalarEq(m[5], 0), !ScalarEq(m[6], 0),
-		!ScalarEq(m[8], 0), !ScalarEq(m[9], 0), !ScalarEq(m[10], 0),
+		!NearlyEqual(m[0], 0), !NearlyEqual(m[1], 0), !NearlyEqual(m[2], 0),
+		!NearlyEqual(m[4], 0), !NearlyEqual(m[5], 0), !NearlyEqual(m[6], 0),
+		!NearlyEqual(m[8], 0), !NearlyEqual(m[9], 0), !NearlyEqual(m[10], 0),
 	}
 
 	bti := func(b bool) int {
@@ -238,46 +238,45 @@ func (m Matrix[T]) IsAxisAligned2D() bool {
 		return false
 	}
 
-	if ScalarEq(m[1], 0) && ScalarEq(m[4], 0) {
+	if NearlyEqual(m[1], 0) && NearlyEqual(m[4], 0) {
 		return true
 	}
-	if ScalarEq(m[0], 0) && ScalarEq(m[5], 0) {
+	if NearlyEqual(m[0], 0) && NearlyEqual(m[5], 0) {
 		return true
 	}
 	return false
 }
 
 // IsTranslationOnly returns true if the matrix contains only translation (no scale, rotation, shear, or perspective).
-// This checks if the matrix is of the form:
-// [ 1 0 0 tx ]
-// [ 0 1 0 ty ]
-// [ 0 0 1 tz ]
-// [ 0 0 0 1 ]
 func (m Matrix[T]) IsTranslationOnly() bool {
+	// This checks if the matrix is of the form:
+	// [ 1 0 0 tx ]
+	// [ 0 1 0 ty ]
+	// [ 0 0 1 tz ]
+	// [ 0 0 0 1 ]
 
-	return ScalarEq(m[0], 1) && ScalarEq(m[1], 0) && ScalarEq(m[2], 0) && ScalarEq(m[3], 0) &&
-		ScalarEq(m[4], 0) && ScalarEq(m[5], 1) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
-		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && ScalarEq(m[10], 1) && ScalarEq(m[11], 0) &&
-		ScalarEq(m[15], 1)
+	return NearlyEqual(m[0], 1) && NearlyEqual(m[1], 0) && NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) &&
+		NearlyEqual(m[4], 0) && NearlyEqual(m[5], 1) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
+		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && NearlyEqual(m[10], 1) && NearlyEqual(m[11], 0) &&
+		NearlyEqual(m[15], 1)
 }
 
 // IsTranslationScaleOnly returns true if the matrix contains only translation and scale.
-// This checks if the matrix is of the form:
-// [ sx 0 0 tx ]
-// [ 0 sy 0 ty ]
-// [ 0 0 sz tz ]
-// [ 0 0 0 1 ]
-// where sx, sy, sz are scale factors.
 func (m Matrix[T]) IsTranslationScaleOnly() bool {
+	// This checks if the matrix is of the form:
+	// [ sx 0 0 tx ]
+	// [ 0 sy 0 ty ]
+	// [ 0 0 sz tz ]
+	// [ 0 0 0 1 ]
+	// where sx, sy, sz are scale factors.
 
-	return !ScalarEq(m[0], 0) && ScalarEq(m[1], 0) && ScalarEq(m[2], 0) && ScalarEq(m[3], 0) &&
-		ScalarEq(m[4], 0) && !ScalarEq(m[5], 0) && ScalarEq(m[6], 0) && ScalarEq(m[7], 0) &&
-		ScalarEq(m[8], 0) && ScalarEq(m[9], 0) && !ScalarEq(m[10], 0) && ScalarEq(m[11], 0) &&
-		ScalarEq(m[15], 1)
+	return !NearlyEqual(m[0], 0) && NearlyEqual(m[1], 0) && NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) &&
+		NearlyEqual(m[4], 0) && !NearlyEqual(m[5], 0) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
+		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && !NearlyEqual(m[10], 0) && NearlyEqual(m[11], 0) &&
+		NearlyEqual(m[15], 1)
 }
 
 // Transpose returns the transpose of the matrix.
-// Formula: C[i][j] = A[j][i] for all i,j
 func (m Matrix[T]) Transpose() Matrix[T] {
 	return Matrix[T]{
 		m[0], m[4], m[8], m[12],
@@ -402,11 +401,11 @@ func (m Matrix[T]) MaxBasisLengthXY() T {
 	// for translate/scale only matrices. This substantially limits the range of
 	// precision for small and large scales. Instead, check for the common cases
 	// and directly return the max scaling factor.
-	if ScalarEq(m[1], 0) && ScalarEq(m[4], 0) {
+	if NearlyEqual(m[1], 0) && NearlyEqual(m[4], 0) {
 		return max(Abs(m[0]), Abs(m[5]))
 	}
 
-	return T(math.Sqrt(float64(
+	return T(math.Sqrt(ToFloat64(
 		max(m[0]*m[0]+m[1]*m[1], m[4]*m[4]+m[5]*m[5]),
 	)))
 }
@@ -444,12 +443,6 @@ func (m Matrix[T]) GetDirectionScale(dir Vector3[T]) T {
 // - [Scalar]
 // - [Vector2]
 // - [Vector3]
-//
-// The resulting matrix is:
-// [ sx  0   0   0 ]
-// [  0 sy   0   0 ]
-// [  0  0   sz  0 ]
-// [  0  0   0   1 ]
 func (m Matrix[T]) Scale(s any) Matrix[T] {
 	var v Vector3[T]
 	switch s := s.(type) {
@@ -473,16 +466,10 @@ func (m Matrix[T]) Scale(s any) Matrix[T] {
 
 // Translate moves the matrix by a given vector.
 //
-// Typical v types include:
+// Typical t types include:
 // - [Scalar]
 // - [Vector2]
 // - [Vector3]
-//
-// The resulting matrix is:
-// [ 1   0   0   0 ]
-// [ 0   1   0   0 ]
-// [ 0   0   1   0 ]
-// [ tx  ty  tz  1 ]
 func (m Matrix[T]) Translate(t any) Matrix[T] {
 	var v Vector3[T]
 	switch t := t.(type) {
@@ -510,12 +497,6 @@ func (m Matrix[T]) Translate(t any) Matrix[T] {
 // - [Scalar]
 // - [Vector2]
 // - [Vector3]
-//
-// The resulting matrix is:
-// [ 1   sy  0   0 ]
-// [ sx  1   0   0 ]
-// [ 0   0   1   0 ]
-// [ 0   0   0   1 ]
 func (m Matrix[T]) Skew(s any) Matrix[T] {
 	var v Vector3[T]
 	switch s := s.(type) {
@@ -539,12 +520,6 @@ func (m Matrix[T]) Skew(s any) Matrix[T] {
 }
 
 // RotateX creates a rotation matrix around the X axis.
-//
-// The resulting matrix is:
-// [ 1    0       0    0 ]
-// [ 0  cosθ   -sinθ  0 ]
-// [ 0  sinθ    cosθ  0 ]
-// [ 0    0       0   1 ]
 func (m Matrix[T]) RotateX(angle Radians) Matrix[T] {
 	cos, sin := m.CosSin(angle)
 	rot := Matrix[T]{
@@ -557,12 +532,6 @@ func (m Matrix[T]) RotateX(angle Radians) Matrix[T] {
 }
 
 // RotateY creates a rotation matrix around the Y axis.
-//
-// The resulting matrix is:
-// [ cosθ  0  sinθ  0 ]
-// [   0   1   0    0 ]
-// [ -sinθ 0  cosθ  0 ]
-// [   0   0   0    1 ]
 func (m Matrix[T]) RotateY(angle Radians) Matrix[T] {
 	cos, sin := m.CosSin(angle)
 	rot := Matrix[T]{
@@ -575,12 +544,6 @@ func (m Matrix[T]) RotateY(angle Radians) Matrix[T] {
 }
 
 // RotateZ creates a rotation matrix around the Z axis.
-//
-// The resulting matrix is:
-// [ cosθ  -sinθ  0  0 ]
-// [ sinθ   cosθ  0  0 ]
-// [   0      0   1  0 ]
-// [   0      0   0  1 ]
 func (m Matrix[T]) RotateZ(angle Radians) Matrix[T] {
 	cos, sin := m.CosSin(angle)
 	rot := Matrix[T]{
@@ -596,15 +559,10 @@ func (m Matrix[T]) RotateZ(angle Radians) Matrix[T] {
 //
 // The resulting matrix rotates points around the specified axis by the given angle.
 // The axis vector should be normalized before calling this function.
-// The resulting matrix is:
-// [ cosθ + (1-cosθ)*vx^2   (1-cosθ)*vx*vy - vz*sinθ  (1-cosθ)*vx*vz + vy*sinθ  0 ]
-// [ (1-cosθ)*vx*vy + vz*sinθ  cosθ + (1-cosθ)*vy^2   (1-cosθ)*vy*vz - vx*sinθ  0 ]
-// [ (1-cosθ)*vx*vz - vy*sinθ  (1-cosθ)*vy*vz + vx*sinθ  cosθ + (1-cosθ)*vz^2   0 ]
-// [ 0  0  0  1 ]
 func (m Matrix[T]) Rotate(angle Radians, axis Vector3[T]) Matrix[T] {
 	v := axis.Normalize()
 	cos, sin := m.CosSin(angle)
-	cosp := T(1) - cos
+	cosp := 1 - cos
 	rm := Matrix[T]{
 		cos + cosp*v.X*v.X,
 		cosp*v.X*v.Y + v.Z*sin,
@@ -627,14 +585,6 @@ func (m Matrix[T]) Rotate(angle Radians, axis Vector3[T]) Matrix[T] {
 //
 // The quaternion should be normalized before calling this function.
 // The resulting matrix applies the rotation defined by the quaternion to points in 3D space.
-// The quaternion is represented as:
-// Quaternion{X: x, Y: y, Z: z, W: w}
-//
-// The resulting matrix is:
-// [ 1 - 2*(y^2 + z^2)   2*(x*y + z*w)   2*(x*z - y*w)  0 ]
-// [ 2*(x*y - z*w)   1 - 2*(x^2 + z^2)   2*(y*z + x*w)  0 ]
-// [ 2*(x*z + y*w)   2*(y*z - x*w)   1 - 2*(x^2 + y^2)  0 ]
-// [ 0   0   0   1 ]
 func (m Matrix[T]) RotateQuat(quat Quaternion[T]) Matrix[T] {
 	x, y, z, w := quat.X, quat.Y, quat.Z, quat.W
 	rm := Matrix[T]{
@@ -653,7 +603,7 @@ func (m Matrix[T]) Orthographic(size Size[T]) Matrix[T] {
 		2 / size.Width, 0, 0, 0,
 		0, 2 / size.Height, 0, 0,
 		0, 0, 1, 0,
-		-1, 1, 1 / 2, 1,
+		-1, 1, T(1) / T(2), 1,
 	}
 	return m.Mul(om)
 }
@@ -675,7 +625,7 @@ func (m Matrix[T]) LookAt(position, target, up Vector3[T]) Matrix[T] {
 
 // Perspective creates a perspective projection matrix.
 func (m Matrix[T]) Perspective(fovY Radians, aspectRatio, zNear, zFar T) Matrix[T] {
-	height := T(math.Tan(fovY.Float64() * 0.5))
+	height := T(math.Tan(ToFloat64(fovY) * 0.5))
 	width := height * aspectRatio
 
 	pm := Matrix[T]{
@@ -766,7 +716,7 @@ func (m Matrix[T]) transformPoint(p Point[T]) Point[T] {
 		Y: p.X*m[1] + p.Y*m[5] + m[13],
 	}
 	if w != 0 {
-		w = T(1) / w
+		w = 1 / w
 	}
 	return Point[T]{r.X * w, r.Y * w}
 }
@@ -800,13 +750,13 @@ func (m Matrix[T]) transformVector4D(v Vector4[T]) Vector4[T] {
 // CosSin returns the cosine and sine of the given angle in radians.
 // This is a helper function for rotation operations.
 func (m Matrix[T]) CosSin(angle Radians) (cos, sin T) {
-	sinVal := T(math.Sin(angle.Float64()))
-	if math.Abs(float64(sinVal)) == 1.0 {
+	sinVal := T(math.Sin(ToFloat64(angle)))
+	if math.Abs(ToFloat64(sinVal)) == 1.0 {
 		// 90 or 270 degrees
 		return T(0), sinVal
 	}
 
-	cosVal := math.Cos(angle.Float64())
+	cosVal := math.Cos(ToFloat64(angle))
 	if math.Abs(cosVal) == 1.0 {
 		// 0 or 180 degrees
 		return T(cosVal), T(0)
@@ -851,7 +801,7 @@ const (
 	MatrixFlagsRotation
 )
 
-type MatrixDecomp[T Scalar] struct {
+type MatrixDecomp[T Number] struct {
 	Translation Vector3[T]
 	Scale       Vector3[T]
 	Shear       Shear[T]

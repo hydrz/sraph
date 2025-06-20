@@ -8,44 +8,44 @@ import (
 func TestCubicSubdivisions(t *testing.T) {
 	tests := []struct {
 		name           string
-		scaleFactor    F32
-		p0, p1, p2, p3 Point[F32]
-		wantMin        F32 // minimum expected subdivisions
+		scaleFactor    Scalar
+		p0, p1, p2, p3 Point[Scalar]
+		wantMin        Scalar // minimum expected subdivisions
 	}{
 		{
 			name:        "straight line cubic",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 0),
-			p2:          Pt[F32](2, 0),
-			p3:          Pt[F32](3, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 0),
+			p2:          Pt[Scalar](2, 0),
+			p3:          Pt[Scalar](3, 0),
 			wantMin:     0,
 		},
 		{
 			name:        "curved cubic with scale factor 1",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 1),
-			p2:          Pt[F32](2, 1),
-			p3:          Pt[F32](3, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 1),
+			p2:          Pt[Scalar](2, 1),
+			p3:          Pt[Scalar](3, 0),
 			wantMin:     1,
 		},
 		{
 			name:        "curved cubic with higher scale factor",
 			scaleFactor: 2.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 1),
-			p2:          Pt[F32](2, 1),
-			p3:          Pt[F32](3, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 1),
+			p2:          Pt[Scalar](2, 1),
+			p3:          Pt[Scalar](3, 0),
 			wantMin:     1,
 		},
 		{
 			name:        "sharp curve cubic",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](0, 10),
-			p2:          Pt[F32](0, 10),
-			p3:          Pt[F32](10, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](0, 10),
+			p2:          Pt[Scalar](0, 10),
+			p3:          Pt[Scalar](10, 0),
 			wantMin:     3,
 		},
 	}
@@ -66,40 +66,40 @@ func TestCubicSubdivisions(t *testing.T) {
 func TestQuadraticSubdivisions(t *testing.T) {
 	tests := []struct {
 		name        string
-		scaleFactor F32
-		p0, p1, p2  Point[F32]
-		wantMin     F32
+		scaleFactor Scalar
+		p0, p1, p2  Point[Scalar]
+		wantMin     Scalar
 	}{
 		{
 			name:        "straight line quadratic",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 0),
-			p2:          Pt[F32](2, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 0),
+			p2:          Pt[Scalar](2, 0),
 			wantMin:     0,
 		},
 		{
 			name:        "curved quadratic with scale factor 1",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 1),
-			p2:          Pt[F32](2, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 1),
+			p2:          Pt[Scalar](2, 0),
 			wantMin:     1,
 		},
 		{
 			name:        "curved quadratic with higher scale factor",
 			scaleFactor: 2.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 1),
-			p2:          Pt[F32](2, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 1),
+			p2:          Pt[Scalar](2, 0),
 			wantMin:     1,
 		},
 		{
 			name:        "sharp curve quadratic",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](0, 10),
-			p2:          Pt[F32](10, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](0, 10),
+			p2:          Pt[Scalar](10, 0),
 			wantMin:     3,
 		},
 	}
@@ -120,53 +120,53 @@ func TestQuadraticSubdivisions(t *testing.T) {
 func TestConicSubdivisions(t *testing.T) {
 	tests := []struct {
 		name        string
-		scaleFactor F32
-		p0, p1, p2  Point[F32]
-		weight      F32
-		wantMin     F32
+		scaleFactor Scalar
+		p0, p1, p2  Point[Scalar]
+		weight      Scalar
+		wantMin     Scalar
 	}{
 		{
 			name:        "straight line conic with weight 1",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 0),
-			p2:          Pt[F32](2, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 0),
+			p2:          Pt[Scalar](2, 0),
 			weight:      1.0,
 			wantMin:     0,
 		},
 		{
 			name:        "curved conic with weight 1",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 1),
-			p2:          Pt[F32](2, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 1),
+			p2:          Pt[Scalar](2, 0),
 			weight:      1.0,
 			wantMin:     1,
 		},
 		{
 			name:        "curved conic with weight 0.5",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 1),
-			p2:          Pt[F32](2, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 1),
+			p2:          Pt[Scalar](2, 0),
 			weight:      0.5,
 			wantMin:     1,
 		},
 		{
 			name:        "curved conic with weight 2",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](1, 1),
-			p2:          Pt[F32](2, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](1, 1),
+			p2:          Pt[Scalar](2, 0),
 			weight:      2.0,
 			wantMin:     1,
 		},
 		{
 			name:        "sharp curve conic",
 			scaleFactor: 1.0,
-			p0:          Pt[F32](0, 0),
-			p1:          Pt[F32](0, 10),
-			p2:          Pt[F32](10, 0),
+			p0:          Pt[Scalar](0, 0),
+			p1:          Pt[Scalar](0, 10),
+			p2:          Pt[Scalar](10, 0),
 			weight:      1.0,
 			wantMin:     2,
 		},
@@ -181,7 +181,7 @@ func TestConicSubdivisions(t *testing.T) {
 			if got < 0 {
 				t.Errorf("ConicSubdivisions() = %v, subdivisions should not be negative", got)
 			}
-			if math.IsNaN(got.Float64()) || math.IsInf(got.Float64(), 0) {
+			if math.IsNaN(ToFloat64(got)) || math.IsInf(ToFloat64(got), 0) {
 				t.Errorf("ConicSubdivisions() = %v, result should be finite", got)
 			}
 		})

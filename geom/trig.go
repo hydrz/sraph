@@ -2,15 +2,15 @@ package geom
 
 import "math"
 
-type Trig[T Scalar] struct {
+type Trig[T Number] struct {
 	Cos T
 	Sin T
 }
 
-func NewTrig[T Scalar](r Radians) Trig[T] {
+func NewTrig[T Number](r Radians) Trig[T] {
 	return Trig[T]{
-		Cos: T(math.Cos(r.Float64())),
-		Sin: T(math.Sin(r.Float64())),
+		Cos: T(math.Cos(ToFloat64(r))),
+		Sin: T(math.Sin(ToFloat64(r))),
 	}
 }
 

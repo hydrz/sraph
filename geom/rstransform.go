@@ -6,7 +6,7 @@ package geom
 //
 //	x' = ScaledCos * x - ScaledSin * y + TranslateX
 //	y' = ScaledSin * x + ScaledCos * y + TranslateY
-type RSTransform[T Scalar] struct {
+type RSTransform[T Number] struct {
 	ScaledCos  T // Cosine of the rotation angle, multiplied by the uniform scale factor.
 	ScaledSin  T // Sine of the rotation angle, multiplied by the uniform scale factor.
 	TranslateX T // Translation offset along the X axis.
@@ -14,7 +14,7 @@ type RSTransform[T Scalar] struct {
 }
 
 // NewRSTransform constructs an RSTransform from the given origin, scale, and radians.
-func NewRSTransform[T Scalar](origin Point[T], scale T, radians Radians) RSTransform[T] {
+func NewRSTransform[T Number](origin Point[T], scale T, radians Radians) RSTransform[T] {
 	cos, sin := NewMatrix[T]().CosSin(radians)
 	return RSTransform[T]{
 		ScaledCos:  cos * scale,
@@ -37,7 +37,7 @@ func (r RSTransform[T]) TY() T {
 // SX returns the scale factor along the X axis.
 func (r RSTransform[T]) SX() T {
 	var zero T
-	if ScalarEq(r.ScaledCos, zero) {
+	if NearlyEqual(r.ScaledCos, zero) {
 		return zero
 	}
 	return r.ScaledCos / Abs(r.ScaledCos)
@@ -46,7 +46,7 @@ func (r RSTransform[T]) SX() T {
 // SY returns the scale factor along the Y axis.
 func (r RSTransform[T]) SY() T {
 	var zero T
-	if ScalarEq(r.ScaledCos, zero) {
+	if NearlyEqual(r.ScaledCos, zero) {
 		return zero
 	}
 	return r.ScaledSin / Abs(r.ScaledCos)
@@ -55,7 +55,7 @@ func (r RSTransform[T]) SY() T {
 // IsAxisAligned returns true if the resulting transformed quad will be axis-aligned.
 func (r RSTransform[T]) IsAxisAligned() bool {
 	var zero T
-	return ScalarEq(r.ScaledCos, zero) || ScalarEq(r.ScaledSin, zero)
+	return NearlyEqual(r.ScaledCos, zero) || NearlyEqual(r.ScaledSin, zero)
 }
 
 // Matrix returns the 4x4 matrix representing this RSTransform.

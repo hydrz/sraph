@@ -1,9 +1,9 @@
 package geom
 
-var _ PathReceiver[F32] = (*testPathReceiver[F32])(nil)
+var _ PathReceiver[Scalar] = (*testPathReceiver[Scalar])(nil)
 
 // testPathReceiver is a generic PathReceiver for test assertions.
-type testPathReceiver[T Scalar] struct {
+type testPathReceiver[T Number] struct {
 	ops      []string
 	moves    []Point[T]
 	lines    []Point[T]

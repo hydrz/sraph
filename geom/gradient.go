@@ -13,7 +13,7 @@ type GradientData struct {
 
 // CreateGradientBuffer populates a buffer with interpolated color bytes
 // for the linear gradient described by colors and stops.
-func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
+func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 	if len(stops) != len(colors) {
 		panic("stops and colors must have the same length")
 	}
@@ -22,7 +22,7 @@ func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
 	if len(stops) == 2 {
 		textureSize = uint32(len(colors))
 	} else {
-		minimumDelta := F32(1.0)
+		minimumDelta := Scalar(1.0)
 		for i := 1; i < len(stops); i++ {
 			value := stops[i] - stops[i-1]
 			// Skip values smaller than tolerance
@@ -36,7 +36,7 @@ func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
 
 		// Avoid creating textures that are absurdly large due to stops
 		// that are very close together
-		calculated := uint32(math.Round(float64(1.0/minimumDelta))) + 1
+		calculated := uint32(math.Round(ToFloat64(1.0/minimumDelta))) + 1
 		if calculated > 1024 {
 			textureSize = 1024
 		} else {
@@ -57,19 +57,19 @@ func CreateGradientBuffer(colors []Color, stops []F32) GradientData {
 	} else {
 		// Interpolation case
 		previousColor := colors[0]
-		previousStop := F32(0.0)
+		previousStop := Scalar(0.0)
 		previousColorIndex := 0
 
 		// First index is always Eq to the first color
 		appendColor(previousColor, &data)
 
 		for i := uint32(1); i < textureSize-1; i++ {
-			scaledI := F32(i) / F32(textureSize-1)
+			scaledI := Scalar(i) / Scalar(textureSize-1)
 			nextColor := colors[previousColorIndex+1]
 			nextStop := stops[previousColorIndex+1]
 
 			// Check if we're nearly Eq to the next stop
-			if ScalarEq(scaledI, nextStop) {
+			if NearlyEqual(scaledI, nextStop) {
 				appendColor(nextColor, &data)
 				previousColor = nextColor
 				previousStop = nextStop
@@ -119,7 +119,7 @@ func (g GradientData) IsValid() bool {
 // GradientStop represents a color stop in a gradient
 type GradientStop struct {
 	Color    Color
-	Position F32 // Position from 0.0 to 1.0
+	Position Scalar // Position from 0.0 to 1.0
 }
 
 // LinearGradient represents a linear gradient definition
@@ -139,7 +139,7 @@ func (lg LinearGradient) ToBuffer() GradientData {
 	}
 
 	colors := make([]Color, len(lg.Stops))
-	stops := make([]F32, len(lg.Stops))
+	stops := make([]Scalar, len(lg.Stops))
 
 	for i, stop := range lg.Stops {
 		colors[i] = stop.Color
@@ -151,13 +151,13 @@ func (lg LinearGradient) ToBuffer() GradientData {
 
 // RadialGradient represents a radial gradient definition
 type RadialGradient struct {
-	Center Point[F32]
-	Radius F32
+	Center Point[Scalar]
+	Radius Scalar
 	Stops  []GradientStop
 }
 
 // NewRadialGradient creates a new radial gradient
-func NewRadialGradient(center Point[F32], radius F32, stops []GradientStop) RadialGradient {
+func NewRadialGradient(center Point[Scalar], radius Scalar, stops []GradientStop) RadialGradient {
 	return RadialGradient{
 		Center: center,
 		Radius: radius,
@@ -172,7 +172,7 @@ func (rg RadialGradient) ToBuffer() GradientData {
 	}
 
 	colors := make([]Color, len(rg.Stops))
-	stops := make([]F32, len(rg.Stops))
+	stops := make([]Scalar, len(rg.Stops))
 
 	for i, stop := range rg.Stops {
 		colors[i] = stop.Color

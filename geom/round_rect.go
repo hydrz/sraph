@@ -1,13 +1,13 @@
 package geom
 
 // RoundRect represents a rectangle with rounded corners.
-type RoundRect[T Scalar] struct {
+type RoundRect[T Number] struct {
 	Rect[T]
 	radii RoundingRadii[T]
 }
 
 // NewRoundRect creates a new RoundRect with the given rectangle and corner radii.
-func NewRoundRect[T Scalar](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
+func NewRoundRect[T Number](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
 	return RoundRect[T]{
 		Rect:  rect,
 		radii: radii,
@@ -15,29 +15,31 @@ func NewRoundRect[T Scalar](rect Rect[T], radii RoundingRadii[T]) RoundRect[T] {
 }
 
 // NewRoundRectOval creates a new RoundRect that is an oval, with radii Eq to half the width and height of the rectangle.
-func NewRoundRectOval[T Scalar](rect Rect[T]) RoundRect[T] {
+func NewRoundRectOval[T Number](rect Rect[T]) RoundRect[T] {
+	size := rect.Size()
+	halfSize := Size[T]{Width: size.Width / T(2), Height: size.Height / T(2)}
 	return NewRoundRect(
 		rect,
-		NewRoundingRadiiFromSizes(rect.Size().Scale(1/2)),
+		NewRoundingRadiiFromSizes(halfSize),
 	)
 }
 
 // NewRoundRectRadius creates a new RoundRect with the given rectangle and uniform corner radius.
-func NewRoundRectRadius[T Scalar](rect Rect[T], radius T) RoundRect[T] {
+func NewRoundRectRadius[T Number](rect Rect[T], radius T) RoundRect[T] {
 	return NewRoundRect(
 		rect,
 		NewRoundingRadii(radius),
 	)
 }
 
-func NewRoundRectXY[T Scalar](rect Rect[T], xRadius, yRadius T) RoundRect[T] {
+func NewRoundRectXY[T Number](rect Rect[T], xRadius, yRadius T) RoundRect[T] {
 	return NewRoundRect(
 		rect,
 		NewRoundingRadiiFromSizes(Size[T]{Width: xRadius, Height: yRadius}),
 	)
 }
 
-func NewRoundRectLTRB[T Scalar](rect Rect[T], left, top, right, bottom T) RoundRect[T] {
+func NewRoundRectLTRB[T Number](rect Rect[T], left, top, right, bottom T) RoundRect[T] {
 	return NewRoundRect(
 		rect,
 		NewRoundingRadiiLTRB(left, top, right, bottom),
@@ -62,8 +64,8 @@ func (r *RoundRect[T]) IsRect() bool {
 // IsOval returns true if all corner radii are Eq and Eq to half the width/height.
 func (r *RoundRect[T]) IsOval() bool {
 	return !r.Bounds().IsEmpty() && r.radii.IsUniform() &&
-		ScalarEq(r.radii.TopLeft.Width, r.Rect.Width()/T(2)) &&
-		ScalarEq(r.radii.TopLeft.Height, r.Rect.Height()/T(2))
+		NearlyEqual(r.radii.TopLeft.Width, r.Rect.Width()/T(2)) &&
+		NearlyEqual(r.radii.TopLeft.Height, r.Rect.Height()/T(2))
 }
 
 // Dispatch sends the path data of the round rect to the given PathReceiver.
@@ -167,11 +169,11 @@ func (r *RoundRect[T]) cornerContains(p Point[T], corner Point[T], direction Poi
 }
 
 // RoundRectPathSource implements PathSource for a single RoundRect.
-type RoundRectPathSource[T Scalar] struct {
+type RoundRectPathSource[T Number] struct {
 	roundRect RoundRect[T]
 }
 
-func NewRoundRectPathSource[T Scalar](rr RoundRect[T]) PathSource[T] {
+func NewRoundRectPathSource[T Number](rr RoundRect[T]) PathSource[T] {
 	return &RoundRectPathSource[T]{roundRect: rr}
 }
 
@@ -196,12 +198,12 @@ func (r *RoundRectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 }
 
 // DiffRoundRectPathSource implements PathSource for the difference between two RoundRects.
-type DiffRoundRectPathSource[T Scalar] struct {
+type DiffRoundRectPathSource[T Number] struct {
 	outter RoundRect[T]
 	inner  RoundRect[T]
 }
 
-func NewDiffRoundRectPathSource[T Scalar](outter, inner RoundRect[T]) PathSource[T] {
+func NewDiffRoundRectPathSource[T Number](outter, inner RoundRect[T]) PathSource[T] {
 	return &DiffRoundRectPathSource[T]{
 		outter: outter,
 		inner:  inner,
