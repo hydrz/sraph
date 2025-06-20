@@ -472,7 +472,7 @@ func TestPredefinedColors(t *testing.T) {
 		{"ColorRed", ColorRed()},
 		{"ColorGreen", ColorGreen()},
 		{"ColorBlue", ColorBlue()},
-		{"ColorTransparent", ColorTransparent()},
+		{"ColorTransparent", ColorWhiteTransparent()},
 	}
 
 	for _, tt := range tests {
