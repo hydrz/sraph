@@ -1,7 +1,6 @@
 package geom
 
 import (
-	"image/color"
 	"math"
 	"testing"
 )
@@ -28,12 +27,12 @@ func TestColor_RGBA(t *testing.T) {
 		{
 			name:  "red half alpha",
 			color: Color{R: 1.0, G: 0.0, B: 0.0, A: 0.5},
-			wantR: 65535, wantG: 0, wantB: 0, wantA: 32768,
+			wantR: 32768, wantG: 0, wantB: 0, wantA: 32768,
 		},
 		{
 			name:  "transparent",
 			color: Color{R: 0.5, G: 0.5, B: 0.5, A: 0.0},
-			wantR: 32768, wantG: 32768, wantB: 32768, wantA: 0,
+			wantR: 0, wantG: 0, wantB: 0, wantA: 0,
 		},
 	}
 
@@ -53,39 +52,6 @@ func TestColor_RGBA(t *testing.T) {
 			}
 			if diff := absDiffUint32(gotA, tt.wantA); diff > tolerance {
 				t.Errorf("Color.RGBA() A = %v, want %v", gotA, tt.wantA)
-			}
-		})
-	}
-}
-
-func TestNewColorFromRGBA(t *testing.T) {
-	tests := []struct {
-		name  string
-		input color.RGBA
-		want  Color
-	}{
-		{
-			name:  "white",
-			input: color.RGBA{R: 255, G: 255, B: 255, A: 255},
-			want:  Color{R: 1.0, G: 1.0, B: 1.0, A: 1.0},
-		},
-		{
-			name:  "black",
-			input: color.RGBA{R: 0, G: 0, B: 0, A: 255},
-			want:  Color{R: 0.0, G: 0.0, B: 0.0, A: 1.0},
-		},
-		{
-			name:  "half values",
-			input: color.RGBA{R: 128, G: 128, B: 128, A: 128},
-			want:  Color{R: 128.0 / 255.0, G: 128.0 / 255.0, B: 128.0 / 255.0, A: 128.0 / 255.0},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := NewColorFromRGBA(tt.input)
-			if !got.Equal(tt.want) {
-				t.Errorf("NewColorFromRGBA() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -132,22 +98,22 @@ func TestNewColorHex(t *testing.T) {
 	}{
 		{
 			name: "white",
-			hex:  0xFFFFFF,
+			hex:  0xFFFFFFFF,
 			want: Color{R: 1.0, G: 1.0, B: 1.0, A: 1.0},
 		},
 		{
 			name: "red",
-			hex:  0xFF0000,
+			hex:  0xFF0000FF,
 			want: Color{R: 1.0, G: 0.0, B: 0.0, A: 1.0},
 		},
 		{
 			name: "green",
-			hex:  0x00FF00,
+			hex:  0x00FF00FF,
 			want: Color{R: 0.0, G: 1.0, B: 0.0, A: 1.0},
 		},
 		{
 			name: "blue",
-			hex:  0x0000FF,
+			hex:  0x0000FFFF,
 			want: Color{R: 0.0, G: 0.0, B: 1.0, A: 1.0},
 		},
 	}

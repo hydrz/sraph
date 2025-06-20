@@ -1,8 +1,68 @@
 package geom
 
-import (
-	"math"
-)
+import "math"
+
+// LinearGradient defines a linear gradient by a sequence of color stops.
+type LinearGradient struct {
+	Stops []GradientStop
+}
+
+// NewLinearGradient returns a LinearGradient with the provided stops.
+func NewLinearGradient(stops []GradientStop) LinearGradient {
+	return LinearGradient{Stops: stops}
+}
+
+// ToBuffer returns the gradient data for the linear gradient.
+// If no stops are present, returns an invalid GradientData.
+func (lg LinearGradient) ToBuffer() GradientData {
+	if len(lg.Stops) == 0 {
+		return GradientData{}
+	}
+
+	colors := make([]Color, len(lg.Stops))
+	stops := make([]Scalar, len(lg.Stops))
+
+	for i, stop := range lg.Stops {
+		colors[i] = stop.Color
+		stops[i] = stop.Position
+	}
+
+	return CreateGradientBuffer(colors, stops)
+}
+
+// RadialGradient defines a radial gradient by center, radius, and color stops.
+type RadialGradient struct {
+	Center Point[Scalar] // Center of the radial gradient.
+	Radius Scalar        // Radius of the radial gradient.
+	Stops  []GradientStop
+}
+
+// NewRadialGradient returns a RadialGradient with the given center, radius, and stops.
+func NewRadialGradient(center Point[Scalar], radius Scalar, stops []GradientStop) RadialGradient {
+	return RadialGradient{
+		Center: center,
+		Radius: radius,
+		Stops:  stops,
+	}
+}
+
+// ToBuffer returns the gradient data for the radial gradient.
+// If no stops are present, returns an invalid GradientData.
+func (rg RadialGradient) ToBuffer() GradientData {
+	if len(rg.Stops) == 0 {
+		return GradientData{}
+	}
+
+	colors := make([]Color, len(rg.Stops))
+	stops := make([]Scalar, len(rg.Stops))
+
+	for i, stop := range rg.Stops {
+		colors[i] = stop.Color
+		stops[i] = stop.Position
+	}
+
+	return CreateGradientBuffer(colors, stops)
+}
 
 // GradientData holds the color data and texture size for a gradient.
 // If TextureSize is 0, the gradient is considered invalid.
@@ -98,7 +158,7 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 
 // appendColor appends the RGBA bytes of color to the gradient data.
 func appendColor(color Color, data *GradientData) {
-	rgba := color.ToRGBA()
+	rgba := color.Go()
 	data.ColorBytes = append(data.ColorBytes, rgba.R, rgba.G, rgba.B, rgba.A)
 }
 
@@ -111,66 +171,4 @@ func (g GradientData) IsValid() bool {
 type GradientStop struct {
 	Color    Color  // Color at this stop.
 	Position Scalar // Position from 0.0 to 1.0.
-}
-
-// LinearGradient defines a linear gradient by a sequence of color stops.
-type LinearGradient struct {
-	Stops []GradientStop
-}
-
-// NewLinearGradient returns a LinearGradient with the provided stops.
-func NewLinearGradient(stops []GradientStop) LinearGradient {
-	return LinearGradient{Stops: stops}
-}
-
-// ToBuffer returns the gradient data for the linear gradient.
-// If no stops are present, returns an invalid GradientData.
-func (lg LinearGradient) ToBuffer() GradientData {
-	if len(lg.Stops) == 0 {
-		return GradientData{}
-	}
-
-	colors := make([]Color, len(lg.Stops))
-	stops := make([]Scalar, len(lg.Stops))
-
-	for i, stop := range lg.Stops {
-		colors[i] = stop.Color
-		stops[i] = stop.Position
-	}
-
-	return CreateGradientBuffer(colors, stops)
-}
-
-// RadialGradient defines a radial gradient by center, radius, and color stops.
-type RadialGradient struct {
-	Center Point[Scalar] // Center of the radial gradient.
-	Radius Scalar        // Radius of the radial gradient.
-	Stops  []GradientStop
-}
-
-// NewRadialGradient returns a RadialGradient with the given center, radius, and stops.
-func NewRadialGradient(center Point[Scalar], radius Scalar, stops []GradientStop) RadialGradient {
-	return RadialGradient{
-		Center: center,
-		Radius: radius,
-		Stops:  stops,
-	}
-}
-
-// ToBuffer returns the gradient data for the radial gradient.
-// If no stops are present, returns an invalid GradientData.
-func (rg RadialGradient) ToBuffer() GradientData {
-	if len(rg.Stops) == 0 {
-		return GradientData{}
-	}
-
-	colors := make([]Color, len(rg.Stops))
-	stops := make([]Scalar, len(rg.Stops))
-
-	for i, stop := range rg.Stops {
-		colors[i] = stop.Color
-		stops[i] = stop.Position
-	}
-
-	return CreateGradientBuffer(colors, stops)
 }

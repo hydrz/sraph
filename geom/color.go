@@ -22,8 +22,6 @@ func NewColorMatrix() ColorMatrix {
 	}
 }
 
-var _ color.Color = Color{}
-
 // Color represents an RGBA color with components in [0,1].
 // Color implements color.Color. The zero value is fully transparent black.
 type Color struct {
@@ -32,10 +30,15 @@ type Color struct {
 
 // NewColor returns a Color with the given RGBA components in [0,1].
 func NewColor(r, g, b, a Scalar) Color {
-	return Color{R: r, G: g, B: b, A: a}
+	return Color{
+		R: Clamp(r, 0, 1),
+		G: Clamp(g, 0, 1),
+		B: Clamp(b, 0, 1),
+		A: Clamp(a, 0, 1),
+	}
 }
 
-// NewColorRGBA8 returns a Color from 8-bit RGBA values.
+// NewColorRGBA8 returns a Color from a 0-255 RGBA color.
 func NewColorRGBA8(r, g, b, a uint8) Color {
 	return Color{
 		R: Scalar(r) / 255.0,
@@ -45,147 +48,92 @@ func NewColorRGBA8(r, g, b, a uint8) Color {
 	}
 }
 
-// NewColorRGB8 returns an opaque Color from 8-bit RGB values.
-func NewColorRGB8(r, g, b uint8) Color {
-	return NewColorRGBA8(r, g, b, 255)
-}
-
-// NewColorGo returns a Color from any color.Color.
-func NewColorGo(c color.Color) Color {
-	r, g, b, a := c.RGBA()
-	return Color{
-		R: Scalar(r) / 65535.0,
-		G: Scalar(g) / 65535.0,
-		B: Scalar(b) / 65535.0,
-		A: Scalar(a) / 65535.0,
-	}
-}
-
-// NewColorHex returns a Color from a 0xRRGGBB hex value.
+// NewColorHex returns a Color from a 32-bit RGBA hex value.
 func NewColorHex(hex uint32) Color {
-	return NewColorRGBA8(
-		uint8((hex>>16)&0xFF),
-		uint8((hex>>8)&0xFF),
-		uint8(hex&0xFF),
-		255,
-	)
-}
-
-// NewColorHexA returns a Color from a 0xRRGGBBAA hex value.
-func NewColorHexA(hex uint32) Color {
-	return NewColorRGBA8(
-		uint8((hex>>24)&0xFF),
-		uint8((hex>>16)&0xFF),
-		uint8((hex>>8)&0xFF),
-		uint8(hex&0xFF),
-	)
-}
-
-// NewColorFromRGBA returns a Color from a color.RGBA.
-func NewColorFromRGBA(c color.RGBA) Color {
 	return Color{
-		R: Scalar(c.R) / 255.0,
-		G: Scalar(c.G) / 255.0,
-		B: Scalar(c.B) / 255.0,
-		A: Scalar(c.A) / 255.0,
+		R: Scalar((hex>>24)&0xff) / 255.0,
+		G: Scalar((hex>>16)&0xff) / 255.0,
+		B: Scalar((hex>>8)&0xff) / 255.0,
+		A: Scalar(hex&0xff) / 255.0,
 	}
 }
 
-// RandomColor returns a random opaque Color.
+// RandomColor returns a random Color with components in [0,1].
 func RandomColor() Color {
 	return Color{
-		R: Scalar(rand.Float32()),
-		G: Scalar(rand.Float32()),
-		B: Scalar(rand.Float32()),
-		A: 1.0,
-	}
+		R: Scalar(rand.Float64()),
+		G: Scalar(rand.Float64()),
+		B: Scalar(rand.Float64()),
+		A: 1,
+	}.Clamp01()
 }
 
-// RGBA implements color.Color. The returned values are in [0, 0xffff] and alpha-premultiplied.
+// RGBA implements the [color.Color] interface.
 func (c Color) RGBA() (r, g, b, a uint32) {
-	r = uint32(c.R*65535 + 0.5)
-	g = uint32(c.G*65535 + 0.5)
-	b = uint32(c.B*65535 + 0.5)
-	a = uint32(c.A*65535 + 0.5)
-	return
+	// Convert components from [0,1] to [0,0xffff] range
+	a = uint32(c.A * 0xffff)
+	// Alpha-premultiply RGB components
+	r = uint32(c.R * c.A * 0xffff)
+	g = uint32(c.G * c.A * 0xffff)
+	b = uint32(c.B * c.A * 0xffff)
+	return r, g, b, a
 }
 
-// ToRGBA returns a color.RGBA representation of c.
-func (c Color) ToRGBA() color.RGBA {
+func (c Color) Go() color.RGBA {
 	return color.RGBA{
-		R: uint8(Clamp(c.R*255+0.5, 0, 255)),
-		G: uint8(Clamp(c.G*255+0.5, 0, 255)),
-		B: uint8(Clamp(c.B*255+0.5, 0, 255)),
-		A: uint8(Clamp(c.A*255+0.5, 0, 255)),
+		R: uint8(math.Round(c.R * 255.0)),
+		G: uint8(math.Round(c.G * 255.0)),
+		B: uint8(math.Round(c.B * 255.0)),
+		A: uint8(math.Round(c.A * 255.0)),
 	}
 }
 
-// ToR8G8B8A8 returns the color as a [4]uint8 RGBA array.
-func (c Color) ToR8G8B8A8() [4]uint8 {
-	return [4]uint8{
-		uint8(Clamp(c.R*255+0.5, 0, 255)),
-		uint8(Clamp(c.G*255+0.5, 0, 255)),
-		uint8(Clamp(c.B*255+0.5, 0, 255)),
-		uint8(Clamp(c.A*255+0.5, 0, 255)),
-	}
+// Hex returns the color as a 32-bit RGBA hex value.
+func (c Color) Hex() uint32 {
+	return (uint32(math.Round(c.R*255.0))&0xff)<<24 |
+		(uint32(math.Round(c.G*255.0))&0xff)<<16 |
+		(uint32(math.Round(c.B*255.0))&0xff)<<8 |
+		(uint32(math.Round(c.A*255.0))&0xff)<<0
 }
 
-// ToARGB returns the color as a 0xAARRGGBB uint32 value.
-func (c Color) ToARGB() uint32 {
-	rgba := c.ToR8G8B8A8()
-	return uint32(rgba[3])<<24 | uint32(rgba[0])<<16 | uint32(rgba[1])<<8 | uint32(rgba[2])
-}
-
-// ToIColor returns the color as a 0xAARRGGBB uint32 value.
+// ToIColor returns the color as a 32-bit ARGB hex value
 func (c Color) ToIColor() uint32 {
-	return c.ToARGB()
+	return (uint32(math.Round(c.A*255.0))&0xff)<<24 |
+		(uint32(math.Round(c.R*255.0))&0xff)<<16 |
+		(uint32(math.Round(c.G*255.0))&0xff)<<8 |
+		(uint32(math.Round(c.B*255.0))&0xff)<<0
 }
 
-// Equal reports whether c and other are equal within floating-point tolerance.
-func (c Color) Equal(other Color) bool {
-	return NearlyEqual(c.R, other.R) &&
-		NearlyEqual(c.G, other.G) &&
-		NearlyEqual(c.B, other.B) &&
-		NearlyEqual(c.A, other.A)
+// Equal reports whether c and o are equal within floating-point tolerance.
+func (c Color) Equal(o Color) bool {
+	return NearlyEqual(c.R, o.R) &&
+		NearlyEqual(c.G, o.G) &&
+		NearlyEqual(c.B, o.B) &&
+		NearlyEqual(c.A, o.A)
 }
 
-// Add returns the component-wise sum of c and other.
-func (c Color) Add(other Color) Color {
+// Add returns the component-wise sum of c and o.
+func (c Color) Add(o Color) Color {
+	return Color{c.R + o.R, c.G + o.G, c.B + o.B, c.A + o.A}
+}
+
+// Sub returns the component-wise difference of c and o.
+func (c Color) Sub(o Color) Color {
+	return Color{c.R - o.R, c.G - o.G, c.B - o.B, c.A - o.A}
+}
+
+// Mul returns the component-wise product of c and o.
+func (c Color) Mul(o Color) Color {
+	return Color{c.R * o.R, c.G * o.G, c.B * o.B, c.A * o.A}
+}
+
+// Div returns the component-wise quotient of c and o.
+func (c Color) Div(o Color) Color {
 	return Color{
-		R: c.R + other.R,
-		G: c.G + other.G,
-		B: c.B + other.B,
-		A: c.A + other.A,
-	}
-}
-
-// Sub returns the component-wise difference of c and other.
-func (c Color) Sub(other Color) Color {
-	return Color{
-		R: c.R - other.R,
-		G: c.G - other.G,
-		B: c.B - other.B,
-		A: c.A - other.A,
-	}
-}
-
-// Mul returns the component-wise product of c and other.
-func (c Color) Mul(other Color) Color {
-	return Color{
-		R: c.R * other.R,
-		G: c.G * other.G,
-		B: c.B * other.B,
-		A: c.A * other.A,
-	}
-}
-
-// Div returns the component-wise quotient of c and other.
-func (c Color) Div(other Color) Color {
-	return Color{
-		R: c.R / other.R,
-		G: c.G / other.G,
-		B: c.B / other.B,
-		A: c.A / other.A,
+		R: c.R / Clamp(o.R, Epsilon64, 1),
+		G: c.G / Clamp(o.R, Epsilon64, 1),
+		B: c.B / Clamp(o.R, Epsilon64, 1),
+		A: c.A / Clamp(o.R, Epsilon64, 1),
 	}
 }
 
@@ -240,21 +188,21 @@ func (c Color) WithAlpha(alpha Scalar) Color {
 
 // IsTransparent reports whether alpha is zero.
 func (c Color) IsTransparent() bool {
-	return c.A == 0
+	return NearlyEqual(c.A, 0)
 }
 
 // IsOpaque reports whether alpha is one.
 func (c Color) IsOpaque() bool {
-	return c.A == 1
+	return NearlyEqual(c.A, 1)
 }
 
-// Lerp returns the linear interpolation between c and other by t in [0,1].
-func (c Color) Lerp(other Color, t Scalar) Color {
+// Lerp returns the linear interpolation between c and o by t in [0,1].
+func (c Color) Lerp(o Color, t Scalar) Color {
 	return Color{
-		R: c.R + (other.R-c.R)*t,
-		G: c.G + (other.G-c.G)*t,
-		B: c.B + (other.B-c.B)*t,
-		A: c.A + (other.A-c.A)*t,
+		R: Clamp(c.R+(o.R-c.R)*t, 0, 1),
+		G: Clamp(c.G+(o.G-c.G)*t, 0, 1),
+		B: Clamp(c.B+(o.B-c.B)*t, 0, 1),
+		A: Clamp(c.A+(o.A-c.A)*t, 0, 1),
 	}
 }
 
@@ -667,138 +615,138 @@ func ColorYellow() Color           { return Color{R: 1, G: 1, B: 0, A: 1} }
 func ColorCyan() Color             { return Color{R: 0, G: 1, B: 1, A: 1} }
 func ColorMagenta() Color          { return Color{R: 1, G: 0, B: 1, A: 1} }
 
-// Additional predefined colors matching C++ implementation
-func ColorAliceBlue() Color            { return NewColorRGB8(240, 248, 255) }
-func ColorAntiqueWhite() Color         { return NewColorRGB8(250, 235, 215) }
-func ColorAqua() Color                 { return NewColorRGB8(0, 255, 255) }
-func ColorAquaMarine() Color           { return NewColorRGB8(127, 255, 212) }
-func ColorAzure() Color                { return NewColorRGB8(240, 255, 255) }
-func ColorBeige() Color                { return NewColorRGB8(245, 245, 220) }
-func ColorBisque() Color               { return NewColorRGB8(255, 228, 196) }
-func ColorBlanchedAlmond() Color       { return NewColorRGB8(255, 235, 205) }
-func ColorBlueViolet() Color           { return NewColorRGB8(138, 43, 226) }
-func ColorBrown() Color                { return NewColorRGB8(165, 42, 42) }
-func ColorBurlyWood() Color            { return NewColorRGB8(222, 184, 135) }
-func ColorCadetBlue() Color            { return NewColorRGB8(95, 158, 160) }
-func ColorChartreuse() Color           { return NewColorRGB8(127, 255, 0) }
-func ColorChocolate() Color            { return NewColorRGB8(210, 105, 30) }
-func ColorCoral() Color                { return NewColorRGB8(255, 127, 80) }
-func ColorCornflowerBlue() Color       { return NewColorRGB8(100, 149, 237) }
-func ColorCornsilk() Color             { return NewColorRGB8(255, 248, 220) }
-func ColorCrimson() Color              { return NewColorRGB8(220, 20, 60) }
-func ColorDarkBlue() Color             { return NewColorRGB8(0, 0, 139) }
-func ColorDarkCyan() Color             { return NewColorRGB8(0, 139, 139) }
-func ColorDarkGoldenrod() Color        { return NewColorRGB8(184, 134, 11) }
-func ColorDarkGray() Color             { return NewColorRGB8(169, 169, 169) }
-func ColorDarkGreen() Color            { return NewColorRGB8(0, 100, 0) }
-func ColorDarkGrey() Color             { return NewColorRGB8(169, 169, 169) }
-func ColorDarkKhaki() Color            { return NewColorRGB8(189, 183, 107) }
-func ColorDarkMagenta() Color          { return NewColorRGB8(139, 0, 139) }
-func ColorDarkOliveGreen() Color       { return NewColorRGB8(85, 107, 47) }
-func ColorDarkOrange() Color           { return NewColorRGB8(255, 140, 0) }
-func ColorDarkOrchid() Color           { return NewColorRGB8(153, 50, 204) }
-func ColorDarkRed() Color              { return NewColorRGB8(139, 0, 0) }
-func ColorDarkSalmon() Color           { return NewColorRGB8(233, 150, 122) }
-func ColorDarkSeagreen() Color         { return NewColorRGB8(143, 188, 143) }
-func ColorDarkSlateBlue() Color        { return NewColorRGB8(72, 61, 139) }
-func ColorDarkSlateGray() Color        { return NewColorRGB8(47, 79, 79) }
-func ColorDarkSlateGrey() Color        { return NewColorRGB8(47, 79, 79) }
-func ColorDarkTurquoise() Color        { return NewColorRGB8(0, 206, 209) }
-func ColorDarkViolet() Color           { return NewColorRGB8(148, 0, 211) }
-func ColorDeepPink() Color             { return NewColorRGB8(255, 20, 147) }
-func ColorDeepSkyBlue() Color          { return NewColorRGB8(0, 191, 255) }
-func ColorDimGray() Color              { return NewColorRGB8(105, 105, 105) }
-func ColorDimGrey() Color              { return NewColorRGB8(105, 105, 105) }
-func ColorDodgerBlue() Color           { return NewColorRGB8(30, 144, 255) }
-func ColorFirebrick() Color            { return NewColorRGB8(178, 34, 34) }
-func ColorFloralWhite() Color          { return NewColorRGB8(255, 250, 240) }
-func ColorForestGreen() Color          { return NewColorRGB8(34, 139, 34) }
-func ColorFuchsia() Color              { return NewColorRGB8(255, 0, 255) }
-func ColorGainsboro() Color            { return NewColorRGB8(220, 220, 220) }
-func ColorGhostwhite() Color           { return NewColorRGB8(248, 248, 255) }
-func ColorGold() Color                 { return NewColorRGB8(255, 215, 0) }
-func ColorGoldenrod() Color            { return NewColorRGB8(218, 165, 32) }
-func ColorGreenYellow() Color          { return NewColorRGB8(173, 255, 47) }
-func ColorHoneydew() Color             { return NewColorRGB8(240, 255, 240) }
-func ColorHotPink() Color              { return NewColorRGB8(255, 105, 180) }
-func ColorIndianRed() Color            { return NewColorRGB8(205, 92, 92) }
-func ColorIndigo() Color               { return NewColorRGB8(75, 0, 130) }
-func ColorIvory() Color                { return NewColorRGB8(255, 255, 240) }
-func ColorKhaki() Color                { return NewColorRGB8(240, 230, 140) }
-func ColorLavender() Color             { return NewColorRGB8(230, 230, 250) }
-func ColorLavenderBlush() Color        { return NewColorRGB8(255, 240, 245) }
-func ColorLawnGreen() Color            { return NewColorRGB8(124, 252, 0) }
-func ColorLemonChiffon() Color         { return NewColorRGB8(255, 250, 205) }
-func ColorLightBlue() Color            { return NewColorRGB8(173, 216, 230) }
-func ColorLightCoral() Color           { return NewColorRGB8(240, 128, 128) }
-func ColorLightCyan() Color            { return NewColorRGB8(224, 255, 255) }
-func ColorLightGoldenrodYellow() Color { return NewColorRGB8(250, 250, 210) }
-func ColorLightGray() Color            { return NewColorRGB8(211, 211, 211) }
-func ColorLightGreen() Color           { return NewColorRGB8(144, 238, 144) }
-func ColorLightGrey() Color            { return NewColorRGB8(211, 211, 211) }
-func ColorLightPink() Color            { return NewColorRGB8(255, 182, 193) }
-func ColorLightSalmon() Color          { return NewColorRGB8(255, 160, 122) }
-func ColorLightSeaGreen() Color        { return NewColorRGB8(32, 178, 170) }
-func ColorLightSkyBlue() Color         { return NewColorRGB8(135, 206, 250) }
-func ColorLightSlateGray() Color       { return NewColorRGB8(119, 136, 153) }
-func ColorLightSlateGrey() Color       { return NewColorRGB8(119, 136, 153) }
-func ColorLightSteelBlue() Color       { return NewColorRGB8(176, 196, 222) }
-func ColorLightYellow() Color          { return NewColorRGB8(255, 255, 224) }
-func ColorLime() Color                 { return NewColorRGB8(0, 255, 0) }
-func ColorLimeGreen() Color            { return NewColorRGB8(50, 205, 50) }
-func ColorLinen() Color                { return NewColorRGB8(250, 240, 230) }
-func ColorMaroon() Color               { return NewColorRGB8(128, 0, 0) }
-func ColorMediumAquamarine() Color     { return NewColorRGB8(102, 205, 170) }
-func ColorMediumBlue() Color           { return NewColorRGB8(0, 0, 205) }
-func ColorMediumOrchid() Color         { return NewColorRGB8(186, 85, 211) }
-func ColorMediumPurple() Color         { return NewColorRGB8(147, 112, 219) }
-func ColorMediumSeagreen() Color       { return NewColorRGB8(60, 179, 113) }
-func ColorMediumSlateBlue() Color      { return NewColorRGB8(123, 104, 238) }
-func ColorMediumSpringGreen() Color    { return NewColorRGB8(0, 250, 154) }
-func ColorMediumTurquoise() Color      { return NewColorRGB8(72, 209, 204) }
-func ColorMediumVioletRed() Color      { return NewColorRGB8(199, 21, 133) }
-func ColorMidnightBlue() Color         { return NewColorRGB8(25, 25, 112) }
-func ColorMintCream() Color            { return NewColorRGB8(245, 255, 250) }
-func ColorMistyRose() Color            { return NewColorRGB8(255, 228, 225) }
-func ColorMoccasin() Color             { return NewColorRGB8(255, 228, 181) }
-func ColorNavajoWhite() Color          { return NewColorRGB8(255, 222, 173) }
-func ColorNavy() Color                 { return NewColorRGB8(0, 0, 128) }
-func ColorOldLace() Color              { return NewColorRGB8(253, 245, 230) }
-func ColorOlive() Color                { return NewColorRGB8(128, 128, 0) }
-func ColorOliveDrab() Color            { return NewColorRGB8(107, 142, 35) }
-func ColorOrangeRed() Color            { return NewColorRGB8(255, 69, 0) }
-func ColorOrchid() Color               { return NewColorRGB8(218, 112, 214) }
-func ColorPaleGoldenrod() Color        { return NewColorRGB8(238, 232, 170) }
-func ColorPaleGreen() Color            { return NewColorRGB8(152, 251, 152) }
-func ColorPaleTurquoise() Color        { return NewColorRGB8(175, 238, 238) }
-func ColorPaleVioletRed() Color        { return NewColorRGB8(219, 112, 147) }
-func ColorPapayaWhip() Color           { return NewColorRGB8(255, 239, 213) }
-func ColorPeachpuff() Color            { return NewColorRGB8(255, 218, 185) }
-func ColorPeru() Color                 { return NewColorRGB8(205, 133, 63) }
-func ColorPlum() Color                 { return NewColorRGB8(221, 160, 221) }
-func ColorPowderBlue() Color           { return NewColorRGB8(176, 224, 230) }
-func ColorRosyBrown() Color            { return NewColorRGB8(188, 143, 143) }
-func ColorRoyalBlue() Color            { return NewColorRGB8(65, 105, 225) }
-func ColorSaddleBrown() Color          { return NewColorRGB8(139, 69, 19) }
-func ColorSalmon() Color               { return NewColorRGB8(250, 128, 114) }
-func ColorSandyBrown() Color           { return NewColorRGB8(244, 164, 96) }
-func ColorSeagreen() Color             { return NewColorRGB8(46, 139, 87) }
-func ColorSeashell() Color             { return NewColorRGB8(255, 245, 238) }
-func ColorSienna() Color               { return NewColorRGB8(160, 82, 45) }
-func ColorSilver() Color               { return NewColorRGB8(192, 192, 192) }
-func ColorSkyBlue() Color              { return NewColorRGB8(135, 206, 235) }
-func ColorSlateBlue() Color            { return NewColorRGB8(106, 90, 205) }
-func ColorSlateGray() Color            { return NewColorRGB8(112, 128, 144) }
-func ColorSlateGrey() Color            { return NewColorRGB8(112, 128, 144) }
-func ColorSnow() Color                 { return NewColorRGB8(255, 250, 250) }
-func ColorSpringGreen() Color          { return NewColorRGB8(0, 255, 127) }
-func ColorSteelBlue() Color            { return NewColorRGB8(70, 130, 180) }
-func ColorTan() Color                  { return NewColorRGB8(210, 180, 140) }
-func ColorTeal() Color                 { return NewColorRGB8(0, 128, 128) }
-func ColorThistle() Color              { return NewColorRGB8(216, 191, 216) }
-func ColorTomato() Color               { return NewColorRGB8(255, 99, 71) }
-func ColorTurquoise() Color            { return NewColorRGB8(64, 224, 208) }
-func ColorViolet() Color               { return NewColorRGB8(238, 130, 238) }
-func ColorWheat() Color                { return NewColorRGB8(245, 222, 179) }
-func ColorWhitesmoke() Color           { return NewColorRGB8(245, 245, 245) }
-func ColorYellowGreen() Color          { return NewColorRGB8(154, 205, 50) }
+// Additional predefined colors
+func ColorAliceBlue() Color            { return NewColorRGBA8(240, 248, 255, 255) }
+func ColorAntiqueWhite() Color         { return NewColorRGBA8(250, 235, 215, 255) }
+func ColorAqua() Color                 { return NewColorRGBA8(0, 255, 255, 255) }
+func ColorAquaMarine() Color           { return NewColorRGBA8(127, 255, 212, 255) }
+func ColorAzure() Color                { return NewColorRGBA8(240, 255, 255, 255) }
+func ColorBeige() Color                { return NewColorRGBA8(245, 245, 220, 255) }
+func ColorBisque() Color               { return NewColorRGBA8(255, 228, 196, 255) }
+func ColorBlanchedAlmond() Color       { return NewColorRGBA8(255, 235, 205, 255) }
+func ColorBlueViolet() Color           { return NewColorRGBA8(138, 43, 226, 255) }
+func ColorBrown() Color                { return NewColorRGBA8(165, 42, 42, 255) }
+func ColorBurlyWood() Color            { return NewColorRGBA8(222, 184, 135, 255) }
+func ColorCadetBlue() Color            { return NewColorRGBA8(95, 158, 160, 255) }
+func ColorChartreuse() Color           { return NewColorRGBA8(127, 255, 0, 255) }
+func ColorChocolate() Color            { return NewColorRGBA8(210, 105, 30, 255) }
+func ColorCoral() Color                { return NewColorRGBA8(255, 127, 80, 255) }
+func ColorCornflowerBlue() Color       { return NewColorRGBA8(100, 149, 237, 255) }
+func ColorCornsilk() Color             { return NewColorRGBA8(255, 248, 220, 255) }
+func ColorCrimson() Color              { return NewColorRGBA8(220, 20, 60, 255) }
+func ColorDarkBlue() Color             { return NewColorRGBA8(0, 0, 139, 255) }
+func ColorDarkCyan() Color             { return NewColorRGBA8(0, 139, 139, 255) }
+func ColorDarkGoldenrod() Color        { return NewColorRGBA8(184, 134, 11, 255) }
+func ColorDarkGray() Color             { return NewColorRGBA8(169, 169, 169, 255) }
+func ColorDarkGreen() Color            { return NewColorRGBA8(0, 100, 0, 255) }
+func ColorDarkGrey() Color             { return NewColorRGBA8(169, 169, 169, 255) }
+func ColorDarkKhaki() Color            { return NewColorRGBA8(189, 183, 107, 255) }
+func ColorDarkMagenta() Color          { return NewColorRGBA8(139, 0, 139, 255) }
+func ColorDarkOliveGreen() Color       { return NewColorRGBA8(85, 107, 47, 255) }
+func ColorDarkOrange() Color           { return NewColorRGBA8(255, 140, 0, 255) }
+func ColorDarkOrchid() Color           { return NewColorRGBA8(153, 50, 204, 255) }
+func ColorDarkRed() Color              { return NewColorRGBA8(139, 0, 0, 255) }
+func ColorDarkSalmon() Color           { return NewColorRGBA8(233, 150, 122, 255) }
+func ColorDarkSeagreen() Color         { return NewColorRGBA8(143, 188, 143, 255) }
+func ColorDarkSlateBlue() Color        { return NewColorRGBA8(72, 61, 139, 255) }
+func ColorDarkSlateGray() Color        { return NewColorRGBA8(47, 79, 79, 255) }
+func ColorDarkSlateGrey() Color        { return NewColorRGBA8(47, 79, 79, 255) }
+func ColorDarkTurquoise() Color        { return NewColorRGBA8(0, 206, 209, 255) }
+func ColorDarkViolet() Color           { return NewColorRGBA8(148, 0, 211, 255) }
+func ColorDeepPink() Color             { return NewColorRGBA8(255, 20, 147, 255) }
+func ColorDeepSkyBlue() Color          { return NewColorRGBA8(0, 191, 255, 255) }
+func ColorDimGray() Color              { return NewColorRGBA8(105, 105, 105, 255) }
+func ColorDimGrey() Color              { return NewColorRGBA8(105, 105, 105, 255) }
+func ColorDodgerBlue() Color           { return NewColorRGBA8(30, 144, 255, 255) }
+func ColorFirebrick() Color            { return NewColorRGBA8(178, 34, 34, 255) }
+func ColorFloralWhite() Color          { return NewColorRGBA8(255, 250, 240, 255) }
+func ColorForestGreen() Color          { return NewColorRGBA8(34, 139, 34, 255) }
+func ColorFuchsia() Color              { return NewColorRGBA8(255, 0, 255, 255) }
+func ColorGainsboro() Color            { return NewColorRGBA8(220, 220, 220, 255) }
+func ColorGhostwhite() Color           { return NewColorRGBA8(248, 248, 255, 255) }
+func ColorGold() Color                 { return NewColorRGBA8(255, 215, 0, 255) }
+func ColorGoldenrod() Color            { return NewColorRGBA8(218, 165, 32, 255) }
+func ColorGreenYellow() Color          { return NewColorRGBA8(173, 255, 47, 255) }
+func ColorHoneydew() Color             { return NewColorRGBA8(240, 255, 240, 255) }
+func ColorHotPink() Color              { return NewColorRGBA8(255, 105, 180, 255) }
+func ColorIndianRed() Color            { return NewColorRGBA8(205, 92, 92, 255) }
+func ColorIndigo() Color               { return NewColorRGBA8(75, 0, 130, 255) }
+func ColorIvory() Color                { return NewColorRGBA8(255, 255, 240, 255) }
+func ColorKhaki() Color                { return NewColorRGBA8(240, 230, 140, 255) }
+func ColorLavender() Color             { return NewColorRGBA8(230, 230, 250, 255) }
+func ColorLavenderBlush() Color        { return NewColorRGBA8(255, 240, 245, 255) }
+func ColorLawnGreen() Color            { return NewColorRGBA8(124, 252, 0, 255) }
+func ColorLemonChiffon() Color         { return NewColorRGBA8(255, 250, 205, 255) }
+func ColorLightBlue() Color            { return NewColorRGBA8(173, 216, 230, 255) }
+func ColorLightCoral() Color           { return NewColorRGBA8(240, 128, 128, 255) }
+func ColorLightCyan() Color            { return NewColorRGBA8(224, 255, 255, 255) }
+func ColorLightGoldenrodYellow() Color { return NewColorRGBA8(250, 250, 210, 255) }
+func ColorLightGray() Color            { return NewColorRGBA8(211, 211, 211, 255) }
+func ColorLightGreen() Color           { return NewColorRGBA8(144, 238, 144, 255) }
+func ColorLightGrey() Color            { return NewColorRGBA8(211, 211, 211, 255) }
+func ColorLightPink() Color            { return NewColorRGBA8(255, 182, 193, 255) }
+func ColorLightSalmon() Color          { return NewColorRGBA8(255, 160, 122, 255) }
+func ColorLightSeaGreen() Color        { return NewColorRGBA8(32, 178, 170, 255) }
+func ColorLightSkyBlue() Color         { return NewColorRGBA8(135, 206, 250, 255) }
+func ColorLightSlateGray() Color       { return NewColorRGBA8(119, 136, 153, 255) }
+func ColorLightSlateGrey() Color       { return NewColorRGBA8(119, 136, 153, 255) }
+func ColorLightSteelBlue() Color       { return NewColorRGBA8(176, 196, 222, 255) }
+func ColorLightYellow() Color          { return NewColorRGBA8(255, 255, 224, 255) }
+func ColorLime() Color                 { return NewColorRGBA8(0, 255, 0, 255) }
+func ColorLimeGreen() Color            { return NewColorRGBA8(50, 205, 50, 255) }
+func ColorLinen() Color                { return NewColorRGBA8(250, 240, 230, 255) }
+func ColorMaroon() Color               { return NewColorRGBA8(128, 0, 0, 255) }
+func ColorMediumAquamarine() Color     { return NewColorRGBA8(102, 205, 170, 255) }
+func ColorMediumBlue() Color           { return NewColorRGBA8(0, 0, 205, 255) }
+func ColorMediumOrchid() Color         { return NewColorRGBA8(186, 85, 211, 255) }
+func ColorMediumPurple() Color         { return NewColorRGBA8(147, 112, 219, 255) }
+func ColorMediumSeagreen() Color       { return NewColorRGBA8(60, 179, 113, 255) }
+func ColorMediumSlateBlue() Color      { return NewColorRGBA8(123, 104, 238, 255) }
+func ColorMediumSpringGreen() Color    { return NewColorRGBA8(0, 250, 154, 255) }
+func ColorMediumTurquoise() Color      { return NewColorRGBA8(72, 209, 204, 255) }
+func ColorMediumVioletRed() Color      { return NewColorRGBA8(199, 21, 133, 255) }
+func ColorMidnightBlue() Color         { return NewColorRGBA8(25, 25, 112, 255) }
+func ColorMintCream() Color            { return NewColorRGBA8(245, 255, 250, 255) }
+func ColorMistyRose() Color            { return NewColorRGBA8(255, 228, 225, 255) }
+func ColorMoccasin() Color             { return NewColorRGBA8(255, 228, 181, 255) }
+func ColorNavajoWhite() Color          { return NewColorRGBA8(255, 222, 173, 255) }
+func ColorNavy() Color                 { return NewColorRGBA8(0, 0, 128, 255) }
+func ColorOldLace() Color              { return NewColorRGBA8(253, 245, 230, 255) }
+func ColorOlive() Color                { return NewColorRGBA8(128, 128, 0, 255) }
+func ColorOliveDrab() Color            { return NewColorRGBA8(107, 142, 35, 255) }
+func ColorOrangeRed() Color            { return NewColorRGBA8(255, 69, 0, 255) }
+func ColorOrchid() Color               { return NewColorRGBA8(218, 112, 214, 255) }
+func ColorPaleGoldenrod() Color        { return NewColorRGBA8(238, 232, 170, 255) }
+func ColorPaleGreen() Color            { return NewColorRGBA8(152, 251, 152, 255) }
+func ColorPaleTurquoise() Color        { return NewColorRGBA8(175, 238, 238, 255) }
+func ColorPaleVioletRed() Color        { return NewColorRGBA8(219, 112, 147, 255) }
+func ColorPapayaWhip() Color           { return NewColorRGBA8(255, 239, 213, 255) }
+func ColorPeachpuff() Color            { return NewColorRGBA8(255, 218, 185, 255) }
+func ColorPeru() Color                 { return NewColorRGBA8(205, 133, 63, 255) }
+func ColorPlum() Color                 { return NewColorRGBA8(221, 160, 221, 255) }
+func ColorPowderBlue() Color           { return NewColorRGBA8(176, 224, 230, 255) }
+func ColorRosyBrown() Color            { return NewColorRGBA8(188, 143, 143, 255) }
+func ColorRoyalBlue() Color            { return NewColorRGBA8(65, 105, 225, 255) }
+func ColorSaddleBrown() Color          { return NewColorRGBA8(139, 69, 19, 255) }
+func ColorSalmon() Color               { return NewColorRGBA8(250, 128, 114, 255) }
+func ColorSandyBrown() Color           { return NewColorRGBA8(244, 164, 96, 255) }
+func ColorSeagreen() Color             { return NewColorRGBA8(46, 139, 87, 255) }
+func ColorSeashell() Color             { return NewColorRGBA8(255, 245, 238, 255) }
+func ColorSienna() Color               { return NewColorRGBA8(160, 82, 45, 255) }
+func ColorSilver() Color               { return NewColorRGBA8(192, 192, 192, 255) }
+func ColorSkyBlue() Color              { return NewColorRGBA8(135, 206, 235, 255) }
+func ColorSlateBlue() Color            { return NewColorRGBA8(106, 90, 205, 255) }
+func ColorSlateGray() Color            { return NewColorRGBA8(112, 128, 144, 255) }
+func ColorSlateGrey() Color            { return NewColorRGBA8(112, 128, 144, 255) }
+func ColorSnow() Color                 { return NewColorRGBA8(255, 250, 250, 255) }
+func ColorSpringGreen() Color          { return NewColorRGBA8(0, 255, 127, 255) }
+func ColorSteelBlue() Color            { return NewColorRGBA8(70, 130, 180, 255) }
+func ColorTan() Color                  { return NewColorRGBA8(210, 180, 140, 255) }
+func ColorTeal() Color                 { return NewColorRGBA8(0, 128, 128, 255) }
+func ColorThistle() Color              { return NewColorRGBA8(216, 191, 216, 255) }
+func ColorTomato() Color               { return NewColorRGBA8(255, 99, 71, 255) }
+func ColorTurquoise() Color            { return NewColorRGBA8(64, 224, 208, 255) }
+func ColorViolet() Color               { return NewColorRGBA8(238, 130, 238, 255) }
+func ColorWheat() Color                { return NewColorRGBA8(245, 222, 179, 255) }
+func ColorWhitesmoke() Color           { return NewColorRGBA8(245, 245, 245, 255) }
+func ColorYellowGreen() Color          { return NewColorRGBA8(154, 205, 50, 255) }

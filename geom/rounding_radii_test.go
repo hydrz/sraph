@@ -3,7 +3,7 @@ package geom
 import "testing"
 
 func TestRoundingRadii_NewAndProperties(t *testing.T) {
-	r := NewRoundingRadii[Scalar](5.0)
+	r := NewRoundingRadii(5.0)
 	if !r.TopLeft.Equal(Size[Scalar]{5, 5}) ||
 		!r.TopRight.Equal(Size[Scalar]{5, 5}) ||
 		!r.BottomLeft.Equal(Size[Scalar]{5, 5}) ||
@@ -22,7 +22,7 @@ func TestRoundingRadii_NewAndProperties(t *testing.T) {
 }
 
 func TestRoundingRadiiLTRB(t *testing.T) {
-	r := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
+	r := NewRoundingRadiiLTRB(1.0, 2.0, 3.0, 4.0)
 	if !r.TopLeft.Equal(Size[Scalar]{1, 2}) ||
 		!r.TopRight.Equal(Size[Scalar]{3, 2}) ||
 		!r.BottomLeft.Equal(Size[Scalar]{1, 4}) ||
@@ -35,18 +35,18 @@ func TestRoundingRadiiLTRB(t *testing.T) {
 }
 
 func TestRoundingRadii_IsEmpty(t *testing.T) {
-	r := NewRoundingRadii[Scalar](0.0)
+	r := NewRoundingRadii(0.0)
 	if !r.IsEmpty() {
 		t.Errorf("IsEmpty: should be true for all zero radii")
 	}
-	r2 := NewRoundingRadiiLTRB[Scalar](0.0, 1.0, 0.0, 0.0)
+	r2 := NewRoundingRadiiLTRB(0.0, 1.0, 0.0, 0.0)
 	if r2.IsEmpty() {
 		t.Errorf("IsEmpty: should be false if any corner is nonzero")
 	}
 }
 
 func TestRoundingRadii_Scale(t *testing.T) {
-	r := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
+	r := NewRoundingRadiiLTRB(1.0, 2.0, 3.0, 4.0)
 	s := r.Scale(2.0)
 	if !s.TopLeft.Equal(Size[Scalar]{2, 4}) ||
 		!s.TopRight.Equal(Size[Scalar]{6, 4}) ||
@@ -57,8 +57,8 @@ func TestRoundingRadii_Scale(t *testing.T) {
 }
 
 func TestRoundingRadii_ScaleToFit(t *testing.T) {
-	r := NewRoundingRadii[Scalar](10.0)
-	bounds := NewRect[Scalar](0.0, 0.0, 15.0, 20.0)
+	r := NewRoundingRadii(10.0)
+	bounds := NewRect(0.0, 0.0, 15.0, 20.0)
 	scaled := r.ScaleToFit(bounds)
 	sumTop := scaled.TopLeft.Width + scaled.TopRight.Width
 	sumLeft := scaled.TopLeft.Height + scaled.BottomLeft.Height
@@ -68,9 +68,9 @@ func TestRoundingRadii_ScaleToFit(t *testing.T) {
 }
 
 func TestRoundingRadii_Equal(t *testing.T) {
-	r1 := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
-	r2 := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
-	r3 := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 5.0)
+	r1 := NewRoundingRadiiLTRB(1.0, 2.0, 3.0, 4.0)
+	r2 := NewRoundingRadiiLTRB(1.0, 2.0, 3.0, 4.0)
+	r3 := NewRoundingRadiiLTRB(1.0, 2.0, 3.0, 5.0)
 	if !r1.Equal(r2) {
 		t.Errorf("Eq: should be true for identical radii")
 	}
@@ -80,7 +80,7 @@ func TestRoundingRadii_Equal(t *testing.T) {
 }
 
 func TestRoundingRadii_String(t *testing.T) {
-	r := NewRoundingRadii[Scalar](1.0)
+	r := NewRoundingRadii(1.0)
 	s := r.String()
 	if s == "" {
 		t.Errorf("String: should not be empty")
