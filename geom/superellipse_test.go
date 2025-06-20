@@ -39,7 +39,7 @@ func TestSuperellipse_PathSourceVariants(t *testing.T) {
 	if ps.FillType() != FillTypeNonZero {
 		t.Error("SuperellipsePathSource FillType should be FillTypeNonZero")
 	}
-	if !ps.Bounds().Eq(rect) {
+	if !ps.Bounds().Equal(rect) {
 		t.Error("SuperellipsePathSource Bounds mismatch")
 	}
 	if !ps.IsConvex() {
@@ -63,7 +63,7 @@ func TestSuperellipse_DiffPathSource(t *testing.T) {
 	if ps.IsConvex() {
 		t.Error("DiffSuperellipsePathSource should not be convex")
 	}
-	if !ps.Bounds().Eq(rect) {
+	if !ps.Bounds().Equal(rect) {
 		t.Error("DiffSuperellipsePathSource Bounds mismatch")
 	}
 	receiver := &testPathReceiver[float64]{}

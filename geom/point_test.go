@@ -106,10 +106,10 @@ func TestPoint_PointComparison(t *testing.T) {
 	p3 := Point[Scalar]{X: 3.0, Y: 4.0}
 
 	t.Run("Eq", func(t *testing.T) {
-		if !p1.Eq(p2) {
+		if !p1.Equal(p2) {
 			t.Error("Eq points should be Eq")
 		}
-		if p1.Eq(p3) {
+		if p1.Equal(p3) {
 			t.Error("Different points should not be Eq")
 		}
 	})
@@ -262,7 +262,7 @@ func TestPoint_PointReflect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
 			reflected := tt.point.Reflect(tt.axis)
-			if !reflected.Eq(tt.expected) {
+			if !reflected.Equal(tt.expected) {
 				t.Errorf("Reflect(%v) = %v, want %v", tt.axis, reflected, tt.expected)
 			}
 		})

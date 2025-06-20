@@ -66,7 +66,7 @@ func (q Quaternion[T]) Div(other Quaternion[T]) Quaternion[T] {
 }
 
 // Eq checks if this quaternion is Eq to another.
-func (q Quaternion[T]) Eq(other Quaternion[T]) bool {
+func (q Quaternion[T]) Equal(other Quaternion[T]) bool {
 	return NearlyEqual(q.X, other.X) &&
 		NearlyEqual(q.Y, other.Y) &&
 		NearlyEqual(q.Z, other.Z) &&

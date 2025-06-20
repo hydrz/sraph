@@ -4,13 +4,13 @@ import (
 	"math"
 )
 
-// Size represents a 2D size (width and height) in graphics programming.
-// It is commonly used for describing the dimensions of rectangles, images, viewports, and other graphical objects.
-// The struct provides a set of arithmetic and utility operations for manipulating and querying size values.
+// Size represents a two-dimensional size with width and height.
+// Size is safe for concurrent use by multiple goroutines.
 type Size[T TScalar] struct {
 	Width, Height T
 }
 
+// NewSize returns a Size with the given width and height.
 func NewSize[T TScalar](width, height T) Size[T] {
 	return Size[T]{
 		Width:  width,
@@ -18,8 +18,7 @@ func NewSize[T TScalar](width, height T) Size[T] {
 	}
 }
 
-// Add returns the element-wise sum of this size and another.
-// Useful for combining the dimensions of two graphical objects.
+// Add returns the element-wise sum of s and other.
 func (s Size[T]) Add(other Size[T]) Size[T] {
 	return Size[T]{
 		Width:  s.Width + other.Width,
@@ -27,8 +26,7 @@ func (s Size[T]) Add(other Size[T]) Size[T] {
 	}
 }
 
-// Sub returns the element-wise difference of this size and another.
-// Useful for calculating the remaining space or difference between two objects.
+// Sub returns the element-wise difference of s and other.
 func (s Size[T]) Sub(other Size[T]) Size[T] {
 	return Size[T]{
 		Width:  s.Width - other.Width,
@@ -36,8 +34,7 @@ func (s Size[T]) Sub(other Size[T]) Size[T] {
 	}
 }
 
-// Mul returns the element-wise product of this size and another.
-// Can be used for scaling each dimension by another size, e.g., for proportional resizing.
+// Mul returns the element-wise product of s and other.
 func (s Size[T]) Mul(other Size[T]) Size[T] {
 	return Size[T]{
 		Width:  s.Width * other.Width,
@@ -45,8 +42,7 @@ func (s Size[T]) Mul(other Size[T]) Size[T] {
 	}
 }
 
-// Div returns the element-wise division of this size by another.
-// Useful for computing relative scaling factors or normalizing dimensions.
+// Div returns the element-wise quotient of s and other.
 func (s Size[T]) Div(other Size[T]) Size[T] {
 	return Size[T]{
 		Width:  s.Width / other.Width,
@@ -54,8 +50,7 @@ func (s Size[T]) Div(other Size[T]) Size[T] {
 	}
 }
 
-// Neg returns the negated size.
-// Rare in graphics, but can be used for certain mathematical operations.
+// Neg returns the negation of s.
 func (s Size[T]) Neg() Size[T] {
 	return Size[T]{
 		Width:  -s.Width,
@@ -63,8 +58,7 @@ func (s Size[T]) Neg() Size[T] {
 	}
 }
 
-// Scale scales the width and height by the same factor.
-// Commonly used for uniform scaling, such as resizing an image while maintaining aspect ratio.
+// Scale returns a Size scaled by the given factor in both dimensions.
 func (s Size[T]) Scale(scale T) Size[T] {
 	return Size[T]{
 		Width:  s.Width * scale,
@@ -72,8 +66,7 @@ func (s Size[T]) Scale(scale T) Size[T] {
 	}
 }
 
-// ScaleWH scales the width and height by the given factors.
-// Allows non-uniform scaling, e.g., stretching or shrinking only one dimension.
+// ScaleWH returns a Size scaled by width and height factors.
 func (s Size[T]) ScaleWH(width, height T) Size[T] {
 	return Size[T]{
 		Width:  s.Width * width,
@@ -81,12 +74,12 @@ func (s Size[T]) ScaleWH(width, height T) Size[T] {
 	}
 }
 
-// Eq reports whether s and o are equal.
-func (s Size[T]) Eq(o Size[T]) bool {
+// Equal reports whether s and o have equal width and height within floating-point tolerance.
+func (s Size[T]) Equal(o Size[T]) bool {
 	return NearlyEqual(s.Width, o.Width) && NearlyEqual(s.Height, o.Height)
 }
 
-// Min returns the size with the minimum width and height among all.
+// Min returns a Size with the minimum width and height among s and all others.
 func (s Size[T]) Min(o ...Size[T]) Size[T] {
 	minW, minH := s.Width, s.Height
 	for _, other := range o {
@@ -100,7 +93,7 @@ func (s Size[T]) Min(o ...Size[T]) Size[T] {
 	return Size[T]{Width: minW, Height: minH}
 }
 
-// Max returns the size with the maximum width and height among all.
+// Max returns a Size with the maximum width and height among s and all others.
 func (s Size[T]) Max(o ...Size[T]) Size[T] {
 	maxW, maxH := s.Width, s.Height
 	for _, other := range o {
@@ -114,8 +107,7 @@ func (s Size[T]) Max(o ...Size[T]) Size[T] {
 	return Size[T]{Width: maxW, Height: maxH}
 }
 
-// MinDimension returns the minimum of width and height.
-// Used to determine the limiting dimension, e.g., for fitting a square inside a rectangle.
+// MinDimension returns the smaller of width and height.
 func (s Size[T]) MinDimension() T {
 	if s.Width < s.Height {
 		return s.Width
@@ -123,8 +115,7 @@ func (s Size[T]) MinDimension() T {
 	return s.Height
 }
 
-// MaxDimension returns the maximum of width and height.
-// Used to determine the dominant dimension, e.g., for scaling or aspect ratio calculations.
+// MaxDimension returns the larger of width and height.
 func (s Size[T]) MaxDimension() T {
 	if s.Width > s.Height {
 		return s.Width
@@ -132,14 +123,12 @@ func (s Size[T]) MaxDimension() T {
 	return s.Height
 }
 
-// Area returns the area (width * height).
-// Fundamental in graphics for pixel count, memory allocation, or hit-testing.
+// Area returns the area of the size (width * height).
 func (s Size[T]) Area() T {
 	return s.Width * s.Height
 }
 
-// Abs returns the size with absolute width and height.
-// Ensures dimensions are non-negative, which is important for rendering and layout.
+// Abs returns a Size with non-negative width and height.
 func (s Size[T]) Abs() Size[T] {
 	var zero T
 	w := s.Width
@@ -153,8 +142,7 @@ func (s Size[T]) Abs() Size[T] {
 	return Size[T]{Width: w, Height: h}
 }
 
-// Floor returns the size with width and height floored.
-// Useful for aligning to pixel boundaries or integer grid systems.
+// Floor returns a Size with width and height rounded down to the nearest integer.
 func (s Size[T]) Floor() Size[T] {
 	return Size[T]{
 		Width:  T(math.Floor(ToFloat64(s.Width))),
@@ -162,8 +150,7 @@ func (s Size[T]) Floor() Size[T] {
 	}
 }
 
-// Ceil returns the size with width and height ceiled.
-// Useful for ensuring enough space is allocated, avoiding clipping.
+// Ceil returns a Size with width and height rounded up to the nearest integer.
 func (s Size[T]) Ceil() Size[T] {
 	return Size[T]{
 		Width:  T(math.Ceil(ToFloat64(s.Width))),
@@ -171,8 +158,7 @@ func (s Size[T]) Ceil() Size[T] {
 	}
 }
 
-// Round returns the size with width and height rounded.
-// Used for snapping to the nearest pixel or grid unit.
+// Round returns a Size with width and height rounded to the nearest integer.
 func (s Size[T]) Round() Size[T] {
 	return Size[T]{
 		Width:  T(math.Round(ToFloat64(s.Width))),
@@ -180,33 +166,29 @@ func (s Size[T]) Round() Size[T] {
 	}
 }
 
-// IsZero returns true if both width and height are zero.
-// Used to detect degenerate or empty objects.
+// IsZero reports whether both width and height are zero.
 func (s Size[T]) IsZero() bool {
 	var zero T
 	return NearlyEqual(s.Width, zero) && NearlyEqual(s.Height, zero)
 }
 
-// IsFinite returns true if both width and height are finite.
-// Important for validating geometry before rendering or computation.
+// IsFinite reports whether both width and height are finite numbers.
 func (s Size[T]) IsFinite() bool {
 	return IsFinite(s.Width) && IsFinite(s.Height)
 }
 
-// IsInfinite returns true if either width or height is infinite.
-// Can be used to represent unbounded or unconstrained objects.
+// IsInfinite reports whether either width or height is infinite.
 func (s Size[T]) IsInfinite() bool {
 	return math.IsInf(ToFloat64(s.Width), 0) || math.IsInf(ToFloat64(s.Height), 0)
 }
 
-// IsSquare returns true if width and height are equal.
-// Useful for aspect ratio checks, e.g., for icons or tiles.
+// IsSquare reports whether width and height are equal within floating-point tolerance.
 func (s Size[T]) IsSquare() bool {
 	return NearlyEqual(s.Width, s.Height)
 }
 
-// MipCount returns the mipmap count for the size.
-// Used in texture mapping to determine the number of mipmap levels for an image.
+// MipCount returns the number of mipmap levels for the size.
+// The result is at least 1.
 func (s Size[T]) MipCount() int {
 	w := int(s.Width)
 	h := int(s.Height)
@@ -223,7 +205,7 @@ func (s Size[T]) MipCount() int {
 	return count + 1
 }
 
-// String returns a string representation of the size, like "(width, height)".
+// String returns the string representation of the size in the form "(width, height)".
 func (s Size[T]) String() string {
 	return "(" + ToString(s.Width) + ", " + ToString(s.Height) + ")"
 }

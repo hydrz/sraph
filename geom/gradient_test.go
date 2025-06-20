@@ -199,7 +199,7 @@ func TestNewRadialGradient(t *testing.T) {
 
 	gradient := NewRadialGradient(center, radius, stops)
 
-	if !gradient.Center.Eq(center) {
+	if !gradient.Center.Equal(center) {
 		t.Errorf("Center mismatch: got %v, want %v", gradient.Center, center)
 	}
 

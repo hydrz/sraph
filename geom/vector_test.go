@@ -174,15 +174,15 @@ func TestVector3Combine(t *testing.T) {
 	}
 }
 
-func TestVector3Eq(t *testing.T) {
+func TestVector3Equal(t *testing.T) {
 	v1 := Vector3[Scalar]{1.0, 2.0, 3.0}
 	v2 := Vector3[Scalar]{1.0, 2.0, 3.0}
 	v3 := Vector3[Scalar]{1.0, 2.0, 4.0}
 
-	if !v1.Eq(v2) {
+	if !v1.Equal(v2) {
 		t.Error("Eq vectors should be Eq")
 	}
-	if v1.Eq(v3) {
+	if v1.Equal(v3) {
 		t.Error("Different vectors should not be Eq")
 	}
 }

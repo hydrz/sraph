@@ -84,7 +84,7 @@ func TestNewColorFromRGBA(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewColorFromRGBA(tt.input)
-			if !got.Eq(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("NewColorFromRGBA() = %v, want %v", got, tt.want)
 			}
 		})
@@ -117,7 +117,7 @@ func TestNewColorRGBA8(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewColorRGBA8(tt.r, tt.g, tt.b, tt.a)
-			if !got.Eq(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("NewColorRGBA8() = %v, want %v", got, tt.want)
 			}
 		})
@@ -155,7 +155,7 @@ func TestNewColorHex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewColorHex(tt.hex)
-			if !got.Eq(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("NewColorHex() = %v, want %v", got, tt.want)
 			}
 		})
@@ -168,7 +168,7 @@ func TestColor_Add(t *testing.T) {
 	want := Color{R: 0.3, G: 0.5, B: 0.7, A: 0.9}
 
 	got := c1.Add(c2)
-	if !got.Eq(want) {
+	if !got.Equal(want) {
 		t.Errorf("Color.Add() = %v, want %v", got, want)
 	}
 }
@@ -179,7 +179,7 @@ func TestColor_Sub(t *testing.T) {
 	want := Color{R: 0.4, G: 0.4, B: 0.4, A: 0.4}
 
 	got := c1.Sub(c2)
-	if !got.Eq(want) {
+	if !got.Equal(want) {
 		t.Errorf("Color.Sub() = %v, want %v", got, want)
 	}
 }
@@ -190,7 +190,7 @@ func TestColor_Mul(t *testing.T) {
 	want := Color{R: 0.1, G: 0.3, B: 0.2, A: 0.5}
 
 	got := c1.Mul(c2)
-	if !got.Eq(want) {
+	if !got.Equal(want) {
 		t.Errorf("Color.Mul() = %v, want %v", got, want)
 	}
 }
@@ -201,7 +201,7 @@ func TestColor_Scale(t *testing.T) {
 	want := Color{R: 0.4, G: 0.8, B: 1.2, A: 1.6}
 
 	got := c.Scale(scale)
-	if !got.Eq(want) {
+	if !got.Equal(want) {
 		t.Errorf("Color.Scale() = %v, want %v", got, want)
 	}
 }
@@ -237,7 +237,7 @@ func TestColor_Clamp01(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.input.Clamp01()
-			if !got.Eq(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("Color.Clamp01() = %v, want %v", got, tt.want)
 			}
 		})
@@ -270,7 +270,7 @@ func TestColor_Premultiply(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.input.Premultiply()
-			if !got.Eq(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("Color.Premultiply() = %v, want %v", got, tt.want)
 			}
 		})
@@ -303,7 +303,7 @@ func TestColor_Unpremultiply(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.input.Unpremultiply()
-			if !got.Eq(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("Color.Unpremultiply() = %v, want %v", got, tt.want)
 			}
 		})
@@ -316,7 +316,7 @@ func TestColor_WithAlpha(t *testing.T) {
 	want := Color{R: 0.5, G: 0.6, B: 0.7, A: 0.3}
 
 	got := c.WithAlpha(newAlpha)
-	if !got.Eq(want) {
+	if !got.Equal(want) {
 		t.Errorf("Color.WithAlpha() = %v, want %v", got, want)
 	}
 }
@@ -419,7 +419,7 @@ func TestColor_Lerp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := c1.Lerp(c2, tt.t)
-			if !got.Eq(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("Color.Lerp() = %v, want %v", got, tt.want)
 			}
 		})
@@ -458,15 +458,15 @@ func TestColor_Blend(t *testing.T) {
 			switch tt.mode {
 			case BlendModeClear:
 				want := Color{R: 0, G: 0, B: 0, A: 0}
-				if !result.Eq(want) {
+				if !result.Equal(want) {
 					t.Errorf("BlendModeClear should return zero color, got %v", result)
 				}
 			case BlendModeSrc:
-				if !result.Eq(src) {
+				if !result.Equal(src) {
 					t.Errorf("BlendModeSrc should return source color, got %v, want %v", result, src)
 				}
 			case BlendModeDst:
-				if !result.Eq(dst) {
+				if !result.Equal(dst) {
 					t.Errorf("BlendModeDst should return destination color, got %v, want %v", result, dst)
 				}
 			}
@@ -569,7 +569,7 @@ func TestColor_EdgeCases(t *testing.T) {
 	original := Color{R: 0.8, G: 0.6, B: 0.4, A: 0.7}
 	cycled := original.Premultiply().Unpremultiply()
 
-	if !original.Eq(cycled) {
+	if !original.Equal(cycled) {
 		t.Errorf("Premultiply/Unpremultiply cycle failed: original=%v, cycled=%v", original, cycled)
 	}
 }

@@ -4,15 +4,16 @@ import (
 	"math"
 )
 
-// GradientData represents gradient texture data.
-// If TextureSize is 0, the gradient is invalid.
+// GradientData holds the color data and texture size for a gradient.
+// If TextureSize is 0, the gradient is considered invalid.
 type GradientData struct {
-	ColorBytes  []uint8
-	TextureSize uint32
+	ColorBytes  []uint8 // RGBA bytes for the gradient texture.
+	TextureSize uint32  // Number of texels in the gradient.
 }
 
-// CreateGradientBuffer populates a buffer with interpolated color bytes
-// for the linear gradient described by colors and stops.
+// CreateGradientBuffer generates a buffer of interpolated color bytes for a linear gradient.
+// The colors and stops slices must have the same length. Panics if not.
+// The resulting buffer can be used as a 1D texture for gradient rendering.
 func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 	if len(stops) != len(colors) {
 		panic("stops and colors must have the same length")
@@ -25,7 +26,6 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 		minimumDelta := Scalar(1.0)
 		for i := 1; i < len(stops); i++ {
 			value := stops[i] - stops[i-1]
-			// Skip values smaller than tolerance
 			if value < 0.0001 {
 				continue
 			}
@@ -33,9 +33,6 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 				minimumDelta = value
 			}
 		}
-
-		// Avoid creating textures that are absurdly large due to stops
-		// that are very close together
 		calculated := uint32(math.Round(ToFloat64(1.0/minimumDelta))) + 1
 		if calculated > 1024 {
 			textureSize = 1024
@@ -50,17 +47,16 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 	}
 
 	if textureSize == uint32(len(colors)) && len(colors) <= 1024 {
-		// Direct mapping case
+		// Direct mapping: one texel per color.
 		for i := 0; i < len(colors); i++ {
 			appendColor(colors[i], &data)
 		}
 	} else {
-		// Interpolation case
+		// Interpolated mapping.
 		previousColor := colors[0]
 		previousStop := Scalar(0.0)
 		previousColorIndex := 0
 
-		// First index is always Eq to the first color
 		appendColor(previousColor, &data)
 
 		for i := uint32(1); i < textureSize-1; i++ {
@@ -68,19 +64,16 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 			nextColor := colors[previousColorIndex+1]
 			nextStop := stops[previousColorIndex+1]
 
-			// Check if we're nearly Eq to the next stop
 			if NearlyEqual(scaledI, nextStop) {
 				appendColor(nextColor, &data)
 				previousColor = nextColor
 				previousStop = nextStop
 				previousColorIndex++
 			} else if scaledI < nextStop {
-				// Interpolate between current and next color
 				t := (scaledI - previousStop) / (nextStop - previousStop)
 				mixedColor := previousColor.Lerp(nextColor, t)
 				appendColor(mixedColor, &data)
 			} else {
-				// Move to next color segment
 				previousColor = nextColor
 				previousStop = nextStop
 				previousColorIndex++
@@ -88,7 +81,6 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 				if previousColorIndex+1 < len(colors) {
 					nextColor = colors[previousColorIndex+1]
 					nextStop = stops[previousColorIndex+1]
-
 					t := (scaledI - previousStop) / (nextStop - previousStop)
 					mixedColor := previousColor.Lerp(nextColor, t)
 					appendColor(mixedColor, &data)
@@ -98,41 +90,41 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 			}
 		}
 
-		// Last index is always Eq to the last color
 		appendColor(colors[len(colors)-1], &data)
 	}
 
 	return data
 }
 
-// appendColor adds a color's RGBA bytes to the gradient data
+// appendColor appends the RGBA bytes of color to the gradient data.
 func appendColor(color Color, data *GradientData) {
 	rgba := color.ToRGBA()
 	data.ColorBytes = append(data.ColorBytes, rgba.R, rgba.G, rgba.B, rgba.A)
 }
 
-// IsValid returns true if the gradient data is valid
+// IsValid reports whether the gradient data is valid (TextureSize > 0).
 func (g GradientData) IsValid() bool {
 	return g.TextureSize > 0
 }
 
-// GradientStop represents a color stop in a gradient
+// GradientStop represents a color stop in a gradient at a given position in [0,1].
 type GradientStop struct {
-	Color    Color
-	Position Scalar // Position from 0.0 to 1.0
+	Color    Color  // Color at this stop.
+	Position Scalar // Position from 0.0 to 1.0.
 }
 
-// LinearGradient represents a linear gradient definition
+// LinearGradient defines a linear gradient by a sequence of color stops.
 type LinearGradient struct {
 	Stops []GradientStop
 }
 
-// NewLinearGradient creates a new linear gradient with the given stops
+// NewLinearGradient returns a LinearGradient with the provided stops.
 func NewLinearGradient(stops []GradientStop) LinearGradient {
 	return LinearGradient{Stops: stops}
 }
 
-// ToBuffer converts the linear gradient to a gradient buffer
+// ToBuffer returns the gradient data for the linear gradient.
+// If no stops are present, returns an invalid GradientData.
 func (lg LinearGradient) ToBuffer() GradientData {
 	if len(lg.Stops) == 0 {
 		return GradientData{}
@@ -149,14 +141,14 @@ func (lg LinearGradient) ToBuffer() GradientData {
 	return CreateGradientBuffer(colors, stops)
 }
 
-// RadialGradient represents a radial gradient definition
+// RadialGradient defines a radial gradient by center, radius, and color stops.
 type RadialGradient struct {
-	Center Point[Scalar]
-	Radius Scalar
+	Center Point[Scalar] // Center of the radial gradient.
+	Radius Scalar        // Radius of the radial gradient.
 	Stops  []GradientStop
 }
 
-// NewRadialGradient creates a new radial gradient
+// NewRadialGradient returns a RadialGradient with the given center, radius, and stops.
 func NewRadialGradient(center Point[Scalar], radius Scalar, stops []GradientStop) RadialGradient {
 	return RadialGradient{
 		Center: center,
@@ -165,7 +157,8 @@ func NewRadialGradient(center Point[Scalar], radius Scalar, stops []GradientStop
 	}
 }
 
-// ToBuffer converts the radial gradient to a gradient buffer
+// ToBuffer returns the gradient data for the radial gradient.
+// If no stops are present, returns an invalid GradientData.
 func (rg RadialGradient) ToBuffer() GradientData {
 	if len(rg.Stops) == 0 {
 		return GradientData{}

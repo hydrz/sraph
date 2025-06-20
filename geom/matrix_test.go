@@ -324,16 +324,16 @@ func TestMatrix_AxisAngleRotation(t *testing.T) {
 	}
 }
 
-func TestMatrix_Eq(t *testing.T) {
+func TestMatrix_Equal(t *testing.T) {
 	m1 := NewMatrix[Scalar]()
 	m2 := NewMatrix[Scalar]()
 
-	if !m1.Eq(m2) {
+	if !m1.Equal(m2) {
 		t.Error("Two identity matrices should be Eq")
 	}
 
 	m2.Set(0, 0, Scalar(2.0))
-	if m1.Eq(m2) {
+	if m1.Equal(m2) {
 		t.Error("Modified matrix should not Eq identity")
 	}
 }
@@ -394,7 +394,7 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 		// Check that the matrix is orthogonal (transpose == inverse)
 		transpose := result.Transpose()
 		inverse := result.Invert()
-		if !transpose.Eq(inverse) {
+		if !transpose.Equal(inverse) {
 			t.Error("Rotation matrix should be orthogonal (transpose == inverse)")
 		}
 	})

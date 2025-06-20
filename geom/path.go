@@ -55,7 +55,7 @@ type PathSource[T TScalar] interface {
 
 // NewRectPathSource creates a new PathSource for rectangles.
 func NewRectPathSource[T TScalar](rect Rect[T]) PathSource[T] {
-	return &rectPathSource[T]{rect: rect}
+	return rectPathSource[T]{rect: rect}
 }
 
 // rectPathSource is a PathSource for rectangles.
@@ -64,22 +64,22 @@ type rectPathSource[T TScalar] struct {
 }
 
 // FillType implements PathSource.
-func (r *rectPathSource[T]) FillType() FillType {
+func (r rectPathSource[T]) FillType() FillType {
 	return FillTypeNonZero
 }
 
 // Bounds implements PathSource.
-func (r *rectPathSource[T]) Bounds() Rect[T] {
+func (r rectPathSource[T]) Bounds() Rect[T] {
 	return r.rect
 }
 
 // IsConvex implements PathSource.
-func (r *rectPathSource[T]) IsConvex() bool {
+func (r rectPathSource[T]) IsConvex() bool {
 	return true
 }
 
 // Dispatch implements PathSource.
-func (r *rectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
+func (r rectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 	if r.rect.IsEmpty() {
 		return
 	}
@@ -100,7 +100,7 @@ func (r *rectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 
 // NewEllipsePathSource creates a new PathSource for ellipses.
 func NewEllipsePathSource[T TScalar](bounds Rect[T]) PathSource[T] {
-	return &ellipsePathSource[T]{bounds: bounds}
+	return ellipsePathSource[T]{bounds: bounds}
 }
 
 // ellipsePathSource is a PathSource for ellipses.
@@ -109,22 +109,22 @@ type ellipsePathSource[T TScalar] struct {
 }
 
 // FillType implements PathSource.
-func (e *ellipsePathSource[T]) FillType() FillType {
+func (e ellipsePathSource[T]) FillType() FillType {
 	return FillTypeNonZero
 }
 
 // Bounds implements PathSource.
-func (e *ellipsePathSource[T]) Bounds() Rect[T] {
+func (e ellipsePathSource[T]) Bounds() Rect[T] {
 	return e.bounds
 }
 
 // IsConvex implements PathSource.
-func (e *ellipsePathSource[T]) IsConvex() bool {
+func (e ellipsePathSource[T]) IsConvex() bool {
 	return true
 }
 
 // Dispatch implements PathSource.
-func (e *ellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
+func (e ellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
 	if e.bounds.IsEmpty() {
 		return
 	}

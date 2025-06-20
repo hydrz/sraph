@@ -8,23 +8,11 @@ import (
 )
 
 // ColorMatrix represents a 4x5 matrix for color transformation.
-//
-//	[ a, b, c, d, e ]
-//	[ f, g, h, i, j ]
-//	[ k, l, m, n, o ]
-//	[ p, q, r, s, t ]
-//
-// When applied to a color [R, G, B, A], the resulting color is computed as:
-//
-//	R’ = a*R + b*G + c*B + d*A + e;
-//	G’ = f*R + g*G + h*B + i*A + j;
-//	B’ = k*R + l*G + m*B + n*A + o;
-//	A’ = p*R + q*G + r*B + s*A + t;
-//
-// That resulting color [R’, G’, B’, A’] then has each channel clamped to the 0
-// to 1 range.
+// Each ColorMatrix can be used to transform RGBA colors in the range [0,1].
+// When applied to a color [R, G, B, A], the result is clamped to [0,1] per channel.
 type ColorMatrix [20]Scalar
 
+// NewColorMatrix returns an identity ColorMatrix.
 func NewColorMatrix() ColorMatrix {
 	return ColorMatrix{
 		1, 0, 0, 0, 0,
@@ -36,18 +24,18 @@ func NewColorMatrix() ColorMatrix {
 
 var _ color.Color = Color{}
 
-// Color represents an RGBA color with components in the range [0, 1].
-// It implements Go's standard color.Color interface.
+// Color represents an RGBA color with components in [0,1].
+// Color implements color.Color. The zero value is fully transparent black.
 type Color struct {
 	R, G, B, A Scalar
 }
 
-// NewColor creates a new Color with the given RGBA components.
+// NewColor returns a Color with the given RGBA components in [0,1].
 func NewColor(r, g, b, a Scalar) Color {
 	return Color{R: r, G: g, B: b, A: a}
 }
 
-// NewColorRGBA8 creates a Color from 8-bit RGBA values.
+// NewColorRGBA8 returns a Color from 8-bit RGBA values.
 func NewColorRGBA8(r, g, b, a uint8) Color {
 	return Color{
 		R: Scalar(r) / 255.0,
@@ -57,12 +45,12 @@ func NewColorRGBA8(r, g, b, a uint8) Color {
 	}
 }
 
-// NewColorRGB8 creates an opaque Color from 8-bit RGB values.
+// NewColorRGB8 returns an opaque Color from 8-bit RGB values.
 func NewColorRGB8(r, g, b uint8) Color {
 	return NewColorRGBA8(r, g, b, 255)
 }
 
-// NewColorGo creates a Color from any color.Color.
+// NewColorGo returns a Color from any color.Color.
 func NewColorGo(c color.Color) Color {
 	r, g, b, a := c.RGBA()
 	return Color{
@@ -73,7 +61,7 @@ func NewColorGo(c color.Color) Color {
 	}
 }
 
-// NewColorHex creates a Color from a hexadecimal color value.
+// NewColorHex returns a Color from a 0xRRGGBB hex value.
 func NewColorHex(hex uint32) Color {
 	return NewColorRGBA8(
 		uint8((hex>>16)&0xFF),
@@ -83,7 +71,7 @@ func NewColorHex(hex uint32) Color {
 	)
 }
 
-// NewColorHexA creates a Color from a hexadecimal color value with alpha.
+// NewColorHexA returns a Color from a 0xRRGGBBAA hex value.
 func NewColorHexA(hex uint32) Color {
 	return NewColorRGBA8(
 		uint8((hex>>24)&0xFF),
@@ -93,7 +81,7 @@ func NewColorHexA(hex uint32) Color {
 	)
 }
 
-// NewColorFromRGBA creates a Color from Go's standard color.RGBA.
+// NewColorFromRGBA returns a Color from a color.RGBA.
 func NewColorFromRGBA(c color.RGBA) Color {
 	return Color{
 		R: Scalar(c.R) / 255.0,
@@ -103,7 +91,7 @@ func NewColorFromRGBA(c color.RGBA) Color {
 	}
 }
 
-// RandomColor generates a random opaque color.
+// RandomColor returns a random opaque Color.
 func RandomColor() Color {
 	return Color{
 		R: Scalar(rand.Float32()),
@@ -113,8 +101,7 @@ func RandomColor() Color {
 	}
 }
 
-// RGBA implements color.Color interface.
-// Returns the alpha-premultiplied red, green, blue and alpha values.
+// RGBA implements color.Color. The returned values are in [0, 0xffff] and alpha-premultiplied.
 func (c Color) RGBA() (r, g, b, a uint32) {
 	r = uint32(c.R*65535 + 0.5)
 	g = uint32(c.G*65535 + 0.5)
@@ -123,7 +110,7 @@ func (c Color) RGBA() (r, g, b, a uint32) {
 	return
 }
 
-// ToRGBA converts Color to Go's standard color.RGBA.
+// ToRGBA returns a color.RGBA representation of c.
 func (c Color) ToRGBA() color.RGBA {
 	return color.RGBA{
 		R: uint8(Clamp(c.R*255+0.5, 0, 255)),
@@ -133,7 +120,7 @@ func (c Color) ToRGBA() color.RGBA {
 	}
 }
 
-// ToR8G8B8A8 converts color to 8-bit RGBA array.
+// ToR8G8B8A8 returns the color as a [4]uint8 RGBA array.
 func (c Color) ToR8G8B8A8() [4]uint8 {
 	return [4]uint8{
 		uint8(Clamp(c.R*255+0.5, 0, 255)),
@@ -143,26 +130,26 @@ func (c Color) ToR8G8B8A8() [4]uint8 {
 	}
 }
 
-// ToARGB converts color to ARGB 32-bit value.
+// ToARGB returns the color as a 0xAARRGGBB uint32 value.
 func (c Color) ToARGB() uint32 {
 	rgba := c.ToR8G8B8A8()
 	return uint32(rgba[3])<<24 | uint32(rgba[0])<<16 | uint32(rgba[1])<<8 | uint32(rgba[2])
 }
 
-// ToIColor converts color to 32-bit ARGB representation.
+// ToIColor returns the color as a 0xAARRGGBB uint32 value.
 func (c Color) ToIColor() uint32 {
 	return c.ToARGB()
 }
 
-// Eq compares two colors for equality.
-func (c Color) Eq(other Color) bool {
+// Equal reports whether c and other are equal within floating-point tolerance.
+func (c Color) Equal(other Color) bool {
 	return NearlyEqual(c.R, other.R) &&
 		NearlyEqual(c.G, other.G) &&
 		NearlyEqual(c.B, other.B) &&
 		NearlyEqual(c.A, other.A)
 }
 
-// Add performs component-wise addition.
+// Add returns the component-wise sum of c and other.
 func (c Color) Add(other Color) Color {
 	return Color{
 		R: c.R + other.R,
@@ -172,7 +159,7 @@ func (c Color) Add(other Color) Color {
 	}
 }
 
-// Sub performs component-wise subtraction.
+// Sub returns the component-wise difference of c and other.
 func (c Color) Sub(other Color) Color {
 	return Color{
 		R: c.R - other.R,
@@ -182,7 +169,7 @@ func (c Color) Sub(other Color) Color {
 	}
 }
 
-// Mul performs component-wise multiplication.
+// Mul returns the component-wise product of c and other.
 func (c Color) Mul(other Color) Color {
 	return Color{
 		R: c.R * other.R,
@@ -192,7 +179,7 @@ func (c Color) Mul(other Color) Color {
 	}
 }
 
-// Div performs component-wise division.
+// Div returns the component-wise quotient of c and other.
 func (c Color) Div(other Color) Color {
 	return Color{
 		R: c.R / other.R,
@@ -202,7 +189,7 @@ func (c Color) Div(other Color) Color {
 	}
 }
 
-// Scale multiplies all components by a scalar.
+// Scale returns c with all components multiplied by scale.
 func (c Color) Scale(scale Scalar) Color {
 	return Color{
 		R: c.R * scale,
@@ -212,7 +199,7 @@ func (c Color) Scale(scale Scalar) Color {
 	}
 }
 
-// Clamp01 clamps all color components to the range [0, 1].
+// Clamp01 returns c with all components clamped to [0,1].
 func (c Color) Clamp01() Color {
 	return Color{
 		R: Clamp(c.R, 0, 1),
@@ -222,7 +209,7 @@ func (c Color) Clamp01() Color {
 	}
 }
 
-// Premultiply returns the color with RGB premultiplied by alpha.
+// Premultiply returns c with RGB premultiplied by alpha.
 func (c Color) Premultiply() Color {
 	return Color{
 		R: c.R * c.A,
@@ -232,7 +219,8 @@ func (c Color) Premultiply() Color {
 	}
 }
 
-// Unpremultiply returns the color with RGB unpremultiplied by alpha.
+// Unpremultiply returns c with RGB unpremultiplied by alpha.
+// If alpha is zero or negative, returns fully transparent black.
 func (c Color) Unpremultiply() Color {
 	if c.A <= 0 {
 		return Color{}
@@ -245,22 +233,22 @@ func (c Color) Unpremultiply() Color {
 	}
 }
 
-// WithAlpha returns a new color with the specified alpha value.
+// WithAlpha returns a copy of c with the given alpha value.
 func (c Color) WithAlpha(alpha Scalar) Color {
 	return Color{R: c.R, G: c.G, B: c.B, A: alpha}
 }
 
-// IsTransparent returns true if the alpha component is zero.
+// IsTransparent reports whether alpha is zero.
 func (c Color) IsTransparent() bool {
 	return c.A == 0
 }
 
-// IsOpaque returns true if the alpha component is one.
+// IsOpaque reports whether alpha is one.
 func (c Color) IsOpaque() bool {
 	return c.A == 1
 }
 
-// Lerp performs linear interpolation between two colors.
+// Lerp returns the linear interpolation between c and other by t in [0,1].
 func (c Color) Lerp(other Color, t Scalar) Color {
 	return Color{
 		R: c.R + (other.R-c.R)*t,
@@ -270,7 +258,7 @@ func (c Color) Lerp(other Color, t Scalar) Color {
 	}
 }
 
-// LinearToSRGB converts color from linear space to sRGB space.
+// LinearToSRGB returns c converted from linear to sRGB color space.
 func (c Color) LinearToSRGB() Color {
 	convert := func(component Scalar) Scalar {
 		if component <= 0.0031308 {
@@ -278,7 +266,6 @@ func (c Color) LinearToSRGB() Color {
 		}
 		return Scalar(1.055*math.Pow(ToFloat64(component), 1.0/2.4) - 0.055)
 	}
-
 	return Color{
 		R: convert(c.R),
 		G: convert(c.G),
@@ -287,7 +274,7 @@ func (c Color) LinearToSRGB() Color {
 	}
 }
 
-// SRGBToLinear converts color from sRGB space to linear space.
+// SRGBToLinear returns c converted from sRGB to linear color space.
 func (c Color) SRGBToLinear() Color {
 	convert := func(component Scalar) Scalar {
 		if component <= 0.04045 {
@@ -295,7 +282,6 @@ func (c Color) SRGBToLinear() Color {
 		}
 		return Scalar(math.Pow((ToFloat64(component)+0.055)/1.055, 2.4))
 	}
-
 	return Color{
 		R: convert(c.R),
 		G: convert(c.G),
@@ -304,7 +290,7 @@ func (c Color) SRGBToLinear() Color {
 	}
 }
 
-// ApplyColorMatrix applies a color transformation matrix.
+// ApplyColorMatrix returns c transformed by the given ColorMatrix.
 func (c Color) ApplyColorMatrix(matrix ColorMatrix) Color {
 	m := matrix
 	return Color{
@@ -315,7 +301,8 @@ func (c Color) ApplyColorMatrix(matrix ColorMatrix) Color {
 	}.Clamp01()
 }
 
-// Blend blends this color with another using the specified blend mode.
+// Blend returns the result of blending c with src using the given BlendMode.
+// For unsupported modes, BlendModeSrcOver is used.
 func (c Color) Blend(src Color, mode BlendMode) Color {
 	dst := c
 	const kEhCloseEnough = 1e-6

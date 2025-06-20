@@ -59,7 +59,7 @@ func TestQuaternion_QuaternionMultiplication(t *testing.T) {
 	q := Quaternion[Scalar]{1.0, 2.0, 3.0, 4.0}
 
 	result := q.Mul(identity)
-	if !result.Eq(q) {
+	if !result.Equal(q) {
 		t.Errorf("Quaternion multiplication with identity failed")
 	}
 }
@@ -123,15 +123,15 @@ func TestQuaternion_QuaternionInvert(t *testing.T) {
 	}
 }
 
-func TestQuaternion_QuaternionEq(t *testing.T) {
+func TestQuaternion_QuaternionEqual(t *testing.T) {
 	q1 := Quaternion[Scalar]{1.0, 2.0, 3.0, 4.0}
 	q2 := Quaternion[Scalar]{1.0, 2.0, 3.0, 4.0}
 	q3 := Quaternion[Scalar]{1.0, 2.0, 3.0, 5.0}
 
-	if !q1.Eq(q2) {
+	if !q1.Equal(q2) {
 		t.Error("Eq quaternions should be Eq")
 	}
-	if q1.Eq(q3) {
+	if q1.Equal(q3) {
 		t.Error("Different quaternions should not be Eq")
 	}
 }
@@ -144,7 +144,7 @@ func TestQuaternion_QuaternionSlerp(t *testing.T) {
 
 	expected := NewQuaternionFromAxisAngle(Vector3[Scalar]{0.0, 0.0, 1.0}, Radians(math.Pi/8)) // 22.5° rotation around Z
 
-	if !q3.Eq(expected) {
+	if !q3.Equal(expected) {
 		t.Errorf("Slerp() = %v, want %v", q3, expected)
 	}
 }

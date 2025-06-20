@@ -1,29 +1,42 @@
-# Sraph Geometry Package
+# Geom - High-Performance 2D/3D Geometry Library for Go
 
-A comprehensive, high-performance 2D/3D geometry library for Go, designed for graphics programming, game development, and computational geometry applications.
+[![Go Reference](https://pkg.go.dev/badge/github.com/opensraph/sraph/geom.svg)](https://pkg.go.dev/github.com/opensraph/sraph/geom)
+[![Go Report Card](https://goreportcard.com/badge/github.com/opensraph/sraph/geom)](https://goreportcard.com/report/github.com/opensraph/sraph/geom)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Overview
-
-The `geom` package provides a complete set of geometric primitives and mathematical operations with support for generic scalar types. It's built with performance and type safety in mind, offering both integer and floating-point arithmetic with configurable precision.
+A comprehensive, high-performance geometry library for Go, providing robust 2D and 3D geometric primitives, transformations, and utilities for graphics programming, game development, and computational geometry applications.
 
 ## Features
 
-### Core Types
-- **Scalar Types**: `Scalar`, `F64`, `I32`, `I64`, `Int`, `I26_6` (fixed-point)
-- **Angles**: `Radians`, `Degrees` with automatic conversion
-- **Points & Vectors**: 2D/3D/4D vectors with comprehensive operations
-- **Geometric Shapes**: Rectangles, rounded rectangles, ellipses, superellipses
-- **Transformations**: Matrices, quaternions, RSTransform for efficient 2D transforms
+### Core Geometric Primitives
+- **Points & Vectors**: 2D/3D points and vectors with full arithmetic operations
+- **Rectangles**: Axis-aligned rectangles with comprehensive manipulation methods
+- **Rounded Rectangles**: Rectangles with customizable corner radii
+- **Sizes**: Width/height dimensions with scaling and arithmetic operations
+- **Colors**: RGBA color manipulation with multiple color spaces and blending modes
+
+### Mathematical Operations
+- **Matrix Transformations**: 4x4 matrices for 3D transformations (translation, rotation, scaling, perspective)
+- **Quaternions**: Efficient 3D rotation representation with interpolation
+- **Angular Measurements**: Type-safe radians and degrees with conversions
+- **Fixed-Point Numbers**: Int26_6 for sub-pixel precision graphics
 
 ### Advanced Features
-- **Color Management**: RGBA colors with color space conversion (sRGB ↔ Linear)
-- **Gradients**: Linear and radial gradients with texture generation
-- **Path System**: Flexible path representation with receivers and sources
-- **Stroke Styles**: Comprehensive stroke parameters (caps, joins, miter limits)
-- **Blend Modes**: 29 blend modes including Porter-Duff and advanced modes
-- **Wang's Formula**: Curve subdivision for optimal tessellation
+- **Path Generation**: Bezier curves, lines, and complex path construction
+- **Gradients**: Linear and radial gradients with color interpolation
+- **Color Blending**: 29 blend modes including Porter-Duff and separable blend modes
+- **Collision Detection**: Point-in-shape testing for rectangles and rounded rectangles
+- **Coordinate Systems**: Support for different graphics API conventions (DirectX/Vulkan, OpenGL)
+
+## Installation
+
+```bash
+go get github.com/opensraph/sraph/geom
+```
 
 ## Quick Start
+
+### Basic Geometry Operations
 
 ```go
 package main
@@ -35,381 +48,308 @@ import (
 
 func main() {
     // Create points and perform operations
-    p1 := geom.Pt[geom.Scalar](10, 20)
-    p2 := geom.Pt[geom.Scalar](30, 40)
+    p1 := geom.Point[float64]{X: 10, Y: 20}
+    p2 := geom.Point[float64]{X: 30, Y: 40}
 
+    // Vector arithmetic
+    sum := p1.Add(p2)
     distance := p1.Distance(p2)
-    midpoint := p1.Lerp(p2, 0.5)
 
-    fmt.Printf("Distance: %.2f\n", distance)
-    fmt.Printf("Midpoint: %s\n", midpoint)
+    fmt.Printf("Sum: %v, Distance: %.2f\n", sum, distance)
 
     // Create and manipulate rectangles
-    rect := geom.NewRectXYWH[geom.Scalar](0, 0, 100, 200)
+    rect := geom.NewRect[float64](0, 0, 100, 80)
     center := rect.Center()
     area := rect.Area()
 
-    // Create rounded rectangle
-    roundRect := geom.NewRoundRectRadius(rect, 10)
+    fmt.Printf("Center: %v, Area: %.2f\n", center, area)
 
-    // Matrix transformations
-    transform := geom.NewMatrix[geom.Scalar]()
-    transform = transform.Translate(geom.Vector2[geom.Scalar]{X: 50, Y: 25})
-    transform = transform.RotateZ(geom.Radians(0.5))
-    transform = transform.Scale(geom.Vector2[geom.Scalar]{X: 1.5, Y: 1.5})
-
-    transformedRect := rect.TransformBounds(transform)
+    // Check containment
+    point := geom.Point[float64]{X: 50, Y: 40}
+    contains := rect.Contains(point)
+    fmt.Printf("Rectangle contains point: %v\n", contains)
 }
-```
-
-## Core Components
-
-### Scalar Types and Precision
-
-```go
-// Different Number types for different use cases
-type Scalar float32  // 32-bit floating point
-type F64 float64     // 64-bit floating point
-type I32 int32       // 32-bit signed integer
-type I26_6 int32     // 26.6 fixed-point for precise typography
-
-// Configurable epsilon for floating-point comparisons
-const (
-    Epsilon32 = 1e-3  // For Scalar
-    Epsilon64 = 1e-6  // For F64
-)
-
-// Safe equality comparison
-if geom.NearlyEqual(a, b) {
-    // Values are equal within tolerance
-}
-```
-
-### Points and Vectors
-
-```go
-// 2D operations
-point := geom.Pt[geom.Scalar](10, 20)
-vector := geom.Vector2[geom.Scalar]{X: 5, Y: 10}
-
-// Vector operations
-length := point.Length()
-normalized := point.Normalize()
-dotProduct := point.Dot(vector)
-crossProduct := point.Cross(vector)
-
-// 3D vectors
-vec3 := geom.Vector3[geom.Scalar]{X: 1, Y: 2, Z: 3}
-cross3D := vec3.Cross(geom.Vector3[geom.Scalar]{X: 4, Y: 5, Z: 6})
-
-// 4D vectors for homogeneous coordinates
-vec4 := geom.Vector4[geom.Scalar]{X: 1, Y: 2, Z: 3, W: 1}
-```
-
-### Rectangles and Shapes
-
-```go
-// Create rectangles in different ways
-rect1 := geom.NewRect[geom.Scalar](0, 0, 100, 200)           // LTRB
-rect2 := geom.NewRectXYWH[geom.Scalar](10, 20, 80, 60)       // XYWH
-rect3 := geom.NewRectOriginSize(origin, size)                // Origin + Size
-
-// Rectangle operations
-union := rect1.Union(rect2)
-intersection := rect1.Intersect(rect2)
-contains := rect1.Contains(point)
-overlaps := rect1.Intersects(rect2)
-
-// Rounded rectangles with different corner radii
-roundRect := geom.NewRoundRectLTRB(rect, 5, 10, 15, 20)
-isOval := roundRect.IsOval()
-
-// Superellipses for smooth, organic shapes
-superellipse := geom.NewSuperellipseRadius(rect, 15)
 ```
 
 ### Matrix Transformations
 
 ```go
 // Create transformation matrices
-matrix := geom.NewMatrix[geom.Scalar]()
+transform := geom.NewMatrix[float64]()
 
-// Apply transformations (operations are chainable)
-matrix = matrix.Translate(geom.Vector3[geom.Scalar]{X: 100, Y: 50, Z: 0})
-matrix = matrix.RotateZ(geom.Degrees(45).Radians())
-matrix = matrix.Scale(geom.Vector3[geom.Scalar]{X: 2, Y: 2, Z: 1})
+// Apply transformations in sequence
+result := transform.
+    Translate(geom.Vector3[float64]{X: 10, Y: 20, Z: 0}).
+    Scale(geom.Vector3[float64]{X: 2, Y: 2, Z: 1}).
+    RotateZ(geom.Radians(math.Pi / 4)) // 45 degrees
+
+// Transform points
+point := geom.Point[float64]{X: 1, Y: 1}
+transformed := result.Transform(point).(geom.Point[float64])
 
 // Check matrix properties
-isIdentity := matrix.IsIdentity()
-isInvertible := matrix.IsInvertible()
-hasTranslation := matrix.HasTranslation()
-isAxisAligned := matrix.IsAxisAligned()
-
-// Transform geometry
-transformedPoint := matrix.Transform(point)
-transformedRect := rect.TransformBounds(matrix)
-
-// Matrix decomposition
-decomp := matrix.Decompose()
-translation := decomp.Translation
-rotation := decomp.Rotation
-scale := decomp.Scale
+isInvertible := result.IsInvertible()
+determinant := result.Determinant()
 ```
 
-### Colors and Gradients
+### Color Operations
 
 ```go
-// Create colors in various formats
-color1 := geom.NewColorRGB8(255, 128, 64)                    // 8-bit RGB
-color2 := geom.NewColorHex(0xFF8040)                         // Hex
-color3 := geom.NewColor[geom.Scalar](1.0, 0.5, 0.25, 1.0)    // Float RGBA
-color4 := geom.ColorRed()                                    // Predefined colors
+// Create colors
+red := geom.ColorRed()
+blue := geom.ColorBlue()
+customColor := geom.NewColorRGBA8(128, 255, 64, 255)
 
-// Color operations
-blended := color1.Blend(color2, geom.BlendModeSrcOver)
-interpolated := color1.Lerp(color2, 0.5)
-premultiplied := color1.Premultiply()
+// Color blending
+blended := red.Blend(blue, geom.BlendModeMultiply)
 
-// Color space conversion
-linear := color1.SRGBToLinear()
+// Color space conversions
+linear := red.SRGBToLinear()
 srgb := linear.LinearToSRGB()
 
-// Create gradients
-stops := []geom.GradientStop[geom.Scalar]{
+// Color interpolation
+interpolated := red.Lerp(blue, 0.5) // 50% between red and blue
+```
+
+### Rounded Rectangles and Paths
+
+```go
+// Create rounded rectangle
+rect := geom.NewRect[float64](0, 0, 100, 60)
+roundRect := geom.NewRoundRectRadius(rect, 10) // 10-pixel corner radius
+
+// Check if point is inside rounded rectangle
+point := geom.Point[float64]{X: 95, Y: 5}
+inside := roundRect.Contains(point)
+
+// Generate path data
+type MyPathReceiver struct {
+    commands []string
+}
+
+func (r *MyPathReceiver) MoveTo(p geom.Point[float64], willBeClosed bool) {
+    r.commands = append(r.commands, fmt.Sprintf("MoveTo(%.2f, %.2f)", p.X, p.Y))
+}
+// ... implement other PathReceiver methods
+
+receiver := &MyPathReceiver{}
+roundRect.Dispatch(receiver, true)
+```
+
+### Gradients
+
+```go
+// Create linear gradient
+stops := []geom.GradientStop{
     {Color: geom.ColorRed(), Position: 0.0},
+    {Color: geom.ColorGreen(), Position: 0.5},
     {Color: geom.ColorBlue(), Position: 1.0},
 }
-gradient := geom.NewLinearGradient(stops)
-gradientData := gradient.ToBuffer()
+
+linearGradient := geom.NewLinearGradient(stops)
+gradientData := linearGradient.ToBuffer()
+
+// Create radial gradient
+center := geom.Point[float64]{X: 50, Y: 50}
+radialGradient := geom.NewRadialGradient(center, 30, stops)
 ```
 
-### Path System
+## API Reference
 
+### Core Types
+
+#### Scalar Types
+- `Scalar` - Primary floating-point type (alias for float64)
+- `TScalar` - Generic constraint for numeric types
+- `Radians` / `Degrees` - Type-safe angular measurements
+- `Int26_6` - Fixed-point number for sub-pixel precision
+
+#### Geometric Primitives
+- `Point[T]` - 2D point with X, Y coordinates
+- `Vector2[T]` / `Vector3[T]` / `Vector4[T]` - N-dimensional vectors
+- `Size[T]` - Width and height dimensions
+- `Rect[T]` - Axis-aligned rectangle
+- `RoundRect[T]` - Rectangle with rounded corners
+- `Quad[T]` - Array of 4 points representing a quadrilateral
+
+#### Transformations
+- `Matrix[T]` - 4x4 transformation matrix
+- `Quaternion[T]` - Quaternion for 3D rotations
+- `RSTransform[T]` - Rotation, scale, and translation transform
+
+#### Colors and Graphics
+- `Color` - RGBA color with floating-point components
+- `BlendMode` - Enumeration of blending modes
+- `ColorMatrix` - 4x5 matrix for color transformations
+
+### Key Methods
+
+#### Point Operations
 ```go
-// Create path sources for different shapes
-rectPath := geom.NewRectPathSource(rect)
-ellipsePath := geom.NewEllipsePathSource(bounds)
-roundRectPath := geom.NewRoundRectPathSource(roundRect)
+// Arithmetic
+p1.Add(p2)          // Vector addition
+p1.Sub(p2)          // Vector subtraction
+p1.Scale(factor)    // Scalar multiplication
+p1.Dot(p2)          // Dot product
+p1.Cross(p2)        // 2D cross product
 
-// Custom path receiver
-type MyPathReceiver struct{}
-
-func (r *MyPathReceiver) MoveTo(p geom.Point[geom.Scalar], willBeClosed bool) {
-    // Handle move to operation
-}
-
-func (r *MyPathReceiver) LineTo(p geom.Point[geom.Scalar]) {
-    // Handle line to operation
-}
-
-func (r *MyPathReceiver) QuadTo(cp, p geom.Point[geom.Scalar]) {
-    // Handle quadratic curve
-}
-
-func (r *MyPathReceiver) CubicTo(cp1, cp2, p geom.Point[geom.Scalar]) {
-    // Handle cubic curve
-}
-
-func (r *MyPathReceiver) Close() {
-    // Handle path close
-}
-
-func (r *MyPathReceiver) PathEnd() {
-    // Handle path end
-}
-
-// Dispatch path to receiver
-receiver := &MyPathReceiver{}
-rectPath.Dispatch(receiver)
+// Geometric
+p1.Distance(p2)     // Euclidean distance
+p1.Length()         // Vector magnitude
+p1.Normalize()      // Unit vector
+p1.Rotate(angle)    // Rotation around origin
+p1.Lerp(p2, t)      // Linear interpolation
 ```
 
-### Quaternions for 3D Rotations
-
+#### Rectangle Operations
 ```go
-// Create quaternions
-axis := geom.Vector3[geom.Scalar]{X: 0, Y: 1, Z: 0}
-angle := geom.Degrees(90).Radians()
-quat := geom.NewQuaternionFromAxisAngle(axis, angle)
+// Construction
+geom.NewRect(left, top, right, bottom)
+geom.NewRectXYWH(x, y, width, height)
+geom.BoundingRect(points...)
 
-// Quaternion operations
-normalized := quat.Normalize()
-inverted := quat.Invert()
-interpolated := quat.Slerp(otherQuat, 0.5)
+// Properties
+rect.Width()        // Rectangle width
+rect.Height()       // Rectangle height
+rect.Area()         // Rectangle area
+rect.Center()       // Center point
+rect.IsEmpty()      // Check if empty
+rect.IsSquare()     // Check if square
 
-// Rotate vectors
-vector := geom.Vector3[geom.Scalar]{X: 1, Y: 0, Z: 0}
-rotated := quat.RotateVector3(vector)
+// Transformations
+rect.Translate(vector)    // Move rectangle
+rect.Scale(factor)        // Scale rectangle
+rect.Expand(amount)       // Expand by amount
+rect.Union(other)         // Union with another rectangle
+rect.Intersect(other)     // Intersection with another rectangle
 
-// Convert to matrix
-rotationMatrix := geom.NewMatrix[geom.Scalar]().RotateQuat(quat)
+// Testing
+rect.Contains(point)      // Point containment
+rect.ContainsRect(other)  // Rectangle containment
+rect.Intersects(other)    // Intersection test
 ```
 
-## Blend Modes
-
-The package supports 29 different blend modes for color composition:
-
+#### Matrix Operations
 ```go
-// Porter-Duff modes
-geom.BlendModeClear
-geom.BlendModeSrc
-geom.BlendModeDst
-geom.BlendModeSrcOver  // Default
-geom.BlendModeDstOver
-geom.BlendModeSrcIn
-geom.BlendModeDstIn
-geom.BlendModeSrcOut
-geom.BlendModeDstOut
-geom.BlendModeSrcATop
-geom.BlendModeDstATop
-geom.BlendModeXor
-geom.BlendModePlus
-geom.BlendModeModulate
+// Construction
+geom.NewMatrix[T]()  // Identity matrix
 
-// Advanced blend modes
-geom.BlendModeScreen
-geom.BlendModeOverlay
-geom.BlendModeDarken
-geom.BlendModeLighten
-geom.BlendModeColorDodge
-geom.BlendModeColorBurn
-geom.BlendModeHardLight
-geom.BlendModeSoftLight
-geom.BlendModeDifference
-geom.BlendModeExclusion
-geom.BlendModeMultiply
+// Transformations
+matrix.Translate(vector)     // Add translation
+matrix.Scale(vector)         // Add scaling
+matrix.Rotate(angle, axis)   // Add rotation
+matrix.RotateX/Y/Z(angle)   // Axis-specific rotation
 
-// HSV blend modes
-geom.BlendModeHue
-geom.BlendModeSaturation
-geom.BlendModeColor
-geom.BlendModeLuminosity
+// Properties
+matrix.IsIdentity()      // Check if identity
+matrix.IsInvertible()    // Check if invertible
+matrix.Determinant()     // Matrix determinant
+matrix.Transpose()       // Matrix transpose
+matrix.Invert()          // Matrix inverse
+
+// Application
+matrix.Transform(geometry)           // Transform geometric objects
+matrix.TransformDirection(vector)    // Transform direction vectors
 ```
 
-## Performance Features
-
-### Wang's Formula for Curve Tessellation
-
+#### Color Operations
 ```go
-// Optimal subdivision count for smooth curves
-scaleFactor := transform.MaxBasisLengthXY()
+// Construction
+geom.NewColor(r, g, b, a)
+geom.NewColorRGB8(r, g, b)
+geom.NewColorHex(0xFF0000)  // Red
 
-// For cubic curves
-subdivisions := geom.CubicSubdivisions(scaleFactor, p0, p1, p2, p3)
+// Arithmetic
+color1.Add(color2)
+color1.Mul(color2)
+color1.Scale(factor)
+color1.Lerp(color2, t)
 
-// For quadratic curves
-subdivisions := geom.QuadraticSubdivisions(scaleFactor, p0, p1, p2)
+// Blending
+color1.Blend(color2, geom.BlendModeMultiply)
 
-// For conic curves
-subdivisions := geom.ConicSubdivisions(scaleFactor, p0, p1, p2, weight)
+// Color Space
+color.SRGBToLinear()
+color.LinearToSRGB()
+color.Premultiply()
+color.Unpremultiply()
 ```
 
-### Efficient 2D Transformations
+## Performance Considerations
 
-```go
-// RSTransform for efficient sprite transformations
-transform := geom.NewRSTransform(origin, scale, rotation)
+### Memory Efficiency
+- All geometric types are value types (structs) for minimal heap allocation
+- Methods return new values rather than modifying in place (immutable design)
+- Generic types allow choosing appropriate numeric precision
 
-// Generate transformed quad
-quad := transform.QuadSize(spriteSize)
-bounds := transform.BoundsSize(spriteSize)
+### Computational Efficiency
+- Optimized matrix operations with specialized methods for common transformations
+- Fast path detection for axis-aligned and identity transformations
+- Efficient collision detection algorithms
 
-// Check if transformation is axis-aligned for optimization
-if transform.IsAxisAligned() {
-    // Use faster axis-aligned rendering path
-}
-```
+### Numerical Stability
+- Configurable epsilon values for floating-point comparisons
+- Robust handling of edge cases (zero vectors, singular matrices)
+- Fixed-point arithmetic support for graphics applications
 
-## Type Safety and Generics
+## Use Cases
 
-The library extensively uses Go generics for type safety and performance:
+### Graphics Programming
+- 2D and 3D rendering pipelines
+- UI layout and animation systems
+- Canvas and vector graphics libraries
+- Texture mapping and coordinate transformations
 
-```go
-// All geometric types are generic over scalar types
-type Point[T Number] struct {
-    X, Y T
-}
+### Game Development
+- Physics simulations and collision detection
+- Camera systems and view transformations
+- Sprite positioning and animation
+- Particle systems
 
-type Matrix[T Number] [16]T
+### CAD and Engineering
+- Geometric modeling and analysis
+- Technical drawing applications
+- Measurement and annotation tools
+- Coordinate system conversions
 
-type Color struct {
-    R, G, B, A geom.Scalar  // Colors use Scalar for consistency
-}
+### Image Processing
+- Color space conversions and corrections
+- Geometric image transformations
+- Gradient generation and blending
+- Alpha compositing operations
 
-// The Scalar interface ensures type compatibility
-type Scalar interface {
-    ~int | ~int8 | ~int16 | ~int32 | ~int64 | ~float32 | ~float64
-    Float64() float64
-    String() string
-}
-```
+## Coordinate System Conventions
 
-## Integration Examples
+This library follows the **DirectX/Vulkan convention** for 3D graphics:
+- **Left-handed coordinate system**: X right, Y up, Z away from viewer
+- **Positive rotation**: Clockwise about the rotation axis
+- **NDC bounds**: x,y ∈ [-1,1], z ∈ [0,1] where 0 is near plane, 1 is far plane
+- **NDC origin**: (0, 0, 0.5) representing the center of the NDC cube
 
-### With Graphics Libraries
+For OpenGL compatibility, appropriate conversion utilities are provided.
 
-```go
-// Convert to standard Go types
-goRect := rect.ToGo()                    // image.Rectangle
-goPoint := point.ToGo()                  // image.Point
-goColor := color.ToRGBA()                // color.RGBA
+## Testing and Quality Assurance
 
-// From standard Go types
-rect := geom.NewRectGo[geom.Scalar](goRect)
-point := geom.NewPointGo[geom.Scalar](goPoint)
-color := geom.NewColorFromRGBA(goColor)
-```
+- Comprehensive unit tests covering all public APIs
+- Property-based testing for mathematical operations
+- Benchmark tests for performance-critical operations
+- Fuzzing tests for numerical stability
+- Cross-platform compatibility testing
 
-### Custom Rendering Pipeline
+## Contributing
 
-```go
-type Renderer struct {
-    transform geom.Matrix[geom.Scalar]
-}
+Contributions are welcome! Please ensure that:
+- All new features include comprehensive tests
+- Code follows Go formatting standards (`gofmt`)
+- Documentation is updated for new public APIs
+- Performance implications are considered and benchmarked
 
-func (r *Renderer) DrawRect(rect geom.Rect[geom.Scalar], color geom.Color) {
-    // Transform rectangle
-    corners := rect.Transform(r.transform)
+## License
 
-    // Convert to render format
-    vertices := make([]float32, 8)
-    for i, corner := range corners {
-        vertices[i*2] = float32(corner.X)
-        vertices[i*2+1] = float32(corner.Y)
-    }
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-    // Submit to GPU...
-}
+## Acknowledgments
 
-func (r *Renderer) DrawPath(path geom.PathSource[geom.Scalar]) {
-    receiver := &r.pathReceiver
-    path.Dispatch(receiver)
-}
-```
-
-## Best Practices
-
-1. **Choose Appropriate Scalar Types**:
-   - Use `Scalar` for general graphics work
-   - Use `F64` for high-precision calculations
-   - Use `I32` for pixel-perfect integer coordinates
-   - Use `I26_6` for typography and precise measurements
-
-2. **Leverage Type Safety**:
-   - Use strongly-typed angles (`Radians`/`Degrees`)
-   - Prefer `NearlyEqual()` over `==` for floating-point comparisons
-   - Use generic types consistently throughout your codebase
-
-3. **Optimize Transformations**:
-   - Check matrix properties before expensive operations
-   - Use `RSTransform` for simple 2D transformations
-   - Cache transformation matrices when possible
-
-4. **Memory Management**:
-   - Reuse geometric objects when possible
-   - Use value types (structs) instead of pointers for small objects
-   - Consider object pooling for frequently created/destroyed geometry
-
-## Dependencies
-
-- Go 1.21+ (requires min, max support)
-- Standard library only
+- Inspired by geometry libraries from Skia, Flutter, and other graphics frameworks
+- Mathematical foundations based on computer graphics and computational geometry literature
+- Color science implementations following CIE and W3C standards

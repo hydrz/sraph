@@ -57,7 +57,7 @@ func (v Vector3[T]) Div(other Vector3[T]) Vector3[T] {
 }
 
 // Eq checks if this vector is Eq to another vector.
-func (v Vector3[T]) Eq(other Vector3[T]) bool {
+func (v Vector3[T]) Equal(other Vector3[T]) bool {
 	return NearlyEqual(v.X, other.X) &&
 		NearlyEqual(v.Y, other.Y) &&
 		NearlyEqual(v.Z, other.Z)
@@ -224,7 +224,7 @@ func (v Vector4[T]) Div(other Vector4[T]) Vector4[T] {
 }
 
 // Eq checks if this vector is Eq to another vector.
-func (v Vector4[T]) Eq(other Vector4[T]) bool {
+func (v Vector4[T]) Equal(other Vector4[T]) bool {
 	return NearlyEqual(v.X, other.X) &&
 		NearlyEqual(v.Y, other.Y) &&
 		NearlyEqual(v.Z, other.Z) &&

@@ -2,13 +2,14 @@ package geom
 
 import "math"
 
-// Superellipse represents a Superellipse shape, extending Rect.
+// Superellipse represents a superellipse shape, extending RoundRect.
+// The zero value is not valid.
 type Superellipse[T TScalar] struct {
 	RoundRect[T]
 	param SuperellipseParam[T]
 }
 
-// NewSuperellipse creates a new superellipse with the given rectangle and corner radii.
+// NewSuperellipse creates a superellipse with the given rectangle and corner radii.
 func NewSuperellipse[T TScalar](rect Rect[T], radii RoundingRadii[T]) Superellipse[T] {
 	param := NewSuperellipseParam(rect, radii)
 	return Superellipse[T]{
@@ -17,7 +18,7 @@ func NewSuperellipse[T TScalar](rect Rect[T], radii RoundingRadii[T]) Superellip
 	}
 }
 
-// NewSuperellipseOval creates a new Superellipse that is an oval, with radii Eq to half the width and height of the rectangle.
+// NewSuperellipseOval creates a superellipse in oval form, with radii equal to half the width and height.
 func NewSuperellipseOval[T TScalar](rect Rect[T]) Superellipse[T] {
 	size := rect.Size()
 	halfSize := Size[T]{Width: size.Width / T(2), Height: size.Height / T(2)}
@@ -27,7 +28,7 @@ func NewSuperellipseOval[T TScalar](rect Rect[T]) Superellipse[T] {
 	)
 }
 
-// NewSuperellipseRadius creates a new Superellipse with the given rectangle and uniform corner radius.
+// NewSuperellipseRadius creates a superellipse with uniform corner radius.
 func NewSuperellipseRadius[T TScalar](rect Rect[T], radius T) Superellipse[T] {
 	return NewSuperellipse(
 		rect,
@@ -35,7 +36,7 @@ func NewSuperellipseRadius[T TScalar](rect Rect[T], radius T) Superellipse[T] {
 	)
 }
 
-// NewSuperellipseXY creates a new Superellipse with the given rectangle and separate x/y radii.
+// NewSuperellipseXY creates a superellipse with separate x and y radii.
 func NewSuperellipseXY[T TScalar](rect Rect[T], xRadius, yRadius T) Superellipse[T] {
 	return NewSuperellipse(
 		rect,
@@ -43,7 +44,7 @@ func NewSuperellipseXY[T TScalar](rect Rect[T], xRadius, yRadius T) Superellipse
 	)
 }
 
-// NewSuperellipseLTRB creates a new Superellipse with the given rectangle and separate left, top, right, bottom radii.
+// NewSuperellipseLTRB creates a superellipse with separate left, top, right, and bottom radii.
 func NewSuperellipseLTRB[T TScalar](rect Rect[T], left, top, right, bottom T) Superellipse[T] {
 	return NewSuperellipse(
 		rect,
@@ -51,14 +52,15 @@ func NewSuperellipseLTRB[T TScalar](rect Rect[T], left, top, right, bottom T) Su
 	)
 }
 
-// ToApproximateRoundRect returns a rounded rectangle that approximates the current superellipse.
-// This is used for backends that do not support superellipses.
-func (s *Superellipse[T]) ToApproximateRoundRect() RoundRect[T] {
+// ToApproximateRoundRect returns a rounded rectangle that approximates the superellipse.
+// Useful for backends that do not support superellipses.
+func (s Superellipse[T]) ToApproximateRoundRect() RoundRect[T] {
 	return NewRoundRect(s.RoundRect.Bounds(), s.RoundRect.Radius())
 }
 
-// Dispatch overrides RoundRect.Dispatch to handle superellipse-specific logic.
-func (s *Superellipse[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
+// Dispatch emits the path for the superellipse to the given receiver.
+// If includeEnd is true, a PathEnd is emitted at the end.
+func (s Superellipse[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
 	builder := &superellipseBuilder[T]{receiver: receiver}
 
 	var start Point[T]
@@ -91,15 +93,14 @@ func (s *Superellipse[T]) Dispatch(receiver PathReceiver[T], includeEnd bool) {
 	}
 }
 
-// superellipseBuilder is a helper for building superellipse paths.
+// superellipseBuilder assists in building superellipse paths.
 type superellipseBuilder[T TScalar] struct {
 	receiver PathReceiver[T]
 }
 
 // AddQuadrant adds a quadrant of the superellipse to the path.
-// reverse: whether to reverse the drawing direction.
-// scaleSign: sign vector for scaling and flipping.
-func (b *superellipseBuilder[T]) AddQuadrant(quadrant SuperellipseQuadrant[T], reverse bool, scaleSign Point[T]) {
+// reverse determines drawing direction; scaleSign flips/scales the quadrant.
+func (b superellipseBuilder[T]) AddQuadrant(quadrant SuperellipseQuadrant[T], reverse bool, scaleSign Point[T]) {
 	transform := NewMatrix[T]().Scale(quadrant.SignedScale.Mul(scaleSign)).Translate(quadrant.Offset)
 	// If either octant is degenerate (degree < 2), fallback to straight lines.
 	if quadrant.Top.Degree < 2 || quadrant.Right.Degree < 2 {
@@ -133,10 +134,8 @@ func (b *superellipseBuilder[T]) AddQuadrant(quadrant SuperellipseQuadrant[T], r
 }
 
 // AddOctant adds an octant curve to the path.
-// reverse: whether to reverse the curve direction.
-// flip: whether to flip the octant (swap x/y).
-// externalTransform: transformation matrix to apply.
-func (b *superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse, flip bool, externalTransform Matrix[T]) {
+// reverse determines curve direction; flip swaps x/y axes; externalTransform is applied.
+func (b superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse, flip bool, externalTransform Matrix[T]) {
 	transform := externalTransform.Mul(
 		NewMatrix[T]().Translate(octant.Offset),
 	)
@@ -181,7 +180,7 @@ func (b *superellipseBuilder[T]) AddOctant(octant SuperellipseOctant[T], reverse
 }
 
 // circularArcPoints returns the four control points for the circular arc segment of the octant.
-func (b *superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
+func (b superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
 	startVector := octant.CircleStart.Sub(octant.CircleCenter)
 	endVector := startVector.Rotate(Radians(-octant.CircleMaxAngle))
 	circleEnd := octant.CircleCenter.Add(endVector)
@@ -199,7 +198,7 @@ func (b *superellipseBuilder[T]) circularArcPoints(octant SuperellipseOctant[T])
 }
 
 // arcPoints returns the four control points for the superellipse arc segment of the octant.
-func (b *superellipseBuilder[T]) arcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
+func (b superellipseBuilder[T]) arcPoints(octant SuperellipseOctant[T]) [4]Point[T] {
 	start := Point[T]{X: 0, Y: octant.SemiAxis}
 	end := octant.CircleStart
 	startTangent := Point[T]{X: 1, Y: 0}
@@ -216,7 +215,7 @@ func (b *superellipseBuilder[T]) arcPoints(octant SuperellipseOctant[T]) [4]Poin
 
 // bezierFactors returns the Bezier control factors for a given superellipse degree.
 // Uses precomputed values and interpolation for best accuracy.
-func (b *superellipseBuilder[T]) bezierFactors(n T) [2]T {
+func (b superellipseBuilder[T]) bezierFactors(n T) [2]T {
 	precomputedVariables := [][2]float32{
 		{0.01339448, 0.05994973}, // n=2.0
 		{0.13664115, 0.13592082}, // n=3.0
@@ -255,132 +254,101 @@ func (b *superellipseBuilder[T]) bezierFactors(n T) [2]T {
 	}
 }
 
-// SuperellipsePathSource is a PathSource implementation for a single superellipse.
+// SuperellipsePathSource implements PathSource for a single superellipse.
 type SuperellipsePathSource[T TScalar] struct {
 	superellipse Superellipse[T]
 }
 
-// NewSuperellipsePathSource creates a new PathSource for a superellipse.
+// NewSuperellipsePathSource returns a PathSource for a superellipse.
 func NewSuperellipsePathSource[T TScalar](superellipse Superellipse[T]) PathSource[T] {
 	return &SuperellipsePathSource[T]{superellipse: superellipse}
 }
 
-// FillType implements PathSource.
-func (s *SuperellipsePathSource[T]) FillType() FillType {
+// FillType returns the fill rule for the superellipse path.
+func (s SuperellipsePathSource[T]) FillType() FillType {
 	return FillTypeNonZero
 }
 
-// Bounds implements PathSource.
-func (s *SuperellipsePathSource[T]) Bounds() Rect[T] {
+// Bounds returns the bounding rectangle of the superellipse.
+func (s SuperellipsePathSource[T]) Bounds() Rect[T] {
 	return s.superellipse.Bounds()
 }
 
-// IsConvex implements PathSource.
-func (s *SuperellipsePathSource[T]) IsConvex() bool {
-	return true // Superellipses are convex shapes.
+// IsConvex reports whether the superellipse is convex.
+func (s SuperellipsePathSource[T]) IsConvex() bool {
+	return true
 }
 
-// Dispatch implements PathSource.
-func (s *SuperellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
+// Dispatch emits the path for the superellipse to the receiver.
+func (s SuperellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
 	s.superellipse.Dispatch(receiver, true)
 }
 
-// DiffSuperellipsePathSource is a PathSource for the difference of two superellipses.
+// DiffSuperellipsePathSource implements PathSource for the difference of two superellipses.
 type DiffSuperellipsePathSource[T TScalar] struct {
 	outter Superellipse[T]
 	inner  Superellipse[T]
 }
 
-// NewDiffSuperellipsePathSource creates a new PathSource for the difference of two superellipses.
+// NewDiffSuperellipsePathSource returns a PathSource for the difference of two superellipses.
 func NewDiffSuperellipsePathSource[T TScalar](outter, inner Superellipse[T]) PathSource[T] {
 	return &DiffSuperellipsePathSource[T]{outter: outter, inner: inner}
 }
 
-// FillType implements PathSource.
+// FillType returns the fill rule for the difference path.
 func (d *DiffSuperellipsePathSource[T]) FillType() FillType {
 	return FillTypeEvenOdd
 }
 
-// IsConvex implements PathSource.
+// IsConvex reports whether the difference of two superellipses is convex.
 func (d *DiffSuperellipsePathSource[T]) IsConvex() bool {
-	return false // Difference of superellipses is not convex.
+	return false
 }
 
-// Bounds implements PathSource.
+// Bounds returns the bounding rectangle of the outer superellipse.
 func (d *DiffSuperellipsePathSource[T]) Bounds() Rect[T] {
 	return d.outter.Bounds()
 }
 
-// Dispatch implements PathSource.
+// Dispatch emits the path for the difference of two superellipses to the receiver.
 func (d *DiffSuperellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
-	// Draw the outer superellipse, then the inner one in reverse for even-odd fill.
 	d.outter.Dispatch(receiver, false)
 	d.inner.Dispatch(receiver, true)
 }
 
 // SuperellipseOctant holds parameters for drawing a square-like rounded superellipse octant.
 //
-// A Degree of 0 means that the radius is 0, and this octant is a square
-// of size SemiAxis at Offset. All other fields are ignored in this case.
+// A Degree of 0 means the radius is 0 and this octant is a square of size SemiAxis at Offset.
 type SuperellipseOctant[T TScalar] struct {
-	// Offset of the octant's center from the origin.
-	// All other coordinates in this struct are relative to this point.
-	Offset Point[T]
-
-	// SemiAxis is the semi-axis length of the superellipse.
-	SemiAxis T
-	// Degree is the degree of the superellipse.
-	// If 0, this octant is a square of size SemiAxis.
-	Degree T
-	// MaxTheta is the range of the parameter "theta" used to define the superellipse curve.
-	// "theta" is not the angle but the implicit parameter in the curve's parametric equation.
-	MaxTheta T
-
-	// CircleStart is the coordinate of the top left end of the circular arc, relative to Offset.
-	CircleStart Point[T]
-	// CircleCenter is the center of the circular arc, relative to Offset.
-	CircleCenter Point[T]
-	// CircleMaxAngle is the angular span of the circular arc, in radians.
-	CircleMaxAngle Radians
+	Offset         Point[T] // Center of the octant, relative to origin.
+	SemiAxis       T        // Semi-axis length.
+	Degree         T        // Degree of the superellipse. 0 means square.
+	MaxTheta       T        // Range of the parametric "theta".
+	CircleStart    Point[T] // Start point of the circular arc, relative to Offset.
+	CircleCenter   Point[T] // Center of the circular arc, relative to Offset.
+	CircleMaxAngle Radians  // Angular span of the circular arc, in radians.
 }
 
 // SuperellipseQuadrant holds parameters for a quadrant of a rounded superellipse.
 //
-// This struct is used to define a quadrant of an arbitrary rounded superellipse.
+// Used to define a quadrant of an arbitrary rounded superellipse.
 type SuperellipseQuadrant[T TScalar] struct {
-	// Offset of the quadrant's center from the origin.
-	// All other coordinates in this struct are relative to this point.
-	Offset Point[T]
-
-	// SignedScale is the scaling factor used to transform a normalized rounded superellipse
-	// back to its original, unnormalized shape.
-	//
-	// Normalization means adjusting the original curve (possibly with asymmetrical corner sizes)
-	// into a symmetrical one by reducing the longer radius to match the shorter one.
-	// For example, to draw a rounded superellipse with size (200, 300) and radii (20, 10),
-	// the function first draws a normalized RSE with size (100, 300) and radii (10, 10),
-	// then scales it by (2x, 1x) to restore the original proportions.
-	//
-	// Normalization also flips the curve to the first quadrant (positive x and y)
-	// if it originally resides in another quadrant. This affects the signs of SignedScale.
-	SignedScale Point[T]
-
-	// The two octants that make up this quadrant after normalization.
-	Top   SuperellipseOctant[T]
-	Right SuperellipseOctant[T]
+	Offset      Point[T] // Center of the quadrant, relative to origin.
+	SignedScale Point[T] // Scaling factor for normalization and flipping.
+	Top         SuperellipseOctant[T]
+	Right       SuperellipseOctant[T]
 }
 
 // SuperellipseParam expands input parameters for a rounded superellipse to drawing variables.
 type SuperellipseParam[T TScalar] struct {
-	// The four quadrants that make up the full contour.
 	TopRight    SuperellipseQuadrant[T]
 	BottomRight SuperellipseQuadrant[T]
 	BottomLeft  SuperellipseQuadrant[T]
 	TopLeft     SuperellipseQuadrant[T]
-	// If IsUniform is true, only TopRight is populated.
-	IsUniform bool
+	IsUniform   bool // If true, only TopRight is populated.
 }
 
+// NewSuperellipseParam computes drawing parameters for a superellipse with given bounds and radii.
 func NewSuperellipseParam[T TScalar](bounds Rect[T], radii RoundingRadii[T]) SuperellipseParam[T] {
 	if radii.IsUniform() && !radii.TopRight.IsZero() {
 		sq := newSuperellipseQuadrant(bounds.Center(), bounds.TopRight(), radii.TopRight, Size[T]{-1, 1})
@@ -419,6 +387,7 @@ func NewSuperellipseParam[T TScalar](bounds Rect[T], radii RoundingRadii[T]) Sup
 	}
 }
 
+// NewSuperellipseParamRadius computes drawing parameters for a superellipse with uniform radius.
 func NewSuperellipseParamRadius[T TScalar](bounds Rect[T], radius T) SuperellipseParam[T] {
 	sq := newSuperellipseQuadrant(bounds.Center(), bounds.TopRight(), Size[T]{radius, radius}, Size[T]{-1, 1})
 	return SuperellipseParam[T]{
@@ -427,23 +396,12 @@ func NewSuperellipseParamRadius[T TScalar](bounds Rect[T], radius T) Superellips
 	}
 }
 
-// Compute parameters for a quadrant of a rounded superellipse with asymmetrical
-// radii.
-//
-// The `corner` is the coordinate of the corner point in the same coordinate
-// space as `center`, which specifies the half size of the bounding box.
-//
-// The `sign` is a vector of {±1, ±1} that specifies which quadrant the curve
-// should be, which should have the same sign as `corner - center` except that
-// the latter may have a 0.
+// newSuperellipseQuadrant computes parameters for a quadrant of a rounded superellipse with asymmetrical radii.
+// center is the quadrant center, corner is the corner point, sign indicates the quadrant orientation.
 func newSuperellipseQuadrant[T TScalar](center Point[T], corner Point[T], in_radii Size[T], sign Size[T]) SuperellipseQuadrant[T] {
 
 	centerVector := corner.Sub(center)
 	radii := in_radii.Abs()
-	// The prefix "norm" is short for "normalized".
-	//
-	// Be extra careful to avoid NaNs in cases that some coordinates of `in_radii`
-	// or `corner_vector` are zero.
 	normRadius := radii.MinDimension()
 	var forwardScale Size[T]
 	if normRadius == 0 {
@@ -455,11 +413,6 @@ func newSuperellipseQuadrant[T TScalar](center Point[T], corner Point[T], in_rad
 	normHalfSize := centerVector.Abs().DivSize(forwardScale)
 	signedScale := replaceNaNWithDefault(centerVector.Div(normHalfSize), sign)
 
-	// Each quadrant curve is composed of two octant curves, each of which belongs
-	// to a square-like rounded rectangle. For the two octants to connect at the
-	// circular arc, the centers these two square-like rounded rectangle must be
-	// offset from the quadrant center by a same distance in different directions.
-	// The distance is denoted as `c`.
 	c := normHalfSize.X - normHalfSize.Y
 	return SuperellipseQuadrant[T]{
 		Offset:      center,
@@ -470,37 +423,12 @@ func newSuperellipseQuadrant[T TScalar](center Point[T], corner Point[T], in_rad
 
 }
 
-// Compute parameters for a square-like rounded superellipse with a symmetrical radius.
-//
-// The following figure shows the first quadrant of a square-like rounded
-// superellipse.
-//
-//	       superellipse
-//	 A     ↓            circular arc
-//	 ---------...._J   ↙
-//	 |           /   `⟍ M (where x=y)
-//	 |          /     ⟋ ⟍
-//	 |         /   ⟋     \
-//	 |        / ⟋         |
-//	 |       ᜱD           |
-//	 |     ⟋              |
-//	 |  ⟋                 |
-//	 |⟋                   |
-//	 +--------------------| A'
-//	O
-//	 ←-------- a ---------→
+// newSuperellipseOctant computes parameters for a square-like rounded superellipse with a symmetrical radius.
+// center is the octant center, a is the semi-axis, radius is the corner radius.
 func newSuperellipseOctant[T TScalar](center Point[T], a T, radius T) SuperellipseOctant[T] {
-	// gapFactor is used to calculate the "gap", which is the distance from the midpoint
-	// of the curved corners to the nearest sides of the bounding box.
-	//
-	// For symmetrical corner radii, the midpoint is where the circular arc intersects
-	// its quadrant bisector. For asymmetrical radii, the midpoint is transformed accordingly.
-	//
-	// Experiments show the gap is linear with respect to the corner radius on that dimension.
 	const gapFactor = 0.29289321881 // 1-cos(pi/4)
 
 	if radius <= 0 {
-		// If the radius is zero, return a square octant.
 		return SuperellipseOctant[T]{
 			Offset:         center,
 			SemiAxis:       a,
@@ -550,19 +478,14 @@ func newSuperellipseOctant[T TScalar](center Point[T], a T, radius T) Superellip
 	}
 }
 
+// superellipseComputeNAndXj computes the degree n and normalized x_j for a given ratio.
 func superellipseComputeNAndXj(ratio float64) [2]float64 {
 	const (
-		minRatio = 2.00
-
-		// The curve is split into three parts:
-		// * The first part uses a denser lookup table.
-		// * The second part uses a sparser lookup table.
-		// * The third part uses a straight line.
-		firstStepInverse = 10 // = 1/0.10
-		firstMaxRatio    = 2.50
-		firstNumRecords  = 6
-
-		secondStepInverse = 2 // = 1/0.50
+		minRatio          = 2.00
+		firstStepInverse  = 10
+		firstMaxRatio     = 2.50
+		firstNumRecords   = 6
+		secondStepInverse = 2
 		secondMaxRatio    = 5.00
 		thirdNSlope       = 1.559599389
 		thirdKxjSlope     = 0.522807185
@@ -582,7 +505,7 @@ func superellipseComputeNAndXj(ratio float64) [2]float64 {
 			{5.62945551, 2.72948597}, // ratio=4.50
 			{6.43023796, 2.98020421}, // ratio=5.00
 		}
-		kNumRecords = len(precomputedVariables) // Number of precomputed records
+		kNumRecords = len(precomputedVariables)
 	)
 
 	if ratio > secondMaxRatio {
@@ -610,20 +533,7 @@ func superellipseComputeNAndXj(ratio float64) [2]float64 {
 	return [2]float64{n, 1 - 1/k_xJ}
 }
 
-// Find the center of the circle that passes the given two points and have the
-// given radius.
-//
-// Denote the middle point of A and B as M. The key is to find the center of
-// the circle.
-//
-//	       A --__
-//	        /  ⟍ `、
-//	       /   M  ⟍\
-//	      /       ⟋  B
-//	     /     ⟋   ↗
-//	    /   ⟋
-//	   / ⟋    r
-//	C ᜱ  ↙
+// findCircleCenter returns the center of the circle passing through points a and b with radius r.
 func findCircleCenter[T TScalar](a Point[T], b Point[T], r T) Point[T] {
 	aToB := b.Sub(a)
 	m := a.Add(b).Scale(T(1) / T(2))
@@ -633,6 +543,7 @@ func findCircleCenter[T TScalar](a Point[T], b Point[T], r T) Point[T] {
 	return m.Sub(cToM.Normalize().Scale(distanceCM))
 }
 
+// replaceNaNWithDefault replaces NaN values in v with the corresponding values from defaultValue.
 func replaceNaNWithDefault[T TScalar](v Point[T], defaultValue Size[T]) Point[T] {
 	x := defaultValue.Width
 	y := defaultValue.Height

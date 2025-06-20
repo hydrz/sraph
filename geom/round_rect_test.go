@@ -91,7 +91,7 @@ func TestRoundRectPathSource(t *testing.T) {
 	if !src.IsConvex() {
 		t.Errorf("RoundRectPathSource: IsConvex should be true")
 	}
-	if !src.Bounds().Eq(rect) {
+	if !src.Bounds().Equal(rect) {
 		t.Errorf("RoundRectPathSource: Bounds mismatch")
 	}
 	receiver := &testPathReceiver[Scalar]{}
@@ -114,7 +114,7 @@ func TestDiffRoundRectPathSource(t *testing.T) {
 	if src.IsConvex() {
 		t.Errorf("DiffRoundRectPathSource: IsConvex should be false")
 	}
-	if !src.Bounds().Eq(rect) {
+	if !src.Bounds().Equal(rect) {
 		t.Errorf("DiffRoundRectPathSource: Bounds mismatch")
 	}
 	receiver := &testPathReceiver[Scalar]{}

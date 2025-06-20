@@ -1,140 +1,234 @@
-// Package geom provides a comprehensive 2D/3D geometry library for graphics programming.
+// Package geom provides comprehensive 2D and 3D geometric primitives, transformations,
+// and utilities for graphics programming, game development, and computational geometry.
 //
-// This package offers high-performance geometric primitives and mathematical operations
-// with support for generic scalar types, designed for graphics programming, game development,
-// and computational geometry applications.
+// # Overview
 //
-// # Core Features
+// This package offers a complete set of geometric types and operations optimized for
+// performance and numerical stability. All geometric types are immutable value types
+// that support generic numeric types through the TScalar constraint.
 //
-// The geom package includes:
+// # Core Types
 //
-//   - Scalar types: Scalar, F64, I32, I64, Int, I26_6 (fixed-point)
-//   - Angles: Radians and Degrees with automatic conversion
-//   - Points and Vectors: 2D, 3D, and 4D vectors with comprehensive operations
-//   - Geometric shapes: Rectangles, rounded rectangles, ellipses, superellipses
-//   - Transformations: Matrices, quaternions, and efficient 2D transforms (RSTransform)
-//   - Colors: RGBA colors with color space conversion and 29 blend modes
-//   - Gradients: Linear and radial gradients with texture generation
-//   - Path system: Flexible path representation with receivers and sources
-//   - Stroke styles: Comprehensive stroke parameters (caps, joins, miter limits)
-//   - Wang's formula: Optimal curve subdivision for tessellation
+// The package is built around several fundamental geometric primitives:
 //
-// # Type Safety
+//   - Point[T]: 2D points with X, Y coordinates
+//   - Vector2[T], Vector3[T], Vector4[T]: N-dimensional vectors
+//   - Size[T]: Width and height dimensions
+//   - Rect[T]: Axis-aligned rectangles
+//   - RoundRect[T]: Rectangles with rounded corners
+//   - Matrix[T]: 4x4 transformation matrices
+//   - Quaternion[T]: 3D rotation representation
+//   - Color: RGBA colors with floating-point precision
 //
-// All geometric types are generic over scalar types, ensuring type safety and performance:
+// # Coordinate System
 //
-//	type Point[T Number] struct {
-//		X, Y T
-//	}
-//
-//	type Matrix[T Number] [16]T
-//
-// The Scalar interface constrains numeric types to those suitable for geometry calculations:
-//
-//	type Scalar interface {
-//		~int | ~int8 | ~int16 | ~int32 | ~int64 | ~float32 | ~float64
-//		Float64() float64
-//		String() string
-//	}
+// The library follows DirectX/Vulkan conventions:
+//   - Left-handed coordinate system (X right, Y up, Z away from viewer)
+//   - Positive rotation is clockwise about the rotation axis
+//   - Normalized Device Coordinates (NDC): x,y ∈ [-1,1], z ∈ [0,1]
+//   - NDC origin at (0, 0, 0.5) representing the center of the cube
 //
 // # Basic Usage
 //
 // Creating and manipulating points:
 //
-//	p1 := geom.Pt[geom.Scalar](10, 20)
-//	p2 := geom.Pt[geom.Scalar](30, 40)
-//	distance := p1.Distance(p2)
-//	midpoint := p1.Lerp(p2, 0.5)
+//	p1 := geom.NewPoint(10.0, 20.0)
+//	p2 := geom.NewPoint(30.0, 40.0)
+//
+//	// Vector operations
+//	sum := p1.Add(p2)                    // Point addition
+//	distance := p1.Distance(p2)          // Euclidean distance
+//	normalized := p1.Normalize()         // Unit vector
+//	rotated := p1.Rotate(geom.Radians(math.Pi / 4))  // 45° rotation
 //
 // Working with rectangles:
 //
-//	rect := geom.NewRectXYWH[geom.Scalar](0, 0, 100, 200)
-//	center := rect.Center()
-//	area := rect.Area()
-//	contains := rect.Contains(p1)
+//	rect := geom.NewRect(0.0, 0.0, 100.0, 80.0)
+//	center := rect.Center()              // Center point
+//	area := rect.Area()                  // Area calculation
+//	expanded := rect.Expand(10.0)        // Expand by 10 units
 //
-// Matrix transformations:
+//	// Containment testing
+//	point := geom.NewPoint(50.0, 40.0)
+//	contains := rect.Contains(point)     // Point-in-rectangle test
 //
-//	matrix := geom.NewMatrix[geom.Scalar]()
-//	matrix = matrix.Translate(geom.Vector3[geom.Scalar]{X: 50, Y: 25, Z: 0})
-//	matrix = matrix.RotateZ(geom.Degrees(45).Radians())
-//	matrix = matrix.Scale(geom.Vector3[geom.Scalar]{X: 1.5, Y: 1.5, Z: 1})
-//	transformedPoint := matrix.Transform(p1)
+// # Matrix Transformations
 //
-// # Color Management
+// The Matrix type provides comprehensive 3D transformation capabilities:
 //
-// Colors support multiple formats and color space conversions:
+//	// Create identity matrix and apply transformations
+//	transform := geom.NewMatrix[float64]()
+//	result := transform.
+//		Translate(geom.Vector3[float64]{X: 10, Y: 20, Z: 0}).
+//		Scale(geom.Vector3[float64]{X: 2, Y: 2, Z: 1}).
+//		RotateZ(geom.Radians(math.Pi / 4))
 //
-//	color1 := geom.NewColorRGB8(255, 128, 64)      // 8-bit RGB
-//	color2 := geom.NewColorHex(0xFF8040)           // Hex
-//	color3 := geom.ColorRed()                      // Predefined
+//	// Transform geometric objects
+//	transformedPoint := result.Transform(point)
 //
-//	blended := color1.Blend(color2, geom.BlendModeSrcOver)
-//	linear := color1.SRGBToLinear()
+//	// Matrix analysis
+//	isInvertible := result.IsInvertible()
+//	determinant := result.Determinant()
+//	inverse := result.Invert()
 //
-// # Path System
+// # Color Operations
 //
-// The path system provides flexible path representation:
+// The Color type supports various color spaces and blending modes:
 //
-//	rectPath := geom.NewRectPathSource(rect)
-//	ellipsePath := geom.NewEllipsePathSource(bounds)
+//	// Create colors
+//	red := geom.ColorRed()
+//	custom := geom.NewColorRGBA8(128, 255, 64, 255)
+//	fromHex := geom.NewColorHex(0xFF0000)
 //
-//	// Custom path receiver
-//	type MyReceiver struct{}
-//	func (r *MyReceiver) MoveTo(p geom.Point[geom.Scalar], willBeClosed bool) { ... }
-//	func (r *MyReceiver) LineTo(p geom.Point[geom.Scalar]) { ... }
-//	// ... implement other PathReceiver methods
+//	// Color arithmetic
+//	blended := red.Blend(blue, geom.BlendModeMultiply)
+//	interpolated := red.Lerp(blue, 0.5)  // 50% between colors
 //
-//	receiver := &MyReceiver{}
-//	rectPath.Dispatch(receiver)
+//	// Color space conversions
+//	linear := red.SRGBToLinear()
+//	premultiplied := red.Premultiply()
+//
+// # Advanced Features
+//
+// Rounded rectangles with custom corner radii:
+//
+//	rect := geom.NewRect(0.0, 0.0, 100.0, 60.0)
+//	roundRect := geom.NewRoundRectRadius(rect, 10.0)  // 10px radius
+//
+//	// Complex corner configurations
+//	radii := geom.NewRoundingRadiiLTRB(5, 10, 15, 20)  // Individual corners
+//	customRound := geom.NewRoundRect(rect, radii)
+//
+//	// Containment test accounts for rounded corners
+//	inside := roundRect.Contains(point)
+//
+// Gradients for smooth color transitions:
+//
+//	stops := []geom.GradientStop{
+//		{Color: geom.ColorRed(), Position: 0.0},
+//		{Color: geom.ColorGreen(), Position: 0.5},
+//		{Color: geom.ColorBlue(), Position: 1.0},
+//	}
+//
+//	linearGradient := geom.NewLinearGradient(stops)
+//	gradientData := linearGradient.ToBuffer()  // For GPU upload
+//
+//	center := geom.NewPoint(50.0, 50.0)
+//	radialGradient := geom.NewRadialGradient(center, 30.0, stops)
+//
+// Quaternion rotations for smooth 3D animations:
+//
+//	axis := geom.Vector3[float64]{X: 0, Y: 0, Z: 1}
+//	angle := geom.Radians(math.Pi / 2)  // 90 degrees
+//	quat := geom.NewQuaternionFromAxisAngle(axis, angle)
+//
+//	// Interpolation between rotations
+//	interpolated := quat1.Slerp(quat2, 0.5)
+//
+//	// Rotate vectors
+//	vector := geom.Vector3[float64]{X: 1, Y: 0, Z: 0}
+//	rotated := quat.RotateVector3(vector)
 //
 // # Performance Considerations
 //
-// The package is designed for high performance:
+// All geometric types are designed for high performance:
+//   - Value types minimize heap allocations
+//   - Immutable design enables safe concurrent access
+//   - Generic types allow choosing appropriate numeric precision
+//   - Optimized operations for common transformations
+//   - SIMD-friendly data layouts where possible
 //
-//   - All operations are allocation-free where possible
-//   - Matrix operations use column-major storage for GPU compatibility
-//   - Wang's formula provides optimal curve tessellation
-//   - Geometric queries are optimized for common cases
-//   - Type-specific optimizations for differenT Number types
+// # Numerical Stability
 //
-// # Coordinate Systems
+// The package provides robust handling of floating-point precision:
+//   - Configurable epsilon values for comparisons (Epsilon32, Epsilon64)
+//   - NearlyEqual function for tolerance-based equality
+//   - IsFinite checks for numerical validity
+//   - Stable algorithms for matrix operations
 //
-// The package uses standard mathematical coordinate systems:
+// Fixed-point arithmetic for sub-pixel precision:
 //
-//   - 2D: Origin at bottom-left, Y-axis pointing up (can be configured)
-//   - 3D: Right-handed coordinate system
-//   - Matrices: Column-major storage (OpenGL/Vulkan compatible)
-//   - Angles: Radians for calculations, Degrees for convenience
+//	fixed := geom.Int26_6(64)  // Represents 1.0 in 26.6 format
+//	floatVal := fixed.Float64()  // Convert to float64
 //
-// # Precision and Tolerances
+// # Type Safety
 //
-// Floating-point comparisons use configurable epsilon values:
+// Angular measurements use distinct types to prevent unit confusion:
 //
-//	const (
-//		Epsilon32 = 1e-3  // For Scalar comparisons
-//		Epsilon64 = 1e-6  // For F64 comparisons
-//	)
+//	degrees := geom.Degrees(45.0)
+//	radians := degrees.Radians()        // Explicit conversion
+//	rotated := point.Rotate(radians)    // Type-safe API
 //
-// Use NearlyEqual for safe floating-point equality:
+// # Error Handling
 //
-//	if geom.NearlyEqual(a, b) {
-//		// Values are equal within tolerance
+// Most operations are designed to be infallible, returning sensible defaults:
+//   - Zero-length vector normalization returns (1, 0)
+//   - Non-invertible matrix inversion returns zero matrix
+//   - Division by zero in colors returns transparent black
+//
+// For validation, use the provided checking functions:
+//
+//	if !matrix.IsInvertible() {
+//		// Handle non-invertible matrix
+//	}
+//
+//	if !color.IsFinite() {
+//		// Handle invalid color values
 //	}
 //
 // # Integration
 //
-// The package integrates well with Go's standard library:
+// The package integrates well with standard Go libraries:
 //
-//	// Convert to/from standard types
-//	goRect := rect.ToGo()                          // image.Rectangle
-//	goPoint := point.ToGo()                        // image.Point
-//	goColor := color.ToRGBA()                      // color.RGBA
+//	// Convert to/from image package types
+//	goPoint := point.Go()              // -> image.Point
+//	goRect := rect.Go()                // -> image.Rectangle
+//	goColor := color.ToRGBA()          // -> color.RGBA
 //
-//	// From standard types
-//	rect := geom.NewRectFromGo[geom.Scalar](goRect)
-//	point := geom.NewPointFromGo[geom.Scalar](goPoint)
-//	color := geom.NewColorFromRGBA(goColor)
+//	// Create from Go types
+//	pointFromGo := geom.NewPointGo(goPoint)
+//	rectFromGo := geom.NewRectGo(goRect)
+//	colorFromGo := geom.NewColorGo(goColor)
 //
-// For more detailed examples and API documentation, see the individual type documentation.
+// # Common Patterns
+//
+// Building transformation hierarchies:
+//
+//	parentTransform := geom.NewMatrix[float64]().
+//		Translate(geom.Vector3[float64]{X: 100, Y: 50, Z: 0}).
+//		RotateZ(geom.Radians(math.Pi / 4))
+//
+//	childLocalTransform := geom.NewMatrix[float64]().
+//		Scale(geom.Vector3[float64]{X: 0.5, Y: 0.5, Z: 1})
+//
+//	// Child world transform = parent * child_local
+//	childWorldTransform := parentTransform.Mul(childLocalTransform)
+//
+// Animation and interpolation:
+//
+//	// Linear interpolation between positions
+//	start := geom.NewPoint(0.0, 0.0)
+//	end := geom.NewPoint(100.0, 100.0)
+//	t := 0.5  // 50% through animation
+//	current := start.Lerp(end, t)
+//
+//	// Color fading
+//	visible := geom.ColorWhite()
+//	transparent := visible.WithAlpha(0.0)
+//	faded := visible.Lerp(transparent, t)
+//
+// Viewport and projection transformations:
+//
+//	// Orthographic projection for 2D rendering
+//	screenSize := geom.Size[float64]{Width: 800, Height: 600}
+//	orthoMatrix := geom.NewMatrix[float64]().Orthographic(screenSize)
+//
+//	// Perspective projection for 3D rendering
+//	fov := geom.Radians(math.Pi / 3)  // 60 degrees
+//	aspectRatio := screenSize.Width / screenSize.Height
+//	perspMatrix := geom.NewMatrix[float64]().
+//		Perspective(fov, aspectRatio, 0.1, 1000.0)
+//
+// This package provides the foundation for graphics applications, game engines,
+// CAD software, and any application requiring robust geometric computations.
 package geom

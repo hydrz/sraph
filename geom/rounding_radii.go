@@ -58,9 +58,9 @@ func (r RoundingRadii[T]) IsFinite() bool {
 
 // IsUniform returns true if all four corners are Eq.
 func (r RoundingRadii[T]) IsUniform() bool {
-	return r.TopLeft.Eq(r.TopRight) &&
-		r.TopLeft.Eq(r.BottomLeft) &&
-		r.TopLeft.Eq(r.BottomRight)
+	return r.TopLeft.Equal(r.TopRight) &&
+		r.TopLeft.Equal(r.BottomLeft) &&
+		r.TopLeft.Equal(r.BottomRight)
 }
 
 // Scale scales all radii by the given scalar.
@@ -114,11 +114,11 @@ func (r RoundingRadii[T]) ScaleToFit(bounds Rect[T]) RoundingRadii[T] {
 }
 
 // Eq returns true if all four corners are Eq.
-func (r RoundingRadii[T]) Eq(other RoundingRadii[T]) bool {
-	return r.TopLeft.Eq(other.TopLeft) &&
-		r.TopRight.Eq(other.TopRight) &&
-		r.BottomLeft.Eq(other.BottomLeft) &&
-		r.BottomRight.Eq(other.BottomRight)
+func (r RoundingRadii[T]) Equal(other RoundingRadii[T]) bool {
+	return r.TopLeft.Equal(other.TopLeft) &&
+		r.TopRight.Equal(other.TopRight) &&
+		r.BottomLeft.Equal(other.BottomLeft) &&
+		r.BottomRight.Equal(other.BottomRight)
 }
 
 // String returns a string representation of the rounding radii.

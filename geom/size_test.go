@@ -69,10 +69,10 @@ func TestSize_SizeComparison(t *testing.T) {
 	s3 := Size[Scalar]{5.0, 15.0}
 
 	t.Run("Eq", func(t *testing.T) {
-		if !s1.Eq(s2) {
+		if !s1.Equal(s2) {
 			t.Error("Eq sizes should be Eq")
 		}
-		if s1.Eq(s3) {
+		if s1.Equal(s3) {
 			t.Error("Different sizes should not be Eq")
 		}
 	})

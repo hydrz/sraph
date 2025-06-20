@@ -4,10 +4,10 @@ import "testing"
 
 func TestRoundingRadii_NewAndProperties(t *testing.T) {
 	r := NewRoundingRadii[Scalar](5.0)
-	if !r.TopLeft.Eq(Size[Scalar]{5, 5}) ||
-		!r.TopRight.Eq(Size[Scalar]{5, 5}) ||
-		!r.BottomLeft.Eq(Size[Scalar]{5, 5}) ||
-		!r.BottomRight.Eq(Size[Scalar]{5, 5}) {
+	if !r.TopLeft.Equal(Size[Scalar]{5, 5}) ||
+		!r.TopRight.Equal(Size[Scalar]{5, 5}) ||
+		!r.BottomLeft.Equal(Size[Scalar]{5, 5}) ||
+		!r.BottomRight.Equal(Size[Scalar]{5, 5}) {
 		t.Errorf("NewRoundingRadii: all corners should be (5,5)")
 	}
 	if !r.IsUniform() {
@@ -23,10 +23,10 @@ func TestRoundingRadii_NewAndProperties(t *testing.T) {
 
 func TestRoundingRadiiLTRB(t *testing.T) {
 	r := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
-	if !r.TopLeft.Eq(Size[Scalar]{1, 2}) ||
-		!r.TopRight.Eq(Size[Scalar]{3, 2}) ||
-		!r.BottomLeft.Eq(Size[Scalar]{1, 4}) ||
-		!r.BottomRight.Eq(Size[Scalar]{3, 4}) {
+	if !r.TopLeft.Equal(Size[Scalar]{1, 2}) ||
+		!r.TopRight.Equal(Size[Scalar]{3, 2}) ||
+		!r.BottomLeft.Equal(Size[Scalar]{1, 4}) ||
+		!r.BottomRight.Equal(Size[Scalar]{3, 4}) {
 		t.Errorf("NewRoundingRadii4: corners not as expected")
 	}
 	if r.IsUniform() {
@@ -48,10 +48,10 @@ func TestRoundingRadii_IsEmpty(t *testing.T) {
 func TestRoundingRadii_Scale(t *testing.T) {
 	r := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
 	s := r.Scale(2.0)
-	if !s.TopLeft.Eq(Size[Scalar]{2, 4}) ||
-		!s.TopRight.Eq(Size[Scalar]{6, 4}) ||
-		!s.BottomLeft.Eq(Size[Scalar]{2, 8}) ||
-		!s.BottomRight.Eq(Size[Scalar]{6, 8}) {
+	if !s.TopLeft.Equal(Size[Scalar]{2, 4}) ||
+		!s.TopRight.Equal(Size[Scalar]{6, 4}) ||
+		!s.BottomLeft.Equal(Size[Scalar]{2, 8}) ||
+		!s.BottomRight.Equal(Size[Scalar]{6, 8}) {
 		t.Errorf("Scale: scaling not correct")
 	}
 }
@@ -67,14 +67,14 @@ func TestRoundingRadii_ScaleToFit(t *testing.T) {
 	}
 }
 
-func TestRoundingRadii_Eq(t *testing.T) {
+func TestRoundingRadii_Equal(t *testing.T) {
 	r1 := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
 	r2 := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 4.0)
 	r3 := NewRoundingRadiiLTRB[Scalar](1.0, 2.0, 3.0, 5.0)
-	if !r1.Eq(r2) {
+	if !r1.Equal(r2) {
 		t.Errorf("Eq: should be true for identical radii")
 	}
-	if r1.Eq(r3) {
+	if r1.Equal(r3) {
 		t.Errorf("Eq: should be false for different radii")
 	}
 }

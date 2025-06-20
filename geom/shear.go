@@ -6,7 +6,7 @@ type Shear[T TScalar] struct {
 	YZ T
 }
 
-func (s Shear[T]) Eq(o Shear[T]) bool {
+func (s Shear[T]) Equal(o Shear[T]) bool {
 	return NearlyEqual(s.XY, o.XY) && NearlyEqual(s.XZ, o.XZ) && NearlyEqual(s.YZ, o.YZ)
 }
 
