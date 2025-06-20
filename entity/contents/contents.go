@@ -39,12 +39,88 @@ type Entity interface {
 }
 
 // ContentContext provides context for content rendering
+// Based on Impeller's ContentContext which manages pipeline state and resources
 type ContentContext struct {
-	gpuContext         gpu.Context
-	typographerContext interface{} // TODO: Replace with proper type
-	shaderLibrary      *render.ShaderLibrary
-	pipelineLibrary    *render.PipelineLibrary
-	samplerLibrary     *render.SamplerLibrary
+	renderContext      render.Context
+	typographerContext interface{} // TODO: Replace with proper typographer type
+
+	// Pipeline and resource management
+	pipelineCache map[ContentContextOptions]*render.Pipeline
+	samplerCache  map[SamplerDescriptor]*render.Sampler
+
+	// Host buffer for uploading uniform data
+	hostBuffer *render.HostBuffer
+
+	// Texture and atlas management
+	lazyGlyphAtlas interface{} // TODO: Replace with glyph atlas type
+
+	// Capabilities and features
+	capabilities             *render.Capabilities
+	isAdvancedBlendSupported bool
+}
+
+// ContentContextOptions defines pipeline state configuration
+// Based on Impeller's ContentContextOptions for pipeline variants
+type ContentContextOptions struct {
+	// Stencil configuration
+	StencilMode StencilMode
+
+	// Primitive type being rendered
+	PrimitiveType PrimitiveType
+
+	// Sampling options for textures
+	SampleCount uint32
+
+	// Color attachment format
+	ColorAttachmentFormat gpu.TextureFormat
+
+	// Depth/stencil format
+	DepthStencilFormat gpu.TextureFormat
+
+	// Blend mode
+	BlendMode BlendMode
+
+	// Wire frame mode for debugging
+	Wireframe bool
+}
+
+// StencilMode defines how stencil testing should be performed
+type StencilMode uint8
+
+const (
+	// Turn off stencil test
+	StencilModeIgnore StencilMode = iota
+
+	// Stencil-then-cover operations
+	StencilModeNonZeroFill
+	StencilModeEvenOddFill
+	StencilModeCoverCompare
+	StencilModeCoverCompareInverted
+
+	// Overdraw prevention for strokes
+	StencilModeOverdrawPrevent
+	StencilModeOverdrawRestore
+)
+
+// PrimitiveType defines the type of primitive being rendered
+type PrimitiveType uint8
+
+const (
+	PrimitiveTypeTriangleList PrimitiveType = iota
+	PrimitiveTypeTriangleStrip
+	PrimitiveTypeLineList
+	PrimitiveTypeLineStrip
+	PrimitiveTypePointList
+)
+
+// SamplerDescriptor describes sampler state
+type SamplerDescriptor struct {
+	MinFilter    gpu.FilterMode
+	MagFilter    gpu.FilterMode
+	MipFilter    gpu.MipFilterMode
+	AddressModeU gpu.AddressMode
+	AddressModeV gpu.AddressMode
+	AddressModeW gpu.AddressMode
 }
 
 // BlendMode represents different blending modes for content composition
