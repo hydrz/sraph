@@ -1,90 +1,101 @@
 package geom
 
 // RoundingRadii defines the radii for the four corners of a rectangle.
-// It is commonly used for rounded rectangle rendering and hit-testing in graphics.
-type RoundingRadii[T TScalar] struct {
-	TopLeft     Size[T]
-	TopRight    Size[T]
-	BottomLeft  Size[T]
-	BottomRight Size[T]
+type RoundingRadii struct {
+	topLeft     Size
+	topRight    Size
+	bottomLeft  Size
+	bottomRight Size
 }
 
 // NewRoundingRadii creates a RoundingRadii with all four corners set to the same radius.
-func NewRoundingRadii[T TScalar](radius T) RoundingRadii[T] {
-	sz := Size[T]{radius, radius}
-	return RoundingRadii[T]{
-		TopLeft:     sz,
-		TopRight:    sz,
-		BottomLeft:  sz,
-		BottomRight: sz,
+func NewRoundingRadii(radius Scalar) RoundingRadii {
+	sz := NewSize(radius, radius)
+	return RoundingRadii{
+		topLeft:     sz,
+		topRight:    sz,
+		bottomLeft:  sz,
+		bottomRight: sz,
 	}
 }
 
 // NewRoundingRadiiLTRB creates a RoundingRadii with specified radii for each corner.
-func NewRoundingRadiiLTRB[T TScalar](left, top, right, bottom T) RoundingRadii[T] {
-	return RoundingRadii[T]{
-		TopLeft:     Size[T]{left, top},
-		TopRight:    Size[T]{right, top},
-		BottomLeft:  Size[T]{left, bottom},
-		BottomRight: Size[T]{right, bottom},
+func NewRoundingRadiiLTRB(left, top, right, bottom Scalar) RoundingRadii {
+	return RoundingRadii{
+		topLeft:     NewSize(left, top),
+		topRight:    NewSize(right, top),
+		bottomLeft:  NewSize(left, bottom),
+		bottomRight: NewSize(right, bottom),
 	}
 }
 
 // NewRoundingRadiiFromSizes creates a RoundingRadii with all four corners set to the same Size.
-func NewRoundingRadiiFromSizes[T TScalar](sz Size[T]) RoundingRadii[T] {
-	return RoundingRadii[T]{
-		TopLeft:     sz,
-		TopRight:    sz,
-		BottomLeft:  sz,
-		BottomRight: sz,
+func NewRoundingRadiiFromSizes(sz Size) RoundingRadii {
+	return RoundingRadii{
+		topLeft:     sz,
+		topRight:    sz,
+		bottomLeft:  sz,
+		bottomRight: sz,
 	}
 }
 
-// IsEmpty returns true if all radii are zero.
-func (r RoundingRadii[T]) IsEmpty() bool {
-	return r.TopLeft.IsZero() &&
-		r.TopRight.IsZero() &&
-		r.BottomLeft.IsZero() &&
-		r.BottomRight.IsZero()
+// TopLeft returns the top-left corner size.
+func (r RoundingRadii) TopLeft() Size { return r.topLeft }
+
+// TopRight returns the top-right corner size.
+func (r RoundingRadii) TopRight() Size { return r.topRight }
+
+// BottomLeft returns the bottom-left corner size.
+func (r RoundingRadii) BottomLeft() Size { return r.bottomLeft }
+
+// BottomRight returns the bottom-right corner size.
+func (r RoundingRadii) BottomRight() Size { return r.bottomRight }
+
+// IsEmpty reports whether all radii are zero.
+func (r RoundingRadii) IsEmpty() bool {
+	return r.topLeft.IsZero() &&
+		r.topRight.IsZero() &&
+		r.bottomLeft.IsZero() &&
+		r.bottomRight.IsZero()
 }
 
-// IsFinite returns true if all radii are finite.
-func (r RoundingRadii[T]) IsFinite() bool {
-	return r.TopLeft.IsFinite() &&
-		r.TopRight.IsFinite() &&
-		r.BottomLeft.IsFinite() &&
-		r.BottomRight.IsFinite()
+// IsFinite reports whether all radii are finite.
+func (r RoundingRadii) IsFinite() bool {
+	return r.topLeft.IsFinite() &&
+		r.topRight.IsFinite() &&
+		r.bottomLeft.IsFinite() &&
+		r.bottomRight.IsFinite()
 }
 
-// IsUniform returns true if all four corners are Eq.
-func (r RoundingRadii[T]) IsUniform() bool {
-	return r.TopLeft.Equal(r.TopRight) &&
-		r.TopLeft.Equal(r.BottomLeft) &&
-		r.TopLeft.Equal(r.BottomRight)
+// IsUniform reports whether all four corners are equal.
+func (r RoundingRadii) IsUniform() bool {
+	return r.topLeft.Equal(r.topRight) &&
+		r.topLeft.Equal(r.bottomLeft) &&
+		r.topLeft.Equal(r.bottomRight)
 }
 
 // Scale scales all radii by the given scalar.
-func (r RoundingRadii[T]) Scale(scalar T) RoundingRadii[T] {
-	return RoundingRadii[T]{
-		TopLeft:     r.TopLeft.Scale(scalar),
-		TopRight:    r.TopRight.Scale(scalar),
-		BottomLeft:  r.BottomLeft.Scale(scalar),
-		BottomRight: r.BottomRight.Scale(scalar),
+func (r RoundingRadii) Scale(scalar Scalar) RoundingRadii {
+	return RoundingRadii{
+		topLeft:     r.topLeft.Scale(scalar),
+		topRight:    r.topRight.Scale(scalar),
+		bottomLeft:  r.bottomLeft.Scale(scalar),
+		bottomRight: r.bottomRight.Scale(scalar),
 	}
 }
 
 // ScaleToFit scales the radii so that the sum of the radii on each edge does not exceed the bounds.
-func (r RoundingRadii[T]) ScaleToFit(bounds Rect[T]) RoundingRadii[T] {
+func (r RoundingRadii) ScaleToFit(bounds Rect) RoundingRadii {
 	width := bounds.Width()
 	height := bounds.Height()
 
-	sumTop := r.TopLeft.Width + r.TopRight.Width
-	sumBottom := r.BottomLeft.Width + r.BottomRight.Width
-	sumLeft := r.TopLeft.Height + r.BottomLeft.Height
-	sumRight := r.TopRight.Height + r.BottomRight.Height
+	sumTop := r.topLeft.Width() + r.topRight.Width()
+	sumBottom := r.bottomLeft.Width() + r.bottomRight.Width()
+	sumLeft := r.topLeft.Height() + r.bottomLeft.Height()
+	sumRight := r.topRight.Height() + r.bottomRight.Height()
 
-	scaleX := T(1)
-	scaleY := T(1)
+	scaleX := Scalar(1)
+	scaleY := Scalar(1)
 	if sumTop > width {
 		scaleX = width / sumTop
 	}
@@ -113,20 +124,18 @@ func (r RoundingRadii[T]) ScaleToFit(bounds Rect[T]) RoundingRadii[T] {
 	return r.Scale(scale)
 }
 
-// Eq returns true if all four corners are Eq.
-func (r RoundingRadii[T]) Equal(other RoundingRadii[T]) bool {
-	return r.TopLeft.Equal(other.TopLeft) &&
-		r.TopRight.Equal(other.TopRight) &&
-		r.BottomLeft.Equal(other.BottomLeft) &&
-		r.BottomRight.Equal(other.BottomRight)
+// Equal reports whether all four corners are equal.
+func (r RoundingRadii) Equal(other RoundingRadii) bool {
+	return r.topLeft.Equal(other.TopLeft()) &&
+		r.topRight.Equal(other.TopRight()) &&
+		r.bottomLeft.Equal(other.BottomLeft()) &&
+		r.bottomRight.Equal(other.BottomRight())
 }
 
 // String returns a string representation of the rounding radii.
-func (r RoundingRadii[T]) String() string {
-	return "RoundingRadii{" +
-		"TopLeft:" + r.TopLeft.String() +
-		", TopRight:" + r.TopRight.String() +
-		", BottomLeft:" + r.BottomLeft.String() +
-		", BottomRight:" + r.BottomRight.String() +
-		"}"
+func (r RoundingRadii) String() string {
+	return "(" + r.topLeft.String() + ", " +
+		r.topRight.String() + ", " +
+		r.bottomLeft.String() + ", " +
+		r.bottomRight.String() + ")"
 }

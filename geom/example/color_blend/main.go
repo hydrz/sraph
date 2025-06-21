@@ -34,7 +34,7 @@ var blendModeInfos = []blendModeInfo{
 
 // BlendModeDemo creates a precise test pattern for blend mode visualization
 type BlendModeDemo struct {
-	rect geom.Rect[float64]
+	rect geom.Rect
 }
 
 // At generates optimized test patterns for accurate blend mode verification
@@ -151,7 +151,7 @@ func (b *BlendModeDemo) ColorModel() color.Model {
 }
 
 // drawLabels renders blend mode names and descriptions on each cell
-func drawLabels(img draw.Image, rect geom.Rect[float64]) {
+func drawLabels(img draw.Image, rect geom.Rect) {
 	cols := 7
 	rows := 5
 	cellW := int(rect.Width()) / cols
@@ -193,7 +193,7 @@ func drawLabels(img draw.Image, rect geom.Rect[float64]) {
 }
 
 // drawLegend adds explanatory information
-func drawLegend(img draw.Image, rect geom.Rect[float64]) {
+func drawLegend(img draw.Image, rect geom.Rect) {
 	drawer := &font.Drawer{
 		Dst:  img,
 		Src:  image.NewUniform(color.RGBA{255, 255, 255, 255}),

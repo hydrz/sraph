@@ -1,15 +1,17 @@
 package geom
 
 import (
+	"fmt"
 	"image"
 	"math"
 )
 
-type Quad[T TScalar] [4]Point[T]
+// Quad defines the interface for a 4-point polygon (quadrilateral).
+type Quad [4]Point
 
 // Transform applies a transformation matrix to the quad.
-func (q Quad[T]) Transform(m Matrix[T]) Quad[T] {
-	return Quad[T]{
+func (q Quad) Transform(m Matrix) Quad {
+	return Quad{
 		q[0].Transform(m),
 		q[1].Transform(m),
 		q[2].Transform(m),
@@ -17,246 +19,347 @@ func (q Quad[T]) Transform(m Matrix[T]) Quad[T] {
 	}
 }
 
-// Point represents a 2D point or vector in Cartesian coordinates.
-type Point[T TScalar] struct {
-	X T
-	Y T
+// Point defines the interface for a 2D point or vector in Cartesian coordinates.
+// It provides methods for arithmetic operations, geometric queries, and transformations.
+type Point interface {
+	// X returns the X coordinate.
+	X() Scalar
+	// Y returns the Y coordinate.
+	Y() Scalar
+
+	// Add returns the vector sum of this point and another.
+	Add(other Point) Point
+	// Sub returns the vector difference of this point and another.
+	Sub(other Point) Point
+	// Mul returns the element-wise product of this point and another.
+	Mul(other Point) Point
+	// MulSize returns the element-wise product of this point and a size.
+	MulSize(size Size) Point
+	// Div returns the element-wise division of this point by another.
+	Div(other Point) Point
+	// DivSize returns the element-wise division of this point by a size.
+	DivSize(size Size) Point
+	// Neg returns the negation of this point.
+	Neg() Point
+	// Min returns a point with the minimum value for each coordinate from this and another point.
+	Min(other Point) Point
+	// Max returns a point with the maximum value for each coordinate from this and another point.
+	Max(other Point) Point
+	// Abs returns a point with the absolute value of each coordinate.
+	Abs() Point
+	// Conj returns the conjugate of this point, flipping the sign of Y.
+	Conj() Point
+	// Floor returns a point with math.Floor applied to each coordinate.
+	Floor() Point
+	// Ceil returns a point with math.Ceil applied to each coordinate.
+	Ceil() Point
+	// Round returns a point with math.Round applied to each coordinate.
+	Round() Point
+	// Equal reports whether this point and another are nearly equal, using tolerance for floating-point types.
+	Equal(other Point) bool
+	// IsFinite reports whether both coordinates of this point are finite.
+	IsFinite() bool
+	// IsZero reports whether both coordinates of this point are nearly zero.
+	IsZero() bool
+	// Translate returns a new point offset by the given vector.
+	Translate(vector Point) Point
+	// Scale returns a new point scaled by the given scalar.
+	Scale(scale Scalar) Point
+	// Rotate returns a new point rotated around the origin by angle (in radians).
+	Rotate(angle Radians) Point
+	// Normalize returns a unit vector in the direction of this point. If zero, returns (1, 0).
+	Normalize() Point
+	// Dot returns the dot product of this point and another.
+	Dot(other Point) Scalar
+	// Cross returns the 2D cross product of this point and another.
+	Cross(other Point) Scalar
+	// Phase returns the angle (in radians) between this point and the positive X axis, in [-Pi, Pi].
+	Phase() Radians
+	// Polar returns the length and phase (angle in radians) of this point.
+	Polar() (Scalar, Radians)
+	// AngleTo returns the angle (in radians) between this point and another.
+	AngleTo(other Point) Radians
+	// Distance returns the Euclidean distance between this point and another.
+	Distance(other Point) Scalar
+	// DistanceSquared returns the squared Euclidean distance between this point and another.
+	DistanceSquared(other Point) Scalar
+	// Length returns the Euclidean length of this point, i.e., the distance from the origin.
+	Length() Scalar
+	// LengthSquared returns the squared Euclidean length of this point.
+	LengthSquared() Scalar
+	// Reflect returns the reflection of this point about the given axis vector.
+	// The axis does not need to be normalized.
+	Reflect(axis Point) Point
+	// Lerp returns the linear interpolation between this point and another by parameter t in [0,1].
+	Lerp(other Point, t Scalar) Point
+	// Complex returns the complex128 representation of this point.
+	Complex() complex128
+	// Go converts this point to image.Point, truncating coordinates to int.
+	Go() image.Point
+	// Transform applies the given matrix transformation to this point.
+	Transform(m Matrix) Point
+	// TransformDirection applies the given matrix transformation to this point, treating it as a direction vector.
+	TransformDirection(m Matrix) Point
+	// TransformHomogenous transforms this 2D point to 3D homogeneous coordinates.
+	TransformHomogenous(m Matrix) Vector3
+	// String returns a string representation of this point in the form "(x, y)".
+	String() string
 }
 
 // NewPoint constructs a Point with the given coordinates.
-func NewPoint[T TScalar](x, y T) Point[T] {
-	return Point[T]{X: x, Y: y}
+func NewPoint[T Number](x, y T) Point {
+	return point[T]{x: x, y: y}
 }
 
 // NewPointPolar constructs a Point from polar coordinates (radius r, angle θ in radians).
-func NewPointPolar[T TScalar](r T, θ Radians) Point[T] {
-	s, c := math.Sincos(ToFloat64(θ))
-	return Point[T]{X: r * T(c), Y: r * T(s)}
+func NewPointPolar[T Number](r T, θ Radians) Point {
+	s, c := math.Sincos(float64(θ))
+	return point[T]{x: r * T(c), y: r * T(s)}
 }
 
 // NewPointGo converts an image.Point to a Point.
-func NewPointGo[T TScalar](p image.Point) Point[T] {
-	return Point[T]{X: T(p.X), Y: T(p.Y)}
+func NewPointGo[T Number](p image.Point) Point {
+	return point[T]{x: T(p.X), y: T(p.Y)}
 }
 
-// Add returns the vector sum of p and o.
-func (p Point[T]) Add(o Point[T]) Point[T] { return Point[T]{p.X + o.X, p.Y + o.Y} }
-
-// Sub returns the vector difference of p and o.
-func (p Point[T]) Sub(o Point[T]) Point[T] { return Point[T]{p.X - o.X, p.Y - o.Y} }
-
-// Mul returns the element-wise product of p and o.
-func (p Point[T]) Mul(o Point[T]) Point[T] { return Point[T]{p.X * o.X, p.Y * o.Y} }
-
-// MulSize returns the element-wise product of p and a Size.
-func (p Point[T]) MulSize(o Size[T]) Point[T] { return Point[T]{p.X * o.Width, p.Y * o.Height} }
-
-// Div returns the element-wise division of p by o.
-func (p Point[T]) Div(o Point[T]) Point[T] { return Point[T]{p.X / o.X, p.Y / o.Y} }
-
-// DivSize returns the element-wise division of p by a Size.
-func (p Point[T]) DivSize(o Size[T]) Point[T] { return Point[T]{p.X / o.Width, p.Y / o.Height} }
-
-// Neg returns the negation of p.
-func (p Point[T]) Neg() Point[T] { return Point[T]{-p.X, -p.Y} }
-
-// Min returns a point with the minimum value for each coordinate from p and o.
-func (p Point[T]) Min(o Point[T]) Point[T] {
-	return Point[T]{min(p.X, o.X), min(p.Y, o.Y)}
+// point is the generic implementation of the Point interface.
+type point[T Number] struct {
+	x T
+	y T
 }
 
-// Max returns a point with the maximum value for each coordinate from p and o.
-func (p Point[T]) Max(o Point[T]) Point[T] {
-	return Point[T]{max(p.X, o.X), max(p.Y, o.Y)}
+// X implements Point.X.
+func (p point[T]) X() Scalar { return Scalar(p.x) }
+
+// Y implements Point.Y.
+func (p point[T]) Y() Scalar { return Scalar(p.y) }
+
+// Add implements Point.Add.
+func (p point[T]) Add(o Point) Point {
+	return NewPoint(p.X()+o.X(), p.Y()+o.Y())
 }
 
-// Abs returns a point with the absolute value of each coordinate.
-func (p Point[T]) Abs() Point[T] {
-	x := Cond(p.X < 0, -p.X, p.X)
-	y := Cond(p.Y < 0, -p.Y, p.Y)
-	return Point[T]{X: x, Y: y}
+// Sub implements Point.Sub.
+func (p point[T]) Sub(o Point) Point {
+	return NewPoint(p.X()-o.X(), p.Y()-o.Y())
 }
 
-// Conj returns the conjugate of p, flipping the sign of Y.
-func (p Point[T]) Conj() Point[T] {
-	return Point[T]{X: p.X, Y: -p.Y}
+// Mul implements Point.Mul.
+func (p point[T]) Mul(o Point) Point {
+	return NewPoint(p.X()*o.X(), p.Y()*o.Y())
 }
 
-// Floor returns a point with math.Floor applied to each coordinate.
-func (p Point[T]) Floor() Point[T] {
-	return Point[T]{
-		X: T(math.Floor(ToFloat64(p.X))),
-		Y: T(math.Floor(ToFloat64(p.Y))),
-	}
+// MulSize implements Point.MulSize.
+func (p point[T]) MulSize(s Size) Point {
+	return NewPoint(p.X()*s.Width(), p.Y()*s.Height())
 }
 
-// Ceil returns a point with math.Ceil applied to each coordinate.
-func (p Point[T]) Ceil() Point[T] {
-	return Point[T]{
-		X: T(math.Ceil(ToFloat64(p.X))),
-		Y: T(math.Ceil(ToFloat64(p.Y))),
-	}
+// Div implements Point.Div.
+func (p point[T]) Div(o Point) Point {
+	return NewPoint(p.X()/o.X(), p.Y()/o.Y())
 }
 
-// Round returns a point with math.Round applied to each coordinate.
-func (p Point[T]) Round() Point[T] {
-	return Point[T]{
-		X: T(math.Round(ToFloat64(p.X))),
-		Y: T(math.Round(ToFloat64(p.Y))),
-	}
+// DivSize implements Point.DivSize.
+func (p point[T]) DivSize(s Size) Point {
+	return NewPoint(p.X()/s.Width(), p.Y()/s.Height())
 }
 
-// Equal reports whether p and o are nearly equal, using tolerance for floating-point types.
-func (p Point[T]) Equal(o Point[T]) bool {
-	return NearlyEqual(p.X, o.X) && NearlyEqual(p.Y, o.Y)
+// Neg implements Point.Neg.
+func (p point[T]) Neg() Point { return point[T]{x: -p.x, y: -p.y} }
+
+// Min implements Point.Min.
+func (p point[T]) Min(o Point) Point {
+	return point[T]{x: min(p.x, T(o.X())), y: min(p.y, T(o.Y()))}
 }
 
-// IsFinite reports whether both coordinates of p are finite.
-func (p Point[T]) IsFinite() bool {
-	return IsFinite(p.X) && IsFinite(p.Y)
+// Max implements Point.Max.
+func (p point[T]) Max(o Point) Point {
+	return point[T]{x: max(p.x, T(o.X())), y: max(p.y, T(o.Y()))}
 }
 
-// IsZero reports whether both coordinates of p are nearly zero.
-func (p Point[T]) IsZero() bool {
-	return NearlyEqual(p.X, 0) && NearlyEqual(p.Y, 0)
-}
-
-// Translate returns a new point offset by the given vector.
-func (p Point[T]) Translate(vector Point[T]) Point[T] {
-	return Point[T]{X: p.X + vector.X, Y: p.Y + vector.Y}
-}
-
-// Scale returns a new point scaled by the given scalar.
-func (p Point[T]) Scale(scale T) Point[T] {
-	return Point[T]{X: p.X * scale, Y: p.Y * scale}
-}
-
-// Rotate returns a new point rotated around the origin by angle (in radians).
-func (p Point[T]) Rotate(angle Radians) Point[T] {
-	cos := T(math.Cos(ToFloat64(angle)))
-	sin := T(math.Sin(ToFloat64(angle)))
-	return Point[T]{
-		X: p.X*cos - p.Y*sin,
-		Y: p.X*sin + p.Y*cos,
-	}
-}
-
-// Normalize returns a unit vector in the direction of p.
-// If p is zero, returns (1, 0).
-func (p Point[T]) Normalize() Point[T] {
-	len := p.Length()
+// Abs implements Point.Abs.
+func (p point[T]) Abs() Point {
 	var zero T
-	if len == zero {
-		return Point[T]{X: 1, Y: 0}
+	x := p.x
+	y := p.y
+	if x < zero {
+		x = -x
 	}
-	return Point[T]{X: p.X / len, Y: p.Y / len}
+	if y < zero {
+		y = -y
+	}
+	return point[T]{x: x, y: y}
 }
 
-// Dot returns the dot product of p and o.
-func (p Point[T]) Dot(o Point[T]) T {
-	return p.X*o.X + p.Y*o.Y
+// Conj implements Point.Conj.
+func (p point[T]) Conj() Point { return point[T]{x: p.x, y: -p.y} }
+
+// Floor implements Point.Floor.
+func (p point[T]) Floor() Point {
+	return point[T]{x: T(math.Floor(float64(p.x))), y: T(math.Floor(float64(p.y)))}
 }
 
-// Cross returns the 2D cross product of p and o.
-func (p Point[T]) Cross(o Point[T]) T {
-	return p.X*o.Y - p.Y*o.X
+// Ceil implements Point.Ceil.
+func (p point[T]) Ceil() Point {
+	return point[T]{x: T(math.Ceil(float64(p.x))), y: T(math.Ceil(float64(p.y)))}
 }
 
-// Phase returns the angle (in radians) between p and the positive X axis, in [-Pi, Pi].
-func (p Point[T]) Phase() (θ Radians) {
-	return Radians(math.Atan2(ToFloat64(p.Y), ToFloat64(p.X)))
+// Round implements Point.Round.
+func (p point[T]) Round() Point {
+	return point[T]{x: T(math.Round(float64(p.x))), y: T(math.Round(float64(p.y)))}
 }
 
-// Polar returns the length and phase (angle in radians) of p.
-func (p Point[T]) Polar() (r T, θ Radians) {
+// Equal implements Point.Equal.
+func (p point[T]) Equal(other Point) bool {
+	return NearlyEqual(p.x, T(other.X())) && NearlyEqual(p.y, T(other.Y()))
+}
+
+// IsFinite implements Point.IsFinite.
+func (p point[T]) IsFinite() bool {
+	return IsFinite(p.x) && IsFinite(p.y)
+}
+
+// IsZero implements Point.IsZero.
+func (p point[T]) IsZero() bool {
+	return NearlyEqual(p.x, 0) && NearlyEqual(p.y, 0)
+}
+
+// Translate implements Point.Translate.
+func (p point[T]) Translate(v Point) Point {
+	return point[T]{x: p.x + T(v.X()), y: p.y + T(v.Y())}
+}
+
+// Scale implements Point.Scale.
+func (p point[T]) Scale(scale Scalar) Point {
+	return NewPoint(p.X()*scale, p.Y()*scale)
+}
+
+// Rotate implements Point.Rotate.
+func (p point[T]) Rotate(angle Radians) Point {
+	cos := T(math.Cos(float64(angle)))
+	sin := T(math.Sin(float64(angle)))
+	return point[T]{x: p.x*cos - p.y*sin, y: p.x*sin + p.y*cos}
+}
+
+// Normalize implements Point.Normalize.
+func (p point[T]) Normalize() Point {
+	len := p.Length()
+	if len == 0 {
+		return NewPoint(1, 0)
+	}
+	return NewPoint(p.X()/len, p.Y()/len)
+}
+
+// Dot implements Point.Dot.
+func (p point[T]) Dot(o Point) Scalar {
+	return p.X()*o.X() + p.Y()*o.Y()
+}
+
+// Cross implements Point.Cross.
+func (p point[T]) Cross(o Point) Scalar {
+	return p.X()*o.Y() - p.Y()*o.X()
+}
+
+// Phase implements Point.Phase.
+func (p point[T]) Phase() Radians {
+	return Radians(math.Atan2(float64(p.y), float64(p.x)))
+}
+
+// Polar implements Point.Polar.
+func (p point[T]) Polar() (Scalar, Radians) {
 	return p.Length(), p.Phase()
 }
 
-// AngleTo returns the angle (in radians) between p and o.
-func (p Point[T]) AngleTo(o Point[T]) Radians {
-	return Radians(math.Atan2(ToFloat64(p.Cross(o)), ToFloat64(p.Dot(o))))
+// AngleTo implements Point.AngleTo.
+func (p point[T]) AngleTo(o Point) Radians {
+	return Radians(
+		math.Atan2(
+			ToFloat64(p.x*T(o.Y()))-ToFloat64(p.y*T(o.X())),
+			ToFloat64(p.x*T(o.X()))+ToFloat64(p.y*T(o.Y())),
+		),
+	)
 }
 
-// Distance returns the Euclidean distance between p and o.
-func (p Point[T]) Distance(o Point[T]) T {
-	return T(math.Hypot(ToFloat64(p.X-o.X), ToFloat64(p.Y-o.Y)))
+// Distance implements Point.Distance.
+func (p point[T]) Distance(o Point) Scalar {
+	return Scalar(
+		math.Sqrt(ToFloat64(p.DistanceSquared(o))),
+	)
 }
 
-// DistanceSquared returns the squared Euclidean distance between p and o.
-func (p Point[T]) DistanceSquared(o Point[T]) T {
-	dx := p.X - o.X
-	dy := p.Y - o.Y
+// DistanceSquared implements Point.DistanceSquared.
+func (p point[T]) DistanceSquared(o Point) Scalar {
+	dx := o.X() - p.X()
+	dy := o.Y() - p.Y()
 	return dx*dx + dy*dy
 }
 
-// Length returns the Euclidean length of p, i.e., the distance from the origin.
-func (p Point[T]) Length() T {
-	return p.Distance(Point[T]{})
+// Length implements Point.Length.
+func (p point[T]) Length() Scalar {
+	return Scalar(
+		math.Sqrt(ToFloat64(p.LengthSquared())),
+	)
 }
 
-// LengthSquared returns the squared Euclidean length of p.
-func (p Point[T]) LengthSquared() T {
-	return p.X*p.X + p.Y*p.Y
+// LengthSquared implements Point.LengthSquared.
+func (p point[T]) LengthSquared() Scalar {
+	return p.X()*p.X() + p.Y()*p.Y()
 }
 
-// Reflect returns the reflection of p about the given axis vector.
-func (p Point[T]) Reflect(axis Point[T]) Point[T] {
-	axis = axis.Normalize()
-	dot := p.Dot(axis)
-	return p.Sub(axis.Scale(dot).Scale(2))
+// Reflect implements Point.Reflect.
+func (p point[T]) Reflect(axis Point) Point {
+	return p.Sub(
+		axis.Scale(p.Dot(axis)).Scale(2),
+	)
 }
 
-// Lerp returns the linear interpolation between p and o by parameter t in [0,1].
-func (p Point[T]) Lerp(o Point[T], t T) Point[T] {
-	return Point[T]{
-		X: p.X + (o.X-p.X)*t,
-		Y: p.Y + (o.Y-p.Y)*t,
+// Lerp implements Point.Lerp.
+func (p point[T]) Lerp(o Point, t Scalar) Point {
+	return point[T]{
+		x: p.x + (T(o.X())-p.x)*T(t),
+		y: p.y + (T(o.Y())-p.y)*T(t),
 	}
 }
 
-// Complex returns the complex128 representation of p.
-func (p Point[T]) Complex() complex128 {
-	return complex(ToFloat64(p.X), ToFloat64(p.Y))
+// Complex implements Point.Complex.
+func (p point[T]) Complex() complex128 {
+	return complex(float64(p.x), float64(p.y))
 }
 
-// Go converts p to image.Point, truncating coordinates to int.
-func (p Point[T]) Go() image.Point {
-	return image.Point{X: int(ToFloat64(p.X)), Y: int(ToFloat64(p.Y))}
+// Go implements Point.Go.
+func (p point[T]) Go() image.Point {
+	return image.Point{X: int(p.x), Y: int(p.y)}
 }
 
-// Transform applies the given matrix transformation to the point p.
-func (p Point[T]) Transform(m Matrix[T]) Point[T] {
-	w := p.X*m[3] + p.Y*m[7] + m[15]
-	r := Point[T]{
-		X: p.X*m[0] + p.Y*m[4] + m[12],
-		Y: p.X*m[1] + p.Y*m[5] + m[13],
-	}
+// Transform implements Point.Transform.
+func (p point[T]) Transform(m Matrix) Point {
+	w := p.x*T(m[3]) + p.y*T(m[7]) + T(m[15])
+	rx := p.x*T(m[0]) + p.y*T(m[4]) + T(m[12])
+	ry := p.x*T(m[1]) + p.y*T(m[5]) + T(m[13])
 	if w != 0 {
 		w = 1 / w
 	}
-	return Point[T]{r.X * w, r.Y * w}
+	return point[T]{x: rx * w, y: ry * w}
 }
 
-// TransformDirection applies the given matrix transformation to the point p,
-// treating it as a direction vector (ignoring translation).
-func (p Point[T]) TransformDirection(m Matrix[T]) Point[T] {
-	return Point[T]{
-		X: p.X*m[0] + p.Y*m[4],
-		Y: p.X*m[1] + p.Y*m[5],
+// TransformDirection implements Point.TransformDirection.
+func (p point[T]) TransformDirection(m Matrix) Point {
+	return point[T]{
+		x: p.x*T(m[0]) + p.y*T(m[4]),
+		y: p.x*T(m[1]) + p.y*T(m[5]),
 	}
 }
 
-// TransformHomogenous transforms a 2D point to 3D homogeneous coordinates.
-// It applies the transformation matrix to the point and returns a Vector3
-func (p Point[T]) TransformHomogenous(m Matrix[T]) Vector3[T] {
-	return Vector3[T]{
-		X: p.X*m[0] + p.Y*m[4] + m[12],
-		Y: p.X*m[1] + p.Y*m[5] + m[13],
-		Z: p.X*m[3] + p.Y*m[7] + m[15],
-	}
+// TransformHomogenous implements Point.TransformHomogenous.
+func (p point[T]) TransformHomogenous(m Matrix) Vector3 {
+	return NewVector3(
+		p.x*T(m[0])+p.y*T(m[4])+T(m[12]),
+		p.x*T(m[1])+p.y*T(m[5])+T(m[13]),
+		p.x*T(m[3])+p.y*T(m[7])+T(m[15]),
+	)
 }
 
-// String returns a string representation of p in the form "(x, y)".
-func (p Point[T]) String() string {
-	return "(" + ToString(p.X) + ", " + ToString(p.Y) + ")"
+// String implements Point.String.
+func (p point[T]) String() string {
+	return fmt.Sprintf("(%v, %v)", p.x, p.y)
 }

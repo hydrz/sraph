@@ -6,15 +6,13 @@ const kernelRadiusPerSigma = 1.7320508075688772935274463415058723669428052538103
 
 // Sigma represents the standard deviation ("sigma") for Gaussian distributions in filter operations.
 // Sigma is measured in the pixel grid of the filter input and determines the spread of the Gaussian.
-type Sigma struct {
-	sigma Scalar
-}
+type Sigma Scalar
 
-// ToRadians returns the kernel radius in radians corresponding to the Sigma value for convolution filters.
+// Radians returns the kernel radius in radians corresponding to the Sigma value for convolution filters.
 // For Gaussian blur, the radius is linearly related to Sigma. Returns 0 if Sigma is not greater than 0.5.
-func (s Sigma) ToRadians() Radians {
-	if s.sigma > 0.5 {
-		return Radians((s.sigma - 0.5) * kernelRadiusPerSigma)
+func (s Sigma) Radians() Radians {
+	if s > 0.5 {
+		return Radians((s - 0.5) * kernelRadiusPerSigma)
 	}
 	return Radians(0.0)
 }
@@ -23,12 +21,12 @@ func (s Sigma) ToRadians() Radians {
 // If the radius is negative, the result is zero.
 func NewSigma(radius Radians) Sigma {
 	if radius < 0.0 {
-		return Sigma{sigma: 0.0}
+		return Sigma(0.0)
 	}
-	return Sigma{sigma: Scalar(radius)/kernelRadiusPerSigma + 0.5}
+	return Sigma(Scalar(radius)/kernelRadiusPerSigma + 0.5)
 }
 
 // String returns a string representation of the Sigma value.
 func (s Sigma) String() string {
-	return strconv.FormatFloat(ToFloat64(s.sigma), 'f', -1, 64) + "σ"
+	return strconv.FormatFloat(ToFloat64(s), 'f', -1, 64) + "σ"
 }

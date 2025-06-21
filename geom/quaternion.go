@@ -5,186 +5,223 @@ import (
 	"math"
 )
 
-// Quaternion represents a quaternion for 3D rotations.
-// Quaternions are used in 3D graphics and robotics to represent rotations
-// and orientations because they avoid gimbal lock and provide smooth interpolation.
-type Quaternion[T TScalar] struct {
-	X, Y, Z, W T
+// Quaternion defines the interface for a quaternion representing 3D rotations.
+// Provides methods for quaternion arithmetic, normalization, and vector rotation.
+type Quaternion interface {
+	// X returns the X component of the quaternion.
+	X() Scalar
+	// Y returns the Y component of the quaternion.
+	Y() Scalar
+	// Z returns the Z component of the quaternion.
+	Z() Scalar
+	// W returns the W component (scalar part) of the quaternion.
+	W() Scalar
+
+	// Add returns the component-wise sum of this quaternion and another.
+	Add(other Quaternion) Quaternion
+	// Sub returns the component-wise difference of this quaternion and another.
+	Sub(other Quaternion) Quaternion
+	// Mul returns the Hamilton product of this quaternion and another.
+	// This corresponds to the composition of two 3D rotations.
+	Mul(other Quaternion) Quaternion
+	// Div returns the quotient of this quaternion divided by another.
+	// This is equivalent to multiplying by the inverse of the other quaternion.
+	Div(other Quaternion) Quaternion
+
+	// Equal reports whether this quaternion and another are equal within floating-point tolerance.
+	Equal(other Quaternion) bool
+	// Scale returns this quaternion scaled by the given scalar value.
+	Scale(scalar Scalar) Quaternion
+	// Neg returns the negation of this quaternion (all components negated).
+	Neg() Quaternion
+
+	// Length returns the magnitude (norm) of the quaternion.
+	// For unit quaternions representing rotations, this should be 1.
+	Length() Scalar
+	// Dot returns the dot product of this quaternion and another.
+	Dot(other Quaternion) Scalar
+	// Normalize returns a unit quaternion in the same direction as this quaternion.
+	// If this quaternion has zero length, returns a zero quaternion.
+	Normalize() Quaternion
+	// Invert returns the inverse (conjugate divided by squared magnitude) of this quaternion.
+	// For unit quaternions, this is equivalent to the conjugate.
+	Invert() Quaternion
+
+	// Slerp performs spherical linear interpolation between this quaternion and another.
+	// The parameter t should be in the range [0,1], where t=0 returns this quaternion
+	// and t=1 returns the other quaternion.
+	Slerp(other Quaternion, t float64) Quaternion
+	// RotateVector3 applies this quaternion rotation to a 3D vector and returns the rotated vector.
+	RotateVector3(vector Vector3) Vector3
+
+	// String returns a string representation of the quaternion in the form "(x, y, z, w)".
+	String() string
+}
+
+// quaternion is the generic implementation of the Quaternion interface.
+type quaternion[T Number] struct {
+	x, y, z, w T
+}
+
+// NewQuaternion creates a new quaternion with the given components.
+func NewQuaternion(x, y, z, w Scalar) Quaternion {
+	return quaternion[Scalar]{x, y, z, w}
 }
 
 // NewQuaternionFromAxisAngle creates a new quaternion from an axis and angle.
-func NewQuaternionFromAxisAngle[T TScalar](axis Vector3[T], angle Radians) Quaternion[T] {
+func NewQuaternionFromAxisAngle(axis Vector3, angle Radians) Quaternion {
 	axis = axis.Normalize()
 	halfAngle := ToFloat64(angle) / 2
-	sinHalfAngle := T(math.Sin(halfAngle))
-	cosHalfAngle := T(math.Cos(halfAngle))
-	return Quaternion[T]{
-		X: axis.X * sinHalfAngle,
-		Y: axis.Y * sinHalfAngle,
-		Z: axis.Z * sinHalfAngle,
-		W: cosHalfAngle,
+	sinHalfAngle := Scalar(math.Sin(halfAngle))
+	cosHalfAngle := Scalar(math.Cos(halfAngle))
+	return quaternion[Scalar]{
+		x: axis.X() * sinHalfAngle,
+		y: axis.Y() * sinHalfAngle,
+		z: axis.Z() * sinHalfAngle,
+		w: cosHalfAngle,
 	}
 }
 
-// Add adds another quaternion to this one and returns the result.
-func (q Quaternion[T]) Add(other Quaternion[T]) Quaternion[T] {
-	return Quaternion[T]{
-		X: q.X + other.X,
-		Y: q.Y + other.Y,
-		Z: q.Z + other.Z,
-		W: q.W + other.W,
+// X implements Quaternion.X.
+func (q quaternion[T]) X() Scalar { return Scalar(q.x) }
+
+// Y implements Quaternion.Y.
+func (q quaternion[T]) Y() Scalar { return Scalar(q.y) }
+
+// Z implements Quaternion.Z.
+func (q quaternion[T]) Z() Scalar { return Scalar(q.z) }
+
+// W implements Quaternion.W.
+func (q quaternion[T]) W() Scalar { return Scalar(q.w) }
+
+// Add implements Quaternion.Add.
+func (q quaternion[T]) Add(other Quaternion) Quaternion {
+	return quaternion[T]{
+		x: q.x + T(other.X()),
+		y: q.y + T(other.Y()),
+		z: q.z + T(other.Z()),
+		w: q.w + T(other.W()),
 	}
 }
 
-// Sub subtracts another quaternion from this one and returns the result.
-func (q Quaternion[T]) Sub(other Quaternion[T]) Quaternion[T] {
-	return Quaternion[T]{
-		X: q.X - other.X,
-		Y: q.Y - other.Y,
-		Z: q.Z - other.Z,
-		W: q.W - other.W,
+// Sub implements Quaternion.Sub.
+func (q quaternion[T]) Sub(other Quaternion) Quaternion {
+	return quaternion[T]{
+		x: q.x - T(other.X()),
+		y: q.y - T(other.Y()),
+		z: q.z - T(other.Z()),
+		w: q.w - T(other.W()),
 	}
 }
 
-// Mul multiplies this quaternion by another and returns the result.
-// Hamilton product.
-func (q Quaternion[T]) Mul(other Quaternion[T]) Quaternion[T] {
-	x1, y1, z1, w1 := q.X, q.Y, q.Z, q.W
-	x2, y2, z2, w2 := other.X, other.Y, other.Z, other.W
-	return Quaternion[T]{
-		X: w1*x2 + x1*w2 + y1*z2 - z1*y2,
-		Y: w1*y2 - x1*z2 + y1*w2 + z1*x2,
-		Z: w1*z2 + x1*y2 - y1*x2 + z1*w2,
-		W: w1*w2 - x1*x2 - y1*y2 - z1*z2,
+// Mul implements Quaternion.Mul (Hamilton product).
+func (q quaternion[T]) Mul(other Quaternion) Quaternion {
+	x1, y1, z1, w1 := q.x, q.y, q.z, q.w
+	x2, y2, z2, w2 := T(other.X()), T(other.Y()), T(other.Z()), T(other.W())
+	return quaternion[T]{
+		x: w1*x2 + x1*w2 + y1*z2 - z1*y2,
+		y: w1*y2 - x1*z2 + y1*w2 + z1*x2,
+		z: w1*z2 + x1*y2 - y1*x2 + z1*w2,
+		w: w1*w2 - x1*x2 - y1*y2 - z1*z2,
 	}
 }
 
-// Div divides this quaternion by another and returns the result.
-// q / r = q * r^-1
-func (q Quaternion[T]) Div(other Quaternion[T]) Quaternion[T] {
+// Div implements Quaternion.Div.
+func (q quaternion[T]) Div(other Quaternion) Quaternion {
 	return q.Mul(other.Invert())
 }
 
-// Eq checks if this quaternion is Eq to another.
-func (q Quaternion[T]) Equal(other Quaternion[T]) bool {
-	return NearlyEqual(q.X, other.X) &&
-		NearlyEqual(q.Y, other.Y) &&
-		NearlyEqual(q.Z, other.Z) &&
-		NearlyEqual(q.W, other.W)
+// Equal implements Quaternion.Equal.
+func (q quaternion[T]) Equal(other Quaternion) bool {
+	return NearlyEqual(q.x, T(other.X())) &&
+		NearlyEqual(q.y, T(other.Y())) &&
+		NearlyEqual(q.z, T(other.Z())) &&
+		NearlyEqual(q.w, T(other.W()))
 }
 
-// Scale scales the quaternion by a scalar value and returns the result.
-func (q Quaternion[T]) Scale(scalar T) Quaternion[T] {
-	return Quaternion[T]{
-		X: q.X * scalar,
-		Y: q.Y * scalar,
-		Z: q.Z * scalar,
-		W: q.W * scalar,
+// Scale implements Quaternion.Scale.
+func (q quaternion[T]) Scale(scalar Scalar) Quaternion {
+	return quaternion[T]{
+		x: q.x * T(scalar),
+		y: q.y * T(scalar),
+		z: q.z * T(scalar),
+		w: q.w * T(scalar),
 	}
 }
 
-// Neg negates the quaternion (inverts the sign of all components).
-// Negation is useful for reversing the direction of a rotation.
-func (q Quaternion[T]) Neg() Quaternion[T] {
-	return Quaternion[T]{
-		X: -q.X,
-		Y: -q.Y,
-		Z: -q.Z,
-		W: -q.W,
-	}
+// Neg implements Quaternion.Neg.
+func (q quaternion[T]) Neg() Quaternion {
+	return quaternion[T]{x: -q.x, y: -q.y, z: -q.z, w: -q.w}
 }
 
-// Length calculates the length (magnitude) of the quaternion.
-func (q Quaternion[T]) Length() T {
-	return T(math.Sqrt(ToFloat64(q.X*q.X + q.Y*q.Y + q.Z*q.Z + q.W*q.W)))
+// Length implements Quaternion.Length.
+func (q quaternion[T]) Length() Scalar {
+	return Scalar(math.Sqrt(float64(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w)))
 }
 
-// Dot calculates the dot product of this quaternion with another.
-// The dot product is used to measure the similarity or angle between two quaternions.
-// It is commonly used in interpolation and blending of rotations.
-func (q Quaternion[T]) Dot(other Quaternion[T]) T {
-	return q.X*other.X + q.Y*other.Y + q.Z*other.Z + q.W*other.W
+// Dot implements Quaternion.Dot.
+func (q quaternion[T]) Dot(other Quaternion) Scalar {
+	return Scalar(q.x*T(other.X()) + q.y*T(other.Y()) + q.z*T(other.Z()) + q.w*T(other.W()))
 }
 
-// Normalize normalizes the quaternion to unit length and returns the result.
-// Normalization is important in many applications, such as 3D rotations,
-// to ensure the quaternion represents a valid rotation (unit quaternion).
-func (q Quaternion[T]) Normalize() Quaternion[T] {
+// Normalize implements Quaternion.Normalize.
+func (q quaternion[T]) Normalize() Quaternion {
 	len := q.Length()
-	var zero T
-	if len == zero {
-		return Quaternion[T]{}
+	if len == 0 {
+		return quaternion[T]{}
 	}
-	return Quaternion[T]{
-		X: q.X / len,
-		Y: q.Y / len,
-		Z: q.Z / len,
-		W: q.W / len,
+	return quaternion[T]{
+		x: q.x / T(len),
+		y: q.y / T(len),
+		z: q.z / T(len),
+		w: q.w / T(len),
 	}
 }
 
-// Invert returns the inverse of this quaternion (negates the vector part, keeps the scalar part).
-// The inverse is used to undo a rotation or compute relative rotations.
-// The inverse of a quaternion q = (x, y, z, w) is given by q^-1 = (-x, -y, -z, w) / (x^2 + y^2 + z^2 + w^2).
-func (q Quaternion[T]) Invert() Quaternion[T] {
-	normSq := q.X*q.X + q.Y*q.Y + q.Z*q.Z + q.W*q.W
+// Invert implements Quaternion.Invert.
+func (q quaternion[T]) Invert() Quaternion {
+	normSq := q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w
 	var zero T
 	if normSq == zero {
-		return Quaternion[T]{}
+		return quaternion[T]{}
 	}
-	return Quaternion[T]{
-		X: -q.X / normSq,
-		Y: -q.Y / normSq,
-		Z: -q.Z / normSq,
-		W: q.W / normSq,
+	return quaternion[T]{
+		x: -q.x / normSq,
+		y: -q.y / normSq,
+		z: -q.z / normSq,
+		w: q.w / normSq,
 	}
 }
 
-// Slerp performs spherical linear interpolation (SLERP) between
-// this quaternion and another quaternion by a factor of time (0.0 to 1.0).
-// Formula: q' = q * sin((1-t) * θ) / sin(θ) + other * sin(t * θ) / sin(θ)
-func (q Quaternion[T]) Slerp(other Quaternion[T], time float64) Quaternion[T] {
-	time = Clamp(time, 0.0, 1.0) // Ensure time is between 0 and 1
+// Slerp implements Quaternion.Slerp.
+func (q quaternion[T]) Slerp(other Quaternion, t float64) Quaternion {
 	cosine := ToFloat64(q.Dot(other))
 	if NearlyEqual(T(cosine), 1.0) {
-		// Spherical Interpolation
 		sine := math.Sqrt(1.0 - cosine*cosine)
 		angle := math.Atan2(sine, cosine)
 		sineInverse := 1.0 / sine
-		c0 := T(math.Sin((1.0-time)*angle) * sineInverse)
-		c1 := T(math.Sin(time*angle) * sineInverse)
-		return q.Scale(c0).Add(other.Scale(c1)).Normalize()
+		c0 := T(math.Sin((1.0-t)*angle) * sineInverse)
+		c1 := T(math.Sin(t*angle) * sineInverse)
+		return q.Scale(Scalar(c0)).Add(other.Scale(Scalar(c1))).Normalize()
 	} else {
-		// Linear Interpolation
-		return q.Scale(T(1.0) - T(time)).Add(other.Scale(T(time))).Normalize()
+		return q.Scale(Scalar(1.0 - t)).Add(other.Scale(Scalar(t))).Normalize()
 	}
 }
 
-// RotateVector3 rotates a 3D vector by this quaternion and returns the result.
-// This is useful for applying the quaternion as a rotation to a vector in 3D space,
-// such as transforming directions or points in graphics and simulation.
-// Formula: v' = v + 2 * w * (qv × v) + 2 * (qv × (qv × v))
-// where qv is the vector part of the quaternion (x, y, z) and w is the scalar part.
-func (q Quaternion[T]) RotateVector3(vector Vector3[T]) Vector3[T] {
-	// v' = q * v * q^-1
-	vx, vy, vz := vector.X, vector.Y, vector.Z
-	qx, qy, qz, qw := q.X, q.Y, q.Z, q.W
-
-	// Quaternion-vector multiplication (optimized)
-	// t = 2 * cross(q.xyz, v)
+// RotateVector3 implements Quaternion.RotateVector3.
+func (q quaternion[T]) RotateVector3(vector Vector3) Vector3 {
+	vx, vy, vz := T(vector.X()), T(vector.Y()), T(vector.Z())
+	qx, qy, qz, qw := q.x, q.y, q.z, q.w
 	tx := T(2) * (qy*vz - qz*vy)
 	ty := T(2) * (qz*vx - qx*vz)
 	tz := T(2) * (qx*vy - qy*vx)
-
-	// v' = v + qw * t + cross(q.xyz, t)
 	rx := vx + qw*tx + (qy*tz - qz*ty)
 	ry := vy + qw*ty + (qz*tx - qx*tz)
 	rz := vz + qw*tz + (qx*ty - qy*tx)
-
-	return Vector3[T]{rx, ry, rz}
+	return NewVector3(rx, ry, rz)
 }
 
-// String returns a string representation. like "(x, y, z, w)".
-func (q Quaternion[T]) String() string {
-	return fmt.Sprintf("(%v, %v, %v, %v)", q.X, q.Y, q.Z, q.W)
+// String implements Quaternion.String.
+func (q quaternion[T]) String() string {
+	return fmt.Sprintf("(%v, %v, %v, %v)", q.x, q.y, q.z, q.w)
 }

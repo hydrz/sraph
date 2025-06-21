@@ -2,50 +2,71 @@ package geom
 
 import "math"
 
-// Trig represents the cosine and sine of an angle.
+// Trig defines the interface for representing the cosine and sine of an angle.
 // Each Trig value can be used for efficient repeated 2D rotations.
 // The zero value is valid and represents a zero angle (Cos=1, Sin=0).
-type Trig[T TScalar] struct {
-	Cos T // Cosine of the angle.
-	Sin T // Sine of the angle.
+type Trig interface {
+	// Cos returns the cosine of the angle.
+	Cos() Scalar
+	// Sin returns the sine of the angle.
+	Sin() Scalar
+	// Rotate returns the vector v rotated by this angle.
+	Rotate(v Vector2) Vector2
+	// Neg returns the Trig representing the negative of the current angle.
+	Neg() Trig
+	// CirclePoint returns the point on a circle of the given radius at this angle.
+	CirclePoint(radius Scalar) Point
+	// EllipsePoint returns the point on an ellipse with the given radii at this angle.
+	EllipsePoint(ellipseRadii Size) Point
+}
+
+// trig represents the cosine and sine of an angle.
+type trig struct {
+	cos, sin Scalar
 }
 
 // NewTrig returns a Trig representing the cosine and sine of the given angle in radians.
-func NewTrig[T TScalar](r Radians) Trig[T] {
-	return Trig[T]{
-		Cos: T(math.Cos(ToFloat64(r))),
-		Sin: T(math.Sin(ToFloat64(r))),
+func NewTrig(r Radians) Trig {
+	return trig{
+		cos: Scalar(math.Cos(ToFloat64(r))),
+		sin: Scalar(math.Sin(ToFloat64(r))),
 	}
 }
 
-// Rotate returns the vector v rotated by the angle represented by t.
-func (t Trig[T]) Rotate(v Vector2[T]) Vector2[T] {
-	return Vector2[T]{
-		X: v.X*t.Cos - v.Y*t.Sin,
-		Y: v.X*t.Sin + v.Y*t.Cos,
+// Cos implements Trig.Cos.
+func (t trig) Cos() Scalar { return t.cos }
+
+// Sin implements Trig.Sin.
+func (t trig) Sin() Scalar { return t.sin }
+
+// Rotate implements Trig.Rotate.
+func (t trig) Rotate(v Vector2) Vector2 {
+	return NewVector2(
+		v.X()*t.cos-v.Y()*t.sin,
+		v.X()*t.sin+v.Y()*t.cos,
+	)
+}
+
+// Neg implements Trig.Neg.
+func (t trig) Neg() Trig {
+	return trig{
+		cos: t.cos,
+		sin: -t.sin,
 	}
 }
 
-// Neg returns the Trig representing the negative of the current angle.
-func (t Trig[T]) Neg() Trig[T] {
-	return Trig[T]{
-		Cos: t.Cos,
-		Sin: -t.Sin,
-	}
+// CirclePoint implements Trig.CirclePoint.
+func (t trig) CirclePoint(radius Scalar) Point {
+	return NewPoint(
+		t.cos*radius,
+		t.sin*radius,
+	)
 }
 
-// CirclePoint returns the point on a circle of the given radius at the angle represented by t.
-func (t Trig[T]) CirclePoint(radius T) Point[T] {
-	return Point[T]{
-		t.Cos * radius,
-		t.Sin * radius,
-	}
-}
-
-// EllipsePoint returns the point on an ellipse with the given radii at the angle represented by t.
-func (t Trig[T]) EllipsePoint(ellipseRadii Size[T]) Point[T] {
-	return Point[T]{
-		t.Cos * ellipseRadii.Width,
-		t.Sin * ellipseRadii.Height,
-	}
+// EllipsePoint implements Trig.EllipsePoint.
+func (t trig) EllipsePoint(ellipseRadii Size) Point {
+	return NewPoint(
+		t.cos*ellipseRadii.Width(),
+		t.sin*ellipseRadii.Height(),
+	)
 }

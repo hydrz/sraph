@@ -9,7 +9,7 @@ func TestSuperellipse_Dispatch_UniformAndNonUniform(t *testing.T) {
 	rect := NewRect(0.0, 0.0, 100.0, 100.0)
 	tests := []struct {
 		name  string
-		radii RoundingRadii[float64]
+		radii RoundingRadii
 	}{
 		{"Uniform", NewRoundingRadii(20.0)},
 		{"NonUniform", NewRoundingRadiiLTRB(10.0, 20.0, 30.0, 40.0)},
@@ -17,7 +17,7 @@ func TestSuperellipse_Dispatch_UniformAndNonUniform(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			se := NewSuperellipse(rect, tt.radii)
-			receiver := &testPathReceiver[float64]{}
+			receiver := &testPathReceiver{}
 			se.Dispatch(receiver, true)
 			if len(receiver.moves) == 0 {
 				t.Error("Dispatch did not call MoveTo")
@@ -45,7 +45,7 @@ func TestSuperellipse_PathSourceVariants(t *testing.T) {
 	if !ps.IsConvex() {
 		t.Error("SuperellipsePathSource should be convex")
 	}
-	receiver := &testPathReceiver[float64]{}
+	receiver := &testPathReceiver{}
 	ps.Dispatch(receiver)
 	if len(receiver.moves) == 0 {
 		t.Error("SuperellipsePathSource Dispatch did not call MoveTo")
@@ -66,7 +66,7 @@ func TestSuperellipse_DiffPathSource(t *testing.T) {
 	if !ps.Bounds().Equal(rect) {
 		t.Error("DiffSuperellipsePathSource Bounds mismatch")
 	}
-	receiver := &testPathReceiver[float64]{}
+	receiver := &testPathReceiver{}
 	ps.Dispatch(receiver)
 	if len(receiver.moves) == 0 {
 		t.Error("DiffSuperellipsePathSource Dispatch did not call MoveTo")
@@ -86,13 +86,13 @@ func TestSuperellipse_ParamUniformAndNonUniform(t *testing.T) {
 }
 
 func TestSuperellipse_InternalHelpers(t *testing.T) {
-	builder := &superellipseBuilder[float64]{}
-	octant := SuperellipseOctant[float64]{
-		Offset:         Point[float64]{0.0, 0.0},
+	builder := &superellipseBuilder{}
+	octant := SuperellipseOctant{
+		Offset:         NewPoint[Scalar](0.0, 0.0),
 		SemiAxis:       20,
 		Degree:         4,
-		CircleStart:    Point[float64]{10.0, 10.0},
-		CircleCenter:   Point[float64]{0.0, 0.0},
+		CircleStart:    NewPoint[Scalar](10.0, 10.0),
+		CircleCenter:   NewPoint[Scalar](0.0, 0.0),
 		CircleMaxAngle: Radians(math.Pi / 2),
 	}
 	_ = builder.circularArcPoints(octant)
@@ -101,17 +101,17 @@ func TestSuperellipse_InternalHelpers(t *testing.T) {
 }
 
 func TestSuperellipse_FindCircleCenterAndReplaceNaN(t *testing.T) {
-	a := Point[float64]{0.0, 0.0}
-	b := Point[float64]{10.0, 0.0}
-	r := 5.0
+	a := NewPoint[Scalar](0.0, 0.0)
+	b := NewPoint[Scalar](10.0, 0.0)
+	r := Scalar(5.0)
 	center := findCircleCenter(a, b, r)
-	if math.IsNaN(ToFloat64(center.X)) || math.IsNaN(ToFloat64(center.Y)) {
+	if math.IsNaN(ToFloat64(center.X())) || math.IsNaN(ToFloat64(center.Y())) {
 		t.Error("findCircleCenter returned NaN")
 	}
-	v := Point[float64]{math.NaN(), 2}
-	def := Size[float64]{1, 3}
+	v := NewPoint(Scalar(math.NaN()), 2)
+	def := NewSize[Scalar](1, 3)
 	res := replaceNaNWithDefault(v, def)
-	if !NearlyEqual(res.X, 1) || !NearlyEqual(res.Y, 2) {
+	if !NearlyEqual(res.X(), 1) || !NearlyEqual(res.Y(), 2) {
 		t.Error("replaceNaNWithDefault did not replace NaN as expected")
 	}
 }

@@ -6,8 +6,8 @@ import (
 
 func TestRect_NewRectAndBasicProperties(t *testing.T) {
 	r := NewRect(1, 2, 5, 6)
-	if r.Left != 1 || r.Top != 2 || r.Right != 5 || r.Bottom != 6 {
-		t.Errorf("Rect basic edges failed: got (%v, %v, %v, %v)", r.Left, r.Top, r.Right, r.Bottom)
+	if r.Left() != 1 || r.Top() != 2 || r.Right() != 5 || r.Bottom() != 6 {
+		t.Errorf("Rect basic edges failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
 	}
 	if r.X() != 1 || r.Y() != 2 {
 		t.Errorf("Rect origin failed: got (%v, %v)", r.X(), r.Y())
@@ -19,43 +19,43 @@ func TestRect_NewRectAndBasicProperties(t *testing.T) {
 
 func TestRect_NewRectXYWH(t *testing.T) {
 	r := NewRectXYWH(2, 3, 4, 5)
-	if r.Left != 2 || r.Top != 3 || r.Right != 6 || r.Bottom != 8 {
-		t.Errorf("RectXYWH failed: got (%v, %v, %v, %v)", r.Left, r.Top, r.Right, r.Bottom)
+	if r.Left() != 2 || r.Top() != 3 || r.Right() != 6 || r.Bottom() != 8 {
+		t.Errorf("RectXYWH failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
 	}
 	r2 := NewRectXYWH(2, 3, -4, -5)
-	if r2.Left != -2 || r2.Top != -2 || r2.Right != 2 || r2.Bottom != 3 {
-		t.Errorf("RectXYWH negative failed: got (%v, %v, %v, %v)", r2.Left, r2.Top, r2.Right, r2.Bottom)
+	if r2.Left() != -2 || r2.Top() != -2 || r2.Right() != 2 || r2.Bottom() != 3 {
+		t.Errorf("RectXYWH negative failed: got (%v, %v, %v, %v)", r2.Left(), r2.Top(), r2.Right(), r2.Bottom())
 	}
 }
 
 func TestRect_NewRectOriginSize(t *testing.T) {
-	origin := Point[int]{1, 2}
-	size := Size[int]{3, 4}
+	origin := NewPoint(1, 2)
+	size := NewSize(3, 4)
 	r := NewRectOriginSize(origin, size)
-	if r.Left != 1 || r.Top != 2 || r.Right != 4 || r.Bottom != 6 {
-		t.Errorf("RectOriginSize failed: got (%v, %v, %v, %v)", r.Left, r.Top, r.Right, r.Bottom)
+	if r.Left() != 1 || r.Top() != 2 || r.Right() != 4 || r.Bottom() != 6 {
+		t.Errorf("RectOriginSize failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
 	}
 }
 
 func TestRect_NewRectSize(t *testing.T) {
-	size := Size[int]{3, 4}
+	size := NewSize(3, 4)
 	r := NewRectSize(size)
-	if r.Left != 0 || r.Top != 0 || r.Right != 3 || r.Bottom != 4 {
-		t.Errorf("RectSize failed: got (%v, %v, %v, %v)", r.Left, r.Top, r.Right, r.Bottom)
+	if r.Left() != 0 || r.Top() != 0 || r.Right() != 3 || r.Bottom() != 4 {
+		t.Errorf("RectSize failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
 	}
 }
 
 func TestRect_BoundingRect(t *testing.T) {
-	p1 := Point[int]{1, 2}
-	p2 := Point[int]{3, 5}
-	p3 := Point[int]{-1, 4}
+	p1 := NewPoint(1, 2)
+	p2 := NewPoint(3, 5)
+	p3 := NewPoint(-1, 4)
 	r := BoundingRect(p1, p2, p3)
-	if r.Left != -1 || r.Top != 2 || r.Right != 3 || r.Bottom != 5 {
-		t.Errorf("BoundingRect failed: got (%v, %v, %v, %v)", r.Left, r.Top, r.Right, r.Bottom)
+	if r.Left() != -1 || r.Top() != 2 || r.Right() != 3 || r.Bottom() != 5 {
+		t.Errorf("BoundingRect failed: got (%v, %v, %v, %v)", r.Left(), r.Top(), r.Right(), r.Bottom())
 	}
-	empty := BoundingRect[int]()
+	empty := BoundingRect()
 	if !empty.IsEmpty() {
-		t.Errorf("BoundingRect empty failed")
+		t.Errorf("BoundingRect empty: should be empty")
 	}
 }
 
@@ -65,27 +65,27 @@ func TestRect_AreaAndCenter(t *testing.T) {
 		t.Errorf("Area failed: got %v", r.Area())
 	}
 	center := r.Center()
-	if center.X != 2 || center.Y != 2 {
-		t.Errorf("Center failed: got (%v, %v)", center.X, center.Y)
+	if center.X() != 2 || center.Y() != 2 {
+		t.Errorf("Rect center failed: got (%v, %v)", center.X(), center.Y())
 	}
 }
 
 func TestRect_Positive(t *testing.T) {
 	r := NewRect(5, 6, 1, 2)
 	pos := r.Positive()
-	if pos.Left != 1 || pos.Top != 2 || pos.Right != 5 || pos.Bottom != 6 {
-		t.Errorf("Positive failed: got (%v, %v, %v, %v)", pos.Left, pos.Top, pos.Right, pos.Bottom)
+	if pos.Left() != 1 || pos.Top() != 2 || pos.Right() != 5 || pos.Bottom() != 6 {
+		t.Errorf("Rect positive failed: got (%v, %v, %v, %v)", pos.Left(), pos.Top(), pos.Right(), pos.Bottom())
 	}
 }
 
 func TestRect_ContainsAndIntersects(t *testing.T) {
 	r := NewRect(0, 0, 10, 10)
-	p := Point[int]{5, 5}
+	p := NewPoint(5, 5)
 	if !r.Contains(p) {
 		t.Errorf("Contains failed")
 	}
-	if !r.Inside(Point[int]{1, 1}) {
-		t.Errorf("ContainsExclusive failed")
+	if !r.Inside(NewPoint(1, 1)) {
+		t.Errorf("Rect Inside failed")
 	}
 	r2 := NewRect(5, 5, 15, 15)
 	if !r.Intersects(r2) {
@@ -100,45 +100,45 @@ func TestRect_IntersectionUnion(t *testing.T) {
 	r1 := NewRect(0, 0, 10, 10)
 	r2 := NewRect(5, 5, 15, 15)
 	inter := r1.Intersect(r2)
-	if inter.Left != 5 || inter.Top != 5 || inter.Right != 10 || inter.Bottom != 10 {
-		t.Errorf("Intersection failed: got %v", inter)
+	if inter.Left() != 5 || inter.Top() != 5 || inter.Right() != 10 || inter.Bottom() != 10 {
+		t.Errorf("Rect Intersect failed: got (%v, %v, %v, %v)", inter.Left(), inter.Top(), inter.Right(), inter.Bottom())
 	}
 	union := r1.Union(r2)
-	if union.Left != 0 || union.Top != 0 || union.Right != 15 || union.Bottom != 15 {
-		t.Errorf("Union failed: got %v", union)
+	if union.Left() != 0 || union.Top() != 0 || union.Right() != 15 || union.Bottom() != 15 {
+		t.Errorf("Rect Union failed: got (%v, %v, %v, %v)", union.Left(), union.Top(), union.Right(), union.Bottom())
 	}
 }
 
 func TestRect_ExpandAndExpandPoint(t *testing.T) {
 	r := NewRect(1, 1, 3, 3)
 	r2 := r.Expand(1)
-	if r2.Left != 0 || r2.Top != 0 || r2.Right != 4 || r2.Bottom != 4 {
-		t.Errorf("Expand failed: got %v", r2)
+	if r2.Left() != 0 || r2.Top() != 0 || r2.Right() != 4 || r2.Bottom() != 4 {
+		t.Errorf("Rect Expand failed: got (%v, %v, %v, %v)", r2.Left(), r2.Top(), r2.Right(), r2.Bottom())
 	}
-	p := Point[int]{5, 5}
+	p := NewPoint(5, 5)
 	r3 := r.ExpandPoint(p)
-	if r3.Right != 5 || r3.Bottom != 5 {
-		t.Errorf("ExpandPoint failed: got %v", r3)
+	if r3.Right() != 5 || r3.Bottom() != 5 {
+		t.Errorf("Rect ExpandPoint failed: got (%v, %v)", r3.Right(), r3.Bottom())
 	}
 }
 
 func TestRect_TranslateAndScale(t *testing.T) {
 	r := NewRect(1, 2, 3, 4)
-	v := Vector2[int]{2, 3}
+	v := NewVector2(2, 3)
 	r2 := r.Translate(v)
-	if r2.Left != 3 || r2.Top != 5 {
-		t.Errorf("Translate failed: got %v", r2)
+	if r2.Left() != 3 || r2.Top() != 5 {
+		t.Errorf("Rect Translate failed: got (%v, %v)", r2.Left(), r2.Top())
 	}
 	r3 := r.Scale(2)
-	if r3.Left != 2 || r3.Top != 4 || r3.Right != 6 || r3.Bottom != 8 {
-		t.Errorf("Scale failed: got %v", r3)
+	if r3.Left() != 2 || r3.Top() != 4 || r3.Right() != 6 || r3.Bottom() != 8 {
+		t.Errorf("Rect Scale failed: got (%v, %v, %v, %v)", r3.Left(), r3.Top(), r3.Right(), r3.Bottom())
 	}
 }
 
 func TestRect_Round(t *testing.T) {
 	r := NewRect[float32](1.2, 2.7, 3.5, 4.9)
 	ri := r.Round()
-	if ri.Left != 1 || ri.Top != 3 || ri.Right != 4 || ri.Bottom != 5 {
+	if ri.Left() != 1 || ri.Top() != 3 || ri.Right() != 4 || ri.Bottom() != 5 {
 		t.Errorf("Round failed: got %v", ri)
 	}
 }

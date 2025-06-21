@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewMatrix(t *testing.T) {
-	m := NewMatrix[Scalar]()
+	m := NewMatrix()
 
 	// Should be identity matrix
 	if !m.IsIdentity() {
@@ -15,7 +15,7 @@ func TestNewMatrix(t *testing.T) {
 }
 
 func TestMatrix_At(t *testing.T) {
-	m := NewMatrix[Scalar]()
+	m := NewMatrix()
 
 	// Test identity matrix values
 	if m.At(0, 0) != 1.0 || m.At(1, 1) != 1.0 || m.At(2, 2) != 1.0 || m.At(3, 3) != 1.0 {
@@ -28,8 +28,8 @@ func TestMatrix_At(t *testing.T) {
 }
 
 func TestMatrix_Set(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	m.Set(0, 1, Scalar(5.0))
+	m := NewMatrix()
+	m.Set(0, 1, 5.0)
 
 	if m.At(0, 1) != 5.0 {
 		t.Errorf("Set(0, 1, 5.0) failed, got %v", m.At(0, 1))
@@ -37,12 +37,12 @@ func TestMatrix_Set(t *testing.T) {
 }
 
 func TestMatrix_Arithmetic(t *testing.T) {
-	m1 := NewMatrix[Scalar]()
-	m2 := NewMatrix[Scalar]()
+	m1 := NewMatrix()
+	m2 := NewMatrix()
 
 	// Set some test values
-	m1.Set(0, 0, Scalar(2.0))
-	m2.Set(0, 0, Scalar(3.0))
+	m1.Set(0, 0, 2.0)
+	m2.Set(0, 0, 3.0)
 
 	t.Run("Add", func(t *testing.T) {
 		result := m1.Add(m2)
@@ -60,9 +60,9 @@ func TestMatrix_Arithmetic(t *testing.T) {
 }
 
 func TestMatrix_Multiplication(t *testing.T) {
-	identity := NewMatrix[Scalar]()
-	m := NewMatrix[Scalar]()
-	m.Set(0, 3, Scalar(5.0)) // Translation
+	identity := NewMatrix()
+	m := NewMatrix()
+	m.Set(0, 3, 5.0) // Translation
 
 	// Multiply by identity should return original
 	result := m.Mul(identity)
@@ -72,7 +72,7 @@ func TestMatrix_Multiplication(t *testing.T) {
 }
 
 func TestMatrix_Properties(t *testing.T) {
-	identity := NewMatrix[Scalar]()
+	identity := NewMatrix()
 
 	t.Run("IsIdentity", func(t *testing.T) {
 		if !identity.IsIdentity() {
@@ -94,7 +94,7 @@ func TestMatrix_Properties(t *testing.T) {
 
 	t.Run("Determinant", func(t *testing.T) {
 		det := identity.Determinant()
-		if !NearlyEqual(det, Scalar(1.0)) {
+		if !NearlyEqual(det, 1.0) {
 			t.Errorf("Identity matrix determinant = %v, want 1.0", det)
 		}
 	})
@@ -102,8 +102,8 @@ func TestMatrix_Properties(t *testing.T) {
 
 func TestMatrix_Transformations(t *testing.T) {
 	t.Run("Translation", func(t *testing.T) {
-		m := NewMatrix[Scalar]()
-		translation := Vector3[Scalar]{1.0, 2.0, 3.0}
+		m := NewMatrix()
+		translation := NewVector3(1.0, 2.0, 3.0)
 		result := m.Translate(translation)
 
 		if result.At(0, 3) != 1.0 || result.At(1, 3) != 2.0 || result.At(2, 3) != 3.0 {
@@ -112,8 +112,8 @@ func TestMatrix_Transformations(t *testing.T) {
 	})
 
 	t.Run("Scale", func(t *testing.T) {
-		m := NewMatrix[Scalar]()
-		scale := Vector3[Scalar]{2.0, 3.0, 4.0}
+		m := NewMatrix()
+		scale := NewVector3(2.0, 3.0, 4.0)
 		result := m.Scale(scale)
 
 		if result.At(0, 0) != 2.0 || result.At(1, 1) != 3.0 || result.At(2, 2) != 4.0 {
@@ -122,22 +122,22 @@ func TestMatrix_Transformations(t *testing.T) {
 	})
 
 	t.Run("RotationX", func(t *testing.T) {
-		m := NewMatrix[Scalar]()
+		m := NewMatrix()
 		angle := Radians(math.Pi / 2) // 90 degrees
 		result := m.RotateX(angle)
 
 		// Check rotation matrix properties
-		if !NearlyEqual(result.At(0, 0), Scalar(1.0)) {
+		if !NearlyEqual(result.At(0, 0), 1.0) {
 			t.Error("X rotation should not affect X axis")
 		}
-		if !NearlyEqual(result.At(1, 1), Scalar(0.0)) {
+		if !NearlyEqual(result.At(1, 1), 0.0) {
 			t.Error("90 degree X rotation Y component should be 0")
 		}
 	})
 }
 
 func TestMatrix_Inverse(t *testing.T) {
-	identity := NewMatrix[Scalar]()
+	identity := NewMatrix()
 
 	inv := identity.Invert()
 	// Invert() returns Matrix, not (Matrix, error)
@@ -148,8 +148,8 @@ func TestMatrix_Inverse(t *testing.T) {
 }
 
 func TestMatrix_Transpose(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	m.Set(0, 1, Scalar(5.0))
+	m := NewMatrix()
+	m.Set(0, 1, 5.0)
 
 	transposed := m.Transpose()
 	if transposed.At(1, 0) != 5.0 {
@@ -158,7 +158,7 @@ func TestMatrix_Transpose(t *testing.T) {
 }
 
 func TestMatrix_BasisVectors(t *testing.T) {
-	identity := NewMatrix[Scalar]()
+	identity := NewMatrix()
 	basis := identity.BasisVectors()
 
 	if len(basis) != 3 {
@@ -166,53 +166,53 @@ func TestMatrix_BasisVectors(t *testing.T) {
 	}
 
 	// Check identity matrix basis vectors
-	if basis[0].X != 1.0 || basis[0].Y != 0.0 || basis[0].Z != 0.0 {
+	if basis[0].X() != 1.0 || basis[0].Y() != 0.0 || basis[0].Z() != 0.0 {
 		t.Error("X basis vector incorrect")
 	}
-	if basis[1].X != 0.0 || basis[1].Y != 1.0 || basis[1].Z != 0.0 {
+	if basis[1].X() != 0.0 || basis[1].Y() != 1.0 || basis[1].Z() != 0.0 {
 		t.Error("Y basis vector incorrect")
 	}
-	if basis[2].X != 0.0 || basis[2].Y != 0.0 || basis[2].Z != 1.0 {
+	if basis[2].X() != 0.0 || basis[2].Y() != 0.0 || basis[2].Z() != 1.0 {
 		t.Error("Z basis vector incorrect")
 	}
 }
 
 func TestMatrix_Scale(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	m.Set(0, 0, Scalar(2.0))
-	m.Set(1, 1, Scalar(3.0))
-	m.Set(2, 2, Scalar(4.0))
+	m := NewMatrix()
+	m.Set(0, 0, 2.0)
+	m.Set(1, 1, 3.0)
+	m.Set(2, 2, 4.0)
 
 	scale := m.GetScale()
-	if !NearlyEqual(scale.X, Scalar(2.0)) || !NearlyEqual(scale.Y, Scalar(3.0)) || !NearlyEqual(scale.Z, Scalar(4.0)) {
-		t.Errorf("Scale() = (%v, %v, %v), want (2.0, 3.0, 4.0)", scale.X, scale.Y, scale.Z)
+	if !NearlyEqual(scale.X(), 2.0) || !NearlyEqual(scale.Y(), 3.0) || !NearlyEqual(scale.Z(), 4.0) {
+		t.Errorf("Scale() = (%v, %v, %v), want (2.0, 3.0, 4.0)", scale.X(), scale.Y(), scale.Z())
 	}
 }
 
 func TestMatrix_TransformPoint(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	point := Point[Scalar]{1, 2}
+	m := NewMatrix()
+	point := NewPoint(1, 2)
 
 	// Identity transform should return same point
 	result := point.Transform(m)
-	if !NearlyEqual(result.X, point.X) || !NearlyEqual(result.Y, point.Y) {
+	if !NearlyEqual(result.X(), point.X()) || !NearlyEqual(result.Y(), point.Y()) {
 		t.Errorf("Identity transform failed")
 	}
 }
 
 func TestMatrix_TransformVector(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	v3 := Vector3[Scalar]{1, 2, 3}
+	m := NewMatrix()
+	v3 := NewVector3(1, 2, 3)
 
-	// Identity}transform should return same vector
+	// Identity transform should return same vector
 	result := v3.Transform(m)
-	if !NearlyEqual(result.X, v3.X) || !NearlyEqual(result.Y, v3.Y) || !NearlyEqual(result.Z, v3.Z) {
+	if !NearlyEqual(result.X(), v3.X()) || !NearlyEqual(result.Y(), v3.Y()) || !NearlyEqual(result.Z(), v3.Z()) {
 		t.Errorf("Identity vector transform failed")
 	}
 }
 
 func TestMatrix_Analysis(t *testing.T) {
-	identity := NewMatrix[Scalar]()
+	identity := NewMatrix()
 
 	t.Run("IsAffine", func(t *testing.T) {
 		if !identity.IsAffine() {
@@ -240,44 +240,44 @@ func TestMatrix_Analysis(t *testing.T) {
 }
 
 func TestMatrix_Decompose(t *testing.T) {
-	m := NewMatrix[Scalar]()
+	m := NewMatrix()
 	d := m.Decompose()
 
 	// Check identity decomposition
-	if !NearlyEqual(d.Translation.X, Scalar(0.0)) ||
-		!NearlyEqual(d.Translation.Y, Scalar(0.0)) ||
-		!NearlyEqual(d.Translation.Z, Scalar(0.0)) {
+	if !NearlyEqual(d.Translation.X(), 0.0) ||
+		!NearlyEqual(d.Translation.Y(), 0.0) ||
+		!NearlyEqual(d.Translation.Z(), 0.0) {
 		t.Error("Identity matrix should have zero translation")
 	}
 
-	if !NearlyEqual(d.Scale.X, Scalar(1.0)) ||
-		!NearlyEqual(d.Scale.Y, Scalar(1.0)) ||
-		!NearlyEqual(d.Scale.Z, Scalar(1.0)) {
+	if !NearlyEqual(d.Scale.X(), 1.0) ||
+		!NearlyEqual(d.Scale.Y(), 1.0) ||
+		!NearlyEqual(d.Scale.Z(), 1.0) {
 		t.Error("Identity matrix should have unit scale")
 	}
 }
 
 func TestMatrix_CosSin(t *testing.T) {
-	m := NewMatrix[Scalar]()
+	m := NewMatrix()
 
 	// Test 90 degrees
 	cos, sin := m.CosSin(Radians(math.Pi / 2))
-	if !NearlyEqual(cos, Scalar(0.0)) || !NearlyEqual(sin, Scalar(1.0)) {
+	if !NearlyEqual(cos, 0.0) || !NearlyEqual(sin, 1.0) {
 		t.Errorf("CosSin(π/2) = (%v, %v), want (0.0, 1.0)", cos, sin)
 	}
 
 	// Test 0 degrees
 	cos, sin = m.CosSin(Radians(0))
-	if !NearlyEqual(cos, Scalar(1.0)) || !NearlyEqual(sin, Scalar(0.0)) {
+	if !NearlyEqual(cos, 1.0) || !NearlyEqual(sin, 0.0) {
 		t.Errorf("CosSin(0) = (%v, %v), want (1.0, 0.0)", cos, sin)
 	}
 }
 
 func TestMatrix_LookAt(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	position := Vector3[Scalar]{0.0, 0.0, 1.0}
-	target := Vector3[Scalar]{0.0, 0.0, 0.0}
-	up := Vector3[Scalar]{0.0, 1.0, 0.0}
+	m := NewMatrix()
+	position := NewVector3(0.0, 0.0, 1.0)
+	target := NewVector3(0.0, 0.0, 0.0)
+	up := NewVector3(0.0, 1.0, 0.0)
 
 	view := m.LookAt(position, target, up)
 
@@ -288,8 +288,8 @@ func TestMatrix_LookAt(t *testing.T) {
 }
 
 func TestMatrix_Orthographic(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	size := Size[Scalar]{800.0, 600.0}
+	m := NewMatrix()
+	size := NewSize(800.0, 600.0)
 
 	ortho := m.Orthographic(size)
 
@@ -300,8 +300,8 @@ func TestMatrix_Orthographic(t *testing.T) {
 }
 
 func TestMatrix_QuaternionRotation(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	quat := Quaternion[Scalar]{0, 0, 0, 1}
+	m := NewMatrix()
+	quat := NewQuaternion(0, 0, 0, 1)
 
 	rotMatrix := m.RotateQuat(quat)
 
@@ -312,8 +312,8 @@ func TestMatrix_QuaternionRotation(t *testing.T) {
 }
 
 func TestMatrix_AxisAngleRotation(t *testing.T) {
-	m := NewMatrix[Scalar]()
-	axis := Vector3[Scalar]{0.0, 0.0, 1.0}
+	m := NewMatrix()
+	axis := NewVector3(0.0, 0.0, 1.0)
 	angle := Radians(0.0)
 
 	rotMatrix := m.Rotate(angle, axis)
@@ -325,14 +325,14 @@ func TestMatrix_AxisAngleRotation(t *testing.T) {
 }
 
 func TestMatrix_Equal(t *testing.T) {
-	m1 := NewMatrix[Scalar]()
-	m2 := NewMatrix[Scalar]()
+	m1 := NewMatrix()
+	m2 := NewMatrix()
 
 	if !m1.Equal(m2) {
 		t.Error("Two identity matrices should be Eq")
 	}
 
-	m2.Set(0, 0, Scalar(2.0))
+	m2.Set(0, 0, 2.0)
 	if m1.Equal(m2) {
 		t.Error("Modified matrix should not Eq identity")
 	}
@@ -340,11 +340,11 @@ func TestMatrix_Equal(t *testing.T) {
 
 func TestMatrix_ChainedTransformations(t *testing.T) {
 	t.Run("TranslateScaleRotate", func(t *testing.T) {
-		m := NewMatrix[Scalar]()
+		m := NewMatrix()
 
 		// Apply transformations in sequence: translate -> scale -> rotate
-		translation := Vector3[Scalar]{1, 2, 3}
-		scale := Vector3[Scalar]{2, 3, 4}
+		translation := NewVector3(1, 2, 3)
+		scale := NewVector3(2, 3, 4)
 
 		result := m.Translate(translation).Scale(scale).RotateZ(Radians(math.Pi / 4))
 
@@ -354,17 +354,17 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 		}
 
 		// Test that translation component is preserved correctly
-		if !NearlyEqual(result.At(0, 3), Scalar(1.0)) {
+		if !NearlyEqual(result.At(0, 3), 1.0) {
 			t.Errorf("Expected translation X to be 1.0, got %v", result.At(0, 3))
 		}
 	})
 
 	t.Run("InverseTransformChain", func(t *testing.T) {
-		m := NewMatrix[Scalar]()
+		m := NewMatrix()
 
 		// Create a complex transformation
-		original := m.Translate(Vector3[Scalar]{5.0, 10.0, 15.0}).
-			Scale(Vector3[Scalar]{2.0, 3.0, 4.0}).
+		original := m.Translate(NewVector3(5.0, 10.0, 15.0)).
+			Scale(NewVector3(2.0, 3.0, 4.0)).
 			RotateY(Radians(math.Pi / 6))
 
 		// Get inverse
@@ -378,7 +378,7 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 	})
 
 	t.Run("MultipleRotations", func(t *testing.T) {
-		m := NewMatrix[Scalar]()
+		m := NewMatrix()
 
 		// Apply multiple rotations
 		result := m.RotateX(Radians(math.Pi / 4)).
@@ -387,7 +387,7 @@ func TestMatrix_ChainedTransformations(t *testing.T) {
 
 		// Check that it's still a valid rotation matrix (determinant should be 1)
 		det := result.Determinant()
-		if !NearlyEqual(det, Scalar(1.0)) {
+		if !NearlyEqual(det, 1.0) {
 			t.Errorf("Rotation matrix determinant should be 1.0, got %v", det)
 		}
 

@@ -22,19 +22,19 @@ const (
 
 // PathReceiver receives path segments (lines, curves, etc.) during path traversal.
 // Typically used by path iterators or renderers.
-type PathReceiver[T TScalar] interface {
+type PathReceiver interface {
 	// MoveTo moves the current point to p2, starting a new subpath.
 	// willBeClosed indicates if the subpath will be closed.
-	MoveTo(p2 Point[T], willBeClosed bool)
+	MoveTo(p2 Point, willBeClosed bool)
 	// LineTo draws a straight line from the current point to p2.
-	LineTo(p2 Point[T])
+	LineTo(p2 Point)
 	// QuadTo draws a quadratic Bézier curve to p2 with control point cp.
-	QuadTo(cp, p2 Point[T])
+	QuadTo(cp, p2 Point)
 	// ConicTo draws a rational quadratic Bézier curve to p2 with control point cp and weight.
 	// Returns false if not supported (default implementation).
-	ConicTo(cp, p2 Point[T], weight float64) bool
+	ConicTo(cp, p2 Point, weight float64) bool
 	// CubicTo draws a cubic Bézier curve to p2 with control points cp1 and cp2.
-	CubicTo(cp1, cp2, p2 Point[T])
+	CubicTo(cp1, cp2, p2 Point)
 	// Close closes the current subpath.
 	Close()
 	// PathEnd is called at the end of path traversal for cleanup (optional).
@@ -42,44 +42,44 @@ type PathReceiver[T TScalar] interface {
 }
 
 // PathSource provides path data for traversal and property queries.
-type PathSource[T TScalar] interface {
+type PathSource interface {
 	// FillType returns the fill rule for the path (e.g., non-zero, even-odd).
 	FillType() FillType
 	// Bounds returns the bounding rectangle of the path.
-	Bounds() Rect[T]
+	Bounds() Rect
 	// IsConvex returns true if the path is convex.
 	IsConvex() bool
 	// Dispatch sends all path segments to the given PathReceiver.
-	Dispatch(receiver PathReceiver[T])
+	Dispatch(receiver PathReceiver)
 }
 
 // NewRectPathSource creates a new PathSource for rectangles.
-func NewRectPathSource[T TScalar](rect Rect[T]) PathSource[T] {
-	return rectPathSource[T]{rect: rect}
+func NewRectPathSource(rect Rect) PathSource {
+	return rectPathSource{rect: rect}
 }
 
 // rectPathSource is a PathSource for rectangles.
-type rectPathSource[T TScalar] struct {
-	rect Rect[T]
+type rectPathSource struct {
+	rect Rect
 }
 
 // FillType implements PathSource.
-func (r rectPathSource[T]) FillType() FillType {
+func (r rectPathSource) FillType() FillType {
 	return FillTypeNonZero
 }
 
 // Bounds implements PathSource.
-func (r rectPathSource[T]) Bounds() Rect[T] {
+func (r rectPathSource) Bounds() Rect {
 	return r.rect
 }
 
 // IsConvex implements PathSource.
-func (r rectPathSource[T]) IsConvex() bool {
+func (r rectPathSource) IsConvex() bool {
 	return true
 }
 
 // Dispatch implements PathSource.
-func (r rectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
+func (r rectPathSource) Dispatch(receiver PathReceiver) {
 	if r.rect.IsEmpty() {
 		return
 	}
@@ -99,32 +99,32 @@ func (r rectPathSource[T]) Dispatch(receiver PathReceiver[T]) {
 }
 
 // NewEllipsePathSource creates a new PathSource for ellipses.
-func NewEllipsePathSource[T TScalar](bounds Rect[T]) PathSource[T] {
-	return ellipsePathSource[T]{bounds: bounds}
+func NewEllipsePathSource(bounds Rect) PathSource {
+	return ellipsePathSource{bounds: bounds}
 }
 
 // ellipsePathSource is a PathSource for ellipses.
-type ellipsePathSource[T TScalar] struct {
-	bounds Rect[T]
+type ellipsePathSource struct {
+	bounds Rect
 }
 
 // FillType implements PathSource.
-func (e ellipsePathSource[T]) FillType() FillType {
+func (e ellipsePathSource) FillType() FillType {
 	return FillTypeNonZero
 }
 
 // Bounds implements PathSource.
-func (e ellipsePathSource[T]) Bounds() Rect[T] {
+func (e ellipsePathSource) Bounds() Rect {
 	return e.bounds
 }
 
 // IsConvex implements PathSource.
-func (e ellipsePathSource[T]) IsConvex() bool {
+func (e ellipsePathSource) IsConvex() bool {
 	return true
 }
 
 // Dispatch implements PathSource.
-func (e ellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
+func (e ellipsePathSource) Dispatch(receiver PathReceiver) {
 	if e.bounds.IsEmpty() {
 		return
 	}
@@ -132,32 +132,32 @@ func (e ellipsePathSource[T]) Dispatch(receiver PathReceiver[T]) {
 	// Simplified ellipse drawing using quadratic curves
 	// In practice, this would use more sophisticated approximation
 	center := e.bounds.Center()
-	halfWidth := e.bounds.Width() / T(2)
-	halfHeight := e.bounds.Height() / T(2)
+	halfWidth := e.bounds.Width() / 2
+	halfHeight := e.bounds.Height() / 2
 
 	// Start at rightmost point
-	start := Point[T]{center.X + halfWidth, center.Y}
+	start := NewPoint(center.X()+halfWidth, center.Y())
 	receiver.MoveTo(start, true)
 
 	// Approximate ellipse with 4 quadratic curves
 	// This is a simplified implementation
 	// Top-right quadrant
-	cp1 := Point[T]{center.X + halfWidth, center.Y - halfHeight}
-	p1 := Point[T]{center.X, center.Y - halfHeight}
+	cp1 := NewPoint(center.X()+halfWidth, center.Y()-halfHeight)
+	p1 := NewPoint(center.X(), center.Y()-halfHeight)
 	receiver.QuadTo(cp1, p1)
 
 	// Top-left quadrant
-	cp2 := Point[T]{center.X - halfWidth, center.Y - halfHeight}
-	p2 := Point[T]{center.X - halfWidth, center.Y}
+	cp2 := NewPoint(center.X()-halfWidth, center.Y()-halfHeight)
+	p2 := NewPoint(center.X()-halfWidth, center.Y())
 	receiver.QuadTo(cp2, p2)
 
 	// Bottom-left quadrant
-	cp3 := Point[T]{center.X - halfWidth, center.Y + halfHeight}
-	p3 := Point[T]{center.X, center.Y + halfHeight}
+	cp3 := NewPoint(center.X()-halfWidth, center.Y()+halfHeight)
+	p3 := NewPoint(center.X(), center.Y()+halfHeight)
 	receiver.QuadTo(cp3, p3)
 
 	// Bottom-right quadrant
-	cp4 := Point[T]{center.X + halfWidth, center.Y + halfHeight}
+	cp4 := NewPoint(center.X()+halfWidth, center.Y()+halfHeight)
 	receiver.QuadTo(cp4, start)
 
 	receiver.Close()

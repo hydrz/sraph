@@ -1,45 +1,43 @@
 package geom
 
-var _ PathReceiver[Scalar] = (*testPathReceiver[Scalar])(nil)
-
-// testPathReceiver is a generic PathReceiver for test assertions.
-type testPathReceiver[T TScalar] struct {
+// testPathReceiver is a PathReceiver for test assertions.
+type testPathReceiver struct {
 	ops      []string
-	moves    []Point[T]
-	lines    []Point[T]
-	quads    [][2]Point[T]
+	moves    []Point
+	lines    []Point
+	quads    [][2]Point
 	conics   [][3]interface{}
-	cubics   [][3]Point[T]
+	cubics   [][3]Point
 	closed   int
 	pathEnds int
 }
 
-func (d *testPathReceiver[T]) MoveTo(p2 Point[T], willBeClosed bool) {
+func (d *testPathReceiver) MoveTo(p2 Point, willBeClosed bool) {
 	d.ops = append(d.ops, "MoveTo")
 	d.moves = append(d.moves, p2)
 }
-func (d *testPathReceiver[T]) LineTo(p2 Point[T]) {
+func (d *testPathReceiver) LineTo(p2 Point) {
 	d.ops = append(d.ops, "LineTo")
 	d.lines = append(d.lines, p2)
 }
-func (d *testPathReceiver[T]) QuadTo(cp, p2 Point[T]) {
+func (d *testPathReceiver) QuadTo(cp, p2 Point) {
 	d.ops = append(d.ops, "QuadTo")
-	d.quads = append(d.quads, [2]Point[T]{cp, p2})
+	d.quads = append(d.quads, [2]Point{cp, p2})
 }
-func (d *testPathReceiver[T]) ConicTo(cp, p2 Point[T], weight float64) bool {
+func (d *testPathReceiver) ConicTo(cp, p2 Point, weight float64) bool {
 	d.ops = append(d.ops, "ConicTo")
 	d.conics = append(d.conics, [3]interface{}{cp, p2, weight})
 	return true
 }
-func (d *testPathReceiver[T]) CubicTo(cp1, cp2, p2 Point[T]) {
+func (d *testPathReceiver) CubicTo(cp1, cp2, p2 Point) {
 	d.ops = append(d.ops, "CubicTo")
-	d.cubics = append(d.cubics, [3]Point[T]{cp1, cp2, p2})
+	d.cubics = append(d.cubics, [3]Point{cp1, cp2, p2})
 }
-func (d *testPathReceiver[T]) Close() {
+func (d *testPathReceiver) Close() {
 	d.ops = append(d.ops, "Close")
 	d.closed++
 }
-func (d *testPathReceiver[T]) PathEnd() {
+func (d *testPathReceiver) PathEnd() {
 	d.ops = append(d.ops, "PathEnd")
 	d.pathEnds++
 }

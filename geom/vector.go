@@ -2,94 +2,149 @@ package geom
 
 import "math"
 
-// Vector2 is an alias for a 2D vector, implemented as Point.
-type Vector2[T TScalar] = Point[T]
+// Vector2 defines the interface for a 2D vector.
+// Provides methods for vector arithmetic, normalization, and geometric queries.
+type Vector2 = Point
 
-func NewVector2[T TScalar](x, y T) Vector2[T] {
-	return Vector2[T]{X: x, Y: y}
+// Vector3 defines the interface for a 3D vector.
+// Provides methods for vector arithmetic, normalization, and geometric queries.
+type Vector3 interface {
+	X() Scalar
+	Y() Scalar
+	Z() Scalar
+	Add(other Vector3) Vector3
+	Sub(other Vector3) Vector3
+	Mul(other Vector3) Vector3
+	Div(other Vector3) Vector3
+	Equal(other Vector3) bool
+	Scale(scalar Scalar) Vector3
+	Normalize() Vector3
+	Length() Scalar
+	Abs() Vector3
+	Floor() Vector3
+	Ceil() Vector3
+	Round() Vector3
+	Dot(other Vector3) Scalar
+	Cross(other Vector3) Vector3
+	Lerp(other Vector3, t Scalar) Vector3
+	IsZero() bool
+	Transform(m Matrix) Vector3
+	TransformDirection(m Matrix) Vector3
+	String() string
+	Combine(other Vector3, factor Scalar) Vector3
 }
 
-// Vector3 represents a 3D vector with X, Y, Z components.
-type Vector3[T TScalar] struct {
-	X T
-	Y T
-	Z T
+// Vector4 defines the interface for a 4D vector.
+type Vector4 interface {
+	X() Scalar
+	Y() Scalar
+	Z() Scalar
+	W() Scalar
+	Add(other Vector4) Vector4
+	Sub(other Vector4) Vector4
+	Mul(other Vector4) Vector4
+	Div(other Vector4) Vector4
+	Equal(other Vector4) bool
+	Scale(scalar Scalar) Vector4
+	Normalize() Vector4
+	Length() Scalar
+	Abs() Vector4
+	Floor() Vector4
+	Ceil() Vector4
+	Round() Vector4
+	Dot(other Vector4) Scalar
+	Lerp(other Vector4, t Scalar) Vector4
+	IsZero() bool
+	IsFinite() bool
+	Transform(m Matrix) Vector4
+	TransformDirection(m Matrix) Vector4
+	String() string
 }
 
-func NewVector3[T TScalar](x, y, z T) Vector3[T] {
-	return Vector3[T]{X: x, Y: y, Z: z}
+func NewVector2[T Number](x, y T) Vector2 {
+	return NewPoint(x, y)
+}
+
+// NewVector3 creates a new 3D vector.
+func NewVector3[T Number](x, y, z T) Vector3 {
+	return vector3[T]{x: x, y: y, z: z}
+}
+
+// NewVector4 creates a new 4D vector.
+func NewVector4[T Number](x, y, z, w T) Vector4 {
+	return vector4[T]{x: x, y: y, z: z, w: w}
+}
+
+type vector3[T Number] struct {
+	x, y, z T
+}
+
+// X returns the X component of the vector.
+func (v vector3[T]) X() Scalar {
+	return Scalar(v.x)
+}
+
+// Y returns the Y component of the vector.
+func (v vector3[T]) Y() Scalar {
+	return Scalar(v.y)
+}
+
+// Z returns the Z component of the vector.
+func (v vector3[T]) Z() Scalar {
+	return Scalar(v.z)
 }
 
 // Add adds another vector to this vector.
-func (v Vector3[T]) Add(other Vector3[T]) Vector3[T] {
-	return Vector3[T]{
-		X: v.X + other.X,
-		Y: v.Y + other.Y,
-		Z: v.Z + other.Z,
-	}
+func (v vector3[T]) Add(o Vector3) Vector3 {
+	return vector3[T]{x: v.x + T(o.X()), y: v.y + T(o.Y()), z: v.z + T(o.Z())}
 }
 
 // Sub subtracts another vector from this vector.
-func (v Vector3[T]) Sub(other Vector3[T]) Vector3[T] {
-	return Vector3[T]{
-		X: v.X - other.X,
-		Y: v.Y - other.Y,
-		Z: v.Z - other.Z,
-	}
+func (v vector3[T]) Sub(other Vector3) Vector3 {
+	return vector3[T]{x: v.x - T(other.X()), y: v.y - T(other.Y()), z: v.z - T(other.Z())}
 }
 
 // Mul multiplies this vector by another vector component-wise.
-func (v Vector3[T]) Mul(other Vector3[T]) Vector3[T] {
-	return Vector3[T]{
-		X: v.X * other.X,
-		Y: v.Y * other.Y,
-		Z: v.Z * other.Z,
-	}
+func (v vector3[T]) Mul(other Vector3) Vector3 {
+	return vector3[T]{x: v.x * T(other.X()), y: v.y * T(other.Y()), z: v.z * T(other.Z())}
 }
 
 // Div divides this vector by another vector component-wise.
-func (v Vector3[T]) Div(other Vector3[T]) Vector3[T] {
-	return Vector3[T]{
-		X: v.X / other.X,
-		Y: v.Y / other.Y,
-		Z: v.Z / other.Z,
-	}
+func (v vector3[T]) Div(other Vector3) Vector3 {
+	return vector3[T]{x: v.x / T(other.X()), y: v.y / T(other.Y()), z: v.z / T(other.Z())}
 }
 
-// Eq checks if this vector is Eq to another vector.
-func (v Vector3[T]) Equal(other Vector3[T]) bool {
-	return NearlyEqual(v.X, other.X) &&
-		NearlyEqual(v.Y, other.Y) &&
-		NearlyEqual(v.Z, other.Z)
+// Equal checks if this vector is Eq to another vector.
+func (v vector3[T]) Equal(o Vector3) bool {
+	return NearlyEqual(v.x, T(o.X())) && NearlyEqual(v.y, T(o.Y())) && NearlyEqual(v.z, T(o.Z()))
 }
 
 // Scale scales this vector by a scalar.
-func (v Vector3[T]) Scale(scalar T) Vector3[T] {
-	return Vector3[T]{X: v.X * scalar, Y: v.Y * scalar, Z: v.Z * scalar}
+func (v vector3[T]) Scale(o Scalar) Vector3 {
+	return vector3[T]{x: v.x * T(o), y: v.y * T(o), z: v.z * T(o)}
 }
 
 // Normalize returns the normalized (unit) vector.
 // If the vector's length is zero, returns a zero vector.
 // Normalization scales the vector to have a length of 1, while maintaining its direction.
-func (v Vector3[T]) Normalize() Vector3[T] {
-	len := v.Length()
-	var zero T
-	if len == zero {
-		return Vector3[T]{X: zero, Y: zero, Z: zero}
+func (v vector3[T]) Normalize() Vector3 {
+	len := T(v.Length())
+	if len == 0 {
+		return vector3[T]{}
 	}
-	return Vector3[T]{X: v.X / len, Y: v.Y / len, Z: v.Z / len}
+	return vector3[T]{x: v.x / len, y: v.y / len, z: v.z / len}
 }
 
 // Length returns the magnitude (Euclidean norm) of the vector.
 // It is defined as: length = sqrt(x^2 + y^2 + z^2).
-func (v Vector3[T]) Length() T {
-	return T(math.Sqrt(float64(v.X*v.X + v.Y*v.Y + v.Z*v.Z)))
+func (v vector3[T]) Length() Scalar {
+	return Scalar(math.Sqrt(float64(v.x*v.x + v.y*v.y + v.z*v.z)))
 }
 
 // Abs returns the component-wise absolute value of the vector.
-func (v Vector3[T]) Abs() Vector3[T] {
+func (v vector3[T]) Abs() Vector3 {
 	var zero T
-	x, y, z := v.X, v.Y, v.Z
+	x, y, z := v.x, v.y, v.z
 	if x < zero {
 		x = -x
 	}
@@ -99,204 +154,209 @@ func (v Vector3[T]) Abs() Vector3[T] {
 	if z < zero {
 		z = -z
 	}
-	return Vector3[T]{X: x, Y: y, Z: z}
+	return vector3[T]{x: x, y: y, z: z}
 }
 
 // Floor returns the component-wise floor.
-func (v Vector3[T]) Floor() Vector3[T] {
-	return Vector3[T]{
-		X: T(math.Floor(ToFloat64(v.X))),
-		Y: T(math.Floor(ToFloat64(v.Y))),
-		Z: T(math.Floor(ToFloat64(v.Z))),
+func (v vector3[T]) Floor() Vector3 {
+	return vector3[T]{
+		x: T(math.Floor(ToFloat64(v.x))),
+		y: T(math.Floor(ToFloat64(v.y))),
+		z: T(math.Floor(ToFloat64(v.z))),
 	}
 }
 
 // Ceil returns the component-wise ceil.
-func (v Vector3[T]) Ceil() Vector3[T] {
-	return Vector3[T]{
-		X: T(math.Ceil(ToFloat64(v.X))),
-		Y: T(math.Ceil(ToFloat64(v.Y))),
-		Z: T(math.Ceil(ToFloat64(v.Z))),
+func (v vector3[T]) Ceil() Vector3 {
+	return vector3[T]{
+		x: T(math.Ceil(ToFloat64(v.x))),
+		y: T(math.Ceil(ToFloat64(v.y))),
+		z: T(math.Ceil(ToFloat64(v.z))),
 	}
 }
 
 // Round returns the component-wise round.
-func (v Vector3[T]) Round() Vector3[T] {
-	return Vector3[T]{
-		X: T(math.Round(ToFloat64(v.X))),
-		Y: T(math.Round(ToFloat64(v.Y))),
-		Z: T(math.Round(ToFloat64(v.Z))),
+func (v vector3[T]) Round() Vector3 {
+	return vector3[T]{
+		x: T(math.Round(ToFloat64(v.x))),
+		y: T(math.Round(ToFloat64(v.y))),
+		z: T(math.Round(ToFloat64(v.z))),
 	}
 }
 
 // Dot returns the dot product of this vector and another.
-func (v Vector3[T]) Dot(other Vector3[T]) T {
-	return v.X*other.X + v.Y*other.Y + v.Z*other.Z
+func (v vector3[T]) Dot(other Vector3) Scalar {
+	o := other.(vector3[T])
+	return Scalar(v.x*o.x + v.y*o.y + v.z*o.z)
 }
 
 // Cross returns the cross product of this vector and another.
-func (v Vector3[T]) Cross(other Vector3[T]) Vector3[T] {
-	return Vector3[T]{
-		X: v.Y*other.Z - v.Z*other.Y,
-		Y: v.Z*other.X - v.X*other.Z,
-		Z: v.X*other.Y - v.Y*other.X,
+func (v vector3[T]) Cross(other Vector3) Vector3 {
+	o := other.(vector3[T])
+	return vector3[T]{
+		x: v.y*o.z - v.z*o.y,
+		y: v.z*o.x - v.x*o.z,
+		z: v.x*o.y - v.y*o.x,
 	}
 }
 
 // Lerp linearly interpolates between this vector and another by t.
-func (v Vector3[T]) Lerp(other Vector3[T], t T) Vector3[T] {
-	return Vector3[T]{
-		X: v.X + (other.X-v.X)*t,
-		Y: v.Y + (other.Y-v.Y)*t,
-		Z: v.Z + (other.Z-v.Z)*t,
-	}
-}
-
-// Combine makes a linear combination of two vectors.
-func (v Vector3[T]) Combine(b Vector3[T], bScale T) Vector3[T] {
-	return Vector3[T]{
-		X: v.X + b.X*bScale,
-		Y: v.Y + b.Y*bScale,
-		Z: v.Z + b.Z*bScale,
+func (v vector3[T]) Lerp(other Vector3, t Scalar) Vector3 {
+	o := other.(vector3[T])
+	return vector3[T]{
+		x: v.x + (o.x-v.x)*T(t),
+		y: v.y + (o.y-v.y)*T(t),
+		z: v.z + (o.z-v.z)*T(t),
 	}
 }
 
 // IsZero checks if all components are nearly zero.
-func (v Vector3[T]) IsZero() bool {
-	return NearlyEqual(v.X, 0) && NearlyEqual(v.Y, 0) && NearlyEqual(v.Z, 0)
+func (v vector3[T]) IsZero() bool {
+	return NearlyEqual(v.x, 0) && NearlyEqual(v.y, 0) && NearlyEqual(v.z, 0)
 }
 
 // Transform applies a transformation matrix to this vector.
-func (v Vector3[T]) Transform(m Matrix[T]) Vector3[T] {
-	w := v.X*m[3] + v.Y*m[7] + v.Z*m[11] + m[15]
-	r := Vector3[T]{
-		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + m[12],
-		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + m[13],
-		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + m[14],
+func (v vector3[T]) Transform(m Matrix) Vector3 {
+	w := v.x*T(m[3]) + v.y*T(m[7]) + v.z*T(m[11]) + T(m[15])
+	r := vector3[T]{
+		x: v.x*T(m[0]) + v.y*T(m[4]) + v.z*T(m[8]) + T(m[12]),
+		y: v.x*T(m[1]) + v.y*T(m[5]) + v.z*T(m[9]) + T(m[13]),
+		z: v.x*T(m[2]) + v.y*T(m[6]) + v.z*T(m[10]) + T(m[14]),
 	}
 	if w != 0 {
 		w = 1 / w
 	}
-	return r.Scale(w)
+	return r.Scale(Scalar(w))
 }
 
 // TransformDirection applies a transformation matrix to this vector,
 // treating it as a direction vector (ignoring translation).
-func (v Vector3[T]) TransformDirection(m Matrix[T]) Vector3[T] {
-	return Vector3[T]{
-		X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
-		Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
-		Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
+func (v vector3[T]) TransformDirection(m Matrix) Vector3 {
+	return vector3[T]{
+		x: v.x*T(m[0]) + v.y*T(m[4]) + v.z*T(m[8]),
+		y: v.x*T(m[1]) + v.y*T(m[5]) + v.z*T(m[9]),
+		z: v.x*T(m[2]) + v.y*T(m[6]) + v.z*T(m[10]),
 	}
 }
 
 // String returns a string representation of the vector, like "(1, 2, 3)".
-func (v Vector3[T]) String() string {
-	return "(" + ToString(v.X) + ", " + ToString(v.Y) + ", " + ToString(v.Z) + ")"
+func (v vector3[T]) String() string {
+	return "(" + ToString(v.x) + ", " + ToString(v.y) + ", " + ToString(v.z) + ")"
 }
 
-// Vector4 represents a 4D vector with X, Y, Z, W components.
-type Vector4[T TScalar] struct {
-	X T
-	Y T
-	Z T
-	W T
+// Combine combines this vector with another vector by adding the first vector
+// and multiplying the second vector by a scalar factor.
+func (v vector3[T]) Combine(other Vector3, factor Scalar) Vector3 {
+	return vector3[T]{
+		x: v.x + T(factor)*T(other.X()),
+		y: v.y + T(factor)*T(other.Y()),
+		z: v.z + T(factor)*T(other.Z()),
+	}
 }
 
-func NewVector4[T TScalar](x, y, z, w T) Vector4[T] {
-	return Vector4[T]{X: x, Y: y, Z: z, W: w}
+type vector4[T Number] struct {
+	x, y, z, w T
 }
 
-// XY returns the first two components as a Vector2.
-func (v Vector4[T]) XY() Vector2[T] {
-	return Vector2[T]{X: v.X, Y: v.Y}
+// X returns the X component of the vector.
+func (v vector4[T]) X() Scalar {
+	return Scalar(v.x)
+}
+
+// Y returns the Y component of the vector.
+func (v vector4[T]) Y() Scalar {
+	return Scalar(v.y)
+}
+
+// Z returns the Z component of the vector.
+func (v vector4[T]) Z() Scalar {
+	return Scalar(v.z)
+}
+
+// W returns the W component of the vector.
+func (v vector4[T]) W() Scalar {
+	return Scalar(v.w)
 }
 
 // Add adds another vector to this vector.
-func (v Vector4[T]) Add(other Vector4[T]) Vector4[T] {
-	return Vector4[T]{
-		X: v.X + other.X,
-		Y: v.Y + other.Y,
-		Z: v.Z + other.Z,
-		W: v.W + other.W,
+func (v vector4[T]) Add(other Vector4) Vector4 {
+	return vector4[T]{
+		x: v.x + T(other.X()),
+		y: v.y + T(other.Y()),
+		z: v.z + T(other.Z()),
+		w: v.w + T(other.W()),
 	}
 }
 
 // Sub subtracts another vector from this vector.
-func (v Vector4[T]) Sub(other Vector4[T]) Vector4[T] {
-	return Vector4[T]{
-		X: v.X - other.X,
-		Y: v.Y - other.Y,
-		Z: v.Z - other.Z,
-		W: v.W - other.W,
+func (v vector4[T]) Sub(other Vector4) Vector4 {
+	return vector4[T]{
+		x: v.x - T(other.X()),
+		y: v.y - T(other.Y()),
+		z: v.z - T(other.Z()),
+		w: v.w - T(other.W()),
 	}
 }
 
 // Mul multiplies this vector by another vector component-wise.
-func (v Vector4[T]) Mul(other Vector4[T]) Vector4[T] {
-	return Vector4[T]{
-		X: v.X * other.X,
-		Y: v.Y * other.Y,
-		Z: v.Z * other.Z,
-		W: v.W * other.W,
+func (v vector4[T]) Mul(other Vector4) Vector4 {
+	return vector4[T]{
+		x: v.x * T(other.X()),
+		y: v.y * T(other.Y()),
+		z: v.z * T(other.Z()),
+		w: v.w * T(other.W()),
 	}
 }
 
 // Div divides this vector by another vector component-wise.
-func (v Vector4[T]) Div(other Vector4[T]) Vector4[T] {
-	return Vector4[T]{
-		X: v.X / other.X,
-		Y: v.Y / other.Y,
-		Z: v.Z / other.Z,
-		W: v.W / other.W,
+func (v vector4[T]) Div(other Vector4) Vector4 {
+	return vector4[T]{
+		x: v.x / T(other.X()),
+		y: v.y / T(other.Y()),
+		z: v.z / T(other.Z()),
+		w: v.w / T(other.W()),
 	}
 }
 
-// Eq checks if this vector is Eq to another vector.
-func (v Vector4[T]) Equal(other Vector4[T]) bool {
-	return NearlyEqual(v.X, other.X) &&
-		NearlyEqual(v.Y, other.Y) &&
-		NearlyEqual(v.Z, other.Z) &&
-		NearlyEqual(v.W, other.W)
+// Equal checks if this vector is Eq to another vector.
+func (v vector4[T]) Equal(other Vector4) bool {
+	return NearlyEqual(v.x, T(other.X())) &&
+		NearlyEqual(v.y, T(other.Y())) &&
+		NearlyEqual(v.z, T(other.Z())) &&
+		NearlyEqual(v.w, T(other.W()))
 }
 
 // Scale scales this vector by a scalar.
-func (v Vector4[T]) Scale(scalar T) Vector4[T] {
-	return Vector4[T]{
-		X: v.X * scalar,
-		Y: v.Y * scalar,
-		Z: v.Z * scalar,
-		W: v.W * scalar,
+func (v vector4[T]) Scale(scalar Scalar) Vector4 {
+	return vector4[T]{
+		x: v.x * T(scalar),
+		y: v.y * T(scalar),
+		z: v.z * T(scalar),
+		w: v.w * T(scalar),
 	}
 }
 
 // Normalize returns the normalized (unit) vector.
 // If the vector's length is zero, returns a zero vector.
 // Normalization scales the vector to have a length of 1, while maintaining its direction.
-func (v Vector4[T]) Normalize() Vector4[T] {
-	len := v.Length()
-	var zero T
-	if len == zero {
-		return Vector4[T]{X: zero, Y: zero, Z: zero, W: zero}
+func (v vector4[T]) Normalize() Vector4 {
+	len := T(v.Length())
+	if len == 0 {
+		return vector4[T]{}
 	}
-	return Vector4[T]{
-		X: v.X / len,
-		Y: v.Y / len,
-		Z: v.Z / len,
-		W: v.W / len,
-	}
+	return vector4[T]{x: v.x / len, y: v.y / len, z: v.z / len, w: v.w / len}
 }
 
 // Length returns the magnitude (Euclidean norm) of the vector.
 // It is defined as: length = sqrt(x^2 + y^2 + z^2 + w^2).
-func (v Vector4[T]) Length() T {
-	return T(math.Sqrt(float64(v.X*v.X + v.Y*v.Y + v.Z*v.Z + v.W*v.W)))
+func (v vector4[T]) Length() Scalar {
+	return Scalar(math.Sqrt(float64(v.x*v.x + v.y*v.y + v.z*v.z + v.w*v.w)))
 }
 
 // Abs returns the component-wise absolute value of the vector.
-func (v Vector4[T]) Abs() Vector4[T] {
+func (v vector4[T]) Abs() Vector4 {
 	var zero T
-	x, y, z, w := v.X, v.Y, v.Z, v.W
+	x, y, z, w := v.x, v.y, v.z, v.w
 	if x < zero {
 		x = -x
 	}
@@ -309,104 +369,95 @@ func (v Vector4[T]) Abs() Vector4[T] {
 	if w < zero {
 		w = -w
 	}
-	return Vector4[T]{X: x, Y: y, Z: z, W: w}
+	return vector4[T]{x: x, y: y, z: z, w: w}
 }
 
 // Floor returns the component-wise floor.
-func (v Vector4[T]) Floor() Vector4[T] {
-	return Vector4[T]{
-		X: T(math.Floor(ToFloat64(v.X))),
-		Y: T(math.Floor(ToFloat64(v.Y))),
-		Z: T(math.Floor(ToFloat64(v.Z))),
-		W: T(math.Floor(ToFloat64(v.W))),
+func (v vector4[T]) Floor() Vector4 {
+	return vector4[T]{
+		x: T(math.Floor(ToFloat64(v.x))),
+		y: T(math.Floor(ToFloat64(v.y))),
+		z: T(math.Floor(ToFloat64(v.z))),
+		w: T(math.Floor(ToFloat64(v.w))),
 	}
 }
 
 // Ceil returns the component-wise ceil.
-func (v Vector4[T]) Ceil() Vector4[T] {
-	return Vector4[T]{
-		X: T(math.Ceil(ToFloat64(v.X))),
-		Y: T(math.Ceil(ToFloat64(v.Y))),
-		Z: T(math.Ceil(ToFloat64(v.Z))),
-		W: T(math.Ceil(ToFloat64(v.W))),
+func (v vector4[T]) Ceil() Vector4 {
+	return vector4[T]{
+		x: T(math.Ceil(ToFloat64(v.x))),
+		y: T(math.Ceil(ToFloat64(v.y))),
+		z: T(math.Ceil(ToFloat64(v.z))),
+		w: T(math.Ceil(ToFloat64(v.w))),
 	}
 }
 
 // Round returns the component-wise round.
-func (v Vector4[T]) Round() Vector4[T] {
-	return Vector4[T]{
-		X: T(math.Round(ToFloat64(v.X))),
-		Y: T(math.Round(ToFloat64(v.Y))),
-		Z: T(math.Round(ToFloat64(v.Z))),
-		W: T(math.Round(ToFloat64(v.W))),
+func (v vector4[T]) Round() Vector4 {
+	return vector4[T]{
+		x: T(math.Round(ToFloat64(v.x))),
+		y: T(math.Round(ToFloat64(v.y))),
+		z: T(math.Round(ToFloat64(v.z))),
+		w: T(math.Round(ToFloat64(v.w))),
 	}
 }
 
 // Dot returns the dot product of this vector and another.
-func (v Vector4[T]) Dot(other Vector4[T]) T {
-	return v.X*other.X + v.Y*other.Y + v.Z*other.Z + v.W*other.W
+func (v vector4[T]) Dot(other Vector4) Scalar {
+	o := other.(vector4[T])
+	return Scalar(v.x*o.x + v.y*o.y + v.z*o.z + v.w*o.w)
 }
 
 // Cross returns the cross product of this vector and another.
 // Cross product is not well-defined for 4D vectors, so this returns a zero vector.
-func (v Vector4[T]) Cross(other Vector4[T]) Vector4[T] {
+func (v vector4[T]) Cross(other Vector4) Vector4 {
 	var zero T
-	return Vector4[T]{X: zero, Y: zero, Z: zero, W: zero}
+	return vector4[T]{x: zero, y: zero, z: zero, w: zero}
 }
 
 // Lerp linearly interpolates between this vector and another by t.
-func (v Vector4[T]) Lerp(other Vector4[T], t T) Vector4[T] {
-	return Vector4[T]{
-		X: v.X + (other.X-v.X)*t,
-		Y: v.Y + (other.Y-v.Y)*t,
-		Z: v.Z + (other.Z-v.Z)*t,
-		W: v.W + (other.W-v.W)*t,
-	}
-}
-
-// Combine makes a linear combination of two vectors.
-func (v Vector4[T]) Combine(b Vector4[T], bScale T) Vector4[T] {
-	return Vector4[T]{
-		X: v.X + b.X*bScale,
-		Y: v.Y + b.Y*bScale,
-		Z: v.Z + b.Z*bScale,
-		W: v.W + b.W*bScale,
+func (v vector4[T]) Lerp(o Vector4, t Scalar) Vector4 {
+	return vector4[T]{
+		x: v.x + (T(o.X())-v.x)*T(t),
+		y: v.y + (T(o.Y())-v.y)*T(t),
+		z: v.z + (T(o.Z())-v.z)*T(t),
+		w: v.w + (T(o.W())-v.w)*T(t),
 	}
 }
 
 // IsZero checks if all components are nearly zero.
-func (v Vector4[T]) IsZero() bool {
-	return NearlyEqual(v.X, 0) && NearlyEqual(v.Y, 0) &&
-		NearlyEqual(v.Z, 0) && NearlyEqual(v.W, 0)
+func (v vector4[T]) IsZero() bool {
+	return NearlyEqual(v.x, 0) && NearlyEqual(v.y, 0) &&
+		NearlyEqual(v.z, 0) && NearlyEqual(v.w, 0)
 }
 
 // IsFinite returns true if all components are finite.
-func (v Vector4[T]) IsFinite() bool {
-	return IsFinite(v.X) && IsFinite(v.Y) && IsFinite(v.Z) && IsFinite(v.W)
+func (v vector4[T]) IsFinite() bool {
+	return IsFinite(v.x) && IsFinite(v.y) && IsFinite(v.z) && IsFinite(v.w)
 }
 
 // Transform applies a transformation matrix to this vector.
-func (v Vector4[T]) Transform(m Matrix[T]) Vector4[T] {
-	return Vector4[T]{
-		v.X*m[0] + v.Y*m[4] + v.Z*m[8] + v.W*m[12],
-		v.X*m[1] + v.Y*m[5] + v.Z*m[9] + v.W*m[13],
-		v.X*m[2] + v.Y*m[6] + v.Z*m[10] + v.W*m[14],
-		v.X*m[3] + v.Y*m[7] + v.Z*m[11] + v.W*m[15],
+func (v vector4[T]) Transform(m Matrix) Vector4 {
+	return vector4[T]{
+		x: v.x*T(m[0]) + v.y*T(m[4]) + v.z*T(m[8]) + v.w*T(m[12]),
+		y: v.x*T(m[1]) + v.y*T(m[5]) + v.z*T(m[9]) + v.w*T(m[13]),
+		z: v.x*T(m[2]) + v.y*T(m[6]) + v.z*T(m[10]) + v.w*T(m[14]),
+		w: v.x*T(m[3]) + v.y*T(m[7]) + v.z*T(m[11]) + v.w*T(m[15]),
 	}
 }
 
 // TransformDirection applies a transformation matrix to this vector,
 // treating it as a direction vector (ignoring translation).
-func (v Vector4[T]) TransformDirection(m Matrix[T]) Vector4[T] {
-	return Vector4[T]{
-		X: v.X*m[0] + v.Y*m[4] + v.Z*m[8],
-		Y: v.X*m[1] + v.Y*m[5] + v.Z*m[9],
-		Z: v.X*m[2] + v.Y*m[6] + v.Z*m[10],
-		W: v.W,
+func (v vector4[T]) TransformDirection(m Matrix) Vector4 {
+	return vector4[T]{
+		x: v.x*T(m[0]) + v.y*T(m[4]) + v.z*T(m[8]),
+		y: v.x*T(m[1]) + v.y*T(m[5]) + v.z*T(m[9]),
+		z: v.x*T(m[2]) + v.y*T(m[6]) + v.z*T(m[10]),
+		w: v.w, // Direction vectors do not change w
 	}
 }
 
 // String returns a string representation of the vector, like "(1, 2, 3, 4)".
-func (v Vector4[T]) String() string {
-	return "(" + ToString(v.X) + ", " + ToString(v.Y) + ", " + ToString(v.Z) + ", " + ToString(v.W) + ")"
+func (v vector4[T]) String() string {
+	return "(" + ToString(v.x) + ", " + ToString(v.y) + ", " + ToString(v.z) + ", " + ToString(v.w) + ")"
 }

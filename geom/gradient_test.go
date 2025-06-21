@@ -190,7 +190,7 @@ func TestLinearGradient_ToBuffer_EmptyStops(t *testing.T) {
 }
 
 func TestNewRadialGradient(t *testing.T) {
-	center := Point[Scalar]{0.5, 0.5}
+	center := NewPoint(0.5, 0.5)
 	radius := Scalar(1.0)
 	stops := []GradientStop{
 		{Color: ColorWhite(), Position: 0.0},
@@ -213,7 +213,7 @@ func TestNewRadialGradient(t *testing.T) {
 }
 
 func TestRadialGradient_ToBuffer(t *testing.T) {
-	center := Point[Scalar]{0, 0}
+	center := NewPoint(0, 0)
 	stops := []GradientStop{
 		{Color: ColorRed(), Position: 0.0},
 		{Color: ColorBlue(), Position: 1.0},

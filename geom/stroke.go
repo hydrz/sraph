@@ -20,7 +20,7 @@ const (
 
 // StrokeStyle describes how to render the outline of a path or shape.
 // The zero value is valid and represents a stroke with zero width and default join/cap styles.
-type StrokeStyle[T TScalar] struct {
+type StrokeStyle[T Number] struct {
 	Width      T          // Stroke width.
 	Cap        StrokeCap  // End cap style.
 	Join       StrokeJoin // Join style between segments.

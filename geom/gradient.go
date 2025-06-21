@@ -32,13 +32,13 @@ func (lg LinearGradient) ToBuffer() GradientData {
 
 // RadialGradient defines a radial gradient by center, radius, and color stops.
 type RadialGradient struct {
-	Center Point[Scalar] // Center of the radial gradient.
-	Radius Scalar        // Radius of the radial gradient.
+	Center Point  // Center of the radial gradient.
+	Radius Scalar // Radius of the radial gradient.
 	Stops  []GradientStop
 }
 
 // NewRadialGradient returns a RadialGradient with the given center, radius, and stops.
-func NewRadialGradient(center Point[Scalar], radius Scalar, stops []GradientStop) RadialGradient {
+func NewRadialGradient(center Point, radius Scalar, stops []GradientStop) RadialGradient {
 	return RadialGradient{
 		Center: center,
 		Radius: radius,
@@ -83,7 +83,7 @@ func CreateGradientBuffer(colors []Color, stops []Scalar) GradientData {
 	if len(stops) == 2 {
 		textureSize = uint32(len(colors))
 	} else {
-		minimumDelta := Scalar(1.0)
+		minimumDelta := Scalar(1.0) // Minimum delta between stops.
 		for i := 1; i < len(stops); i++ {
 			value := stops[i] - stops[i-1]
 			if value < 0.0001 {

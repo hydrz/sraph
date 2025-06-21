@@ -24,11 +24,11 @@ import (
 //
 //	https://learn.microsoft.com/zh-cn/windows/win32/learnwin32/appendix--matrix-transforms
 //	https://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
-type Matrix[T TScalar] [16]T
+type Matrix [16]Scalar
 
 // NewMatrix returns an identity matrix that applies no transformation.
-func NewMatrix[T TScalar]() Matrix[T] {
-	return Matrix[T]{
+func NewMatrix() Matrix {
+	return Matrix{
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
@@ -37,20 +37,21 @@ func NewMatrix[T TScalar]() Matrix[T] {
 }
 
 // At returns the matrix element at the specified row and column (0-based indices).
-func (m Matrix[T]) At(row int, col int) T {
+func (m Matrix) At(row int, col int) Scalar {
 	// Column-major order: index = col*4 + row
 	return m[col*4+row]
 }
 
 // Set modifies the matrix element at the specified row and column (0-based indices).
-func (m *Matrix[T]) Set(row int, col int, value T) {
+// Note: This creates a copy, so modifications won't persist. Use a pointer for persistent changes.
+func (m *Matrix) Set(row int, col int, value Scalar) {
 	m[col*4+row] = value
 }
 
 // Add returns the element-wise sum of two matrices.
-func (m Matrix[T]) Add(other Matrix[T]) Matrix[T] {
+func (m Matrix) Add(other Matrix) Matrix {
 	o := other
-	return Matrix[T]{
+	return Matrix{
 		m[0] + o[0], m[1] + o[1], m[2] + o[2], m[3] + o[3],
 		m[4] + o[4], m[5] + o[5], m[6] + o[6], m[7] + o[7],
 		m[8] + o[8], m[9] + o[9], m[10] + o[10], m[11] + o[11],
@@ -59,9 +60,9 @@ func (m Matrix[T]) Add(other Matrix[T]) Matrix[T] {
 }
 
 // Sub returns the element-wise difference of two matrices.
-func (m Matrix[T]) Sub(other Matrix[T]) Matrix[T] {
+func (m Matrix) Sub(other Matrix) Matrix {
 	o := other
-	return Matrix[T]{
+	return Matrix{
 		m[0] - o[0], m[1] - o[1], m[2] - o[2], m[3] - o[3],
 		m[4] - o[4], m[5] - o[5], m[6] - o[6], m[7] - o[7],
 		m[8] - o[8], m[9] - o[9], m[10] - o[10], m[11] - o[11],
@@ -70,8 +71,9 @@ func (m Matrix[T]) Sub(other Matrix[T]) Matrix[T] {
 }
 
 // Mul returns the matrix product of two matrices (standard matrix multiplication).
-func (m Matrix[T]) Mul(o Matrix[T]) Matrix[T] {
-	return Matrix[T]{
+func (m Matrix) Mul(other Matrix) Matrix {
+	o := other
+	return Matrix{
 		m[0]*o[0] + m[4]*o[1] + m[8]*o[2] + m[12]*o[3],
 		m[1]*o[0] + m[5]*o[1] + m[9]*o[2] + m[13]*o[3],
 		m[2]*o[0] + m[6]*o[1] + m[10]*o[2] + m[14]*o[3],
@@ -92,8 +94,7 @@ func (m Matrix[T]) Mul(o Matrix[T]) Matrix[T] {
 }
 
 // Equal reports whether two matrices are approximately equal within floating-point tolerance.
-// This method uses NearlyEqual for each element comparison to handle floating-point precision issues.
-func (m Matrix[T]) Equal(other Matrix[T]) bool {
+func (m Matrix) Equal(other Matrix) bool {
 	o := other
 	for i := 0; i < 16; i++ {
 		if !NearlyEqual(m[i], o[i]) {
@@ -104,8 +105,7 @@ func (m Matrix[T]) Equal(other Matrix[T]) bool {
 }
 
 // IsFinite reports whether all matrix elements are finite numbers.
-// Returns false if any element is NaN or infinite, which indicates numerical instability.
-func (m Matrix[T]) IsFinite() bool {
+func (m Matrix) IsFinite() bool {
 	for i := 0; i < 16; i++ {
 		if !IsFinite(m[i]) {
 			return false
@@ -115,17 +115,14 @@ func (m Matrix[T]) IsFinite() bool {
 }
 
 // IsAffine reports whether the matrix represents an affine transformation.
-// Affine transformations preserve parallel lines and include translation, rotation,
-// scaling, and shearing, but exclude perspective projection.
-func (m Matrix[T]) IsAffine() bool {
+func (m Matrix) IsAffine() bool {
 	return NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
 		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && NearlyEqual(m[10], 1) && NearlyEqual(m[11], 0) &&
 		NearlyEqual(m[14], 0) && NearlyEqual(m[15], 1)
 }
 
 // IsIdentity reports whether the matrix is an identity matrix.
-// Identity matrices apply no transformation to points or vectors.
-func (m Matrix[T]) IsIdentity() bool {
+func (m Matrix) IsIdentity() bool {
 	return NearlyEqual(m[0], 1) && NearlyEqual(m[1], 0) && NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) &&
 		NearlyEqual(m[4], 0) && NearlyEqual(m[5], 1) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
 		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && NearlyEqual(m[10], 1) && NearlyEqual(m[11], 0) &&
@@ -133,13 +130,10 @@ func (m Matrix[T]) IsIdentity() bool {
 }
 
 // IsInvertible reports whether the matrix can be inverted.
-// A matrix is invertible if and only if its determinant is non-zero.
-func (m Matrix[T]) IsInvertible() bool { return m.Determinant() != 0 }
+func (m Matrix) IsInvertible() bool { return m.Determinant() != 0 }
 
 // Determinant returns the determinant of the matrix.
-// The determinant indicates the scaling factor of the transformation and whether
-// it preserves (positive) or reverses (negative) orientation.
-func (m Matrix[T]) Determinant() T {
+func (m Matrix) Determinant() Scalar {
 	a00, a01, a02, a03 := m[0], m[1], m[2], m[3]
 	a10, a11, a12, a13 := m[4], m[5], m[6], m[7]
 	a20, a21, a22, a23 := m[8], m[9], m[10], m[11]
@@ -162,27 +156,22 @@ func (m Matrix[T]) Determinant() T {
 }
 
 // HasPerspective reports whether the matrix contains perspective projection.
-// Perspective transformations cause parallel lines to converge at vanishing points.
-func (m Matrix[T]) HasPerspective() bool {
+func (m Matrix) HasPerspective() bool {
 	return !NearlyEqual(m[3], 0) || !NearlyEqual(m[7], 0) || !NearlyEqual(m[11], 0) || !NearlyEqual(m[15], 1)
 }
 
 // HasPerspective2D reports whether the matrix contains 2D perspective transformation.
-// This affects the homogeneous coordinate in 2D transformations.
-func (m Matrix[T]) HasPerspective2D() bool {
+func (m Matrix) HasPerspective2D() bool {
 	return !NearlyEqual(m[3], 0) || !NearlyEqual(m[7], 0) || !NearlyEqual(m[15], 1)
 }
 
 // HasTranslation reports whether the matrix contains translation components.
-// Translation moves points by adding a constant vector to their coordinates.
-func (m Matrix[T]) HasTranslation() bool {
+func (m Matrix) HasTranslation() bool {
 	return !NearlyEqual(m[12], 0) || !NearlyEqual(m[13], 0)
 }
 
 // IsAxisAligned reports whether the matrix transformation is axis-aligned.
-// Axis-aligned transformations have basis vectors aligned with coordinate axes,
-// containing only translation and non-uniform scaling but no rotation or shear.
-func (m Matrix[T]) IsAxisAligned() bool {
+func (m Matrix) IsAxisAligned() bool {
 	if m.HasPerspective() {
 		return false
 	}
@@ -219,8 +208,7 @@ func (m Matrix[T]) IsAxisAligned() bool {
 }
 
 // IsAxisAligned2D reports whether the matrix is axis-aligned in the XY plane.
-// Returns true if the transformation contains only translation and axis-aligned scaling in 2D.
-func (m Matrix[T]) IsAxisAligned2D() bool {
+func (m Matrix) IsAxisAligned2D() bool {
 	if m.HasPerspective2D() {
 		return false
 	}
@@ -235,8 +223,7 @@ func (m Matrix[T]) IsAxisAligned2D() bool {
 }
 
 // IsTranslationOnly reports whether the matrix contains only translation.
-// Returns true if the matrix represents pure translation without scaling, rotation, or perspective.
-func (m Matrix[T]) IsTranslationOnly() bool {
+func (m Matrix) IsTranslationOnly() bool {
 	return NearlyEqual(m[0], 1) && NearlyEqual(m[1], 0) && NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) &&
 		NearlyEqual(m[4], 0) && NearlyEqual(m[5], 1) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
 		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && NearlyEqual(m[10], 1) && NearlyEqual(m[11], 0) &&
@@ -244,8 +231,7 @@ func (m Matrix[T]) IsTranslationOnly() bool {
 }
 
 // IsTranslationScaleOnly reports whether the matrix contains only translation and uniform scaling.
-// Returns true if the matrix represents translation and scaling without rotation, shear, or perspective.
-func (m Matrix[T]) IsTranslationScaleOnly() bool {
+func (m Matrix) IsTranslationScaleOnly() bool {
 	return !NearlyEqual(m[0], 0) && NearlyEqual(m[1], 0) && NearlyEqual(m[2], 0) && NearlyEqual(m[3], 0) &&
 		NearlyEqual(m[4], 0) && !NearlyEqual(m[5], 0) && NearlyEqual(m[6], 0) && NearlyEqual(m[7], 0) &&
 		NearlyEqual(m[8], 0) && NearlyEqual(m[9], 0) && !NearlyEqual(m[10], 0) && NearlyEqual(m[11], 0) &&
@@ -253,8 +239,8 @@ func (m Matrix[T]) IsTranslationScaleOnly() bool {
 }
 
 // Transpose returns the transpose of the matrix (rows become columns).
-func (m Matrix[T]) Transpose() Matrix[T] {
-	return Matrix[T]{
+func (m Matrix) Transpose() Matrix {
+	return Matrix{
 		m[0], m[4], m[8], m[12],
 		m[1], m[5], m[9], m[13],
 		m[2], m[6], m[10], m[14],
@@ -263,10 +249,8 @@ func (m Matrix[T]) Transpose() Matrix[T] {
 }
 
 // Invert returns the inverse matrix that undoes this transformation.
-// Returns a zero matrix if the matrix is not invertible (determinant is zero).
-// The inverse satisfies: m.Mul(m.Invert()).IsIdentity() == true for invertible matrices.
-func (m Matrix[T]) Invert() Matrix[T] {
-	tmp := Matrix[T]{
+func (m Matrix) Invert() Matrix {
+	tmp := Matrix{
 		m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15] + m[9]*m[7]*m[14] + m[13]*m[6]*m[11] - m[13]*m[7]*m[10],
 		-m[1]*m[10]*m[15] + m[1]*m[11]*m[14] + m[9]*m[2]*m[15] - m[9]*m[3]*m[14] - m[13]*m[2]*m[11] + m[13]*m[3]*m[10],
 		m[1]*m[6]*m[15] - m[1]*m[7]*m[14] - m[5]*m[2]*m[15] + m[5]*m[3]*m[14] + m[13]*m[2]*m[7] - m[13]*m[3]*m[6],
@@ -288,12 +272,12 @@ func (m Matrix[T]) Invert() Matrix[T] {
 	det := m[0]*tmp[0] + m[1]*tmp[4] + m[2]*tmp[8] + m[3]*tmp[12]
 
 	if det == 0 {
-		return Matrix[T]{}
+		return Matrix{}
 	}
 
 	det = 1 / det
 
-	return Matrix[T]{
+	return Matrix{
 		tmp[0] * det, tmp[1] * det, tmp[2] * det, tmp[3] * det,
 		tmp[4] * det, tmp[5] * det, tmp[6] * det, tmp[7] * det,
 		tmp[8] * det, tmp[9] * det, tmp[10] * det, tmp[11] * det,
@@ -302,10 +286,8 @@ func (m Matrix[T]) Invert() Matrix[T] {
 }
 
 // To3x3 returns a 3x3 matrix containing the upper-left 3x3 portion.
-// This extracts the linear transformation components (rotation, scaling, shearing)
-// while removing translation and perspective effects.
-func (m Matrix[T]) To3x3() Matrix[T] {
-	return Matrix[T]{
+func (m Matrix) To3x3() Matrix {
+	return Matrix{
 		m[0], m[1], 0, m[3],
 		m[4], m[5], 0, m[7],
 		0, 0, 1, 0,
@@ -314,9 +296,8 @@ func (m Matrix[T]) To3x3() Matrix[T] {
 }
 
 // ToColumnMajor returns the matrix elements in column-major order.
-// This is the default storage format used by this Matrix type.
-func (m Matrix[T]) ToColumnMajor() Matrix[T] {
-	return Matrix[T]{
+func (m Matrix) ToColumnMajor() Matrix {
+	return Matrix{
 		m[0], m[4], m[8], m[12],
 		m[1], m[5], m[9], m[13],
 		m[2], m[6], m[10], m[14],
@@ -325,9 +306,8 @@ func (m Matrix[T]) ToColumnMajor() Matrix[T] {
 }
 
 // ToRowMajor returns the matrix elements in row-major order.
-// This format is used by some graphics APIs and mathematical libraries.
-func (m Matrix[T]) ToRowMajor() Matrix[T] {
-	return Matrix[T]{
+func (m Matrix) ToRowMajor() Matrix {
+	return Matrix{
 		m[0], m[1], m[2], m[3],
 		m[4], m[5], m[6], m[7],
 		m[8], m[9], m[10], m[11],
@@ -336,9 +316,8 @@ func (m Matrix[T]) ToRowMajor() Matrix[T] {
 }
 
 // Base returns the matrix with translation components removed.
-// The resulting matrix contains only the linear transformation (rotation, scaling, shearing).
-func (m Matrix[T]) Base() Matrix[T] {
-	return Matrix[T]{
+func (m Matrix) Base() Matrix {
+	return Matrix{
 		m[0], m[1], m[2], 0,
 		m[4], m[5], m[6], 0,
 		m[8], m[9], m[10], 0,
@@ -347,126 +326,117 @@ func (m Matrix[T]) Base() Matrix[T] {
 }
 
 // BasisPoints returns the 2D basis vectors as points.
-// This represents how the coordinate axes are transformed in 2D space.
-func (m Matrix[T]) BasisPoints() []Point[T] {
-	return []Point[T]{
-		{m[0], m[1]}, // X basis
-		{m[4], m[5]}, // Y basis
-		{m[8], m[9]}, // Z basis (projected to 2D)
+func (m Matrix) BasisPoints() []Point {
+	return []Point{
+		NewPoint(m[0], m[1]), // X basis
+		NewPoint(m[4], m[5]), // Y basis
+		NewPoint(m[8], m[9]), // Z basis (projected to 2D)
 	}
 }
 
 // BasisVectors returns the 3D basis vectors representing the transformed coordinate axes.
-// Index 0: transformed X-axis, Index 1: transformed Y-axis, Index 2: transformed Z-axis.
-func (m Matrix[T]) BasisVectors() []Vector3[T] {
-	return []Vector3[T]{
-		{m[0], m[1], m[2]},  // X basis
-		{m[4], m[5], m[6]},  // Y basis
-		{m[8], m[9], m[10]}, // Z basis
+func (m Matrix) BasisVectors() []Vector3 {
+	return []Vector3{
+		NewVector3(m[0], m[1], m[2]),  // X basis
+		NewVector3(m[4], m[5], m[6]),  // Y basis
+		NewVector3(m[8], m[9], m[10]), // Z basis
 	}
 }
 
 // MaxBasisLengthXY returns the maximum scaling factor in the XY plane.
-// For translation/scale matrices, this directly returns the maximum scale factor.
-// For complex transformations, this computes the maximum length of the basis vectors.
-func (m Matrix[T]) MaxBasisLengthXY() T {
+func (m Matrix) MaxBasisLengthXY() Scalar {
 	if NearlyEqual(m[1], 0) && NearlyEqual(m[4], 0) {
 		return max(Abs(m[0]), Abs(m[5]))
 	}
 
-	return T(math.Sqrt(ToFloat64(
+	return Scalar(math.Sqrt(ToFloat64(
 		max(m[0]*m[0]+m[1]*m[1], m[4]*m[4]+m[5]*m[5]),
 	)))
 }
 
 // BasisX returns the transformed X-axis basis vector.
-func (m Matrix[T]) BasisX() Vector3[T] { return Vector3[T]{m[0], m[1], m[2]} }
+func (m Matrix) BasisX() Vector3 { return NewVector3(m[0], m[1], m[2]) }
 
 // BasisY returns the transformed Y-axis basis vector.
-func (m Matrix[T]) BasisY() Vector3[T] { return Vector3[T]{m[4], m[5], m[6]} }
+func (m Matrix) BasisY() Vector3 { return NewVector3(m[4], m[5], m[6]) }
 
 // BasisZ returns the transformed Z-axis basis vector.
-func (m Matrix[T]) BasisZ() Vector3[T] { return Vector3[T]{m[8], m[9], m[10]} }
+func (m Matrix) BasisZ() Vector3 { return NewVector3(m[8], m[9], m[10]) }
 
 // GetScale returns the scaling factors along each axis.
-// For matrices containing rotation, this returns the length of each basis vector.
-func (m Matrix[T]) GetScale() Vector3[T] {
-	basisX := Vector3[T]{m[0], m[1], m[2]}
-	basisY := Vector3[T]{m[4], m[5], m[6]}
-	basisZ := Vector3[T]{m[8], m[9], m[10]}
-	return Vector3[T]{basisX.Length(), basisY.Length(), basisZ.Length()}
+func (m Matrix) GetScale() Vector3 {
+	basisX := NewVector3(m[0], m[1], m[2])
+	basisY := NewVector3(m[4], m[5], m[6])
+	basisZ := NewVector3(m[8], m[9], m[10])
+	return NewVector3(basisX.Length(), basisY.Length(), basisZ.Length())
 }
 
 // GetDirectionScale returns the scaling factor applied to vectors in the specified direction.
-// This is useful for anisotropic filtering and directional scaling analysis.
-func (m Matrix[T]) GetDirectionScale(dir Vector3[T]) T {
+func (m Matrix) GetDirectionScale(dir Vector3) Scalar {
 	return 1 / dir.Normalize().Transform(m.Base().Invert()).Length() * dir.Length()
 }
 
 // Scale returns a new matrix with scaling transformation applied.
-// Accepts Scalar (uniform scaling), Vector2 (2D scaling), or Vector3 (3D scaling).
-func (m Matrix[T]) Scale(s any) Matrix[T] {
-	var v Vector3[T]
+func (m Matrix) Scale(s any) Matrix {
+	var v Vector3
 	switch s := s.(type) {
-	case T:
-		v = Vector3[T]{s, s, s}
-	case Vector2[T]:
-		v = Vector3[T]{s.X, s.Y, 1}
-	case Vector3[T]:
+	case Scalar:
+		v = NewVector3(s, s, s)
+	case Vector2:
+		v = NewVector3(s.X(), s.Y(), 1)
+	case Vector3:
 		v = s
 	default:
 		panic("unsupported type for Scale: must be Scalar, Vector2, or Vector3")
 	}
-	sm := Matrix[T]{
-		v.X, 0, 0, 0,
-		0, v.Y, 0, 0,
-		0, 0, v.Z, 0,
+	sm := Matrix{
+		v.X(), 0, 0, 0,
+		0, v.Y(), 0, 0,
+		0, 0, v.Z(), 0,
 		0, 0, 0, 1,
 	}
 	return m.Mul(sm)
 }
 
 // Translate returns a new matrix with translation transformation applied.
-// Accepts Scalar (uniform translation), Vector2 (2D translation), or Vector3 (3D translation).
-func (m Matrix[T]) Translate(t any) Matrix[T] {
-	var v Vector3[T]
+func (m Matrix) Translate(t any) Matrix {
+	var v Vector3
 	switch t := t.(type) {
-	case T:
-		v = Vector3[T]{t, t, t}
-	case Vector2[T]:
-		v = Vector3[T]{t.X, t.Y, 0}
-	case Vector3[T]:
+	case Scalar:
+		v = NewVector3(t, t, t)
+	case Vector2:
+		v = NewVector3(t.X(), t.Y(), 0)
+	case Vector3:
 		v = t
 	default:
 		panic("unsupported type for Translate: must be Scalar, Vector2, or Vector3")
 	}
-	tm := Matrix[T]{
+	tm := Matrix{
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
-		v.X, v.Y, v.Z, 1,
+		v.X(), v.Y(), v.Z(), 1,
 	}
 	return m.Mul(tm)
 }
 
 // Skew returns a new matrix with shear transformation applied.
-// Accepts Scalar (uniform shear), Vector2 (2D shear), or Vector3 (3D shear).
-func (m Matrix[T]) Skew(s any) Matrix[T] {
-	var v Vector3[T]
+func (m Matrix) Skew(s any) Matrix {
+	var v Vector3
 	switch s := s.(type) {
-	case T:
-		v = Vector3[T]{s, s, s}
-	case Vector2[T]:
-		v = Vector3[T]{s.X, s.Y, 0}
-	case Vector3[T]:
+	case Scalar:
+		v = NewVector3(s, s, s)
+	case Vector2:
+		v = NewVector3(s.X(), s.Y(), 0)
+	case Vector3:
 		v = s
 	default:
 		panic("unsupported type for Skew: must be Scalar, Vector2, or Vector3")
 	}
 
-	sm := Matrix[T]{
-		1, v.Y, 0, 0,
-		v.X, 1, 0, 0,
+	sm := Matrix{
+		1, v.Y(), 0, 0,
+		v.X(), 1, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1,
 	}
@@ -474,9 +444,9 @@ func (m Matrix[T]) Skew(s any) Matrix[T] {
 }
 
 // RotateX returns a new matrix with rotation around the X-axis applied.
-func (m Matrix[T]) RotateX(angle Radians) Matrix[T] {
+func (m Matrix) RotateX(angle Radians) Matrix {
 	cos, sin := m.CosSin(angle)
-	rot := Matrix[T]{
+	rot := Matrix{
 		1, 0, 0, 0,
 		0, cos, sin, 0,
 		0, -sin, cos, 0,
@@ -486,9 +456,9 @@ func (m Matrix[T]) RotateX(angle Radians) Matrix[T] {
 }
 
 // RotateY returns a new matrix with rotation around the Y-axis applied.
-func (m Matrix[T]) RotateY(angle Radians) Matrix[T] {
+func (m Matrix) RotateY(angle Radians) Matrix {
 	cos, sin := m.CosSin(angle)
-	rot := Matrix[T]{
+	rot := Matrix{
 		cos, 0, -sin, 0,
 		0, 1, 0, 0,
 		sin, 0, cos, 0,
@@ -498,9 +468,9 @@ func (m Matrix[T]) RotateY(angle Radians) Matrix[T] {
 }
 
 // RotateZ returns a new matrix with rotation around the Z-axis applied.
-func (m Matrix[T]) RotateZ(angle Radians) Matrix[T] {
+func (m Matrix) RotateZ(angle Radians) Matrix {
 	cos, sin := m.CosSin(angle)
-	rot := Matrix[T]{
+	rot := Matrix{
 		cos, sin, 0, 0,
 		-sin, cos, 0, 0,
 		0, 0, 1, 0,
@@ -510,23 +480,22 @@ func (m Matrix[T]) RotateZ(angle Radians) Matrix[T] {
 }
 
 // Rotate returns a new matrix with rotation around an arbitrary axis applied.
-// Uses Rodrigues' rotation formula. The axis vector should be normalized.
-func (m Matrix[T]) Rotate(angle Radians, axis Vector3[T]) Matrix[T] {
+func (m Matrix) Rotate(angle Radians, axis Vector3) Matrix {
 	v := axis.Normalize()
 	cos, sin := m.CosSin(angle)
 	cosp := 1 - cos
-	rm := Matrix[T]{
-		cos + cosp*v.X*v.X,
-		cosp*v.X*v.Y + v.Z*sin,
-		cosp*v.X*v.Z - v.Y*sin,
+	rm := Matrix{
+		cos + cosp*v.X()*v.X(),
+		cosp*v.X()*v.Y() + v.Z()*sin,
+		cosp*v.X()*v.Z() - v.Y()*sin,
 		0,
-		cosp*v.X*v.Y - v.Z*sin,
-		cos + cosp*v.Y*v.Y,
-		cosp*v.Y*v.Z + v.X*sin,
+		cosp*v.X()*v.Y() - v.Z()*sin,
+		cos + cosp*v.Y()*v.Y(),
+		cosp*v.Y()*v.Z() + v.X()*sin,
 		0,
-		cosp*v.X*v.Z + v.Y*sin,
-		cosp*v.Y*v.Z - v.X*sin,
-		cos + cosp*v.Z*v.Z,
+		cosp*v.X()*v.Z() + v.Y()*sin,
+		cosp*v.Y()*v.Z() - v.X()*sin,
+		cos + cosp*v.Z()*v.Z(),
 		0,
 		0, 0, 0, 1,
 	}
@@ -534,10 +503,9 @@ func (m Matrix[T]) Rotate(angle Radians, axis Vector3[T]) Matrix[T] {
 }
 
 // RotateQuat returns a new matrix with rotation from a quaternion applied.
-// The quaternion should be normalized before calling this method.
-func (m Matrix[T]) RotateQuat(quat Quaternion[T]) Matrix[T] {
-	x, y, z, w := quat.X, quat.Y, quat.Z, quat.W
-	rm := Matrix[T]{
+func (m Matrix) RotateQuat(quat Quaternion) Matrix {
+	x, y, z, w := quat.X(), quat.Y(), quat.Z(), quat.W()
+	rm := Matrix{
 		1 - 2*(y*y+z*z), 2 * (x*y + z*w), 2 * (x*z - y*w), 0,
 		2 * (x*y - z*w), 1 - 2*(x*x+z*z), 2 * (y*z + x*w), 0,
 		2 * (x*z + y*w), 2 * (y*z - x*w), 1 - 2*(x*x+y*y), 0,
@@ -547,40 +515,37 @@ func (m Matrix[T]) RotateQuat(quat Quaternion[T]) Matrix[T] {
 }
 
 // Orthographic returns a new matrix with orthographic projection applied.
-// Maps the rectangle [0, width] × [0, height] to NDC coordinates [-1, 1].
-func (m Matrix[T]) Orthographic(size Size[T]) Matrix[T] {
-	om := Matrix[T]{
-		2 / size.Width, 0, 0, 0,
-		0, 2 / size.Height, 0, 0,
+func (m Matrix) Orthographic(size Size) Matrix {
+	om := Matrix{
+		2 / size.Width(), 0, 0, 0,
+		0, 2 / size.Height(), 0, 0,
 		0, 0, 1, 0,
-		-1, 1, T(1) / T(2), 1,
+		-1, 1, 0.5, 1,
 	}
 	return m.Mul(om)
 }
 
 // LookAt returns a new matrix with view transformation applied.
-// Creates a camera view matrix that looks from position toward target with the specified up vector.
-func (m Matrix[T]) LookAt(position, target, up Vector3[T]) Matrix[T] {
+func (m Matrix) LookAt(position, target, up Vector3) Matrix {
 	forward := target.Sub(position).Normalize()
 	right := up.Cross(forward)
 	upNorm := forward.Cross(right)
 
-	lm := Matrix[T]{
-		right.X, upNorm.X, forward.X, 0,
-		right.Y, upNorm.Y, forward.Y, 0,
-		right.Z, upNorm.Z, forward.Z, 0,
+	lm := Matrix{
+		right.X(), upNorm.X(), forward.X(), 0,
+		right.Y(), upNorm.Y(), forward.Y(), 0,
+		right.Z(), upNorm.Z(), forward.Z(), 0,
 		-right.Dot(position), -upNorm.Dot(position), -forward.Dot(position), 1,
 	}
 	return m.Mul(lm)
 }
 
 // Perspective returns a new matrix with perspective projection applied.
-// Creates a perspective projection matrix with the specified field of view, aspect ratio, and near/far planes.
-func (m Matrix[T]) Perspective(fovY Radians, aspectRatio, zNear, zFar T) Matrix[T] {
-	height := T(math.Tan(ToFloat64(fovY) * 0.5))
+func (m Matrix) Perspective(fovY Radians, aspectRatio, zNear, zFar Scalar) Matrix {
+	height := Scalar(math.Tan(ToFloat64(fovY) * 0.5))
 	width := height * aspectRatio
 
-	pm := Matrix[T]{
+	pm := Matrix{
 		1 / width, 0, 0, 0,
 		0, 1 / height, 0, 0,
 		0, 0, zFar / (zFar - zNear), 1,
@@ -590,32 +555,30 @@ func (m Matrix[T]) Perspective(fovY Radians, aspectRatio, zNear, zFar T) Matrix[
 }
 
 // PerspectiveSize returns a new matrix with perspective projection applied using viewport size.
-// Calculates aspect ratio from the provided size and applies perspective projection.
-func (m Matrix[T]) PerspectiveSize(fovY Radians, size Size[T], zNear, zFar T) Matrix[T] {
-	aspectRatio := size.Width / size.Height
+func (m Matrix) PerspectiveSize(fovY Radians, size Size, zNear, zFar Scalar) Matrix {
+	aspectRatio := size.Width() / size.Height()
 	return m.Perspective(fovY, aspectRatio, zNear, zFar)
 }
 
 // CosSin returns the cosine and sine of the given angle.
-// Optimizes for special angles (0°, 90°, 180°, 270°) to return exact values.
-func (m Matrix[T]) CosSin(angle Radians) (cos, sin T) {
-	sinVal := T(math.Sin(ToFloat64(angle)))
+func (m Matrix) CosSin(angle Radians) (cos, sin Scalar) {
+	sinVal := Scalar(math.Sin(ToFloat64(angle)))
 	if math.Abs(ToFloat64(sinVal)) == 1.0 {
 		// 90 or 270 degrees
-		return T(0), sinVal
+		return 0, sinVal
 	}
 
 	cosVal := math.Cos(ToFloat64(angle))
 	if math.Abs(cosVal) == 1.0 {
 		// 0 or 180 degrees
-		return T(cosVal), T(0)
+		return Scalar(cosVal), 0
 	}
 
-	return T(cosVal), sinVal
+	return Scalar(cosVal), sinVal
 }
 
 // String returns a string representation of the matrix in a 4x4 grid format.
-func (m Matrix[T]) String() string {
+func (m Matrix) String() string {
 	return fmt.Sprintf(
 		"[%v %v %v %v]\n[%v %v %v %v]\n[%v %v %v %v]\n[%v %v %v %v]",
 		m[0], m[1], m[2], m[3],
@@ -626,15 +589,13 @@ func (m Matrix[T]) String() string {
 }
 
 // Decompose extracts the transformation components from the matrix.
-// Returns a MatrixDecomp containing translation, scale, shear, perspective, and rotation components.
-// Note: This implementation provides basic decomposition and may not handle all edge cases.
-func (m Matrix[T]) Decompose() MatrixDecomp[T] {
-	return MatrixDecomp[T]{
-		Translation: Vector3[T]{m[12], m[13], m[14]},
+func (m Matrix) Decompose() MatrixDecomp {
+	return MatrixDecomp{
+		Translation: NewVector3(m[12], m[13], m[14]),
 		Scale:       m.GetScale(),
-		Shear:       Shear[T]{XY: 0, XZ: 0, YZ: 0},
-		Perspective: Vector4[T]{0, 0, 0, 1},
-		Rotation:    Quaternion[T]{0, 0, 0, 1},
+		Shear:       NewShear(0, 0, 0),
+		Perspective: NewVector4(0, 0, 0, 1),
+		Rotation:    NewQuaternion(0, 0, 0, 1),
 	}
 }
 
@@ -650,40 +611,40 @@ const (
 )
 
 // MatrixDecomp represents the decomposed components of a transformation matrix.
-type MatrixDecomp[T TScalar] struct {
-	Translation Vector3[T]    // Translation vector
-	Scale       Vector3[T]    // Scale factors for each axis
-	Shear       Shear[T]      // Shear transformation parameters
-	Perspective Vector4[T]    // Perspective transformation parameters
-	Rotation    Quaternion[T] // Rotation as quaternion
+type MatrixDecomp struct {
+	Translation Vector3    // Translation vector
+	Scale       Vector3    // Scale factors for each axis
+	Shear       Shear      // Shear transformation parameters
+	Perspective Vector4    // Perspective transformation parameters
+	Rotation    Quaternion // Rotation as quaternion
 }
 
 // Mask returns a bitmask indicating which transformation components are present.
-func (md *MatrixDecomp[T]) Mask() MatrixFlags {
+func (md MatrixDecomp) Mask() MatrixFlags {
 	var mask MatrixFlags
 
 	// Check translation
-	if md.Translation.X != 0 || md.Translation.Y != 0 || md.Translation.Z != 0 {
+	if md.Translation.X() != 0 || md.Translation.Y() != 0 || md.Translation.Z() != 0 {
 		mask |= MatrixFlagsTranslation
 	}
 
 	// Check scale
-	if md.Scale.X != 1 || md.Scale.Y != 1 || md.Scale.Z != 1 {
+	if md.Scale.X() != 1 || md.Scale.Y() != 1 || md.Scale.Z() != 1 {
 		mask |= MatrixFlagsScale
 	}
 
 	// Check shear
-	if md.Shear.XY != 0 || md.Shear.XZ != 0 || md.Shear.YZ != 0 {
+	if md.Shear.XY() != 0 || md.Shear.XZ() != 0 || md.Shear.YZ() != 0 {
 		mask |= MatrixFlagsShear
 	}
 
 	// Check perspective
-	if md.Perspective.X != 0 || md.Perspective.Y != 0 || md.Perspective.Z != 0 || md.Perspective.W != 1 {
+	if md.Perspective.X() != 0 || md.Perspective.Y() != 0 || md.Perspective.Z() != 0 || md.Perspective.W() != 1 {
 		mask |= MatrixFlagsPerspective
 	}
 
 	// Check rotation (identity quaternion has W=1, others=0)
-	if md.Rotation.X != 0 || md.Rotation.Y != 0 || md.Rotation.Z != 0 || md.Rotation.W != 1 {
+	if md.Rotation.X() != 0 || md.Rotation.Y() != 0 || md.Rotation.Z() != 0 || md.Rotation.W() != 1 {
 		mask |= MatrixFlagsRotation
 	}
 

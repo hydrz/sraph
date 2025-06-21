@@ -1,197 +1,218 @@
 package geom
 
 import (
+	"fmt"
 	"math"
 )
 
-// Size represents a two-dimensional size with width and height.
-// Size is safe for concurrent use by multiple goroutines.
-type Size[T TScalar] struct {
-	Width, Height T
+// Size defines the interface for a two-dimensional size.
+// It provides methods for arithmetic operations, comparison, and property queries.
+type Size interface {
+	// Width returns the width component.
+	Width() Scalar
+	// Height returns the height component.
+	Height() Scalar
+
+	// Add returns the element-wise sum of this size and another.
+	Add(other Size) Size
+	// Sub returns the element-wise difference of this size and another.
+	Sub(other Size) Size
+	// Mul returns the element-wise product of this size and another.
+	Mul(other Size) Size
+	// Div returns the element-wise quotient of this size and another.
+	Div(other Size) Size
+	// Neg returns the negation of this size.
+	Neg() Size
+	// Equal reports whether this size and another are equal within floating-point tolerance.
+	Equal(other Size) bool
+
+	// Scale returns a size scaled by the given factor in both dimensions.
+	Scale(scale Scalar) Size
+	// ScaleWH returns a size scaled by width and height factors.
+	ScaleWH(width, height Scalar) Size
+	// MinDimension returns the smaller of width and height.
+	MinDimension() Scalar
+	// MaxDimension returns the larger of width and height.
+	MaxDimension() Scalar
+	// Area returns the area of the size (width * height).
+	Area() Scalar
+	// Abs returns a size with non-negative width and height.
+	Abs() Size
+	// Floor returns a size with width and height rounded down to the nearest integer.
+	Floor() Size
+	// Ceil returns a size with width and height rounded up to the nearest integer.
+	Ceil() Size
+	// Round returns a size with width and height rounded to the nearest integer.
+	Round() Size
+
+	// IsZero reports whether both width and height are zero.
+	IsZero() bool
+	// IsFinite reports whether both width and height are finite numbers.
+	IsFinite() bool
+	// IsInfinite reports whether either width or height is infinite.
+	IsInfinite() bool
+	// IsSquare reports whether width and height are equal within floating-point tolerance.
+	IsSquare() bool
+
+	// MipCount returns the number of mipmap levels for the size. The result is at least 1.
+	MipCount() int
+
+	// String returns the string representation of the size.
+	String() string
 }
 
-// NewSize returns a Size with the given width and height.
-func NewSize[T TScalar](width, height T) Size[T] {
-	return Size[T]{
-		Width:  width,
-		Height: height,
+func NewSize[T Number](width, height T) Size {
+	return size[T]{
+		width:  width,
+		height: height,
 	}
 }
 
-// Add returns the element-wise sum of s and other.
-func (s Size[T]) Add(other Size[T]) Size[T] {
-	return Size[T]{
-		Width:  s.Width + other.Width,
-		Height: s.Height + other.Height,
-	}
+// size represents a two-dimensional size with width and height.
+// size is safe for concurrent use by multiple goroutines.
+type size[T Number] struct {
+	width, height T
 }
 
-// Sub returns the element-wise difference of s and other.
-func (s Size[T]) Sub(other Size[T]) Size[T] {
-	return Size[T]{
-		Width:  s.Width - other.Width,
-		Height: s.Height - other.Height,
-	}
+// Width returns the width component.
+func (s size[T]) Width() Scalar {
+	return Scalar(s.width)
 }
 
-// Mul returns the element-wise product of s and other.
-func (s Size[T]) Mul(other Size[T]) Size[T] {
-	return Size[T]{
-		Width:  s.Width * other.Width,
-		Height: s.Height * other.Height,
-	}
+// Height returns the height component.
+func (s size[T]) Height() Scalar {
+	return Scalar(s.height)
 }
 
-// Div returns the element-wise quotient of s and other.
-func (s Size[T]) Div(other Size[T]) Size[T] {
-	return Size[T]{
-		Width:  s.Width / other.Width,
-		Height: s.Height / other.Height,
-	}
+// Add returns the element-wise sum of this size and another.
+func (s size[T]) Add(other Size) Size {
+	o := other.(size[T])
+	return size[T]{width: s.width + o.width, height: s.height + o.height}
 }
 
-// Neg returns the negation of s.
-func (s Size[T]) Neg() Size[T] {
-	return Size[T]{
-		Width:  -s.Width,
-		Height: -s.Height,
-	}
+// Sub returns the element-wise difference of this size and another.
+func (s size[T]) Sub(other Size) Size {
+	o := other.(size[T])
+	return size[T]{width: s.width - o.width, height: s.height - o.height}
 }
 
-// Scale returns a Size scaled by the given factor in both dimensions.
-func (s Size[T]) Scale(scale T) Size[T] {
-	return Size[T]{
-		Width:  s.Width * scale,
-		Height: s.Height * scale,
-	}
+// Mul returns the element-wise product of this size and another.
+func (s size[T]) Mul(other Size) Size {
+	o := other.(size[T])
+	return size[T]{width: s.width * o.width, height: s.height * o.height}
 }
 
-// ScaleWH returns a Size scaled by width and height factors.
-func (s Size[T]) ScaleWH(width, height T) Size[T] {
-	return Size[T]{
-		Width:  s.Width * width,
-		Height: s.Height * height,
-	}
+// Div returns the element-wise quotient of this size and another.
+func (s size[T]) Div(other Size) Size {
+	o := other.(size[T])
+	return size[T]{width: s.width / o.width, height: s.height / o.height}
 }
 
-// Equal reports whether s and o have equal width and height within floating-point tolerance.
-func (s Size[T]) Equal(o Size[T]) bool {
-	return NearlyEqual(s.Width, o.Width) && NearlyEqual(s.Height, o.Height)
+// Neg returns the negation of this size.
+func (s size[T]) Neg() Size {
+	return size[T]{width: -s.width, height: -s.height}
 }
 
-// Min returns a Size with the minimum width and height among s and all others.
-func (s Size[T]) Min(o ...Size[T]) Size[T] {
-	minW, minH := s.Width, s.Height
-	for _, other := range o {
-		if other.Width < minW {
-			minW = other.Width
-		}
-		if other.Height < minH {
-			minH = other.Height
-		}
-	}
-	return Size[T]{Width: minW, Height: minH}
+// Equal reports whether this size and another are equal within floating-point tolerance.
+func (s size[T]) Equal(other Size) bool {
+	o := other.(size[T])
+	return NearlyEqual(s.width, o.width) && NearlyEqual(s.height, o.height)
 }
 
-// Max returns a Size with the maximum width and height among s and all others.
-func (s Size[T]) Max(o ...Size[T]) Size[T] {
-	maxW, maxH := s.Width, s.Height
-	for _, other := range o {
-		if other.Width > maxW {
-			maxW = other.Width
-		}
-		if other.Height > maxH {
-			maxH = other.Height
-		}
-	}
-	return Size[T]{Width: maxW, Height: maxH}
+// Scale returns a size scaled by the given factor in both dimensions.
+func (s size[T]) Scale(scale Scalar) Size {
+	return size[T]{width: s.width * T(scale), height: s.height * T(scale)}
+}
+
+// ScaleWH returns a size scaled by width and height factors.
+func (s size[T]) ScaleWH(width Scalar, height Scalar) Size {
+	return size[T]{width: s.width * T(width), height: s.height * T(height)}
 }
 
 // MinDimension returns the smaller of width and height.
-func (s Size[T]) MinDimension() T {
-	if s.Width < s.Height {
-		return s.Width
+func (s size[T]) MinDimension() Scalar {
+	if s.width < s.height {
+		return Scalar(s.width)
 	}
-	return s.Height
+	return Scalar(s.height)
 }
 
 // MaxDimension returns the larger of width and height.
-func (s Size[T]) MaxDimension() T {
-	if s.Width > s.Height {
-		return s.Width
+func (s size[T]) MaxDimension() Scalar {
+	if s.width > s.height {
+		return Scalar(s.width)
 	}
-	return s.Height
+	return Scalar(s.height)
 }
 
 // Area returns the area of the size (width * height).
-func (s Size[T]) Area() T {
-	return s.Width * s.Height
+func (s size[T]) Area() Scalar {
+	return Scalar(s.width) * Scalar(s.height)
 }
 
-// Abs returns a Size with non-negative width and height.
-func (s Size[T]) Abs() Size[T] {
+// Abs returns a size with non-negative width and height.
+func (s size[T]) Abs() Size {
 	var zero T
-	w := s.Width
-	h := s.Height
+	w := s.width
+	h := s.height
 	if w < zero {
 		w = -w
 	}
 	if h < zero {
 		h = -h
 	}
-	return Size[T]{Width: w, Height: h}
+	return size[T]{width: w, height: h}
 }
 
-// Floor returns a Size with width and height rounded down to the nearest integer.
-func (s Size[T]) Floor() Size[T] {
-	return Size[T]{
-		Width:  T(math.Floor(ToFloat64(s.Width))),
-		Height: T(math.Floor(ToFloat64(s.Height))),
+// Floor returns a size with width and height rounded down to the nearest integer.
+func (s size[T]) Floor() Size {
+	return size[T]{
+		width:  T(math.Floor(float64(s.width))),
+		height: T(math.Floor(float64(s.height))),
 	}
 }
 
-// Ceil returns a Size with width and height rounded up to the nearest integer.
-func (s Size[T]) Ceil() Size[T] {
-	return Size[T]{
-		Width:  T(math.Ceil(ToFloat64(s.Width))),
-		Height: T(math.Ceil(ToFloat64(s.Height))),
+// Ceil returns a size with width and height rounded up to the nearest integer.
+func (s size[T]) Ceil() Size {
+	return size[T]{
+		width:  T(math.Ceil(float64(s.width))),
+		height: T(math.Ceil(float64(s.height))),
 	}
 }
 
-// Round returns a Size with width and height rounded to the nearest integer.
-func (s Size[T]) Round() Size[T] {
-	return Size[T]{
-		Width:  T(math.Round(ToFloat64(s.Width))),
-		Height: T(math.Round(ToFloat64(s.Height))),
+// Round returns a size with width and height rounded to the nearest integer.
+func (s size[T]) Round() Size {
+	return size[T]{
+		width:  T(math.Round(float64(s.width))),
+		height: T(math.Round(float64(s.height))),
 	}
 }
 
 // IsZero reports whether both width and height are zero.
-func (s Size[T]) IsZero() bool {
+func (s size[T]) IsZero() bool {
 	var zero T
-	return NearlyEqual(s.Width, zero) && NearlyEqual(s.Height, zero)
+	return NearlyEqual(s.width, zero) && NearlyEqual(s.height, zero)
 }
 
 // IsFinite reports whether both width and height are finite numbers.
-func (s Size[T]) IsFinite() bool {
-	return IsFinite(s.Width) && IsFinite(s.Height)
+func (s size[T]) IsFinite() bool {
+	return IsFinite(s.width) && IsFinite(s.height)
 }
 
 // IsInfinite reports whether either width or height is infinite.
-func (s Size[T]) IsInfinite() bool {
-	return math.IsInf(ToFloat64(s.Width), 0) || math.IsInf(ToFloat64(s.Height), 0)
+func (s size[T]) IsInfinite() bool {
+	return math.IsInf(ToFloat64(s.width), 0) || math.IsInf(ToFloat64(s.height), 0)
 }
 
 // IsSquare reports whether width and height are equal within floating-point tolerance.
-func (s Size[T]) IsSquare() bool {
-	return NearlyEqual(s.Width, s.Height)
+func (s size[T]) IsSquare() bool {
+	return NearlyEqual(s.width, s.height)
 }
 
-// MipCount returns the number of mipmap levels for the size.
-// The result is at least 1.
-func (s Size[T]) MipCount() int {
-	w := int(s.Width)
-	h := int(s.Height)
+// MipCount returns the number of mipmap levels for the size. The result is at least 1.
+func (s size[T]) MipCount() int {
+	w := int(s.width)
+	h := int(s.height)
 	count := 0
 	for w > 1 || h > 1 {
 		if w > 1 {
@@ -205,7 +226,7 @@ func (s Size[T]) MipCount() int {
 	return count + 1
 }
 
-// String returns the string representation of the size in the form "(width, height)".
-func (s Size[T]) String() string {
-	return "(" + ToString(s.Width) + ", " + ToString(s.Height) + ")"
+// String returns the string representation of the size.
+func (s size[T]) String() string {
+	return fmt.Sprintf("(%v, %v)", s.width, s.height)
 }

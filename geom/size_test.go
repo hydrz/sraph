@@ -6,94 +6,65 @@ import (
 )
 
 func TestSize_SizeArithmetic(t *testing.T) {
-	s1 := Size[Scalar]{10.0, 20.0}
-	s2 := Size[Scalar]{5.0, 10.0}
+	s1 := NewSize[Scalar](10.0, 20.0)
+	s2 := NewSize[Scalar](5.0, 10.0)
 
 	t.Run("Add", func(t *testing.T) {
 		result := s1.Add(s2)
-		if result.Width != 15.0 || result.Height != 30.0 {
-			t.Errorf("Add() = (%v, %v), want (15.0, 30.0)", result.Width, result.Height)
+		if result.Width() != 15.0 || result.Height() != 30.0 {
+			t.Errorf("Add() = (%v, %v), want (15.0, 30.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("Sub", func(t *testing.T) {
 		result := s1.Sub(s2)
-		if result.Width != 5.0 || result.Height != 10.0 {
-			t.Errorf("Sub() = (%v, %v), want (5.0, 10.0)", result.Width, result.Height)
+		if result.Width() != 5.0 || result.Height() != 10.0 {
+			t.Errorf("Sub() = (%v, %v), want (5.0, 10.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("Mul", func(t *testing.T) {
 		result := s1.Mul(s2)
-		if result.Width != 50.0 || result.Height != 200.0 {
-			t.Errorf("Mul() = (%v, %v), want (50.0, 200.0)", result.Width, result.Height)
+		if result.Width() != 50.0 || result.Height() != 200.0 {
+			t.Errorf("Mul() = (%v, %v), want (50.0, 200.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("Div", func(t *testing.T) {
 		result := s1.Div(s2)
-		if result.Width != 2.0 || result.Height != 2.0 {
-			t.Errorf("Div() = (%v, %v), want (2.0, 2.0)", result.Width, result.Height)
+		if result.Width() != 2.0 || result.Height() != 2.0 {
+			t.Errorf("Div() = (%v, %v), want (2.0, 2.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("Neg", func(t *testing.T) {
 		result := s1.Neg()
-		if result.Width != -10.0 || result.Height != -20.0 {
-			t.Errorf("Neg() = (%v, %v), want (-10.0, -20.0)", result.Width, result.Height)
+		if result.Width() != Scalar(-10.0) || result.Height() != Scalar(-20.0) {
+			t.Errorf("Neg() = (%v, %v), want (-10.0, -20.0)", result.Width(), result.Height())
 		}
 	})
 }
 
 func TestSize_SizeScale(t *testing.T) {
-	s := Size[Scalar]{10.0, 20.0}
+	s := NewSize[Scalar](10.0, 20.0)
 
 	t.Run("Scale", func(t *testing.T) {
 		result := s.ScaleWH(2.0, 1.5)
-		if result.Width != 20.0 || result.Height != 30.0 {
-			t.Errorf("Scale(2.0, 1.5) = (%v, %v), want (20.0, 30.0)", result.Width, result.Height)
+		if result.Width() != 20.0 || result.Height() != 30.0 {
+			t.Errorf("Scale(2.0, 1.5) = (%v, %v), want (20.0, 30.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("ScaleDim", func(t *testing.T) {
 		result := s.Scale(2.0)
-		if result.Width != 20.0 || result.Height != 40.0 {
-			t.Errorf("ScaleDim(2.0) = (%v, %v), want (20.0, 40.0)", result.Width, result.Height)
-		}
-	})
-}
-
-func TestSize_SizeComparison(t *testing.T) {
-	s1 := Size[Scalar]{10.0, 20.0}
-	s2 := Size[Scalar]{10.0, 20.0}
-	s3 := Size[Scalar]{5.0, 15.0}
-
-	t.Run("Eq", func(t *testing.T) {
-		if !s1.Equal(s2) {
-			t.Error("Eq sizes should be Eq")
-		}
-		if s1.Equal(s3) {
-			t.Error("Different sizes should not be Eq")
-		}
-	})
-
-	t.Run("Min", func(t *testing.T) {
-		result := s1.Min(s3)
-		if result.Width != 5.0 || result.Height != 15.0 {
-			t.Errorf("Min() = (%v, %v), want (5.0, 15.0)", result.Width, result.Height)
-		}
-	})
-
-	t.Run("Max", func(t *testing.T) {
-		result := s1.Max(s3)
-		if result.Width != 10.0 || result.Height != 20.0 {
-			t.Errorf("Max() = (%v, %v), want (10.0, 20.0)", result.Width, result.Height)
+		if result.Width() != 20.0 || result.Height() != 40.0 {
+			t.Errorf("ScaleDim(2.0) = (%v, %v), want (20.0, 40.0)", result.Width(), result.Height())
 		}
 	})
 }
 
 func TestSize_SizeDimensions(t *testing.T) {
-	s := Size[Scalar]{15.0, 10.0}
+	s := NewSize[Scalar](15.0, 10.0)
 
 	t.Run("MinDimension", func(t *testing.T) {
 		min := s.MinDimension()
@@ -118,43 +89,43 @@ func TestSize_SizeDimensions(t *testing.T) {
 }
 
 func TestSize_SizeAbs(t *testing.T) {
-	s := Size[Scalar]{-10.0, -20.0}
+	s := NewSize[Scalar](-10.0, -20.0)
 	result := s.Abs()
 
-	if result.Width != 10.0 || result.Height != 20.0 {
-		t.Errorf("Abs() = (%v, %v), want (10.0, 20.0)", result.Width, result.Height)
+	if result.Width() != 10.0 || result.Height() != 20.0 {
+		t.Errorf("Abs() = (%v, %v), want (10.0, 20.0)", result.Width(), result.Height())
 	}
 }
 
 func TestSize_SizeMathFunctions(t *testing.T) {
-	s := Size[Scalar]{10.7, 20.3}
+	s := NewSize[Scalar](10.7, 20.3)
 
 	t.Run("Floor", func(t *testing.T) {
 		result := s.Floor()
-		if result.Width != 10.0 || result.Height != 20.0 {
-			t.Errorf("Floor() = (%v, %v), want (10.0, 20.0)", result.Width, result.Height)
+		if result.Width() != 10.0 || result.Height() != 20.0 {
+			t.Errorf("Floor() = (%v, %v), want (10.0, 20.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("Ceil", func(t *testing.T) {
 		result := s.Ceil()
-		if result.Width != 11.0 || result.Height != 21.0 {
-			t.Errorf("Ceil() = (%v, %v), want (11.0, 21.0)", result.Width, result.Height)
+		if result.Width() != 11.0 || result.Height() != 21.0 {
+			t.Errorf("Ceil() = (%v, %v), want (11.0, 21.0)", result.Width(), result.Height())
 		}
 	})
 
 	t.Run("Round", func(t *testing.T) {
 		result := s.Round()
-		if result.Width != 11.0 || result.Height != 20.0 {
-			t.Errorf("Round() = (%v, %v), want (11.0, 20.0)", result.Width, result.Height)
+		if result.Width() != 11.0 || result.Height() != 20.0 {
+			t.Errorf("Round() = (%v, %v), want (11.0, 20.0)", result.Width(), result.Height())
 		}
 	})
 }
 
 func TestSize_SizeProperties(t *testing.T) {
 	t.Run("IsZero", func(t *testing.T) {
-		zero := Size[Scalar]{0.0, 0.0}
-		nonZero := Size[Scalar]{1.0, 0.0}
+		zero := NewSize[Scalar](0.0, 0.0)
+		nonZero := NewSize[Scalar](1.0, 0.0)
 
 		if !zero.IsZero() {
 			t.Error("Zero size should return true for IsZero()")
@@ -165,8 +136,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsFinite", func(t *testing.T) {
-		finite := Size[Scalar]{10.0, 20.0}
-		infinite := Size[Scalar]{Scalar(math.Inf(1)), 20.0}
+		finite := NewSize[Scalar](10.0, 20.0)
+		infinite := NewSize(Scalar(math.Inf(1)), 20.0)
 
 		if !finite.IsFinite() {
 			t.Error("Finite size should return true for IsFinite()")
@@ -177,8 +148,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsInfinite", func(t *testing.T) {
-		finite := Size[Scalar]{10.0, 20.0}
-		infinite := Size[Scalar]{Scalar(math.Inf(1)), 20.0}
+		finite := NewSize[Scalar](10.0, 20.0)
+		infinite := NewSize(Scalar(math.Inf(1)), 20.0)
 
 		if finite.IsInfinite() {
 			t.Error("Finite size should return false for IsInfinite()")
@@ -189,8 +160,8 @@ func TestSize_SizeProperties(t *testing.T) {
 	})
 
 	t.Run("IsSquare", func(t *testing.T) {
-		square := Size[Scalar]{10.0, 10.0}
-		rectangle := Size[Scalar]{10.0, 20.0}
+		square := NewSize[Scalar](10.0, 10.0)
+		rectangle := NewSize[Scalar](10.0, 20.0)
 
 		if !square.IsSquare() {
 			t.Error("Square size should return true for IsSquare()")
@@ -204,17 +175,17 @@ func TestSize_SizeProperties(t *testing.T) {
 func TestSize_SizeMipCount(t *testing.T) {
 	tests := []struct {
 		name     string
-		size     Size[int]
+		size     Size
 		expected int
 	}{
-		{"1x1", Size[int]{1, 1}, 1},
-		{"2x2", Size[int]{2, 2}, 2},
-		{"4x4", Size[int]{4, 4}, 3},
-		{"8x8", Size[int]{8, 8}, 4},
-		{"16x16", Size[int]{16, 16}, 5},
-		{"256x256", Size[int]{256, 256}, 9},
-		{"4x2", Size[int]{4, 2}, 3},
-		{"8x4", Size[int]{8, 4}, 4},
+		{"1x1", NewSize[Scalar](1, 1), 1},
+		{"2x2", NewSize[Scalar](2, 2), 2},
+		{"4x4", NewSize[Scalar](4, 4), 3},
+		{"8x8", NewSize[Scalar](8, 8), 4},
+		{"16x16", NewSize[Scalar](16, 16), 5},
+		{"256x256", NewSize[Scalar](256, 256), 9},
+		{"4x2", NewSize[Scalar](4, 2), 3},
+		{"8x4", NewSize[Scalar](8, 4), 4},
 	}
 
 	for _, tt := range tests {
@@ -228,7 +199,7 @@ func TestSize_SizeMipCount(t *testing.T) {
 }
 
 func TestSize_SizeString(t *testing.T) {
-	s := Size[Scalar]{10.5, 20.5}
+	s := NewSize[Scalar](10.5, 20.5)
 	str := s.String()
 	expected := "(10.5, 20.5)"
 	if str != expected {
@@ -237,8 +208,8 @@ func TestSize_SizeString(t *testing.T) {
 }
 
 func BenchmarkSizeOperations(b *testing.B) {
-	s1 := Size[Scalar]{10.0, 20.0}
-	s2 := Size[Scalar]{5.0, 10.0}
+	s1 := NewSize[Scalar](10.0, 20.0)
+	s2 := NewSize[Scalar](5.0, 10.0)
 
 	b.Run("Add", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

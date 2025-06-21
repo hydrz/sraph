@@ -300,32 +300,32 @@ func (c Color) Blend(src Color, mode BlendMode) Color {
 		return src.Premultiply().Mul(dst.Premultiply()).Unpremultiply()
 	case BlendModeScreen:
 		// Screen: s + d - s*d
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return s.Add(d).Sub(s.Mul(d))
 		})
 	case BlendModeOverlay:
 		// Overlay: same as HardLight but with src/dst reversed
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
-			screenSrc := d.Scale(2).Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1})
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
+			screenSrc := d.Scale(2).Sub(NewVector3(1, 1, 1))
 			screen := screenSrc.Add(s).Sub(screenSrc.Mul(s))
 			multiply := s.Mul(d.Scale(2))
 			return componentChoose(multiply, screen, d, 0.5)
 		})
 	case BlendModeDarken:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
-			return Vector3[Scalar]{
-				X: min(d.X, s.X),
-				Y: min(d.Y, s.Y),
-				Z: min(d.Z, s.Z),
-			}
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
+			return NewVector3(
+				min(d.X(), s.X()),
+				min(d.Y(), s.Y()),
+				min(d.Z(), s.Z()),
+			)
 		})
 	case BlendModeLighten:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
-			return Vector3[Scalar]{
-				X: max(d.X, s.X),
-				Y: max(d.Y, s.Y),
-				Z: max(d.Z, s.Z),
-			}
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
+			return NewVector3(
+				max(d.X(), s.X()),
+				max(d.Y(), s.Y()),
+				max(d.Z(), s.Z()),
+			)
 		})
 	case BlendModeColorDodge:
 		return doColorBlendComponents(dst, src, func(d, s Scalar) Scalar {
@@ -348,58 +348,60 @@ func (c Color) Blend(src Color, mode BlendMode) Color {
 			return 1.0 - min(1.0, (1.0-d)/s)
 		})
 	case BlendModeHardLight:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
-			screenSrc := s.Scale(2).Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1})
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
+			screenSrc := s.Scale(2).Sub(NewVector3(1, 1, 1))
 			screen := screenSrc.Add(d).Sub(screenSrc.Mul(d))
 			multiply := d.Mul(s.Scale(2))
 			return componentChoose(multiply, screen, s, 0.5)
 		})
 	case BlendModeSoftLight:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			D := componentChoose(
-				Vector3[Scalar]{
-					X: ((d.X*16-12)*d.X + 4) * d.X,
-					Y: ((d.Y*16-12)*d.Y + 4) * d.Y,
-					Z: ((d.Z*16-12)*d.Z + 4) * d.Z,
-				},
-				Vector3[Scalar]{
-					X: Scalar(math.Sqrt(ToFloat64(d.X))),
-					Y: Scalar(math.Sqrt(ToFloat64(d.Y))),
-					Z: Scalar(math.Sqrt(ToFloat64(d.Z))),
-				},
+				NewVector3(
+					((d.X()*16-12)*d.X()+4)*d.X(),
+					((d.Y()*16-12)*d.Y()+4)*d.Y(),
+					((d.Z()*16-12)*d.Z()+4)*d.Z(),
+				),
+				NewVector3(
+					Scalar(math.Sqrt(ToFloat64(d.X()))),
+					Scalar(math.Sqrt(ToFloat64(d.Y()))),
+					Scalar(math.Sqrt(ToFloat64(d.Z()))),
+				),
 				d,
 				0.25,
 			)
-			case1 := d.Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1}.Sub(s.Scale(2)).Mul(d).Mul(Vector3[Scalar]{X: 1, Y: 1, Z: 1}.Sub(d)))
-			case2 := d.Add(s.Scale(2).Sub(Vector3[Scalar]{X: 1, Y: 1, Z: 1}).Mul(D.Sub(d)))
+			v1 := NewVector3(1, 1, 1)
+
+			case1 := d.Sub(v1.Sub(s.Scale(2)).Mul(d).Mul(v1.Sub(d)))
+			case2 := d.Add(s.Scale(2).Sub(v1).Mul(D.Sub(d)))
 			return componentChoose(case1, case2, s, 0.5)
 		})
 	case BlendModeDifference:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return d.Sub(s).Abs()
 		})
 	case BlendModeExclusion:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return d.Add(s).Sub(d.Mul(s).Scale(2))
 		})
 	case BlendModeMultiply:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return d.Mul(s)
 		})
 	case BlendModeHue:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return setLuminosity(setSaturation(s, saturation(d)), luminosity(d))
 		})
 	case BlendModeSaturation:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return setLuminosity(setSaturation(d, saturation(s)), luminosity(d))
 		})
 	case BlendModeColor:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return setLuminosity(s, luminosity(d))
 		})
 	case BlendModeLuminosity:
-		return doColorBlend(dst, src, func(d, s Vector3[Scalar]) Vector3[Scalar] {
+		return doColorBlend(dst, src, func(d, s Vector3) Vector3 {
 			return setLuminosity(d, luminosity(s))
 		})
 	default:
@@ -467,7 +469,7 @@ func (b BlendMode) String() string {
 // Helper functions for HSV blend modes
 
 // doColorBlend applies a blend function to RGB components and composites the result
-func doColorBlend(dst, src Color, blendFunc func(Vector3[Scalar], Vector3[Scalar]) Vector3[Scalar]) Color {
+func doColorBlend(dst, src Color, blendFunc func(Vector3, Vector3) Vector3) Color {
 	dstRGB := toRGB(dst)
 	srcRGB := toRGB(src)
 	blendResult := blendFunc(dstRGB, srcRGB)
@@ -476,37 +478,37 @@ func doColorBlend(dst, src Color, blendFunc func(Vector3[Scalar], Vector3[Scalar
 
 // doColorBlendComponents applies a blend function to individual color components
 func doColorBlendComponents(dst, src Color, blendFunc func(Scalar, Scalar) Scalar) Color {
-	blendResult := Vector3[Scalar]{
-		X: blendFunc(dst.R, src.R),
-		Y: blendFunc(dst.G, src.G),
-		Z: blendFunc(dst.B, src.B),
-	}
+	blendResult := NewVector3(
+		blendFunc(dst.G, src.G),
+		blendFunc(dst.R, src.R),
+		blendFunc(dst.B, src.B),
+	)
 	return applyBlendedColor(dst, src, blendResult).Unpremultiply()
 }
 
-func luminosity(color Vector3[Scalar]) Scalar {
-	return color.X*0.3 + color.Y*0.59 + color.Z*0.11
+func luminosity(color Vector3) Scalar {
+	return color.X()*0.3 + color.Y()*0.59 + color.Z()*0.11
 }
 
-func saturation(color Vector3[Scalar]) Scalar {
-	return max(color.X, color.Y, color.Z) -
-		min(color.X, color.Y, color.Z)
+func saturation(color Vector3) Scalar {
+	return max(color.X(), color.Y(), color.Z()) -
+		min(color.X(), color.Y(), color.Z())
 }
 
-func clipColor(color Vector3[Scalar]) Vector3[Scalar] {
+func clipColor(color Vector3) Vector3 {
 	lum := luminosity(color)
-	mn := min(color.X, color.Y, color.Z)
-	mx := max(color.X, color.Y, color.Z)
+	mn := min(color.X(), color.Y(), color.Z())
+	mx := max(color.X(), color.Y(), color.Z())
 
 	if mn < 0 {
 		diff := lum - mn + Epsilon32
 		if diff != 0 {
 			factor := lum / diff
-			color = Vector3[Scalar]{
-				X: lum + (color.X-lum)*factor,
-				Y: lum + (color.Y-lum)*factor,
-				Z: lum + (color.Z-lum)*factor,
-			}
+			color = NewVector3(
+				lum+(color.X()-lum)*factor,
+				lum+(color.Y()-lum)*factor,
+				lum+(color.Z()-lum)*factor,
+			)
 		}
 	}
 
@@ -514,66 +516,53 @@ func clipColor(color Vector3[Scalar]) Vector3[Scalar] {
 		diff := mx - lum + Epsilon32
 		if diff != 0 {
 			factor := (1 - lum) / diff
-			color = Vector3[Scalar]{
-				X: lum + (color.X-lum)*factor,
-				Y: lum + (color.Y-lum)*factor,
-				Z: lum + (color.Z-lum)*factor,
-			}
+			color = NewVector3(
+				lum+(color.X()-lum)*factor,
+				lum+(color.Y()-lum)*factor,
+				lum+(color.Z()-lum)*factor,
+			)
 		}
 	}
 
 	return color
 }
 
-func setLuminosity(color Vector3[Scalar], lum Scalar) Vector3[Scalar] {
+func setLuminosity(color Vector3, lum Scalar) Vector3 {
 	relativeLum := lum - luminosity(color)
-	return clipColor(Vector3[Scalar]{
-		X: color.X + relativeLum,
-		Y: color.Y + relativeLum,
-		Z: color.Z + relativeLum,
-	})
+	return clipColor(NewVector3(
+		color.X()+relativeLum,
+		color.Y()+relativeLum,
+		color.Z()+relativeLum,
+	))
 }
 
-func setSaturation(color Vector3[Scalar], sat Scalar) Vector3[Scalar] {
-	mn := min(color.X, color.Y, color.Z)
-	mx := max(color.X, color.Y, color.Z)
+func setSaturation(color Vector3, sat Scalar) Vector3 {
+	mn := min(color.X(), color.Y(), color.Z())
+	mx := max(color.X(), color.Y(), color.Z())
 	if mn < mx {
 		factor := sat / (mx - mn)
-		return Vector3[Scalar]{
-			X: (color.X - mn) * factor,
-			Y: (color.Y - mn) * factor,
-			Z: (color.Z - mn) * factor,
-		}
+		return NewVector3(
+			(color.X()-mn)*factor,
+			(color.Y()-mn)*factor,
+			(color.Z()-mn)*factor,
+		)
 	}
-	return Vector3[Scalar]{}
+	return NewVector3(0, 0, 0)
 }
 
-func componentChoose(a, b, value Vector3[Scalar], cutoff Scalar) Vector3[Scalar] {
-	result := Vector3[Scalar]{}
-	if value.X > cutoff {
-		result.X = b.X
-	} else {
-		result.X = a.X
-	}
-	if value.Y > cutoff {
-		result.Y = b.Y
-	} else {
-		result.Y = a.Y
-	}
-	if value.Z > cutoff {
-		result.Z = b.Z
-	} else {
-		result.Z = a.Z
-	}
-	return result
+func componentChoose(a, b, value Vector3, cutoff Scalar) Vector3 {
+	x := Cond(value.X() > cutoff, a.X(), b.X())
+	y := Cond(value.Y() > cutoff, a.Y(), b.Y())
+	z := Cond(value.Z() > cutoff, a.Z(), b.Z())
+	return NewVector3(x, y, z)
 }
 
-func toRGB(c Color) Vector3[Scalar] {
-	return Vector3[Scalar]{X: c.R, Y: c.G, Z: c.B}
+func toRGB(c Color) Vector3 {
+	return NewVector3(c.R, c.G, c.B)
 }
 
-func fromRGB(rgb Vector3[Scalar], alpha Scalar) Color {
-	return Color{R: rgb.X, G: rgb.Y, B: rgb.Z, A: alpha}
+func fromRGB(rgb Vector3, alpha Scalar) Color {
+	return Color{R: rgb.X(), G: rgb.Y(), B: rgb.Z(), A: alpha}
 }
 
 // String returns a string representation of the color.
@@ -581,7 +570,7 @@ func (c Color) String() string {
 	return fmt.Sprintf("R=%.2f,G=%.2f,B=%.2f,A=%.2f", c.R, c.G, c.B, c.A)
 }
 
-func applyBlendedColor(dst, src Color, blendResult Vector3[Scalar]) Color {
+func applyBlendedColor(dst, src Color, blendResult Vector3) Color {
 	dst = dst.Premultiply()
 
 	// Use the blended color for areas where the source and destination colors overlap
