@@ -39,17 +39,17 @@ type BlendModeDemo struct {
 
 // At generates optimized test patterns for accurate blend mode verification
 func (b *BlendModeDemo) At(x int, y int) color.Color {
-	width := float64(b.rect.Width())
-	height := float64(b.rect.Height())
+	width := int(b.rect.Width())
+	height := int(b.rect.Height())
 
 	// Grid layout: 7 columns × 5 rows for 29 blend modes (0-28)
 	cols := 7
 	rows := 5
-	cellW := width / float64(cols)
-	cellH := height / float64(rows)
+	cellW := width / cols
+	cellH := height / rows
 
-	col := int(float64(x) / cellW)
-	row := int(float64(y) / cellH)
+	col := x / cellW
+	row := y / cellH
 
 	if col >= cols {
 		col = cols - 1
@@ -67,8 +67,8 @@ func (b *BlendModeDemo) At(x int, y int) color.Color {
 	}
 
 	// Calculate normalized coordinates within cell [0,1]
-	fx := (float64(x) - float64(col)*cellW) / cellW
-	fy := (float64(y) - float64(row)*cellH) / cellH
+	fx := float64((x - col*cellW)) / float64(cellW)
+	fy := float64((y - row*cellH)) / float64(cellH)
 
 	// Reserve space for text labels at top
 	if fy < 0.25 {

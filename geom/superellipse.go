@@ -423,26 +423,27 @@ func newSuperellipseOctant(center Point, a Scalar, radius Scalar) SuperellipseOc
 		}
 	}
 
-	af := ToFloat64(a)
-
 	ratio := a * 2 / radius
-	g := Scalar(gapFactor * ToFloat64(radius))
+	g := gapFactor * radius
 	precomputedVars := superellipseComputeNAndXj(ToFloat64(ratio))
 	n := precomputedVars[0]
-	xJ := precomputedVars[1] * af
-	yJ := math.Pow(1-math.Pow(precomputedVars[1], n), 1/n) * af
+	xJ := precomputedVars[1] * ToFloat64(a)
+	yJ := math.Pow(
+		1-math.Pow(precomputedVars[1], n),
+		1/n,
+	) * ToFloat64(a)
 	maxTheta := math.Asin(math.Pow(precomputedVars[1], n/2))
 	tanPhiJ := math.Pow(xJ/yJ, n-1)
 	d := (xJ - tanPhiJ*yJ) / (1 - tanPhiJ)
-	R := Scalar((ToFloat64(a) - d - ToFloat64(g)) * math.Sqrt(2))
+	r := (a - Scalar(d) - g) * Scalar(math.Sqrt(2))
 
 	PointM := NewPoint(a-g, a-g)
-	pointJ := NewPoint(Scalar(xJ), Scalar(yJ))
+	pointJ := NewPoint(xJ, yJ)
 	var circleCenter Point
 	if radius == 0 {
 		circleCenter = PointM
 	} else {
-		circleCenter = findCircleCenter(pointJ, PointM, R)
+		circleCenter = findCircleCenter(pointJ, PointM, Scalar(r))
 	}
 	var circleMaxAngle Radians
 	if radius == 0 {
@@ -453,7 +454,7 @@ func newSuperellipseOctant(center Point, a Scalar, radius Scalar) SuperellipseOc
 
 	return SuperellipseOctant{
 		Offset:         center,
-		SemiAxis:       a,
+		SemiAxis:       Scalar(a),
 		Degree:         Scalar(n),
 		MaxTheta:       Scalar(maxTheta),
 		CircleStart:    pointJ,
@@ -500,20 +501,23 @@ func superellipseComputeNAndXj(ratio float64) [2]float64 {
 		return [2]float64{n, 1 - 1/k_xJ}
 	}
 	ratio = Clamp(ratio, minRatio, secondMaxRatio)
-	var steps float64
+	var steps int
 	if ratio < firstMaxRatio {
-		steps = (ratio - minRatio) * firstStepInverse
+		steps = int(math.Floor(
+			(ToFloat64(ratio) - minRatio) * firstStepInverse,
+		))
 	} else {
-		steps =
-			(ratio-firstMaxRatio)*secondStepInverse + firstNumRecords - 1
+		steps = int(math.Floor(
+			(ToFloat64(ratio)-firstMaxRatio)*secondStepInverse + firstNumRecords - 1,
+		))
 	}
 
-	left := Clamp(math.Floor(steps), 0, float64(kNumRecords-2))
-	frac := steps - left
-	n := (1-frac)*precomputedVariables[int(left)][0] +
-		frac*precomputedVariables[int(left)+1][0]
-	k_xJ := (1-frac)*precomputedVariables[int(left)][1] +
-		frac*precomputedVariables[int(left)+1][1]
+	left := Clamp(steps, 0, kNumRecords-2)
+	frac := float64(steps - left)
+	n := (1-frac)*precomputedVariables[left][0] +
+		frac*precomputedVariables[left+1][0]
+	k_xJ := (1-frac)*precomputedVariables[left][1] +
+		frac*precomputedVariables[left+1][1]
 	return [2]float64{n, 1 - 1/k_xJ}
 }
 

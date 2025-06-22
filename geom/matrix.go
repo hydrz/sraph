@@ -349,7 +349,7 @@ func (m Matrix) MaxBasisLengthXY() Scalar {
 		return max(Abs(m[0]), Abs(m[5]))
 	}
 
-	return Scalar(math.Sqrt(ToFloat64(
+	return ToScalar(math.Sqrt(ToFloat64(
 		max(m[0]*m[0]+m[1]*m[1], m[4]*m[4]+m[5]*m[5]),
 	)))
 }
@@ -571,10 +571,10 @@ func (m Matrix) CosSin(angle Radians) (cos, sin Scalar) {
 	cosVal := math.Cos(ToFloat64(angle))
 	if math.Abs(cosVal) == 1.0 {
 		// 0 or 180 degrees
-		return Scalar(cosVal), 0
+		return ToScalar(cosVal), 0
 	}
 
-	return Scalar(cosVal), sinVal
+	return ToScalar(cosVal), sinVal
 }
 
 // String returns a string representation of the matrix in a 4x4 grid format.

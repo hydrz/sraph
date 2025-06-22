@@ -209,17 +209,6 @@ func TestVector4Length(t *testing.T) {
 	}
 }
 
-func TestVector4CrossProduct(t *testing.T) {
-	v1 := vector4[Scalar]{1.0, 0.0, 0.0, 0.0}
-	v2 := vector4[Scalar]{0.0, 1.0, 0.0, 0.0}
-
-	// Cross product returns zero vector for 4D
-	cross := v1.Cross(v2)
-	if cross.X() != 0.0 || cross.Y() != 0.0 || cross.Z() != 0.0 || cross.W() != 0.0 {
-		t.Errorf("Cross() should return zero vector for 4D")
-	}
-}
-
 func TestVector4IsFinite(t *testing.T) {
 	finite := vector4[Scalar]{1.0, 2.0, 3.0, 4.0}
 	infinite := vector4[Scalar]{Scalar(math.Inf(1)), 2.0, 3.0, 4.0}

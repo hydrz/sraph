@@ -15,7 +15,7 @@ func CubicSubdivisions(scaleFactor Scalar, p0, p1, p2, p3 Point) Scalar {
 	k := ToFloat64(scaleFactor) * 0.75 * precision
 	a := p0.Sub(p1.Scale(2)).Add(p2).Abs()
 	b := p1.Sub(p2.Scale(2)).Add(p3).Abs()
-	return Scalar(math.Sqrt(k * ToFloat64(a.Max(b).Length())))
+	return ToScalar(math.Sqrt(k * ToFloat64(a.Max(b).Length())))
 }
 
 // QuadraticSubdivisions returns the minimum number of evenly spaced line segments required
@@ -24,7 +24,7 @@ func CubicSubdivisions(scaleFactor Scalar, p0, p1, p2, p3 Point) Scalar {
 // of the current transform.
 func QuadraticSubdivisions(scaleFactor Scalar, p0, p1, p2 Point) Scalar {
 	k := ToFloat64(scaleFactor) * 0.25 * precision
-	return Scalar(math.Sqrt(k * ToFloat64(p0.Sub(p1.Scale(2)).Add(p2).Length())))
+	return ToScalar(math.Sqrt(k * ToFloat64(p0.Sub(p1.Scale(2)).Add(p2).Length())))
 }
 
 // ConicSubdivisions returns the minimum number of evenly spaced line segments required
@@ -57,5 +57,5 @@ func ConicSubdivisions(scaleFactor Scalar, p0, p1, p2 Point, weight Scalar) Scal
 
 	// Number of segments = sqrt(numer / denom).
 	// Assumes the parametric interval of the curve is [0, 1].
-	return Scalar(math.Sqrt(numer / denom))
+	return ToScalar(math.Sqrt(numer / denom))
 }

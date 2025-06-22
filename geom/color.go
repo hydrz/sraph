@@ -212,7 +212,7 @@ func (c Color) LinearToSRGB() Color {
 		if component <= 0.0031308 {
 			return component * 12.92
 		}
-		return Scalar(1.055*math.Pow(ToFloat64(component), 1.0/2.4) - 0.055)
+		return ToScalar(1.055*math.Pow(ToFloat64(component), 1.0/2.4) - 0.055)
 	}
 	return Color{
 		R: convert(c.R),
@@ -228,7 +228,7 @@ func (c Color) SRGBToLinear() Color {
 		if component <= 0.04045 {
 			return component / 12.92
 		}
-		return Scalar(math.Pow((ToFloat64(component)+0.055)/1.055, 2.4))
+		return ToScalar(math.Pow((ToFloat64(component)+0.055)/1.055, 2.4))
 	}
 	return Color{
 		R: convert(c.R),

@@ -1,7 +1,6 @@
 package geom
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -18,18 +17,18 @@ type Quaternion interface {
 	W() Scalar
 
 	// Add returns the component-wise sum of this quaternion and another.
-	Add(other Quaternion) Quaternion
+	Add(o Quaternion) Quaternion
 	// Sub returns the component-wise difference of this quaternion and another.
-	Sub(other Quaternion) Quaternion
+	Sub(o Quaternion) Quaternion
 	// Mul returns the Hamilton product of this quaternion and another.
 	// This corresponds to the composition of two 3D rotations.
-	Mul(other Quaternion) Quaternion
+	Mul(o Quaternion) Quaternion
 	// Div returns the quotient of this quaternion divided by another.
 	// This is equivalent to multiplying by the inverse of the other quaternion.
-	Div(other Quaternion) Quaternion
+	Div(o Quaternion) Quaternion
 
 	// Equal reports whether this quaternion and another are equal within floating-point tolerance.
-	Equal(other Quaternion) bool
+	Equal(o Quaternion) bool
 	// Scale returns this quaternion scaled by the given scalar value.
 	Scale(scalar Scalar) Quaternion
 	// Neg returns the negation of this quaternion (all components negated).
@@ -39,7 +38,7 @@ type Quaternion interface {
 	// For unit quaternions representing rotations, this should be 1.
 	Length() Scalar
 	// Dot returns the dot product of this quaternion and another.
-	Dot(other Quaternion) Scalar
+	Dot(o Quaternion) Scalar
 	// Normalize returns a unit quaternion in the same direction as this quaternion.
 	// If this quaternion has zero length, returns a zero quaternion.
 	Normalize() Quaternion
@@ -64,8 +63,8 @@ type quaternion[T Number] struct {
 }
 
 // NewQuaternion creates a new quaternion with the given components.
-func NewQuaternion(x, y, z, w Scalar) Quaternion {
-	return quaternion[Scalar]{x, y, z, w}
+func NewQuaternion[T Number](x, y, z, w T) Quaternion {
+	return quaternion[T]{x, y, z, w}
 }
 
 // NewQuaternionFromAxisAngle creates a new quaternion from an axis and angle.
@@ -74,94 +73,102 @@ func NewQuaternionFromAxisAngle(axis Vector3, angle Radians) Quaternion {
 	halfAngle := ToFloat64(angle) / 2
 	sinHalfAngle := Scalar(math.Sin(halfAngle))
 	cosHalfAngle := Scalar(math.Cos(halfAngle))
-	return quaternion[Scalar]{
-		x: axis.X() * sinHalfAngle,
-		y: axis.Y() * sinHalfAngle,
-		z: axis.Z() * sinHalfAngle,
-		w: cosHalfAngle,
-	}
+	return NewQuaternion(
+		axis.X()*sinHalfAngle,
+		axis.Y()*sinHalfAngle,
+		axis.Z()*sinHalfAngle,
+		cosHalfAngle,
+	)
 }
 
 // X implements Quaternion.X.
-func (q quaternion[T]) X() Scalar { return Scalar(q.x) }
+func (q quaternion[T]) X() Scalar { return ToScalar(q.x) }
 
 // Y implements Quaternion.Y.
-func (q quaternion[T]) Y() Scalar { return Scalar(q.y) }
+func (q quaternion[T]) Y() Scalar { return ToScalar(q.y) }
 
 // Z implements Quaternion.Z.
-func (q quaternion[T]) Z() Scalar { return Scalar(q.z) }
+func (q quaternion[T]) Z() Scalar { return ToScalar(q.z) }
 
 // W implements Quaternion.W.
-func (q quaternion[T]) W() Scalar { return Scalar(q.w) }
+func (q quaternion[T]) W() Scalar { return ToScalar(q.w) }
 
 // Add implements Quaternion.Add.
-func (q quaternion[T]) Add(other Quaternion) Quaternion {
-	return quaternion[T]{
-		x: q.x + T(other.X()),
-		y: q.y + T(other.Y()),
-		z: q.z + T(other.Z()),
-		w: q.w + T(other.W()),
-	}
+func (q quaternion[T]) Add(o Quaternion) Quaternion {
+	return NewQuaternion(
+		q.X()+o.X(),
+		q.Y()+o.Y(),
+		q.Z()+o.Z(),
+		q.W()+o.W(),
+	)
 }
 
 // Sub implements Quaternion.Sub.
 func (q quaternion[T]) Sub(other Quaternion) Quaternion {
-	return quaternion[T]{
-		x: q.x - T(other.X()),
-		y: q.y - T(other.Y()),
-		z: q.z - T(other.Z()),
-		w: q.w - T(other.W()),
-	}
+	return NewQuaternion(
+		q.X()-other.X(),
+		q.Y()-other.Y(),
+		q.Z()-other.Z(),
+		q.W()-other.W(),
+	)
 }
 
 // Mul implements Quaternion.Mul (Hamilton product).
-func (q quaternion[T]) Mul(other Quaternion) Quaternion {
-	x1, y1, z1, w1 := q.x, q.y, q.z, q.w
-	x2, y2, z2, w2 := T(other.X()), T(other.Y()), T(other.Z()), T(other.W())
-	return quaternion[T]{
-		x: w1*x2 + x1*w2 + y1*z2 - z1*y2,
-		y: w1*y2 - x1*z2 + y1*w2 + z1*x2,
-		z: w1*z2 + x1*y2 - y1*x2 + z1*w2,
-		w: w1*w2 - x1*x2 - y1*y2 - z1*z2,
-	}
+func (q quaternion[T]) Mul(o Quaternion) Quaternion {
+	x1, y1, z1, w1 := q.X(), q.Y(), q.Z(), q.W()
+	x2, y2, z2, w2 := o.X(), o.Y(), o.Z(), o.W()
+	return NewQuaternion(
+		w1*x2+x1*w2+y1*z2-z1*y2,
+		w1*y2-x1*z2+y1*w2+z1*x2,
+		w1*z2+x1*y2-y1*x2+z1*w2,
+		w1*w2-x1*x2-y1*y2-z1*z2,
+	)
 }
 
 // Div implements Quaternion.Div.
-func (q quaternion[T]) Div(other Quaternion) Quaternion {
-	return q.Mul(other.Invert())
+func (q quaternion[T]) Div(o Quaternion) Quaternion {
+	return q.Mul(o.Invert())
 }
 
 // Equal implements Quaternion.Equal.
 func (q quaternion[T]) Equal(other Quaternion) bool {
-	return NearlyEqual(q.x, T(other.X())) &&
-		NearlyEqual(q.y, T(other.Y())) &&
-		NearlyEqual(q.z, T(other.Z())) &&
-		NearlyEqual(q.w, T(other.W()))
+	return NearlyEqual(q.X(), other.X()) &&
+		NearlyEqual(q.Y(), other.Y()) &&
+		NearlyEqual(q.Z(), other.Z()) &&
+		NearlyEqual(q.W(), other.W())
 }
 
 // Scale implements Quaternion.Scale.
 func (q quaternion[T]) Scale(scalar Scalar) Quaternion {
-	return quaternion[T]{
-		x: q.x * T(scalar),
-		y: q.y * T(scalar),
-		z: q.z * T(scalar),
-		w: q.w * T(scalar),
-	}
+	return NewQuaternion(
+		q.X()*scalar,
+		q.Y()*scalar,
+		q.Z()*scalar,
+		q.W()*scalar,
+	)
 }
 
 // Neg implements Quaternion.Neg.
 func (q quaternion[T]) Neg() Quaternion {
-	return quaternion[T]{x: -q.x, y: -q.y, z: -q.z, w: -q.w}
+	return NewQuaternion(
+		-q.X(),
+		-q.Y(),
+		-q.Z(),
+		-q.W(),
+	)
 }
 
 // Length implements Quaternion.Length.
 func (q quaternion[T]) Length() Scalar {
-	return Scalar(math.Sqrt(float64(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w)))
+	return ToScalar(math.Sqrt(ToFloat64(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w)))
 }
 
 // Dot implements Quaternion.Dot.
-func (q quaternion[T]) Dot(other Quaternion) Scalar {
-	return Scalar(q.x*T(other.X()) + q.y*T(other.Y()) + q.z*T(other.Z()) + q.w*T(other.W()))
+func (q quaternion[T]) Dot(o Quaternion) Scalar {
+	return q.X()*o.X() +
+		q.Y()*o.Y() +
+		q.Z()*o.Z() +
+		q.W()*o.W()
 }
 
 // Normalize implements Quaternion.Normalize.
@@ -170,42 +177,41 @@ func (q quaternion[T]) Normalize() Quaternion {
 	if len == 0 {
 		return quaternion[T]{}
 	}
-	return quaternion[T]{
-		x: q.x / T(len),
-		y: q.y / T(len),
-		z: q.z / T(len),
-		w: q.w / T(len),
-	}
+	return NewQuaternion(
+		q.X()/len,
+		q.Y()/len,
+		q.Z()/len,
+		q.W()/len,
+	)
 }
 
 // Invert implements Quaternion.Invert.
 func (q quaternion[T]) Invert() Quaternion {
-	normSq := q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w
-	var zero T
-	if normSq == zero {
+	normSq := q.X()*q.X() + q.Y()*q.Y() + q.Z()*q.Z() + q.W()*q.W()
+	if normSq == 0 {
 		return quaternion[T]{}
 	}
-	return quaternion[T]{
-		x: -q.x / normSq,
-		y: -q.y / normSq,
-		z: -q.z / normSq,
-		w: q.w / normSq,
-	}
+	return NewQuaternion(
+		-q.X()/normSq,
+		-q.Y()/normSq,
+		-q.Z()/normSq,
+		q.W()/normSq,
+	)
 }
 
 // Slerp implements Quaternion.Slerp.
-func (q quaternion[T]) Slerp(other Quaternion, t float64) Quaternion {
-	cosine := ToFloat64(q.Dot(other))
-	if NearlyEqual(T(cosine), 1.0) {
-		sine := math.Sqrt(1.0 - cosine*cosine)
-		angle := math.Atan2(sine, cosine)
-		sineInverse := 1.0 / sine
-		c0 := T(math.Sin((1.0-t)*angle) * sineInverse)
-		c1 := T(math.Sin(t*angle) * sineInverse)
-		return q.Scale(Scalar(c0)).Add(other.Scale(Scalar(c1))).Normalize()
-	} else {
-		return q.Scale(Scalar(1.0 - t)).Add(other.Scale(Scalar(t))).Normalize()
+func (q quaternion[T]) Slerp(o Quaternion, t float64) Quaternion {
+	cosine := ToFloat64(q.Dot(o))
+	if !NearlyEqual(cosine, 1.0) {
+		return q.Scale(Scalar(1.0 - t)).Add(o.Scale(Scalar(t))).Normalize()
 	}
+
+	sine := math.Sqrt(1.0 - cosine*cosine)
+	angle := math.Atan2(sine, cosine)
+	sineInverse := 1.0 / sine
+	c0 := ToScalar(math.Sin((1.0-t)*angle) * sineInverse)
+	c1 := ToScalar(math.Sin(t*angle) * sineInverse)
+	return q.Scale(c0).Add(o.Scale(c1)).Normalize()
 }
 
 // RotateVector3 implements Quaternion.RotateVector3.
@@ -223,5 +229,8 @@ func (q quaternion[T]) RotateVector3(vector Vector3) Vector3 {
 
 // String implements Quaternion.String.
 func (q quaternion[T]) String() string {
-	return fmt.Sprintf("(%v, %v, %v, %v)", q.x, q.y, q.z, q.w)
+	return "(" + ToString(q.x) + ", " +
+		ToString(q.y) + ", " +
+		ToString(q.z) + ", " +
+		ToString(q.w) + ")"
 }

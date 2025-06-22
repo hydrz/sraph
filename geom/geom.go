@@ -30,7 +30,23 @@ type Floater interface {
 	Float64() float64
 }
 
+// ToFloat64 converts a scalar value to float64.
+// If the value implements Floater interface, uses its Float64 method for conversion.
+// Otherwise, performs a direct type conversion to float64.
+func ToFloat64[T Number](s T) float64 {
+	if f, ok := any(s).(Floater); ok {
+		return f.Float64()
+	}
+	return float64(s)
+}
+
+// Scalar is a type alias for float32, representing a scalar value in geometric calculations.
 type Scalar float32
+
+// ToScalar converts a Number type to a Scalar.
+func ToScalar[T Number](s T) Scalar {
+	return Scalar(ToFloat64(s))
+}
 
 type Radians Scalar
 
@@ -94,16 +110,6 @@ func Cond[T any](condition bool, ifTrue, ifFalse T) T {
 	return ifFalse
 }
 
-// ToFloat64 converts a scalar value to float64.
-// If the value implements Floater interface, uses its Float64 method for conversion.
-// Otherwise, performs a direct type conversion to float64.
-func ToFloat64[T Number](s T) float64 {
-	if f, ok := any(s).(Floater); ok {
-		return f.Float64()
-	}
-	return float64(s)
-}
-
 // ToString converts a scalar value to its string representation.
 // Uses the String method if the value implements fmt.Stringer, otherwise formats as float64.
 func ToString[T Number](s T) string {
@@ -112,6 +118,8 @@ func ToString[T Number](s T) string {
 	}
 	return strconv.FormatFloat(ToFloat64(s), 'f', -1, 64)
 }
+
+// === Custom Number types ===
 
 // Int26_6 represents a signed 26.6 fixed-point number.
 // The integer part uses 26 bits (range: -33554432 to 33554431) and the fractional part uses 6 bits.

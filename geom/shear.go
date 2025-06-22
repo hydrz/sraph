@@ -26,17 +26,17 @@ func NewShear[T Number](xy, xz, yz T) Shear {
 
 // XY returns the shear factor in the XY plane.
 func (s shear[T]) XY() Scalar {
-	return Scalar(s.xy)
+	return ToScalar(s.xy)
 }
 
 // XZ returns the shear factor in the XZ plane.
 func (s shear[T]) XZ() Scalar {
-	return Scalar(s.xz)
+	return ToScalar(s.xz)
 }
 
 // YZ returns the shear factor in the YZ plane.
 func (s shear[T]) YZ() Scalar {
-	return Scalar(s.yz)
+	return ToScalar(s.yz)
 }
 
 func (s shear[T]) Equal(o Shear) bool {
